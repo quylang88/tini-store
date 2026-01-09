@@ -26,7 +26,7 @@ const Login = ({ onLogin }) => {
     e.preventDefault();
     
     // Kiểm tra tài khoản cứng
-    if (username === 'tini-shop' && password === 'Believe93') {
+    if (username === 'tiny-shop' && password === 'Believe93') {
       // 2. Xử lý Ghi nhớ Tài khoản/Mật khẩu
       if (remember) {
         // Nếu chọn Ghi nhớ: Lưu vào bộ nhớ máy
@@ -52,7 +52,7 @@ const Login = ({ onLogin }) => {
             <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mb-3 shadow-lg">
               <Store size={32} className="text-indigo-600" />
             </div>
-            <h1 className="text-2xl font-bold text-white tracking-wide">Tini Beauty</h1>
+            <h1 className="text-2xl font-bold text-white tracking-wide">Tiny Beauty</h1>
             <p className="text-indigo-100 text-sm mt-1">Hệ thống quản lý</p>
           </div>
         </div>
@@ -120,7 +120,7 @@ const Login = ({ onLogin }) => {
         </div>
         
         <div className="bg-gray-50 p-4 text-center text-xs text-gray-400 border-t border-gray-100">
-          © 2026 Tini Beauty
+          © 2026 Tiny Beauty
         </div>
       </div>
     </div>
