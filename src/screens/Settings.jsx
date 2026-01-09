@@ -203,7 +203,7 @@ const Settings = ({ products, orders, setProducts, setOrders, settings, setSetti
         </div>
         <div className="p-4 space-y-4">
           <p className="text-sm text-gray-500">
-            Dữ liệu hiện tại chỉ lưu trên trình duyệt này. Hãy tải về máy thường xuyên để tránh mất mát.
+            Dữ liệu hiện tại chỉ lưu trên trình duyệt này. Hãy tải về máy thường xuyên để tránh mất dữ liệu.
           </p>
           
           <button 
@@ -246,7 +246,7 @@ const Settings = ({ products, orders, setProducts, setOrders, settings, setSetti
       
       {/* Footer info */}
       <div className="text-center text-xs text-gray-400 pb-4">
-        Phiên bản 2.1 - Shop Manager<br/>
+        Phiên bản 2.3 - Tiny Shop<br/>
         Dữ liệu được lưu trữ cục bộ (Local Storage)
       </div>
     </div>

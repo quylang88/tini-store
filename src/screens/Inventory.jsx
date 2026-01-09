@@ -244,7 +244,7 @@ const Inventory = ({ products, setProducts, settings }) => {
 
       {/* Modal Add/Edit */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center backdrop-blur-sm">
+        <div className="fixed inset-0 bg-black/50 z-[70] flex items-end sm:items-center justify-center backdrop-blur-sm">
           <div className="bg-white w-full sm:w-96 rounded-t-2xl sm:rounded-2xl p-5 pb-[calc(env(safe-area-inset-bottom)+1.25rem)] animate-slide-up max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-5">
               <h3 className="font-bold text-lg">{editingProduct ? 'Sửa Sản Phẩm' : 'Thêm Mới'}</h3>
@@ -271,8 +271,8 @@ const Inventory = ({ products, setProducts, settings }) => {
               </div>
 
               {/* Barcode & Category */}
-              <div className="grid grid-cols-2 gap-4">
-                <div>
+              <div className="grid grid-cols-2 gap-4 items-end">
+                <div className="flex flex-col gap-1">
                   <label className="text-xs font-bold text-gray-500 uppercase flex justify-between">
                     Mã Vạch <ScanBarcode size={14} className="text-indigo-600 cursor-pointer" onClick={() => setShowScanner(true)} />
                   </label>
@@ -282,7 +282,7 @@ const Inventory = ({ products, setProducts, settings }) => {
                     placeholder="Quét/Nhập..."
                   />
                 </div>
-                <div>
+                <div className="flex flex-col gap-1">
                   <label className="text-xs font-bold text-gray-500 uppercase">Danh mục</label>
                   <select
                     className="w-full border-b border-gray-200 py-2 focus:border-indigo-500 outline-none text-gray-800 text-sm bg-transparent"
