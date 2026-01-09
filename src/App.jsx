@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 
 // --- IMPORT CÁC MÀN HÌNH TỪ THƯ MỤC RIÊNG ---
+// Đảm bảo bạn đã tạo đủ các file này trong thư mục src/screens/
+import Login from './screens/Login';
 import Dashboard from './screens/Dashboard';
 import Inventory from './screens/Inventory';
 import Orders from './screens/Orders';
@@ -10,30 +12,37 @@ import Settings from './screens/Settings';
 import TabBar from './components/TabBar';
 
 const App = () => {
-  const [activeTab, setActiveTab] = useState('dashboard');
+  // --- 1. QUẢN LÝ TRẠNG THÁI ĐĂNG NHẬP ---
+  // Kiểm tra session để giữ đăng nhập khi F5
+  const [isAuthenticated, setIsAuthenticated] = useState(() => {
+    return sessionStorage.getItem('tini_auth') === 'true';
+  });
 
-  // 1. Dữ liệu Sản phẩm
+  const [activeTab, setActiveTab] = useState('dashboard');
+  
+  // --- 2. KHỞI TẠO DỮ LIỆU TỪ LOCALSTORAGE ---
+  // Dữ liệu Sản phẩm
   const [products, setProducts] = useState(() => {
     const saved = localStorage.getItem('shop_products_v2');
     return saved ? JSON.parse(saved) : [];
   });
-
-  // 2. Dữ liệu Đơn hàng
+  
+  // Dữ liệu Đơn hàng
   const [orders, setOrders] = useState(() => {
     const saved = localStorage.getItem('shop_orders_v2');
     return saved ? JSON.parse(saved) : [];
   });
 
-  // 3. Cài đặt chung (Tỷ giá,...) - MỚI
+  // Cài đặt chung (Tỷ giá, Danh mục)
   const [settings, setSettings] = useState(() => {
     const saved = localStorage.getItem('shop_settings');
-    return saved ? JSON.parse(saved) : {
-      exchangeRate: 170, // Tỷ giá mặc định 1 JPY = 170 VND
-      categories: ['Chung', 'Mỹ phẩm', 'Thực phẩm', 'Quần áo'] // Danh mục mặc định
+    return saved ? JSON.parse(saved) : { 
+      exchangeRate: 170, 
+      categories: ['Chung', 'Mỹ phẩm', 'Thực phẩm', 'Quần áo'] 
     };
   });
 
-  // --- EFFECT LƯU DATA ---
+  // --- 3. TỰ ĐỘNG LƯU DỮ LIỆU KHI CÓ THAY ĐỔI ---
   useEffect(() => {
     try {
       localStorage.setItem('shop_products_v2', JSON.stringify(products));
@@ -50,54 +59,74 @@ const App = () => {
     localStorage.setItem('shop_settings', JSON.stringify(settings));
   }, [settings]);
 
+  // --- 4. CÁC HÀM XỬ LÝ AUTH ---
+  const handleLoginSuccess = () => {
+    setIsAuthenticated(true);
+    sessionStorage.setItem('tini_auth', 'true');
+  };
+
+  const handleLogout = () => {
+    if(window.confirm('Bạn có chắc chắn muốn đăng xuất?')) {
+      setIsAuthenticated(false);
+      sessionStorage.removeItem('tini_auth'); // Xóa phiên làm việc
+      setActiveTab('dashboard'); // Reset tab về mặc định
+    }
+  };
+
+  // --- 5. RENDERING ---
+
+  // Nếu chưa đăng nhập -> Hiện màn hình Login
+  if (!isAuthenticated) {
+    return <Login onLogin={handleLoginSuccess} />;
+  }
+
+  // Nếu đã đăng nhập -> Hiện App chính
   return (
     <div className="h-screen bg-gray-50 text-gray-900 font-sans overflow-hidden flex flex-col">
       <div className="flex-1 overflow-hidden relative">
-
+        
         {activeTab === 'dashboard' && (
-          <Dashboard
-            products={products}
-            orders={orders}
-          />
+          <Dashboard products={products} orders={orders} />
         )}
-
+        
         {activeTab === 'inventory' && (
-          <Inventory
-            products={products}
-            setProducts={setProducts}
-            settings={settings} // Truyền cài đặt xuống kho
+          <Inventory 
+            products={products} 
+            setProducts={setProducts} 
+            settings={settings} 
           />
         )}
-
+        
         {activeTab === 'orders' && (
-          <Orders
-            products={products}
-            setProducts={setProducts}
-            orders={orders}
+          <Orders 
+            products={products} 
+            setProducts={setProducts} 
+            orders={orders} 
             setOrders={setOrders}
-            settings={settings}       // Truyền cài đặt xuống đơn hàng
+            settings={settings}
           />
         )}
-
+        
         {activeTab === 'settings' && (
-          <Settings
-            products={products}
-            orders={orders}
-            setProducts={setProducts}
+          <Settings 
+            products={products} 
+            orders={orders} 
+            setProducts={setProducts} 
             setOrders={setOrders}
-            settings={settings}       // Truyền cài đặt để sửa
-            setSettings={setSettings} // Hàm sửa cài đặt
+            settings={settings}       
+            setSettings={setSettings}
+            onLogout={handleLogout}
           />
         )}
       </div>
 
-      <TabBar
-        activeTab={activeTab}
-        setActiveTab={setActiveTab}
-      />
-
+      <TabBar activeTab={activeTab} setActiveTab={setActiveTab} />
+      
+      {/* CSS Global */}
       <style>{`
         .pb-safe-area { padding-bottom: env(safe-area-inset-bottom); }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         @keyframes slide-up { from { transform: translateY(100%); } to { transform: translateY(0); } }
         .animate-slide-up { animation: slide-up 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
         @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }

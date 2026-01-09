@@ -11,8 +11,8 @@ const BarcodeScanner = ({ onScanSuccess, onClose }) => {
 
     scanner.render((decodedText) => {
       onScanSuccess(decodedText);
-      scanner.clear();
-    }, (error) => {
+      scanner.clear().catch(error => console.error("Failed to clear scanner", error));
+    }, () => {
       // Bỏ qua lỗi
     });
 
@@ -20,6 +20,27 @@ const BarcodeScanner = ({ onScanSuccess, onClose }) => {
       scanner.clear().catch(error => console.error("Failed to clear scanner", error));
     };
   }, [onScanSuccess]);
+
+  return (
+    <div className="fixed inset-0 z-[70] bg-black/70 backdrop-blur-sm flex flex-col items-center justify-center p-4">
+      <div className="w-full max-w-sm bg-white rounded-2xl shadow-xl p-4">
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="font-bold text-gray-800">Quét mã vạch</h3>
+          <button
+            type="button"
+            onClick={onClose}
+            className="text-gray-500 hover:text-gray-700 text-sm font-semibold"
+          >
+            Đóng
+          </button>
+        </div>
+        <div id="reader" className="w-full rounded-lg overflow-hidden bg-black/5" />
+        <p className="text-xs text-gray-500 mt-3 text-center">
+          Đưa mã vạch vào khung để tự động nhận diện.
+        </p>
+      </div>
+    </div>
+  );
 };
 
 export default BarcodeScanner;
