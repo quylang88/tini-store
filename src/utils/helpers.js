@@ -20,3 +20,24 @@ export const compressImage = (file) => {
     };
   });
 };
+
+export const formatNumber = (value) => {
+  const number = Number(value);
+  if (!Number.isFinite(number)) {
+    return '0';
+  }
+  return number.toLocaleString('en-US');
+};
+
+export const formatInputNumber = (value) => {
+  if (value === '' || value === null || value === undefined) {
+    return '';
+  }
+  const number = Number(value);
+  if (!Number.isFinite(number)) {
+    return '';
+  }
+  return number.toLocaleString('en-US');
+};
+
+export const sanitizeNumberInput = (value) => value.replace(/[^\d]/g, '');
