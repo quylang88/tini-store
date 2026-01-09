@@ -8,23 +8,23 @@ const Inventory = ({ products, setProducts, settings }) => {
   const [showScanner, setShowScanner] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
-  
+
   // State quản lý danh mục đang xem
   const [activeCategory, setActiveCategory] = useState('Tất cả');
-  
+
   const fileInputRef = useRef(null);
 
   // Form data có thêm các trường mới: category, costJPY, exchangeRate
-  const [formData, setFormData] = useState({ 
-    name: '', 
-    barcode: '', 
+  const [formData, setFormData] = useState({
+    name: '',
+    barcode: '',
     category: 'Chung',
     costJPY: '',       // Giá vốn tiền Yên
     exchangeRate: settings.exchangeRate, // Lấy tỷ giá mặc định từ Settings
     cost: '',          // Giá vốn VNĐ
     price: '',         // Giá bán VNĐ
-    stock: '', 
-    image: '' 
+    stock: '',
+    image: ''
   });
 
   // Tự động tính giá vốn VNĐ khi nhập Yên hoặc thay đổi Tỷ giá
@@ -38,7 +38,7 @@ const Inventory = ({ products, setProducts, settings }) => {
   const handleScanSuccess = (decodedText) => {
     setShowScanner(false);
     const existingProduct = products.find(p => p.barcode === decodedText);
-    
+
     if (existingProduct) {
       alert(`Sản phẩm này đã có: ${existingProduct.name}`);
       openModal(existingProduct);
@@ -67,7 +67,7 @@ const Inventory = ({ products, setProducts, settings }) => {
 
     // Check trùng Barcode
     if (formData.barcode) {
-      const duplicateBarcode = products.find(p => 
+      const duplicateBarcode = products.find(p =>
         p.barcode === formData.barcode && p.id !== (editingProduct ? editingProduct.id : null)
       );
       if (duplicateBarcode) {
@@ -100,29 +100,29 @@ const Inventory = ({ products, setProducts, settings }) => {
   const openModal = (product = null) => {
     if (product) {
       setEditingProduct(product);
-      setFormData({ 
-        name: product.name, 
-        barcode: product.barcode || '', 
+      setFormData({
+        name: product.name,
+        barcode: product.barcode || '',
         category: product.category || 'Chung',
         costJPY: product.costJPY || '',
         exchangeRate: product.exchangeRate || settings.exchangeRate,
         cost: product.cost || '',
-        price: product.price, 
-        stock: product.stock, 
-        image: product.image || '' 
+        price: product.price,
+        stock: product.stock,
+        image: product.image || ''
       });
     } else {
       setEditingProduct(null);
-      setFormData({ 
-        name: '', 
-        barcode: '', 
+      setFormData({
+        name: '',
+        barcode: '',
         category: activeCategory === 'Tất cả' ? 'Chung' : activeCategory,
         costJPY: '',
         exchangeRate: settings.exchangeRate, // Load tỷ giá mặc định
         cost: '',
-        price: '', 
-        stock: '', 
-        image: '' 
+        price: '',
+        stock: '',
+        image: ''
       });
     }
     setIsModalOpen(true);
@@ -134,17 +134,17 @@ const Inventory = ({ products, setProducts, settings }) => {
   };
 
   const handleDelete = (id) => {
-    if(window.confirm('Xóa sản phẩm này?')) {
+    if (window.confirm('Xóa sản phẩm này?')) {
       setProducts(products.filter(p => p.id !== id));
     }
   };
 
   // LỌC SẢN PHẨM: Theo Tìm kiếm + Theo Danh mục
   const filtered = products.filter(p => {
-    const matchSearch = p.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                        (p.barcode && p.barcode.includes(searchTerm));
+    const matchSearch = p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (p.barcode && p.barcode.includes(searchTerm));
     const matchCategory = activeCategory === 'Tất cả' || p.category === activeCategory;
-    
+
     return matchSearch && matchCategory;
   });
 
@@ -168,7 +168,7 @@ const Inventory = ({ products, setProducts, settings }) => {
           </div>
           <div className="relative">
             <Search className="absolute left-3 top-2.5 text-gray-400" size={16} />
-            <input 
+            <input
               type="text"
               placeholder="Tìm tên hoặc quét mã..."
               className="w-full bg-gray-100 pl-9 pr-4 py-2 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
@@ -180,14 +180,14 @@ const Inventory = ({ products, setProducts, settings }) => {
 
         {/* Thanh Tab Danh mục */}
         <div className="px-3 pb-0 overflow-x-auto flex gap-2 no-scrollbar border-b border-gray-100">
-          <button 
+          <button
             onClick={() => setActiveCategory('Tất cả')}
             className={`whitespace-nowrap py-3 px-2 border-b-2 text-sm font-medium transition-colors ${activeCategory === 'Tất cả' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-gray-500'}`}
           >
             Tất cả
           </button>
           {settings.categories.map(cat => (
-            <button 
+            <button
               key={cat}
               onClick={() => setActiveCategory(cat)}
               className={`whitespace-nowrap py-3 px-2 border-b-2 text-sm font-medium transition-colors ${activeCategory === cat ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-gray-500'}`}
@@ -206,7 +206,7 @@ const Inventory = ({ products, setProducts, settings }) => {
               {p.image ? (
                 <img src={p.image} className="w-full h-full object-cover" alt={p.name} />
               ) : (
-                <div className="w-full h-full flex items-center justify-center text-gray-300"><ImageIcon size={20}/></div>
+                <div className="w-full h-full flex items-center justify-center text-gray-300"><ImageIcon size={20} /></div>
               )}
             </div>
             <div className="flex-1 min-w-0">
@@ -214,17 +214,17 @@ const Inventory = ({ products, setProducts, settings }) => {
                 <div className="font-bold text-gray-800 truncate">{p.name}</div>
                 <span className="text-[10px] bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded ml-2 whitespace-nowrap">{p.category}</span>
               </div>
-              
+
               <div className="text-xs text-gray-400 font-mono mb-0.5">{p.barcode || '---'}</div>
-              
+
               <div className="flex justify-between items-end mt-1">
                 <div>
-                   <div className="text-indigo-600 font-bold text-sm">{p.price.toLocaleString()}đ</div>
-                   {p.costJPY > 0 && (
-                     <div className="text-[10px] text-gray-400">
-                        Vốn: ¥{p.costJPY} ({p.cost.toLocaleString()}đ)
-                     </div>
-                   )}
+                  <div className="text-indigo-600 font-bold text-sm">{p.price.toLocaleString()}đ</div>
+                  {p.costJPY > 0 && (
+                    <div className="text-[10px] text-gray-400">
+                      Vốn: ¥{p.costJPY} ({p.cost.toLocaleString()}đ)
+                    </div>
+                  )}
                 </div>
                 <div className={`text-xs font-medium ${p.stock < 5 ? 'text-red-500' : 'text-gray-500'}`}>
                   Kho: {p.stock}
@@ -232,8 +232,8 @@ const Inventory = ({ products, setProducts, settings }) => {
               </div>
             </div>
             <div className="flex flex-col gap-2 pl-2 border-l border-gray-50">
-              <button onClick={() => openModal(p)} className="text-gray-400 hover:text-indigo-600"><Edit size={18}/></button>
-              <button onClick={() => handleDelete(p.id)} className="text-gray-400 hover:text-red-500"><Trash2 size={18}/></button>
+              <button onClick={() => openModal(p)} className="text-gray-400 hover:text-indigo-600"><Edit size={18} /></button>
+              <button onClick={() => handleDelete(p.id)} className="text-gray-400 hover:text-red-500"><Trash2 size={18} /></button>
             </div>
           </div>
         ))}
@@ -245,16 +245,16 @@ const Inventory = ({ products, setProducts, settings }) => {
       {/* Modal Add/Edit */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center backdrop-blur-sm">
-          <div className="bg-white w-full sm:w-96 rounded-t-2xl sm:rounded-2xl p-5 animate-slide-up max-h-[90vh] overflow-y-auto">
+          <div className="bg-white w-full sm:w-96 rounded-t-2xl sm:rounded-2xl p-5 pb-[calc(env(safe-area-inset-bottom)+1.25rem)] animate-slide-up max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-5">
               <h3 className="font-bold text-lg">{editingProduct ? 'Sửa Sản Phẩm' : 'Thêm Mới'}</h3>
-              <button onClick={closeModal} className="bg-gray-100 p-1.5 rounded-full"><X size={18}/></button>
+              <button onClick={closeModal} className="bg-gray-100 p-1.5 rounded-full"><X size={18} /></button>
             </div>
-            
+
             <div className="space-y-4">
               {/* Image */}
               <div className="flex justify-center">
-                <div 
+                <div
                   onClick={() => fileInputRef.current.click()}
                   className="w-full h-32 bg-gray-50 border-2 border-dashed border-gray-300 rounded-xl flex flex-col items-center justify-center text-gray-400 hover:border-indigo-500 hover:text-indigo-500 transition cursor-pointer overflow-hidden relative"
                 >
@@ -262,7 +262,7 @@ const Inventory = ({ products, setProducts, settings }) => {
                     <img src={formData.image} className="w-full h-full object-contain absolute inset-0" alt="Preview" />
                   ) : (
                     <div className="flex flex-col items-center">
-                      <Upload size={24} className="mb-2"/>
+                      <Upload size={24} className="mb-2" />
                       <span className="text-xs">Chạm để tải ảnh</span>
                     </div>
                   )}
@@ -274,20 +274,20 @@ const Inventory = ({ products, setProducts, settings }) => {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="text-xs font-bold text-gray-500 uppercase flex justify-between">
-                    Mã Vạch <ScanBarcode size={14} className="text-indigo-600 cursor-pointer" onClick={() => setShowScanner(true)}/>
+                    Mã Vạch <ScanBarcode size={14} className="text-indigo-600 cursor-pointer" onClick={() => setShowScanner(true)} />
                   </label>
-                  <input 
+                  <input
                     className="w-full border-b border-gray-200 py-2 focus:border-indigo-500 outline-none text-gray-800 font-mono text-sm"
-                    value={formData.barcode} onChange={e => setFormData({...formData, barcode: e.target.value})}
+                    value={formData.barcode} onChange={e => setFormData({ ...formData, barcode: e.target.value })}
                     placeholder="Quét/Nhập..."
                   />
                 </div>
                 <div>
                   <label className="text-xs font-bold text-gray-500 uppercase">Danh mục</label>
-                  <select 
+                  <select
                     className="w-full border-b border-gray-200 py-2 focus:border-indigo-500 outline-none text-gray-800 text-sm bg-transparent"
                     value={formData.category}
-                    onChange={e => setFormData({...formData, category: e.target.value})}
+                    onChange={e => setFormData({ ...formData, category: e.target.value })}
                   >
                     {settings.categories.map(cat => (
                       <option key={cat} value={cat}>{cat}</option>
@@ -299,9 +299,9 @@ const Inventory = ({ products, setProducts, settings }) => {
               {/* Name */}
               <div>
                 <label className="text-xs font-bold text-gray-500 uppercase">Tên sản phẩm</label>
-                <input 
+                <input
                   className="w-full border-b border-gray-200 py-2 focus:border-indigo-500 outline-none text-gray-800 font-medium"
-                  value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})}
+                  value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })}
                   placeholder="Nhập tên..."
                 />
               </div>
@@ -313,20 +313,20 @@ const Inventory = ({ products, setProducts, settings }) => {
                     <label className="text-[10px] font-bold text-blue-800 uppercase">Giá nhập (Yên)</label>
                     <div className="relative">
                       <span className="absolute left-0 top-2 text-blue-500">¥</span>
-                      <input 
+                      <input
                         type="number"
                         className="w-full bg-transparent border-b border-blue-200 py-2 pl-4 focus:border-blue-500 outline-none text-blue-900 font-bold"
-                        value={formData.costJPY} onChange={e => setFormData({...formData, costJPY: e.target.value})}
+                        value={formData.costJPY} onChange={e => setFormData({ ...formData, costJPY: e.target.value })}
                         placeholder="0"
                       />
                     </div>
                   </div>
                   <div>
                     <label className="text-[10px] font-bold text-blue-800 uppercase">Tỷ giá</label>
-                    <input 
+                    <input
                       type="number"
                       className="w-full bg-transparent border-b border-blue-200 py-2 focus:border-blue-500 outline-none text-blue-900 text-right"
-                      value={formData.exchangeRate} onChange={e => setFormData({...formData, exchangeRate: e.target.value})}
+                      value={formData.exchangeRate} onChange={e => setFormData({ ...formData, exchangeRate: e.target.value })}
                     />
                   </div>
                 </div>
@@ -339,19 +339,19 @@ const Inventory = ({ products, setProducts, settings }) => {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="text-xs font-bold text-gray-500 uppercase">Giá bán (VNĐ)</label>
-                  <input 
+                  <input
                     type="number"
                     className="w-full border-b border-gray-200 py-2 focus:border-indigo-500 outline-none text-gray-800 font-bold text-lg"
-                    value={formData.price} onChange={e => setFormData({...formData, price: e.target.value})}
+                    value={formData.price} onChange={e => setFormData({ ...formData, price: e.target.value })}
                     placeholder="0"
                   />
                 </div>
                 <div>
                   <label className="text-xs font-bold text-gray-500 uppercase">Tồn kho</label>
-                  <input 
+                  <input
                     type="number"
                     className="w-full border-b border-gray-200 py-2 focus:border-indigo-500 outline-none text-gray-800 font-bold text-lg"
-                    value={formData.stock} onChange={e => setFormData({...formData, stock: e.target.value})}
+                    value={formData.stock} onChange={e => setFormData({ ...formData, stock: e.target.value })}
                     placeholder="0"
                   />
                 </div>
