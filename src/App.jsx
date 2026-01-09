@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { Html5QrcodeScanner } from 'html5-qrcode';
 import {
   LayoutDashboard,
   Package,
@@ -6,16 +7,16 @@ import {
   Plus,
   Trash2,
   Edit,
-  Save,
   X,
   ChevronRight,
   Search,
-  TrendingUp,
   DollarSign,
   Image as ImageIcon,
   Upload,
   Download,
-  Settings as SettingsIcon // <-- Đã đổi tên Icon để không trùng
+  Settings as SettingsIcon,
+  ScanBarcode, // Icon mới
+  AlertTriangle
 } from 'lucide-react';
 
 // --- TIỆN ÍCH NÉN ẢNH ---
@@ -39,14 +40,48 @@ const compressImage = (file) => {
   });
 };
 
-// --- COMPONENTS ---
+// --- COMPONENT QUÉT MÃ VẠCH ---
+const BarcodeScanner = ({ onScanSuccess, onClose }) => {
+  useEffect(() => {
+    const scanner = new Html5QrcodeScanner(
+      "reader",
+      { fps: 10, qrbox: { width: 250, height: 250 } },
+      /* verbose= */ false
+    );
+    scanner.render((decodedText) => {
+      onScanSuccess(decodedText);
+      scanner.clear();
+    }, (error) => {
+      // Bỏ qua lỗi quét
+    });
+
+    return () => {
+      scanner.clear().catch(error => console.error("Failed to clear scanner", error));
+    };
+  }, []);
+
+  return (
+    <div className="fixed inset-0 bg-black z-[60] flex flex-col items-center justify-center p-4">
+      <h3 className="text-white font-bold mb-4 text-lg">Đưa mã vạch vào khung</h3>
+      <div id="reader" className="w-full max-w-sm bg-white rounded-xl overflow-hidden"></div>
+      <button
+        onClick={onClose}
+        className="mt-6 bg-white/20 text-white px-6 py-2 rounded-full font-medium backdrop-blur-sm"
+      >
+        Đóng Camera
+      </button>
+    </div>
+  );
+};
+
+// --- MAIN COMPONENTS ---
 
 const TabBar = ({ activeTab, setActiveTab }) => {
   const tabs = [
     { id: 'dashboard', icon: LayoutDashboard, label: 'Tổng quan' },
     { id: 'orders', icon: ShoppingCart, label: 'Đơn hàng' },
     { id: 'inventory', icon: Package, label: 'Kho hàng' },
-    { id: 'settings', icon: SettingsIcon, label: 'Cài đặt' }, // <-- Dùng tên Icon mới
+    { id: 'settings', icon: SettingsIcon, label: 'Cài đặt' },
   ];
 
   return (
@@ -134,11 +169,34 @@ const Dashboard = ({ products, orders }) => {
 
 const Inventory = ({ products, setProducts }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [showScanner, setShowScanner] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const fileInputRef = useRef(null);
 
-  const [formData, setFormData] = useState({ name: '', price: '', stock: '', image: '' });
+  const [formData, setFormData] = useState({ name: '', barcode: '', price: '', stock: '', image: '' });
+
+  // Xử lý khi quét mã vạch thành công
+  const handleScanSuccess = (decodedText) => {
+    setShowScanner(false);
+
+    // Kiểm tra xem mã này đã có trong kho chưa
+    const existingProduct = products.find(p => p.barcode === decodedText);
+
+    if (existingProduct) {
+      // Nếu có rồi -> Mở sản phẩm đó lên để sửa
+      alert(`Sản phẩm này đã có: ${existingProduct.name}`);
+      openModal(existingProduct);
+    } else {
+      // Nếu chưa có -> Mở form thêm mới và tự điền mã
+      if (isModalOpen) {
+        setFormData(prev => ({ ...prev, barcode: decodedText }));
+      } else {
+        openModal();
+        setTimeout(() => setFormData(prev => ({ ...prev, barcode: decodedText })), 100);
+      }
+    }
+  };
 
   const handleImageChange = async (e) => {
     if (e.target.files && e.target.files[0]) {
@@ -148,11 +206,37 @@ const Inventory = ({ products, setProducts }) => {
   };
 
   const handleSave = () => {
-    if (!formData.name || !formData.price) return;
+    if (!formData.name || !formData.price) {
+      alert("Vui lòng nhập Tên và Giá!");
+      return;
+    }
+
+    // --- CHECK TRÙNG LẶP (QUAN TRỌNG) ---
+    // 1. Check trùng Barcode
+    if (formData.barcode) {
+      const duplicateBarcode = products.find(p =>
+        p.barcode === formData.barcode && p.id !== (editingProduct ? editingProduct.id : null)
+      );
+      if (duplicateBarcode) {
+        alert(`LỖI: Mã vạch này đang thuộc về sản phẩm "${duplicateBarcode.name}"`);
+        return;
+      }
+    }
+
+    // 2. Check trùng Tên (nếu cần thiết, có thể bỏ qua nếu muốn cho phép trùng tên)
+    const duplicateName = products.find(p =>
+      p.name.toLowerCase() === formData.name.trim().toLowerCase() && p.id !== (editingProduct ? editingProduct.id : null)
+    );
+    if (duplicateName) {
+      if (!window.confirm(`Cảnh báo: Tên "${duplicateName.name}" đã tồn tại. Bạn có chắc muốn tạo thêm không?`)) {
+        return;
+      }
+    }
 
     const newProduct = {
       id: editingProduct ? editingProduct.id : Date.now().toString(),
-      name: formData.name,
+      name: formData.name.trim(),
+      barcode: formData.barcode ? formData.barcode.trim() : '',
       price: Number(formData.price),
       stock: Number(formData.stock),
       image: formData.image
@@ -169,10 +253,16 @@ const Inventory = ({ products, setProducts }) => {
   const openModal = (product = null) => {
     if (product) {
       setEditingProduct(product);
-      setFormData({ name: product.name, price: product.price, stock: product.stock, image: product.image || '' });
+      setFormData({
+        name: product.name,
+        barcode: product.barcode || '',
+        price: product.price,
+        stock: product.stock,
+        image: product.image || ''
+      });
     } else {
       setEditingProduct(null);
-      setFormData({ name: '', price: '', stock: '', image: '' });
+      setFormData({ name: '', barcode: '', price: '', stock: '', image: '' });
     }
     setIsModalOpen(true);
   };
@@ -188,22 +278,37 @@ const Inventory = ({ products, setProducts }) => {
     }
   };
 
-  const filtered = products.filter(p => p.name.toLowerCase().includes(searchTerm.toLowerCase()));
+  // Tìm kiếm theo tên HOẶC mã vạch
+  const filtered = products.filter(p =>
+    p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (p.barcode && p.barcode.includes(searchTerm))
+  );
 
   return (
     <div className="flex flex-col h-full bg-gray-50">
+      {/* SCANNER OVERLAY */}
+      {showScanner && <BarcodeScanner onScanSuccess={handleScanSuccess} onClose={() => setShowScanner(false)} />}
+
       <div className="bg-white p-3 border-b border-gray-200 sticky top-0 z-10 shadow-sm">
         <div className="flex justify-between items-center mb-3">
           <h2 className="text-xl font-bold text-gray-800">Kho Hàng</h2>
-          <button onClick={() => openModal()} className="bg-indigo-600 text-white w-9 h-9 rounded-full flex items-center justify-center shadow-md active:scale-95">
-            <Plus size={20} />
-          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setShowScanner(true)}
+              className="bg-gray-100 text-gray-700 w-9 h-9 rounded-full flex items-center justify-center hover:bg-gray-200"
+            >
+              <ScanBarcode size={20} />
+            </button>
+            <button onClick={() => openModal()} className="bg-indigo-600 text-white w-9 h-9 rounded-full flex items-center justify-center shadow-md active:scale-95">
+              <Plus size={20} />
+            </button>
+          </div>
         </div>
         <div className="relative">
           <Search className="absolute left-3 top-2.5 text-gray-400" size={16} />
           <input
             type="text"
-            placeholder="Tìm kiếm..."
+            placeholder="Tìm tên hoặc quét mã..."
             className="w-full bg-gray-100 pl-9 pr-4 py-2 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
             value={searchTerm}
             onChange={e => setSearchTerm(e.target.value)}
@@ -223,6 +328,7 @@ const Inventory = ({ products, setProducts }) => {
             </div>
             <div className="flex-1 min-w-0">
               <div className="font-bold text-gray-800 truncate">{p.name}</div>
+              <div className="text-xs text-gray-400 font-mono mb-0.5">{p.barcode || 'Chưa có mã'}</div>
               <div className="text-indigo-600 font-bold text-sm">{p.price.toLocaleString()}đ</div>
               <div className={`text-xs mt-1 ${p.stock < 5 ? 'text-red-500 font-medium' : 'text-gray-500'}`}>Kho: {p.stock}</div>
             </div>
@@ -236,13 +342,14 @@ const Inventory = ({ products, setProducts }) => {
 
       {isModalOpen && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center backdrop-blur-sm">
-          <div className="bg-white w-full sm:w-96 rounded-t-2xl sm:rounded-2xl p-5 animate-slide-up">
+          <div className="bg-white w-full sm:w-96 rounded-t-2xl sm:rounded-2xl p-5 animate-slide-up max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-5">
               <h3 className="font-bold text-lg">{editingProduct ? 'Sửa SP' : 'Thêm Mới'}</h3>
               <button onClick={closeModal} className="bg-gray-100 p-1.5 rounded-full"><X size={18} /></button>
             </div>
 
             <div className="space-y-4">
+              {/* Image Upload Area */}
               <div className="flex justify-center">
                 <div
                   onClick={() => fileInputRef.current.click()}
@@ -258,6 +365,20 @@ const Inventory = ({ products, setProducts }) => {
                   )}
                   <input type="file" ref={fileInputRef} onChange={handleImageChange} className="hidden" accept="image/*" />
                 </div>
+              </div>
+
+              <div>
+                <label className="text-xs font-bold text-gray-500 uppercase flex justify-between">
+                  Mã Vạch (Barcode)
+                  <button onClick={() => setShowScanner(true)} className="text-indigo-600 flex items-center gap-1">
+                    <ScanBarcode size={14} /> Quét ngay
+                  </button>
+                </label>
+                <input
+                  className="w-full border-b border-gray-200 py-2 focus:border-indigo-500 outline-none text-gray-800 font-mono"
+                  value={formData.barcode} onChange={e => setFormData({ ...formData, barcode: e.target.value })}
+                  placeholder="Quét hoặc nhập tay..."
+                />
               </div>
 
               <div>
@@ -303,6 +424,25 @@ const Inventory = ({ products, setProducts }) => {
 const Orders = ({ products, setProducts, orders, setOrders }) => {
   const [view, setView] = useState('list');
   const [cart, setCart] = useState({});
+  const [showScanner, setShowScanner] = useState(false);
+
+  // Xử lý quét mã khi bán hàng
+  const handleScanForSale = (decodedText) => {
+    const product = products.find(p => p.barcode === decodedText);
+    if (product) {
+      if (product.stock > 0) {
+        addToCart(product.id);
+        alert(`Đã thêm: ${product.name}`);
+        setShowScanner(false); // Tắt cam sau khi quét được
+      } else {
+        alert(`Sản phẩm ${product.name} đã hết hàng!`);
+        setShowScanner(false);
+      }
+    } else {
+      alert("Không tìm thấy sản phẩm với mã này!");
+      setShowScanner(false);
+    }
+  };
 
   const addToCart = (id) => setCart(prev => ({ ...prev, [id]: (prev[id] || 0) + 1 }));
   const removeFromCart = (id) => {
@@ -343,9 +483,16 @@ const Orders = ({ products, setProducts, orders, setOrders }) => {
   if (view === 'create') {
     return (
       <div className="flex flex-col h-full bg-gray-50 pb-safe-area">
-        <div className="bg-white p-3 border-b flex items-center gap-2 sticky top-0 z-10 shadow-sm">
-          <button onClick={() => setView('list')} className="p-2 hover:bg-gray-100 rounded-full"><ChevronRight className="rotate-180 text-gray-600" /></button>
-          <h2 className="text-xl font-bold text-gray-800">Tạo Đơn</h2>
+        {showScanner && <BarcodeScanner onScanSuccess={handleScanForSale} onClose={() => setShowScanner(false)} />}
+
+        <div className="bg-white p-3 border-b flex items-center justify-between sticky top-0 z-10 shadow-sm">
+          <div className="flex items-center gap-2">
+            <button onClick={() => setView('list')} className="p-2 hover:bg-gray-100 rounded-full"><ChevronRight className="rotate-180 text-gray-600" /></button>
+            <h2 className="text-xl font-bold text-gray-800">Tạo Đơn</h2>
+          </div>
+          <button onClick={() => setShowScanner(true)} className="flex items-center gap-1 text-indigo-600 bg-indigo-50 px-3 py-1.5 rounded-lg text-sm font-bold">
+            <ScanBarcode size={18} /> Quét
+          </button>
         </div>
 
         <div className="flex-1 overflow-y-auto p-3 space-y-3 pb-32">
