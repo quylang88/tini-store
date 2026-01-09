@@ -1,16 +1,17 @@
 import React, { useState } from 'react';
-import { ChevronRight, ScanBarcode, Image as ImageIcon, Plus, Minus, Trash2, ShoppingCart, RefreshCw } from 'lucide-react';
-
+import { ChevronRight, ScanBarcode, Image as ImageIcon, Plus, Minus, Trash2, ShoppingCart, Search } from 'lucide-react';
 import BarcodeScanner from '../components/BarcodeScanner';
 
-const Orders = ({ products, setProducts, orders, setOrders }) => {
-  const [view, setView] = useState('list');
+const Orders = ({ products, setProducts, orders, setOrders, settings }) => {
+  const [view, setView] = useState('list'); // 'list' | 'create'
   const [cart, setCart] = useState({});
   const [showScanner, setShowScanner] = useState(false);
+  
+  // State cho bộ lọc
+  const [activeCategory, setActiveCategory] = useState('Tất cả');
+  const [searchTerm, setSearchTerm] = useState('');
 
-  // --- 1. LOGIC QUẢN LÝ GIỎ HÀNG ---
-
-  // Xóa toàn bộ giỏ hàng (MỚI)
+  // --- 1. LOGIC GIỎ HÀNG ---
   const handleClearCart = () => {
     if (Object.keys(cart).length === 0) return;
     if (window.confirm("Bạn chắc chắn muốn xóa hết các sản phẩm đã chọn?")) {
@@ -20,26 +21,15 @@ const Orders = ({ products, setProducts, orders, setOrders }) => {
 
   const handleQuantityChange = (productId, value, stock) => {
     if (value === '') {
-      setCart(prev => {
-        const next = { ...prev };
-        delete next[productId];
-        return next;
-      });
+      setCart(prev => { const next = { ...prev }; delete next[productId]; return next; });
       return;
     }
-
     let qty = parseInt(value);
     if (isNaN(qty) || qty < 0) qty = 0;
-
-    if (qty > stock) {
-      alert(`Chỉ còn ${stock} sản phẩm trong kho!`);
-      qty = stock;
-    }
-
+    if (qty > stock) { alert(`Chỉ còn ${stock} sản phẩm trong kho!`); qty = stock; }
     setCart(prev => {
       const next = { ...prev };
-      if (qty === 0) delete next[productId];
-      else next[productId] = qty;
+      if (qty === 0) delete next[productId]; else next[productId] = qty;
       return next;
     });
   };
@@ -47,16 +37,10 @@ const Orders = ({ products, setProducts, orders, setOrders }) => {
   const adjustQuantity = (productId, delta, stock) => {
     const currentQty = cart[productId] || 0;
     const newQty = currentQty + delta;
-
-    if (newQty > stock) {
-      alert(`Hết hàng trong kho!`);
-      return;
-    }
-
+    if (newQty > stock) { alert(`Hết hàng trong kho!`); return; }
     setCart(prev => {
       const next = { ...prev };
-      if (newQty <= 0) delete next[productId];
-      else next[productId] = newQty;
+      if (newQty <= 0) delete next[productId]; else next[productId] = newQty;
       return next;
     });
   };
@@ -87,7 +71,6 @@ const Orders = ({ products, setProducts, orders, setOrders }) => {
 
   const handleCheckout = () => {
     if (totalAmount === 0) return;
-    
     if (!window.confirm(`Xác nhận thanh toán: ${totalAmount.toLocaleString()}đ?`)) return;
 
     const newOrder = {
@@ -116,48 +99,96 @@ const Orders = ({ products, setProducts, orders, setOrders }) => {
     setView('list');
   };
 
+  // --- 4. BỘ LỌC SẢN PHẨM (Kết hợp Tìm kiếm + Danh mục) ---
+  const filteredProducts = products.filter(p => {
+    // Lọc theo danh mục
+    const matchCategory = activeCategory === 'Tất cả' || p.category === activeCategory;
+    
+    // Lọc theo từ khóa (Tên hoặc Mã vạch)
+    const lowerTerm = searchTerm.toLowerCase();
+    const matchSearch = p.name.toLowerCase().includes(lowerTerm) || 
+                        (p.barcode && p.barcode.includes(lowerTerm));
+
+    return matchCategory && matchSearch;
+  });
+
   // --- GIAO DIỆN TẠO ĐƠN ---
   if (view === 'create') {
     const hasItems = Object.keys(cart).length > 0;
+    const categories = settings?.categories || ['Chung'];
 
     return (
       <div className="flex flex-col h-full bg-gray-50 pb-safe-area relative">
         {showScanner && <BarcodeScanner onScanSuccess={handleScanForSale} onClose={() => setShowScanner(false)} />}
         
-        {/* Header */}
-        <div className="bg-white p-3 border-b flex items-center justify-between sticky top-0 z-10 shadow-sm">
-          <div className="flex items-center gap-2">
-            <button onClick={() => setView('list')} className="p-2 hover:bg-gray-100 rounded-full transition">
-              <ChevronRight className="rotate-180 text-gray-600"/>
-            </button>
-            <h2 className="text-xl font-bold text-gray-800">Tạo Đơn</h2>
-          </div>
-          
-          <div className="flex items-center gap-2">
-            {/* Nút Xóa Hết (Chỉ hiện khi có hàng trong giỏ) */}
-            {hasItems && (
-              <button 
-                onClick={handleClearCart}
-                className="p-2 text-red-500 bg-red-50 rounded-lg hover:bg-red-100 active:scale-95 transition flex items-center gap-1 text-xs font-bold"
-              >
-                <Trash2 size={18} />
-                <span className="hidden sm:inline">Xóa hết</span>
+        {/* Header Cố định */}
+        <div className="bg-white sticky top-0 z-10 shadow-sm">
+          {/* Hàng 1: Tiêu đề & Nút chức năng */}
+          <div className="p-3 border-b border-gray-100 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <button onClick={() => setView('list')} className="p-2 hover:bg-gray-100 rounded-full transition">
+                <ChevronRight className="rotate-180 text-gray-600"/>
               </button>
-            )}
+              <h2 className="text-xl font-bold text-gray-800">Tạo Đơn</h2>
+            </div>
+            
+            <div className="flex items-center gap-2">
+              {hasItems && (
+                <button onClick={handleClearCart} className="p-2 text-red-500 bg-red-50 rounded-lg hover:bg-red-100 active:scale-95 transition">
+                  <Trash2 size={18} />
+                </button>
+              )}
+              <button onClick={() => setShowScanner(true)} className="flex items-center gap-1 text-indigo-600 bg-indigo-50 px-3 py-2 rounded-lg text-sm font-bold active:scale-95 transition">
+                <ScanBarcode size={18}/> <span className="hidden sm:inline">Quét</span>
+              </button>
+            </div>
+          </div>
 
+          {/* Hàng 2: Thanh Tìm kiếm */}
+          <div className="px-3 py-2 border-b border-gray-100">
+            <div className="relative">
+              <Search className="absolute left-3 top-2.5 text-gray-400" size={16} />
+              <input 
+                type="text"
+                placeholder="Tìm tên hoặc mã sản phẩm..."
+                className="w-full bg-gray-100 pl-9 pr-4 py-2 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+              {searchTerm && (
+                <button 
+                  onClick={() => setSearchTerm('')}
+                  className="absolute right-3 top-2.5 text-gray-400 hover:text-gray-600"
+                >
+                  ✕
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Hàng 3: Thanh Tab Danh mục */}
+          <div className="px-3 pb-0 overflow-x-auto flex gap-2 no-scrollbar border-b border-gray-100">
             <button 
-              onClick={() => setShowScanner(true)} 
-              className="flex items-center gap-1 text-indigo-600 bg-indigo-50 px-3 py-2 rounded-lg text-sm font-bold active:scale-95 transition"
+              onClick={() => setActiveCategory('Tất cả')}
+              className={`whitespace-nowrap py-3 px-2 border-b-2 text-sm font-medium transition-colors ${activeCategory === 'Tất cả' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-gray-500'}`}
             >
-              <ScanBarcode size={18}/> 
-              <span className="hidden sm:inline">Quét</span>
+              Tất cả
             </button>
+            {categories.map(cat => (
+              <button 
+                key={cat}
+                onClick={() => setActiveCategory(cat)}
+                className={`whitespace-nowrap py-3 px-2 border-b-2 text-sm font-medium transition-colors ${activeCategory === cat ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-gray-500'}`}
+              >
+                {cat}
+              </button>
+            ))}
           </div>
         </div>
         
-        {/* List Sản Phẩm */}
+        {/* List Sản Phẩm (Đã Lọc) */}
         <div className="flex-1 overflow-y-auto p-3 space-y-3 pb-40">
-          {products.map(p => {
+          {filteredProducts.map(p => {
             const qty = cart[p.id] || 0;
             const isOutOfStock = p.stock <= 0;
 
@@ -172,7 +203,15 @@ const Orders = ({ products, setProducts, orders, setOrders }) => {
                  </div>
 
                  <div className="flex-1 min-w-0">
-                    <div className="font-bold text-sm text-gray-800 truncate">{p.name}</div>
+                    <div className="flex justify-between items-start">
+                      <div className="font-bold text-sm text-gray-800 truncate pr-1">{p.name}</div>
+                      {/* Badge danh mục */}
+                      {activeCategory === 'Tất cả' && (
+                        <span className="text-[10px] text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded border border-gray-200 whitespace-nowrap">
+                          {p.category}
+                        </span>
+                      )}
+                    </div>
                     <div className="text-xs text-gray-500 mt-0.5">
                       <span className="font-semibold text-indigo-600">{p.price.toLocaleString()}đ</span>
                       <span className="mx-1">|</span>
@@ -180,16 +219,12 @@ const Orders = ({ products, setProducts, orders, setOrders }) => {
                     </div>
                  </div>
 
-                 {/* Nút tăng giảm & Ô nhập số */}
+                 {/* Bộ điều khiển số lượng */}
                  {qty > 0 ? (
                    <div className="flex items-center bg-indigo-50 rounded-lg h-9 border border-indigo-100 overflow-hidden shadow-sm">
-                     <button 
-                       onClick={() => adjustQuantity(p.id, -1, p.stock)} 
-                       className="w-9 h-full flex items-center justify-center text-indigo-600 hover:bg-indigo-100 active:bg-indigo-200"
-                     >
+                     <button onClick={() => adjustQuantity(p.id, -1, p.stock)} className="w-9 h-full flex items-center justify-center text-indigo-600 hover:bg-indigo-100 active:bg-indigo-200">
                        <Minus size={16} strokeWidth={2.5} />
                      </button>
-                     
                      <input 
                        type="number"
                        className="w-12 h-full text-center bg-transparent border-x border-indigo-100 outline-none text-indigo-900 font-bold text-sm m-0 p-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
@@ -197,43 +232,35 @@ const Orders = ({ products, setProducts, orders, setOrders }) => {
                        onChange={(e) => handleQuantityChange(p.id, e.target.value, p.stock)}
                        onFocus={(e) => e.target.select()}
                      />
-                     
-                     <button 
-                       onClick={() => adjustQuantity(p.id, 1, p.stock)} 
-                       disabled={qty >= p.stock} 
-                       className="w-9 h-full flex items-center justify-center text-indigo-600 hover:bg-indigo-100 active:bg-indigo-200 disabled:opacity-30"
-                     >
+                     <button onClick={() => adjustQuantity(p.id, 1, p.stock)} disabled={qty >= p.stock} className="w-9 h-full flex items-center justify-center text-indigo-600 hover:bg-indigo-100 active:bg-indigo-200 disabled:opacity-30">
                        <Plus size={16} strokeWidth={2.5} />
                      </button>
                    </div>
                  ) : (
-                   <button 
-                     onClick={() => adjustQuantity(p.id, 1, p.stock)} 
-                     disabled={isOutOfStock} 
-                     className="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg text-xs font-bold hover:bg-gray-200 active:scale-95 transition"
-                   >
+                   <button onClick={() => adjustQuantity(p.id, 1, p.stock)} disabled={isOutOfStock} className="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg text-xs font-bold hover:bg-gray-200 active:scale-95 transition">
                      {isOutOfStock ? 'Hết' : 'Thêm'}
                    </button>
                  )}
               </div>
             )
           })}
-          {products.length === 0 && (
-            <div className="text-center text-gray-400 mt-10">Kho trống!</div>
+          
+          {filteredProducts.length === 0 && (
+            <div className="text-center text-gray-400 mt-10">
+              <div className="flex justify-center mb-2"><Search size={32} className="opacity-20"/></div>
+              <p>Không tìm thấy sản phẩm</p>
+            </div>
           )}
         </div>
 
-        {/* --- THANH TOÁN (z-[60] để đè TabBar) --- */}
+        {/* Thanh Toán */}
         {totalAmount > 0 && (
           <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 pb-safe-area z-[60] shadow-[0_-4px_15px_rgba(0,0,0,0.1)] animate-slide-up">
             <div className="flex justify-between items-center mb-3">
               <span className="text-gray-500 font-medium text-sm">Tổng thanh toán:</span>
               <span className="text-2xl font-bold text-indigo-600">{totalAmount.toLocaleString()}đ</span>
             </div>
-            <button 
-              onClick={handleCheckout} 
-              className="w-full bg-indigo-600 text-white py-3.5 rounded-xl font-bold shadow-lg shadow-indigo-200 active:scale-95 transition flex items-center justify-center gap-2 text-lg"
-            >
+            <button onClick={handleCheckout} className="w-full bg-indigo-600 text-white py-3.5 rounded-xl font-bold shadow-lg shadow-indigo-200 active:scale-95 transition flex items-center justify-center gap-2 text-lg">
               <ShoppingCart size={20} /> Thanh toán ngay
             </button>
           </div>
@@ -242,19 +269,15 @@ const Orders = ({ products, setProducts, orders, setOrders }) => {
     );
   }
 
-  // --- GIAO DIỆN DANH SÁCH ---
+  // --- GIAO DIỆN DANH SÁCH ĐƠN ---
   return (
     <div className="flex flex-col h-full bg-gray-50 pb-20">
       <div className="bg-white p-4 border-b border-gray-200 sticky top-0 z-10 flex justify-between items-center shadow-sm">
         <h2 className="text-xl font-bold text-gray-800">Lịch sử đơn</h2>
-        <button 
-          onClick={() => setView('create')} 
-          className="bg-indigo-600 text-white px-4 py-2 rounded-xl text-sm font-bold shadow-md shadow-indigo-200 active:scale-95 transition flex items-center gap-2"
-        >
+        <button onClick={() => setView('create')} className="bg-indigo-600 text-white px-4 py-2 rounded-xl text-sm font-bold shadow-md shadow-indigo-200 active:scale-95 transition flex items-center gap-2">
           <Plus size={18} /> Đơn mới
         </button>
       </div>
-      
       <div className="flex-1 overflow-y-auto p-3 space-y-3">
         {orders.map(order => (
           <div key={order.id} className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 hover:border-indigo-100 transition">

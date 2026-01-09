@@ -55,7 +55,10 @@ const App = () => {
       <div className="flex-1 overflow-hidden relative">
 
         {activeTab === 'dashboard' && (
-          <Dashboard products={products} orders={orders} />
+          <Dashboard
+            products={products}
+            orders={orders}
+          />
         )}
 
         {activeTab === 'inventory' && (
@@ -72,6 +75,7 @@ const App = () => {
             setProducts={setProducts}
             orders={orders}
             setOrders={setOrders}
+            settings={settings}       // Truyền cài đặt xuống đơn hàng
           />
         )}
 
@@ -87,7 +91,10 @@ const App = () => {
         )}
       </div>
 
-      <TabBar activeTab={activeTab} setActiveTab={setActiveTab} />
+      <TabBar
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+      />
 
       <style>{`
         .pb-safe-area { padding-bottom: env(safe-area-inset-bottom); }
