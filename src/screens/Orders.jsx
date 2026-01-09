@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ChevronRight, ScanBarcode, Image as ImageIcon, Plus, Minus, ShoppingCart } from 'lucide-react';
+import { ChevronRight, ScanBarcode, Image as ImageIcon, Plus, Minus, Trash2, ShoppingCart, RefreshCw } from 'lucide-react';
 
 import BarcodeScanner from '../components/BarcodeScanner';
 
@@ -8,7 +8,16 @@ const Orders = ({ products, setProducts, orders, setOrders }) => {
   const [cart, setCart] = useState({});
   const [showScanner, setShowScanner] = useState(false);
 
-  // --- 1. LOGIC NHẬP SỐ LƯỢNG TRỰC TIẾP ---
+  // --- 1. LOGIC QUẢN LÝ GIỎ HÀNG ---
+
+  // Xóa toàn bộ giỏ hàng (MỚI)
+  const handleClearCart = () => {
+    if (Object.keys(cart).length === 0) return;
+    if (window.confirm("Bạn chắc chắn muốn xóa hết các sản phẩm đã chọn?")) {
+      setCart({});
+    }
+  };
+
   const handleQuantityChange = (productId, value, stock) => {
     if (value === '') {
       setCart(prev => {
@@ -109,6 +118,8 @@ const Orders = ({ products, setProducts, orders, setOrders }) => {
 
   // --- GIAO DIỆN TẠO ĐƠN ---
   if (view === 'create') {
+    const hasItems = Object.keys(cart).length > 0;
+
     return (
       <div className="flex flex-col h-full bg-gray-50 pb-safe-area relative">
         {showScanner && <BarcodeScanner onScanSuccess={handleScanForSale} onClose={() => setShowScanner(false)} />}
@@ -121,12 +132,27 @@ const Orders = ({ products, setProducts, orders, setOrders }) => {
             </button>
             <h2 className="text-xl font-bold text-gray-800">Tạo Đơn</h2>
           </div>
-          <button 
-            onClick={() => setShowScanner(true)} 
-            className="flex items-center gap-1 text-indigo-600 bg-indigo-50 px-3 py-1.5 rounded-lg text-sm font-bold active:scale-95 transition"
-          >
-            <ScanBarcode size={18}/> Quét
-          </button>
+          
+          <div className="flex items-center gap-2">
+            {/* Nút Xóa Hết (Chỉ hiện khi có hàng trong giỏ) */}
+            {hasItems && (
+              <button 
+                onClick={handleClearCart}
+                className="p-2 text-red-500 bg-red-50 rounded-lg hover:bg-red-100 active:scale-95 transition flex items-center gap-1 text-xs font-bold"
+              >
+                <Trash2 size={18} />
+                <span className="hidden sm:inline">Xóa hết</span>
+              </button>
+            )}
+
+            <button 
+              onClick={() => setShowScanner(true)} 
+              className="flex items-center gap-1 text-indigo-600 bg-indigo-50 px-3 py-2 rounded-lg text-sm font-bold active:scale-95 transition"
+            >
+              <ScanBarcode size={18}/> 
+              <span className="hidden sm:inline">Quét</span>
+            </button>
+          </div>
         </div>
         
         {/* List Sản Phẩm */}
@@ -164,7 +190,6 @@ const Orders = ({ products, setProducts, orders, setOrders }) => {
                        <Minus size={16} strokeWidth={2.5} />
                      </button>
                      
-                     {/* Đã thêm class ẩn mũi tên (appearance:textfield...) */}
                      <input 
                        type="number"
                        className="w-12 h-full text-center bg-transparent border-x border-indigo-100 outline-none text-indigo-900 font-bold text-sm m-0 p-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
@@ -198,6 +223,7 @@ const Orders = ({ products, setProducts, orders, setOrders }) => {
           )}
         </div>
 
+        {/* --- THANH TOÁN (z-[60] để đè TabBar) --- */}
         {totalAmount > 0 && (
           <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 pb-safe-area z-[60] shadow-[0_-4px_15px_rgba(0,0,0,0.1)] animate-slide-up">
             <div className="flex justify-between items-center mb-3">
