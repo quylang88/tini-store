@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Search, ScanBarcode, Plus, Image as ImageIcon, Edit, Trash2, Upload, X } from 'lucide-react';
-import { compressImage } from '../utils/helpers';
+import { compressImage, formatNumber, formatInputNumber, sanitizeNumberInput } from '../utils/helpers';
 import BarcodeScanner from '../components/BarcodeScanner';
 
 const Inventory = ({ products, setProducts, settings }) => {
@@ -20,7 +20,7 @@ const Inventory = ({ products, setProducts, settings }) => {
     barcode: '',
     category: 'Chung',
     costJPY: '',       // Giá vốn tiền Yên
-    exchangeRate: settings.exchangeRate, // Lấy tỷ giá mặc định từ Settings
+    exchangeRate: String(settings.exchangeRate), // Lấy tỷ giá mặc định từ Settings
     cost: '',          // Giá vốn VNĐ
     price: '',         // Giá bán VNĐ
     stock: '',
@@ -29,11 +29,20 @@ const Inventory = ({ products, setProducts, settings }) => {
 
   // Tự động tính giá vốn VNĐ khi nhập Yên hoặc thay đổi Tỷ giá
   useEffect(() => {
-    if (formData.costJPY && formData.exchangeRate) {
-      const calculatedCost = Math.round(formData.costJPY * formData.exchangeRate);
+    const costJPYValue = Number(formData.costJPY || 0);
+    const exchangeRateValue = Number(formData.exchangeRate || 0);
+    if (costJPYValue > 0 && exchangeRateValue > 0) {
+      const calculatedCost = Math.round(costJPYValue * exchangeRateValue);
       setFormData(prev => ({ ...prev, cost: calculatedCost }));
+    } else if (formData.cost !== 0) {
+      setFormData(prev => ({ ...prev, cost: 0 }));
     }
-  }, [formData.costJPY, formData.exchangeRate]);
+  }, [formData.costJPY, formData.exchangeRate, formData.cost]);
+
+  const handleMoneyChange = (field) => (event) => {
+    const rawValue = sanitizeNumberInput(event.target.value);
+    setFormData(prev => ({ ...prev, [field]: rawValue }));
+  };
 
   const handleScanSuccess = (decodedText) => {
     setShowScanner(false);
@@ -105,7 +114,7 @@ const Inventory = ({ products, setProducts, settings }) => {
         barcode: product.barcode || '',
         category: product.category || 'Chung',
         costJPY: product.costJPY || '',
-        exchangeRate: product.exchangeRate || settings.exchangeRate,
+        exchangeRate: String(product.exchangeRate || settings.exchangeRate),
         cost: product.cost || '',
         price: product.price,
         stock: product.stock,
@@ -118,7 +127,7 @@ const Inventory = ({ products, setProducts, settings }) => {
         barcode: '',
         category: activeCategory === 'Tất cả' ? 'Chung' : activeCategory,
         costJPY: '',
-        exchangeRate: settings.exchangeRate, // Load tỷ giá mặc định
+        exchangeRate: String(settings.exchangeRate), // Load tỷ giá mặc định
         cost: '',
         price: '',
         stock: '',
@@ -219,10 +228,10 @@ const Inventory = ({ products, setProducts, settings }) => {
 
               <div className="flex justify-between items-end mt-1">
                 <div>
-                  <div className="text-indigo-600 font-bold text-sm">{p.price.toLocaleString()}đ</div>
+                  <div className="text-indigo-600 font-bold text-sm">{formatNumber(p.price)}đ</div>
                   {p.costJPY > 0 && (
                     <div className="text-[10px] text-gray-400">
-                      Vốn: ¥{p.costJPY} ({p.cost.toLocaleString()}đ)
+                      Vốn: ¥{formatNumber(p.costJPY)} ({formatNumber(p.cost)}đ)
                     </div>
                   )}
                 </div>
@@ -244,7 +253,7 @@ const Inventory = ({ products, setProducts, settings }) => {
 
       {/* Modal Add/Edit */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center backdrop-blur-sm">
+        <div className="fixed inset-0 bg-black/50 z-[70] flex items-end sm:items-center justify-center backdrop-blur-sm">
           <div className="bg-white w-full sm:w-96 rounded-t-2xl sm:rounded-2xl p-5 pb-[calc(env(safe-area-inset-bottom)+1.25rem)] animate-slide-up max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-5">
               <h3 className="font-bold text-lg">{editingProduct ? 'Sửa Sản Phẩm' : 'Thêm Mới'}</h3>
@@ -271,8 +280,8 @@ const Inventory = ({ products, setProducts, settings }) => {
               </div>
 
               {/* Barcode & Category */}
-              <div className="grid grid-cols-2 gap-4">
-                <div>
+              <div className="grid grid-cols-2 gap-4 items-end">
+                <div className="flex flex-col gap-1">
                   <label className="text-xs font-bold text-gray-500 uppercase flex justify-between">
                     Mã Vạch <ScanBarcode size={14} className="text-indigo-600 cursor-pointer" onClick={() => setShowScanner(true)} />
                   </label>
@@ -282,7 +291,7 @@ const Inventory = ({ products, setProducts, settings }) => {
                     placeholder="Quét/Nhập..."
                   />
                 </div>
-                <div>
+                <div className="flex flex-col gap-1">
                   <label className="text-xs font-bold text-gray-500 uppercase">Danh mục</label>
                   <select
                     className="w-full border-b border-gray-200 py-2 focus:border-indigo-500 outline-none text-gray-800 text-sm bg-transparent"
@@ -314,9 +323,10 @@ const Inventory = ({ products, setProducts, settings }) => {
                     <div className="relative">
                       <span className="absolute left-0 top-2 text-blue-500">¥</span>
                       <input
-                        type="number"
+                        inputMode="numeric"
                         className="w-full bg-transparent border-b border-blue-200 py-2 pl-4 focus:border-blue-500 outline-none text-blue-900 font-bold"
-                        value={formData.costJPY} onChange={e => setFormData({ ...formData, costJPY: e.target.value })}
+                        value={formatInputNumber(formData.costJPY)}
+                        onChange={handleMoneyChange('costJPY')}
                         placeholder="0"
                       />
                     </div>
@@ -324,14 +334,15 @@ const Inventory = ({ products, setProducts, settings }) => {
                   <div>
                     <label className="text-[10px] font-bold text-blue-800 uppercase">Tỷ giá</label>
                     <input
-                      type="number"
+                      inputMode="numeric"
                       className="w-full bg-transparent border-b border-blue-200 py-2 focus:border-blue-500 outline-none text-blue-900 text-right"
-                      value={formData.exchangeRate} onChange={e => setFormData({ ...formData, exchangeRate: e.target.value })}
+                      value={formatInputNumber(formData.exchangeRate)}
+                      onChange={handleMoneyChange('exchangeRate')}
                     />
                   </div>
                 </div>
                 <div className="text-right text-xs text-blue-600 font-medium">
-                  = {Number(formData.cost).toLocaleString()} VNĐ (Vốn)
+                  = {formatNumber(formData.cost)} VNĐ (Vốn)
                 </div>
               </div>
 
@@ -340,9 +351,10 @@ const Inventory = ({ products, setProducts, settings }) => {
                 <div>
                   <label className="text-xs font-bold text-gray-500 uppercase">Giá bán (VNĐ)</label>
                   <input
-                    type="number"
+                    inputMode="numeric"
                     className="w-full border-b border-gray-200 py-2 focus:border-indigo-500 outline-none text-gray-800 font-bold text-lg"
-                    value={formData.price} onChange={e => setFormData({ ...formData, price: e.target.value })}
+                    value={formatInputNumber(formData.price)}
+                    onChange={handleMoneyChange('price')}
                     placeholder="0"
                   />
                 </div>

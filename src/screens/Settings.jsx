@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Download, Upload, Plus, Trash2, RefreshCw, X, LogOut } from 'lucide-react';
+import { formatInputNumber, formatNumber, sanitizeNumberInput } from '../utils/helpers';
 
 const Settings = ({ products, orders, setProducts, setOrders, settings, setSettings, onLogout }) => {
   const [newCategory, setNewCategory] = useState('');
@@ -45,11 +46,11 @@ const Settings = ({ products, orders, setProducts, setOrders, settings, setSetti
       const res = await fetch('https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/jpy.json');
       const data = await res.json();
       const rate = data.jpy.vnd;
-      
+
       if (rate) {
         const roundedRate = Math.round(rate);
         saveSettings({ ...settings, exchangeRate: roundedRate });
-        alert(`Đã cập nhật tỷ giá thị trường: 1 JPY = ${roundedRate} VND`);
+        alert(`Đã cập nhật tỷ giá thị trường: 1 JPY = ${formatNumber(roundedRate)} VND`);
       } else {
         alert("Không tìm thấy dữ liệu tỷ giá.");
       }
@@ -66,7 +67,7 @@ const Settings = ({ products, orders, setProducts, setOrders, settings, setSetti
     const data = JSON.stringify({ products, orders, settings });
     const blob = new Blob([data], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
-    
+
     const link = document.createElement('a');
     link.href = url;
     const dateStr = new Date().toISOString().slice(0, 10);
@@ -109,11 +110,11 @@ const Settings = ({ products, orders, setProducts, setOrders, settings, setSetti
   return (
     <div className="p-4 space-y-6 overflow-y-auto pb-24 h-full bg-gray-50">
       <h1 className="text-2xl font-bold text-gray-800 mb-2">Cài đặt</h1>
-      
+
       {/* 1. Cấu hình Tiền tệ */}
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
         <div className="p-4 border-b border-gray-50 font-bold text-gray-700 flex items-center gap-2">
-          <RefreshCw size={18} className="text-blue-500"/>
+          <RefreshCw size={18} className="text-blue-500" />
           Cấu hình Tiền tệ
         </div>
         <div className="p-4 space-y-4">
@@ -123,25 +124,29 @@ const Settings = ({ products, orders, setProducts, setOrders, settings, setSetti
             </label>
             <div className="flex gap-2">
               <div className="relative flex-1">
-                <input 
-                  type="number" 
+                <input
+                  inputMode="numeric"
                   className="w-full border border-gray-200 rounded-lg pl-3 pr-12 py-3 outline-none focus:border-indigo-500 font-medium text-lg"
-                  value={settings.exchangeRate}
-                  onChange={(e) => saveSettings({...settings, exchangeRate: Number(e.target.value)})}
+                  value={formatInputNumber(settings.exchangeRate)}
+                  onChange={(e) => {
+                    const rawValue = sanitizeNumberInput(e.target.value);
+                    const nextValue = rawValue === '' ? 0 : Number(rawValue);
+                    saveSettings({ ...settings, exchangeRate: nextValue });
+                  }}
                   placeholder="Ví dụ: 175"
                 />
                 <span className="absolute right-3 top-3.5 text-gray-400 text-sm font-bold">VND</span>
               </div>
-              <button 
+              <button
                 onClick={fetchOnlineRate}
                 disabled={isFetchingRate}
                 className="bg-indigo-50 text-indigo-600 px-4 py-2 rounded-lg font-medium text-sm flex flex-col items-center justify-center min-w-[80px] hover:bg-indigo-100 transition"
               >
                 {isFetchingRate ? (
-                  <RefreshCw size={20} className="animate-spin"/>
+                  <RefreshCw size={20} className="animate-spin" />
                 ) : (
                   <>
-                    <RefreshCw size={18} className="mb-1"/>
+                    <RefreshCw size={18} className="mb-1" />
                     <span>Online</span>
                   </>
                 )}
@@ -157,36 +162,36 @@ const Settings = ({ products, orders, setProducts, setOrders, settings, setSetti
       {/* 2. Quản lý Danh mục */}
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
         <div className="p-4 border-b border-gray-50 font-bold text-gray-700 flex items-center gap-2">
-          <Plus size={18} className="text-green-500"/>
+          <Plus size={18} className="text-green-500" />
           Danh mục sản phẩm
         </div>
         <div className="p-4 space-y-4">
           <div className="flex gap-2">
-            <input 
+            <input
               className="flex-1 border border-gray-200 rounded-lg px-3 py-2 outline-none focus:border-indigo-500 text-sm"
               placeholder="Nhập tên danh mục mới..."
               value={newCategory}
               onChange={(e) => setNewCategory(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleAddCategory()}
             />
-            <button 
+            <button
               onClick={handleAddCategory}
               className="bg-indigo-600 text-white w-12 h-10 rounded-lg flex items-center justify-center hover:bg-indigo-700 active:scale-95 transition"
             >
-              <Plus size={24}/>
+              <Plus size={24} />
             </button>
           </div>
-          
+
           <div className="flex flex-wrap gap-2 pt-2">
             {settings.categories.map(cat => (
               <div key={cat} className="bg-gray-100 text-gray-700 px-3 py-1.5 rounded-full text-sm flex items-center gap-2 border border-gray-200">
                 {cat}
                 {cat !== 'Chung' && (
-                  <button 
-                    onClick={() => handleDeleteCategory(cat)} 
+                  <button
+                    onClick={() => handleDeleteCategory(cat)}
                     className="text-gray-400 hover:text-red-500 p-0.5 rounded-full hover:bg-gray-200 transition"
                   >
-                    <X size={14}/>
+                    <X size={14} />
                   </button>
                 )}
               </div>
@@ -198,19 +203,19 @@ const Settings = ({ products, orders, setProducts, setOrders, settings, setSetti
       {/* 3. Sao lưu & Khôi phục */}
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
         <div className="p-4 border-b border-gray-50 font-bold text-gray-700 flex items-center gap-2">
-          <Download size={18} className="text-orange-500"/>
+          <Download size={18} className="text-orange-500" />
           Sao lưu & Khôi phục
         </div>
         <div className="p-4 space-y-4">
           <p className="text-sm text-gray-500">
-            Dữ liệu hiện tại chỉ lưu trên trình duyệt này. Hãy tải về máy thường xuyên để tránh mất mát.
+            Dữ liệu hiện tại chỉ lưu trên trình duyệt này. Hãy tải về máy thường xuyên để tránh mất dữ liệu.
           </p>
-          
-          <button 
-            onClick={exportData} 
+
+          <button
+            onClick={exportData}
             className="w-full flex items-center justify-center gap-2 bg-indigo-50 text-indigo-700 py-3 rounded-xl font-bold hover:bg-indigo-100 transition border border-indigo-100"
           >
-            <Download size={20}/> Tải Dữ Liệu Về Máy (Backup)
+            <Download size={20} /> Tải Dữ Liệu Về Máy (Backup)
           </button>
 
           <div className="relative pt-2">
@@ -223,30 +228,30 @@ const Settings = ({ products, orders, setProducts, setOrders, settings, setSetti
           </div>
 
           <div className="relative group">
-            <input 
-              type="file" 
-              onChange={importData} 
-              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" 
+            <input
+              type="file"
+              onChange={importData}
+              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
               accept=".json"
             />
             <button className="w-full flex items-center justify-center gap-2 bg-gray-100 text-gray-700 py-3 rounded-xl font-bold group-hover:bg-gray-200 transition border border-gray-200">
-              <Upload size={20}/> Khôi Phục Dữ Liệu (Restore)
+              <Upload size={20} /> Khôi Phục Dữ Liệu (Restore)
             </button>
           </div>
         </div>
       </div>
 
       {/* 4. Nút Đăng Xuất */}
-      <button 
+      <button
         onClick={onLogout}
         className="w-full bg-red-50 text-red-600 py-3.5 rounded-2xl font-bold flex items-center justify-center gap-2 hover:bg-red-100 transition active:scale-95 border border-red-100 mt-4"
       >
         <LogOut size={20} /> Đăng Xuất
       </button>
-      
+
       {/* Footer info */}
       <div className="text-center text-xs text-gray-400 pb-4">
-        Phiên bản 2.1 - Shop Manager<br/>
+        Phiên bản 2.3 - Tiny Shop<br />
         Dữ liệu được lưu trữ cục bộ (Local Storage)
       </div>
     </div>
