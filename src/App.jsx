@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 
 // --- IMPORT CÁC MÀN HÌNH TỪ THƯ MỤC RIÊNG ---
-import Dashboard from './screens/DashBoard';
+import Dashboard from './screens/Dashboard';
 import Inventory from './screens/Inventory';
 import Orders from './screens/Orders';
 import Settings from './screens/Settings';
