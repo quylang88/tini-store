@@ -13,13 +13,13 @@ const OrderListView = ({
   handleCancelOrder
 }) => (
   <div className="flex flex-col h-full bg-transparent pb-20">
-    <div className="bg-white p-4 border-b border-gray-200 sticky top-0 z-10 flex justify-between items-center shadow-sm">
+    <div className="bg-amber-50/90 p-4 border-b border-amber-100 sticky top-0 z-10 flex justify-between items-center shadow-sm backdrop-blur">
       <img
         src="/tiny-shop.png"
         alt="Tiny Shop"
         className="h-12 w-auto object-contain"
       />
-      <button onClick={() => setView('create')} className="bg-indigo-600 text-white px-4 py-2 rounded-xl text-sm font-bold shadow-md shadow-indigo-200 active:scale-95 transition flex items-center gap-2">
+      <button onClick={() => setView('create')} className="bg-rose-500 text-white px-4 py-2 rounded-xl text-sm font-bold shadow-md shadow-rose-200 active:scale-95 transition flex items-center gap-2">
         <Plus size={18} /> Đơn mới
       </button>
     </div>
@@ -29,10 +29,10 @@ const OrderListView = ({
         const hasShipping = order.shippingUpdated || order.shippingFee > 0;
         const isPaid = order.status === 'paid';
         return (
-          <div key={order.id} className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 hover:border-indigo-100 transition">
+          <div key={order.id} className="bg-white p-4 rounded-xl shadow-sm border border-amber-100 hover:border-rose-200 transition">
             <div className="flex justify-between mb-2">
               <span className="font-bold text-gray-800 text-lg">#{order.id.slice(-4)}</span>
-              <span className="text-indigo-600 font-bold text-lg bg-indigo-50 px-2 py-0.5 rounded">{formatNumber(order.total)}đ</span>
+              <span className="text-rose-600 font-bold text-lg bg-rose-50 px-2 py-0.5 rounded">{formatNumber(order.total)}đ</span>
             </div>
             <div className="flex items-center justify-between text-xs text-gray-500 mb-2">
               <span className={`inline-flex items-center gap-2 px-2 py-0.5 rounded-full border ${statusInfo.badgeClass}`}>
@@ -63,7 +63,7 @@ const OrderListView = ({
               </button>
               <button
                 onClick={() => handleExportToVietnam(order.id)}
-                className="text-xs font-semibold text-indigo-600 bg-indigo-50 border border-indigo-100 px-3 py-1.5 rounded-full hover:bg-indigo-100 transition"
+                className="text-xs font-semibold text-rose-600 bg-rose-50 border border-rose-100 px-3 py-1.5 rounded-full hover:bg-rose-100 transition"
               >
                 {hasShipping ? 'Cập nhật phí gửi' : 'Xuất về VN'}
               </button>

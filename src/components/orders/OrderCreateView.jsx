@@ -38,12 +38,12 @@ const OrderCreateView = ({
       {showScanner && <BarcodeScanner onScanSuccess={handleScanForSale} onClose={() => setShowScanner(false)} />}
 
       {/* Header Cố định */}
-      <div className="bg-white sticky top-0 z-10 shadow-sm">
+      <div className="bg-amber-50/90 sticky top-0 z-10 shadow-sm backdrop-blur">
         {/* Hàng 1: Tiêu đề & Nút chức năng */}
-        <div className="p-3 border-b border-gray-100 flex items-center justify-between">
+        <div className="p-3 border-b border-amber-100 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <button onClick={handleExitCreate} className="p-2 hover:bg-gray-100 rounded-full transition">
-              <ChevronRight className="rotate-180 text-gray-600" />
+            <button onClick={handleExitCreate} className="p-2 hover:bg-amber-100 rounded-full transition">
+              <ChevronRight className="rotate-180 text-amber-700" />
             </button>
             <div>
               <h2 className="text-xl font-bold text-gray-800">
@@ -61,20 +61,20 @@ const OrderCreateView = ({
                 <Trash2 size={18} />
               </button>
             )}
-            <button onClick={() => setShowScanner(true)} className="flex items-center gap-1 text-indigo-600 bg-indigo-50 px-3 py-2 rounded-lg text-sm font-bold active:scale-95 transition">
+            <button onClick={() => setShowScanner(true)} className="flex items-center gap-1 text-rose-600 bg-rose-50 px-3 py-2 rounded-lg text-sm font-bold active:scale-95 transition">
               <ScanBarcode size={18} /> <span className="hidden sm:inline">Quét</span>
             </button>
           </div>
         </div>
 
         {/* Hàng 2: Thanh Tìm kiếm */}
-        <div className="px-3 py-2 border-b border-gray-100">
+        <div className="px-3 py-2 border-b border-amber-100">
           <div className="relative">
-            <Search className="absolute left-3 top-2.5 text-gray-400" size={16} />
+            <Search className="absolute left-3 top-2.5 text-amber-400" size={16} />
             <input
               type="text"
               placeholder="Tìm tên hoặc mã sản phẩm..."
-              className="w-full bg-gray-100 pl-9 pr-4 py-2 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
+              className="w-full bg-amber-100/70 pl-9 pr-4 py-2 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-rose-300 transition-all"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -90,10 +90,10 @@ const OrderCreateView = ({
         </div>
 
         {/* Hàng 3: Thanh Tab Danh mục */}
-        <div className="px-3 pb-0 overflow-x-auto flex gap-2 no-scrollbar border-b border-gray-100">
+        <div className="px-3 pb-0 overflow-x-auto flex gap-2 no-scrollbar border-b border-amber-100">
           <button
             onClick={() => setActiveCategory('Tất cả')}
-            className={`whitespace-nowrap py-3 px-2 border-b-2 text-sm font-medium transition-colors ${activeCategory === 'Tất cả' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-gray-500'}`}
+            className={`whitespace-nowrap py-3 px-2 border-b-2 text-sm font-medium transition-colors ${activeCategory === 'Tất cả' ? 'border-rose-500 text-rose-600' : 'border-transparent text-amber-500'}`}
           >
             Tất cả
           </button>
@@ -101,7 +101,7 @@ const OrderCreateView = ({
             <button
               key={cat}
               onClick={() => setActiveCategory(cat)}
-              className={`whitespace-nowrap py-3 px-2 border-b-2 text-sm font-medium transition-colors ${activeCategory === cat ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-gray-500'}`}
+              className={`whitespace-nowrap py-3 px-2 border-b-2 text-sm font-medium transition-colors ${activeCategory === cat ? 'border-rose-500 text-rose-600' : 'border-transparent text-amber-500'}`}
             >
               {cat}
             </button>
@@ -117,7 +117,7 @@ const OrderCreateView = ({
           const isOutOfStock = availableStock <= 0;
 
           return (
-            <div key={p.id} className={`bg-white p-3 rounded-xl shadow-sm border border-gray-100 flex gap-3 items-center ${isOutOfStock ? 'opacity-50 grayscale' : ''}`}>
+            <div key={p.id} className={`bg-white p-3 rounded-xl shadow-sm border border-amber-100 flex gap-3 items-center ${isOutOfStock ? 'opacity-50 grayscale' : ''}`}>
               <div className="w-14 h-14 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0 relative border border-gray-200">
                 {p.image ? (
                   <img src={p.image} className="w-full h-full object-cover" alt={p.name} />
@@ -137,7 +137,7 @@ const OrderCreateView = ({
                   )}
                 </div>
                 <div className="text-xs text-gray-500 mt-0.5">
-                  <span className="font-semibold text-indigo-600">{formatNumber(p.price)}đ</span>
+                  <span className="font-semibold text-rose-600">{formatNumber(p.price)}đ</span>
                   <span className="mx-1">|</span>
                   <span>Kho: {availableStock}</span>
                 </div>
@@ -145,23 +145,23 @@ const OrderCreateView = ({
 
               {/* Bộ điều khiển số lượng */}
               {qty > 0 ? (
-                <div className="flex items-center bg-indigo-50 rounded-lg h-9 border border-indigo-100 overflow-hidden shadow-sm">
-                  <button onClick={() => adjustQuantity(p.id, -1, availableStock)} className="w-9 h-full flex items-center justify-center text-indigo-600 hover:bg-indigo-100 active:bg-indigo-200">
+                <div className="flex items-center bg-rose-50 rounded-lg h-9 border border-rose-100 overflow-hidden shadow-sm">
+                  <button onClick={() => adjustQuantity(p.id, -1, availableStock)} className="w-9 h-full flex items-center justify-center text-rose-600 hover:bg-rose-100 active:bg-rose-200">
                     <Minus size={16} strokeWidth={2.5} />
                   </button>
                   <input
                     type="number"
-                    className="w-12 h-full text-center bg-transparent border-x border-indigo-100 outline-none text-indigo-900 font-bold text-sm m-0 p-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                    className="w-12 h-full text-center bg-transparent border-x border-rose-100 outline-none text-rose-900 font-bold text-sm m-0 p-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                     value={qty}
                     onChange={(e) => handleQuantityChange(p.id, e.target.value, availableStock)}
                     onFocus={(e) => e.target.select()}
                   />
-                  <button onClick={() => adjustQuantity(p.id, 1, availableStock)} disabled={qty >= availableStock} className="w-9 h-full flex items-center justify-center text-indigo-600 hover:bg-indigo-100 active:bg-indigo-200 disabled:opacity-30">
+                  <button onClick={() => adjustQuantity(p.id, 1, availableStock)} disabled={qty >= availableStock} className="w-9 h-full flex items-center justify-center text-rose-600 hover:bg-rose-100 active:bg-rose-200 disabled:opacity-30">
                     <Plus size={16} strokeWidth={2.5} />
                   </button>
                 </div>
               ) : (
-                <button onClick={() => adjustQuantity(p.id, 1, availableStock)} disabled={isOutOfStock} className="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg text-xs font-bold hover:bg-gray-200 active:scale-95 transition">
+                <button onClick={() => adjustQuantity(p.id, 1, availableStock)} disabled={isOutOfStock} className="bg-amber-100 text-amber-800 px-4 py-2 rounded-lg text-xs font-bold hover:bg-amber-200 active:scale-95 transition">
                   {isOutOfStock ? 'Hết' : 'Thêm'}
                 </button>
               )}
@@ -179,14 +179,14 @@ const OrderCreateView = ({
 
       {/* Tạo Đơn */}
       {totalAmount > 0 && (
-        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 pb-safe-area z-[60] shadow-[0_-4px_15px_rgba(0,0,0,0.1)] animate-slide-up">
+        <div className="fixed bottom-0 left-0 right-0 bg-amber-50/90 border-t border-amber-200 p-4 pb-safe-area z-[60] shadow-[0_-4px_15px_rgba(0,0,0,0.1)] animate-slide-up backdrop-blur">
           <div className="flex justify-between items-center mb-3">
             <span className="text-gray-500 font-medium text-sm">Tổng đơn hàng:</span>
-            <span className="text-2xl font-bold text-indigo-600">{formatNumber(totalAmount)}đ</span>
+            <span className="text-2xl font-bold text-rose-600">{formatNumber(totalAmount)}đ</span>
           </div>
           <button
             onClick={handleSubmitOrder}
-            className="w-full bg-indigo-600 text-white py-3.5 rounded-xl font-bold shadow-lg shadow-indigo-200 active:scale-95 transition flex items-center justify-center gap-2 text-lg"
+            className="w-full bg-rose-500 text-white py-3.5 rounded-xl font-bold shadow-lg shadow-rose-200 active:scale-95 transition flex items-center justify-center gap-2 text-lg"
           >
             <ShoppingCart size={20} /> {orderBeingEdited ? 'Cập nhật đơn' : 'Lên đơn'}
           </button>

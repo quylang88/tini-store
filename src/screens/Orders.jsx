@@ -251,7 +251,7 @@ const Orders = ({ products, setProducts, orders, setOrders, settings }) => {
       return { label: 'Đã thanh toán', dotClass: 'bg-emerald-500', badgeClass: 'bg-emerald-50 text-emerald-700 border-emerald-100' };
     }
     if (hasShipping) {
-      return { label: 'Đã xuất VN', dotClass: 'bg-indigo-500', badgeClass: 'bg-indigo-50 text-indigo-700 border-indigo-100' };
+      return { label: 'Đã xuất VN', dotClass: 'bg-rose-500', badgeClass: 'bg-rose-50 text-rose-700 border-rose-100' };
     }
     return { label: 'Chờ gom', dotClass: 'bg-amber-500', badgeClass: 'bg-amber-50 text-amber-700 border-amber-100' };
   };

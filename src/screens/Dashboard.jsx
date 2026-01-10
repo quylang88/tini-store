@@ -105,7 +105,7 @@ const Dashboard = ({ products, orders }) => {
         className="h-12 w-auto object-contain"
       />
       <div className="grid grid-cols-2 gap-3">
-        <div className="bg-indigo-600 text-white p-4 rounded-2xl shadow-lg shadow-indigo-200">
+        <div className="bg-rose-500 text-white p-4 rounded-2xl shadow-lg shadow-rose-200">
           <div className="flex items-center gap-2 opacity-90 mb-2">
             <DollarSign size={18} />
             <span className="text-xs font-bold uppercase">Doanh thu</span>
@@ -142,7 +142,7 @@ const Dashboard = ({ products, orders }) => {
             <div className="space-y-4">
               <div className="flex items-center gap-4 text-xs text-gray-500">
                 <div className="flex items-center gap-2">
-                  <span className="inline-block w-3 h-3 rounded-full bg-indigo-500"></span>
+                  <span className="inline-block w-3 h-3 rounded-full bg-rose-500"></span>
                   <span>Doanh thu</span>
                 </div>
                 <div className="flex items-center gap-2">
@@ -155,7 +155,7 @@ const Dashboard = ({ products, orders }) => {
                   <div key={item.key} className="flex-1 flex flex-col items-center gap-2">
                     <div className="w-full flex items-end gap-1 h-36">
                       <div
-                        className="flex-1 bg-indigo-500 rounded-t-md"
+                        className="flex-1 bg-rose-500 rounded-t-md"
                         style={{ height: `${(item.revenue / chartMax) * 100}%` }}
                         title={`Doanh thu: ${formatNumber(item.revenue)}đ`}
                       />
@@ -181,7 +181,7 @@ const Dashboard = ({ products, orders }) => {
           <div>
             <button
               onClick={() => setShowHistory(prev => !prev)}
-              className="w-full flex items-center justify-between text-sm font-semibold text-indigo-600 bg-indigo-50 border border-indigo-100 rounded-lg px-3 py-2"
+              className="w-full flex items-center justify-between text-sm font-semibold text-rose-600 bg-rose-50 border border-rose-100 rounded-lg px-3 py-2"
             >
               <span>{showHistory ? 'Ẩn thống kê các tháng trước' : 'Xem thống kê các tháng trước'}</span>
               {showHistory ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
@@ -205,7 +205,7 @@ const Dashboard = ({ products, orders }) => {
                         </div>
                         <button
                           onClick={() => setExpandedMonth(isExpanded ? null : key)}
-                          className="text-xs font-semibold text-indigo-600 bg-indigo-50 px-2.5 py-1.5 rounded-lg"
+                          className="text-xs font-semibold text-rose-600 bg-rose-50 px-2.5 py-1.5 rounded-lg"
                         >
                           {isExpanded ? 'Thu gọn' : 'Xem chi tiết'}
                         </button>

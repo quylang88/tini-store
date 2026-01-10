@@ -6,7 +6,7 @@ const ProductList = ({ products, onEdit, onDelete }) => {
   return (
     <div className="flex-1 overflow-y-auto p-3 space-y-3 pb-24">
       {products.map(product => (
-        <div key={product.id} className="bg-white p-3 rounded-xl shadow-sm border border-gray-100 flex gap-3 items-center">
+        <div key={product.id} className="bg-white p-3 rounded-xl shadow-sm border border-amber-100 flex gap-3 items-center">
           <div className="w-16 h-16 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0 border border-gray-200 relative">
             {product.image ? (
               <img src={product.image} className="w-full h-full object-cover" alt={product.name} />
@@ -24,7 +24,7 @@ const ProductList = ({ products, onEdit, onDelete }) => {
 
             <div className="flex justify-between items-end mt-1">
               <div>
-                <div className="text-indigo-600 font-bold text-sm">{formatNumber(product.price)}đ</div>
+                <div className="text-rose-600 font-bold text-sm">{formatNumber(product.price)}đ</div>
                 {product.cost > 0 && (
                   <div className="text-[10px] text-gray-400">
                     {product.costJPY > 0
@@ -38,8 +38,8 @@ const ProductList = ({ products, onEdit, onDelete }) => {
               </div>
             </div>
           </div>
-          <div className="flex flex-col gap-2 pl-2 border-l border-gray-50">
-            <button onClick={() => onEdit(product)} className="text-gray-400 hover:text-indigo-600"><Edit size={18} /></button>
+          <div className="flex flex-col gap-2 pl-2 border-l border-amber-100">
+            <button onClick={() => onEdit(product)} className="text-gray-400 hover:text-rose-600"><Edit size={18} /></button>
             <button onClick={() => onDelete(product.id)} className="text-gray-400 hover:text-red-500"><Trash2 size={18} /></button>
           </div>
         </div>
