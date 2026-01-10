@@ -185,7 +185,7 @@ const Inventory = ({ products, setProducts, settings }) => {
   });
 
   return (
-    <div className="flex flex-col h-full bg-gray-50">
+    <div className="flex flex-col h-full bg-transparent">
       {showScanner && <BarcodeScanner onScanSuccess={handleScanSuccess} onClose={() => setShowScanner(false)} />}
 
       {/* Tách phần header & tab danh mục để Inventory gọn hơn */}

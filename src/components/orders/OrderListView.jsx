@@ -12,9 +12,13 @@ const OrderListView = ({
   handleEditOrder,
   handleCancelOrder
 }) => (
-  <div className="flex flex-col h-full bg-gray-50 pb-20">
+  <div className="flex flex-col h-full bg-transparent pb-20">
     <div className="bg-white p-4 border-b border-gray-200 sticky top-0 z-10 flex justify-between items-center shadow-sm">
-      <h2 className="text-xl font-bold text-gray-800">Lịch sử đơn</h2>
+      <img
+        src="/tiny-shop.png"
+        alt="Tiny Shop"
+        className="h-12 w-auto object-contain"
+      />
       <button onClick={() => setView('create')} className="bg-indigo-600 text-white px-4 py-2 rounded-xl text-sm font-bold shadow-md shadow-indigo-200 active:scale-95 transition flex items-center gap-2">
         <Plus size={18} /> Đơn mới
       </button>

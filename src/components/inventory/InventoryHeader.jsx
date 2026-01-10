@@ -15,7 +15,11 @@ const InventoryHeader = ({
       {/* Header & Search */}
       <div className="p-3 border-b border-gray-100">
         <div className="flex justify-between items-center mb-3">
-          <h2 className="text-xl font-bold text-gray-800">Kho Hàng</h2>
+          <img
+            src="/tiny-shop-transparent.png"
+            alt="Tiny Shop"
+            className="h-12 w-auto object-contain"
+          />
           <div className="flex gap-2">
             <button onClick={onShowScanner} className="bg-gray-100 text-gray-700 w-9 h-9 rounded-full flex items-center justify-center hover:bg-gray-200">
               <ScanBarcode size={20} />

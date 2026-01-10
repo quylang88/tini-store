@@ -34,7 +34,7 @@ const OrderCreateView = ({
   };
 
   return (
-    <div className="flex flex-col h-full bg-gray-50 pb-safe-area relative">
+    <div className="flex flex-col h-full bg-transparent pb-safe-area relative">
       {showScanner && <BarcodeScanner onScanSuccess={handleScanForSale} onClose={() => setShowScanner(false)} />}
 
       {/* Header Cố định */}

@@ -108,8 +108,12 @@ const Settings = ({ products, orders, setProducts, setOrders, settings, setSetti
   };
 
   return (
-    <div className="p-4 space-y-6 overflow-y-auto pb-24 h-full bg-gray-50">
-      <h1 className="text-2xl font-bold text-gray-800 mb-2">Cài đặt</h1>
+    <div className="p-4 space-y-6 overflow-y-auto pb-24 h-full bg-transparent">
+      <img
+        src="/tiny-shop.png"
+        alt="Tiny Shop"
+        className="h-12 w-auto object-contain"
+      />
 
       {/* 1. Cấu hình Tiền tệ */}
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
@@ -251,7 +255,7 @@ const Settings = ({ products, orders, setProducts, setOrders, settings, setSetti
 
       {/* Footer info */}
       <div className="text-center text-xs text-gray-400 pb-4">
-        Phiên bản 2.3 - Tiny Shop<br />
+        Phiên bản 3.0 - Tiny Shop<br />
         Dữ liệu được lưu trữ cục bộ (Local Storage)
       </div>
     </div>

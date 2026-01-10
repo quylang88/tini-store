@@ -99,8 +99,11 @@ const Dashboard = ({ products, orders }) => {
 
   return (
     <div className="p-4 space-y-4 pb-24 animate-fade-in">
-      <h1 className="text-2xl font-bold text-gray-800">Tổng Quan Shop</h1>
-
+      <img
+        src="/tiny-shop-transparent.png"
+        alt="Tiny Shop"
+        className="h-12 w-auto object-contain"
+      />
       <div className="grid grid-cols-2 gap-3">
         <div className="bg-indigo-600 text-white p-4 rounded-2xl shadow-lg shadow-indigo-200">
           <div className="flex items-center gap-2 opacity-90 mb-2">
