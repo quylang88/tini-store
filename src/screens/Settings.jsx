@@ -110,7 +110,7 @@ const Settings = ({ products, orders, setProducts, setOrders, settings, setSetti
   return (
     <div className="p-4 space-y-6 overflow-y-auto pb-24 h-full bg-transparent">
       <img
-        src="/tiny-shop.png"
+        src="/tiny-shop-transparent.png"
         alt="Tiny Shop"
         className="h-12 w-auto object-contain"
       />

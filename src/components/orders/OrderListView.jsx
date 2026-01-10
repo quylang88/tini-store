@@ -15,7 +15,7 @@ const OrderListView = ({
   <div className="flex flex-col h-full bg-transparent pb-20">
     <div className="bg-amber-50/90 p-4 border-b border-amber-100 sticky top-0 z-10 flex justify-between items-center shadow-sm backdrop-blur">
       <img
-        src="/tiny-shop.png"
+        src="/tiny-shop-transparent.png"
         alt="Tiny Shop"
         className="h-12 w-auto object-contain"
       />
@@ -63,7 +63,10 @@ const OrderListView = ({
               </button>
               <button
                 onClick={() => handleExportToVietnam(order.id)}
-                className="text-xs font-semibold text-rose-600 bg-rose-50 border border-rose-100 px-3 py-1.5 rounded-full hover:bg-rose-100 transition"
+                className={`text-xs font-semibold px-3 py-1.5 rounded-full border transition ${hasShipping
+                    ? 'text-sky-700 bg-sky-50 border-sky-100 hover:bg-sky-100'
+                    : 'text-indigo-700 bg-indigo-50 border-indigo-100 hover:bg-indigo-100'
+                  }`}
               >
                 {hasShipping ? 'Cập nhật phí gửi' : 'Xuất về VN'}
               </button>

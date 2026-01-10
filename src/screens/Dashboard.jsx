@@ -105,7 +105,7 @@ const Dashboard = ({ products, orders }) => {
         className="h-12 w-auto object-contain"
       />
       <div className="grid grid-cols-2 gap-3">
-        <div className="bg-rose-500 text-white p-4 rounded-2xl shadow-lg shadow-rose-200">
+        <div className="bg-rose-400 text-white p-4 rounded-2xl shadow-lg shadow-rose-200">
           <div className="flex items-center gap-2 opacity-90 mb-2">
             <DollarSign size={18} />
             <span className="text-xs font-bold uppercase">Doanh thu</span>
@@ -113,7 +113,7 @@ const Dashboard = ({ products, orders }) => {
           <div className="text-xl font-bold">{formatNumber(totalRevenue)}đ</div>
         </div>
 
-        <div className="bg-emerald-600 text-white p-4 rounded-2xl shadow-lg shadow-emerald-100">
+        <div className="bg-emerald-400 text-white p-4 rounded-2xl shadow-lg shadow-emerald-100">
           <div className="flex items-center gap-2 opacity-90 mb-2">
             <TrendingUp size={18} />
             <span className="text-xs font-bold uppercase">Lợi nhuận</span>
@@ -142,11 +142,11 @@ const Dashboard = ({ products, orders }) => {
             <div className="space-y-4">
               <div className="flex items-center gap-4 text-xs text-gray-500">
                 <div className="flex items-center gap-2">
-                  <span className="inline-block w-3 h-3 rounded-full bg-rose-500"></span>
+                  <span className="inline-block w-3 h-3 rounded-full bg-rose-300"></span>
                   <span>Doanh thu</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="inline-block w-3 h-3 rounded-full bg-emerald-500"></span>
+                  <span className="inline-block w-3 h-3 rounded-full bg-emerald-300"></span>
                   <span>Lợi nhuận</span>
                 </div>
               </div>
@@ -155,12 +155,12 @@ const Dashboard = ({ products, orders }) => {
                   <div key={item.key} className="flex-1 flex flex-col items-center gap-2">
                     <div className="w-full flex items-end gap-1 h-36">
                       <div
-                        className="flex-1 bg-rose-500 rounded-t-md"
+                        className="flex-1 bg-rose-300 rounded-t-md"
                         style={{ height: `${(item.revenue / chartMax) * 100}%` }}
                         title={`Doanh thu: ${formatNumber(item.revenue)}đ`}
                       />
                       <div
-                        className="flex-1 bg-emerald-500 rounded-t-md"
+                        className="flex-1 bg-emerald-300 rounded-t-md"
                         style={{ height: `${(item.profit / chartMax) * 100}%` }}
                         title={`Lợi nhuận: ${formatNumber(item.profit)}đ`}
                       />
