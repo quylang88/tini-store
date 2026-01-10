@@ -19,6 +19,7 @@ const Inventory = ({ products, setProducts, settings }) => {
     name: '',
     barcode: '',
     category: 'Chung',
+    costCurrency: 'JPY',
     costJPY: '',       // Giá vốn tiền Yên
     exchangeRate: String(settings.exchangeRate), // Lấy tỷ giá mặc định từ Settings
     cost: '',          // Giá vốn VNĐ
@@ -29,19 +30,33 @@ const Inventory = ({ products, setProducts, settings }) => {
 
   // Tự động tính giá vốn VNĐ khi nhập Yên hoặc thay đổi Tỷ giá
   useEffect(() => {
+    if (formData.costCurrency !== 'JPY') {
+      return;
+    }
     const costJPYValue = Number(formData.costJPY || 0);
     const exchangeRateValue = Number(formData.exchangeRate || 0);
     if (costJPYValue > 0 && exchangeRateValue > 0) {
       const calculatedCost = Math.round(costJPYValue * exchangeRateValue);
       setFormData(prev => ({ ...prev, cost: calculatedCost }));
-    } else if (formData.cost !== 0) {
+    } else {
       setFormData(prev => ({ ...prev, cost: 0 }));
     }
-  }, [formData.costJPY, formData.exchangeRate, formData.cost]);
+  }, [formData.costCurrency, formData.costJPY, formData.exchangeRate]);
 
   const handleMoneyChange = (field) => (event) => {
     const rawValue = sanitizeNumberInput(event.target.value);
     setFormData(prev => ({ ...prev, [field]: rawValue }));
+  };
+
+  const handleCurrencyChange = (event) => {
+    const nextCurrency = event.target.value;
+    setFormData(prev => ({
+      ...prev,
+      costCurrency: nextCurrency,
+      cost: nextCurrency === 'JPY' ? '' : prev.cost,
+      costJPY: nextCurrency === 'VND' ? '' : prev.costJPY,
+      exchangeRate: String(settings.exchangeRate)
+    }));
   };
 
   const handleScanSuccess = (decodedText) => {
@@ -74,6 +89,13 @@ const Inventory = ({ products, setProducts, settings }) => {
       return;
     }
 
+    const costValue = Number(formData.cost) || 0;
+    const priceValue = Number(formData.price) || 0;
+    if (costValue > 0 && priceValue <= costValue) {
+      alert("Giá bán phải cao hơn giá vốn!");
+      return;
+    }
+
     // Check trùng Barcode
     if (formData.barcode) {
       const duplicateBarcode = products.find(p =>
@@ -90,6 +112,7 @@ const Inventory = ({ products, setProducts, settings }) => {
       name: formData.name.trim(),
       barcode: formData.barcode ? formData.barcode.trim() : '',
       category: formData.category,
+      costCurrency: formData.costCurrency,
       costJPY: Number(formData.costJPY) || 0,
       exchangeRate: Number(formData.exchangeRate) || settings.exchangeRate,
       cost: Number(formData.cost) || 0, // Giá vốn VNĐ
@@ -113,6 +136,7 @@ const Inventory = ({ products, setProducts, settings }) => {
         name: product.name,
         barcode: product.barcode || '',
         category: product.category || 'Chung',
+        costCurrency: product.costCurrency || (product.costJPY > 0 ? 'JPY' : 'VND'),
         costJPY: product.costJPY || '',
         exchangeRate: String(product.exchangeRate || settings.exchangeRate),
         cost: product.cost || '',
@@ -126,6 +150,7 @@ const Inventory = ({ products, setProducts, settings }) => {
         name: '',
         barcode: '',
         category: activeCategory === 'Tất cả' ? 'Chung' : activeCategory,
+        costCurrency: 'JPY',
         costJPY: '',
         exchangeRate: String(settings.exchangeRate), // Load tỷ giá mặc định
         cost: '',
@@ -229,9 +254,11 @@ const Inventory = ({ products, setProducts, settings }) => {
               <div className="flex justify-between items-end mt-1">
                 <div>
                   <div className="text-indigo-600 font-bold text-sm">{formatNumber(p.price)}đ</div>
-                  {p.costJPY > 0 && (
+                  {p.cost > 0 && (
                     <div className="text-[10px] text-gray-400">
-                      Vốn: ¥{formatNumber(p.costJPY)} ({formatNumber(p.cost)}đ)
+                      {p.costJPY > 0
+                        ? `Vốn: ¥${formatNumber(p.costJPY)} (${formatNumber(p.cost)}đ)`
+                        : `Vốn: ${formatNumber(p.cost)}đ`}
                     </div>
                   )}
                 </div>
@@ -315,35 +342,65 @@ const Inventory = ({ products, setProducts, settings }) => {
                 />
               </div>
 
-              {/* Khu vực tính giá Yên */}
+              {/* Khu vực giá nhập */}
               <div className="bg-blue-50 p-3 rounded-lg border border-blue-100">
-                <div className="grid grid-cols-2 gap-4 mb-2">
+                <div className="flex items-center justify-between mb-3">
+                  <label className="text-[10px] font-bold text-blue-800 uppercase">Giá nhập</label>
+                  <select
+                    className="bg-transparent text-[10px] font-semibold text-blue-700 border border-blue-200 rounded px-2 py-1"
+                    value={formData.costCurrency}
+                    onChange={handleCurrencyChange}
+                  >
+                    <option value="JPY">Theo Yên</option>
+                    <option value="VND">Theo VNĐ</option>
+                  </select>
+                </div>
+
+                {formData.costCurrency === 'JPY' ? (
+                  <>
+                    <div className="grid grid-cols-2 gap-4 mb-2">
+                      <div>
+                        <label className="text-[10px] font-bold text-blue-800 uppercase">Giá nhập (Yên)</label>
+                        <div className="relative">
+                          <span className="absolute left-0 top-2 text-blue-500">¥</span>
+                          <input
+                            inputMode="numeric"
+                            className="w-full bg-transparent border-b border-blue-200 py-2 pl-4 focus:border-blue-500 outline-none text-blue-900 font-bold"
+                            value={formatInputNumber(formData.costJPY)}
+                            onChange={handleMoneyChange('costJPY')}
+                            placeholder="0"
+                          />
+                        </div>
+                      </div>
+                      <div>
+                        <label className="text-[10px] font-bold text-blue-800 uppercase">Tỷ giá</label>
+                        <input
+                          inputMode="numeric"
+                          className="w-full bg-transparent border-b border-blue-200 py-2 focus:border-blue-500 outline-none text-blue-900 text-right"
+                          value={formatInputNumber(formData.exchangeRate)}
+                          onChange={handleMoneyChange('exchangeRate')}
+                        />
+                      </div>
+                    </div>
+                    <div className="text-right text-xs text-blue-600 font-medium">
+                      = {formatNumber(formData.cost)} VNĐ (Vốn)
+                    </div>
+                  </>
+                ) : (
                   <div>
-                    <label className="text-[10px] font-bold text-blue-800 uppercase">Giá nhập (Yên)</label>
+                    <label className="text-[10px] font-bold text-blue-800 uppercase">Giá nhập (VNĐ)</label>
                     <div className="relative">
-                      <span className="absolute left-0 top-2 text-blue-500">¥</span>
+                      <span className="absolute left-0 top-2 text-blue-500">đ</span>
                       <input
                         inputMode="numeric"
                         className="w-full bg-transparent border-b border-blue-200 py-2 pl-4 focus:border-blue-500 outline-none text-blue-900 font-bold"
-                        value={formatInputNumber(formData.costJPY)}
-                        onChange={handleMoneyChange('costJPY')}
+                        value={formatInputNumber(formData.cost)}
+                        onChange={handleMoneyChange('cost')}
                         placeholder="0"
                       />
                     </div>
                   </div>
-                  <div>
-                    <label className="text-[10px] font-bold text-blue-800 uppercase">Tỷ giá</label>
-                    <input
-                      inputMode="numeric"
-                      className="w-full bg-transparent border-b border-blue-200 py-2 focus:border-blue-500 outline-none text-blue-900 text-right"
-                      value={formatInputNumber(formData.exchangeRate)}
-                      onChange={handleMoneyChange('exchangeRate')}
-                    />
-                  </div>
-                </div>
-                <div className="text-right text-xs text-blue-600 font-medium">
-                  = {formatNumber(formData.cost)} VNĐ (Vốn)
-                </div>
+                )}
               </div>
 
               {/* VND Pricing & Stock */}
