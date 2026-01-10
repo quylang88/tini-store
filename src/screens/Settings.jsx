@@ -108,8 +108,12 @@ const Settings = ({ products, orders, setProducts, setOrders, settings, setSetti
   };
 
   return (
-    <div className="p-4 space-y-6 overflow-y-auto pb-24 h-full bg-gray-50">
-      <h1 className="text-2xl font-bold text-gray-800 mb-2">Cài đặt</h1>
+    <div className="p-4 space-y-6 overflow-y-auto pb-24 h-full bg-transparent">
+      <img
+        src="/tiny-shop-transparent.png"
+        alt="Tiny Shop"
+        className="h-12 w-auto object-contain"
+      />
 
       {/* 1. Cấu hình Tiền tệ */}
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
@@ -126,7 +130,7 @@ const Settings = ({ products, orders, setProducts, setOrders, settings, setSetti
               <div className="relative flex-1">
                 <input
                   inputMode="numeric"
-                  className="w-full border border-gray-200 rounded-lg pl-3 pr-12 py-3 outline-none focus:border-indigo-500 font-medium text-lg"
+                  className="w-full border border-gray-200 rounded-lg pl-3 pr-12 py-3 outline-none focus:border-rose-400 font-medium text-lg"
                   value={formatInputNumber(settings.exchangeRate)}
                   onChange={(e) => {
                     const rawValue = sanitizeNumberInput(e.target.value);
@@ -140,7 +144,7 @@ const Settings = ({ products, orders, setProducts, setOrders, settings, setSetti
               <button
                 onClick={fetchOnlineRate}
                 disabled={isFetchingRate}
-                className="bg-indigo-50 text-indigo-600 px-4 py-2 rounded-lg font-medium text-sm flex flex-col items-center justify-center min-w-[80px] hover:bg-indigo-100 transition"
+                className="bg-rose-50 text-rose-600 px-4 py-2 rounded-lg font-medium text-sm flex flex-col items-center justify-center min-w-[80px] hover:bg-rose-100 transition"
               >
                 {isFetchingRate ? (
                   <RefreshCw size={20} className="animate-spin" />
@@ -168,7 +172,7 @@ const Settings = ({ products, orders, setProducts, setOrders, settings, setSetti
         <div className="p-4 space-y-4">
           <div className="flex gap-2">
             <input
-              className="flex-1 border border-gray-200 rounded-lg px-3 py-2 outline-none focus:border-indigo-500 text-sm"
+              className="flex-1 border border-gray-200 rounded-lg px-3 py-2 outline-none focus:border-rose-400 text-sm"
               placeholder="Nhập tên danh mục mới..."
               value={newCategory}
               onChange={(e) => setNewCategory(e.target.value)}
@@ -176,7 +180,7 @@ const Settings = ({ products, orders, setProducts, setOrders, settings, setSetti
             />
             <button
               onClick={handleAddCategory}
-              className="bg-indigo-600 text-white w-12 h-10 rounded-lg flex items-center justify-center hover:bg-indigo-700 active:scale-95 transition"
+              className="bg-rose-500 text-white w-12 h-10 rounded-lg flex items-center justify-center hover:bg-rose-600 active:scale-95 transition"
             >
               <Plus size={24} />
             </button>
@@ -213,7 +217,7 @@ const Settings = ({ products, orders, setProducts, setOrders, settings, setSetti
 
           <button
             onClick={exportData}
-            className="w-full flex items-center justify-center gap-2 bg-indigo-50 text-indigo-700 py-3 rounded-xl font-bold hover:bg-indigo-100 transition border border-indigo-100"
+            className="w-full flex items-center justify-center gap-2 bg-rose-50 text-rose-700 py-3 rounded-xl font-bold hover:bg-rose-100 transition border border-rose-100"
           >
             <Download size={20} /> Tải Dữ Liệu Về Máy (Backup)
           </button>
@@ -251,7 +255,7 @@ const Settings = ({ products, orders, setProducts, setOrders, settings, setSetti
 
       {/* Footer info */}
       <div className="text-center text-xs text-gray-400 pb-4">
-        Phiên bản 2.3 - Tiny Shop<br />
+        Phiên bản 3.0 - Tiny Shop<br />
         Dữ liệu được lưu trữ cục bộ (Local Storage)
       </div>
     </div>

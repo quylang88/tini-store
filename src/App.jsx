@@ -19,14 +19,14 @@ const App = () => {
   });
 
   const [activeTab, setActiveTab] = useState('dashboard');
-  
+
   // --- 2. KHỞI TẠO DỮ LIỆU TỪ LOCALSTORAGE ---
   // Dữ liệu Sản phẩm
   const [products, setProducts] = useState(() => {
     const saved = localStorage.getItem('shop_products_v2');
     return saved ? JSON.parse(saved) : [];
   });
-  
+
   // Dữ liệu Đơn hàng
   const [orders, setOrders] = useState(() => {
     const saved = localStorage.getItem('shop_orders_v2');
@@ -36,9 +36,9 @@ const App = () => {
   // Cài đặt chung (Tỷ giá, Danh mục)
   const [settings, setSettings] = useState(() => {
     const saved = localStorage.getItem('shop_settings');
-    return saved ? JSON.parse(saved) : { 
-      exchangeRate: 170, 
-      categories: ['Chung', 'Mỹ phẩm', 'Thực phẩm', 'Quần áo'] 
+    return saved ? JSON.parse(saved) : {
+      exchangeRate: 170,
+      categories: ['Chung', 'Mỹ phẩm', 'Thực phẩm', 'Quần áo']
     };
   });
 
@@ -66,7 +66,7 @@ const App = () => {
   };
 
   const handleLogout = () => {
-    if(window.confirm('Bạn có chắc chắn muốn đăng xuất?')) {
+    if (window.confirm('Bạn có chắc chắn muốn đăng xuất?')) {
       setIsAuthenticated(false);
       sessionStorage.removeItem('tini_auth'); // Xóa phiên làm việc
       setActiveTab('dashboard'); // Reset tab về mặc định
@@ -82,38 +82,38 @@ const App = () => {
 
   // Nếu đã đăng nhập -> Hiện App chính
   return (
-    <div className="h-screen bg-gray-50 text-gray-900 font-sans overflow-hidden flex flex-col">
+    <div className="h-screen bg-gradient-to-br from-amber-50 via-rose-50 to-orange-100 text-gray-900 font-sans overflow-hidden flex flex-col">
       <div className="flex-1 overflow-hidden relative">
-        
+
         {activeTab === 'dashboard' && (
           <Dashboard products={products} orders={orders} />
         )}
-        
+
         {activeTab === 'inventory' && (
-          <Inventory 
-            products={products} 
-            setProducts={setProducts} 
-            settings={settings} 
+          <Inventory
+            products={products}
+            setProducts={setProducts}
+            settings={settings}
           />
         )}
-        
+
         {activeTab === 'orders' && (
-          <Orders 
-            products={products} 
-            setProducts={setProducts} 
-            orders={orders} 
+          <Orders
+            products={products}
+            setProducts={setProducts}
+            orders={orders}
             setOrders={setOrders}
             settings={settings}
           />
         )}
-        
+
         {activeTab === 'settings' && (
-          <Settings 
-            products={products} 
-            orders={orders} 
-            setProducts={setProducts} 
+          <Settings
+            products={products}
+            orders={orders}
+            setProducts={setProducts}
             setOrders={setOrders}
-            settings={settings}       
+            settings={settings}
             setSettings={setSettings}
             onLogout={handleLogout}
           />
@@ -121,7 +121,7 @@ const App = () => {
       </div>
 
       <TabBar activeTab={activeTab} setActiveTab={setActiveTab} />
-      
+
       {/* CSS Global */}
       <style>{`
         .pb-safe-area { padding-bottom: env(safe-area-inset-bottom); }

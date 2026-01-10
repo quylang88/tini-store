@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Store, Lock, User, ArrowRight, CheckSquare } from 'lucide-react';
+import { Lock, User, ArrowRight, CheckSquare } from 'lucide-react';
 
 const Login = ({ onLogin }) => {
   const [username, setUsername] = useState('');
@@ -24,7 +24,7 @@ const Login = ({ onLogin }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    
+
     // Kiểm tra tài khoản cứng
     if (username === 'tiny-shop' && password === 'Believe93') {
       // 2. Xử lý Ghi nhớ Tài khoản/Mật khẩu
@@ -43,19 +43,12 @@ const Login = ({ onLogin }) => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-pink-50 to-indigo-50 flex items-center justify-center p-4">
-      <div className="bg-white w-full max-w-sm rounded-2xl shadow-xl overflow-hidden animate-fade-in">
-        {/* Header */}
-        <div className="bg-indigo-600 p-8 text-center relative overflow-hidden">
-          <div className="absolute top-0 left-0 w-full h-full bg-white opacity-10 transform -skew-y-6 origin-top-left"></div>
-          <div className="relative z-10 flex flex-col items-center">
-            <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mb-3 shadow-lg">
-              <Store size={32} className="text-indigo-600" />
-            </div>
-            <h1 className="text-2xl font-bold text-white tracking-wide">Tiny Beauty</h1>
-            <p className="text-indigo-100 text-sm mt-1">Hệ thống quản lý</p>
-          </div>
-        </div>
+    <div className="min-h-screen bg-gradient-to-br from-amber-50 via-rose-50 to-orange-100 flex items-center justify-center p-4">
+      <div className="bg-white/90 w-full max-w-sm rounded-2xl shadow-xl backdrop-blur overflow-hidden animate-fade-in border border-white/70">
+        <div
+          className="h-32 bg-cover bg-center"
+          style={{ backgroundImage: "url('/tiny-shop.png')" }}
+        />
 
         {/* Form */}
         <div className="p-8">
@@ -72,9 +65,9 @@ const Login = ({ onLogin }) => {
                 <span className="absolute left-3 top-3 text-gray-400">
                   <User size={20} />
                 </span>
-                <input 
-                  type="text" 
-                  className="w-full bg-gray-50 border border-gray-200 rounded-xl py-3 pl-10 pr-4 outline-none focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 transition"
+                <input
+                  type="text"
+                  className="w-full bg-white/90 border border-rose-200 rounded-xl py-3 pl-10 pr-4 outline-none focus:bg-white focus:border-rose-400 focus:ring-2 focus:ring-rose-100 transition"
                   placeholder="Nhập tài khoản..."
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
@@ -88,9 +81,9 @@ const Login = ({ onLogin }) => {
                 <span className="absolute left-3 top-3 text-gray-400">
                   <Lock size={20} />
                 </span>
-                <input 
-                  type="password" 
-                  className="w-full bg-gray-50 border border-gray-200 rounded-xl py-3 pl-10 pr-4 outline-none focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 transition"
+                <input
+                  type="password"
+                  className="w-full bg-white/90 border border-rose-200 rounded-xl py-3 pl-10 pr-4 outline-none focus:bg-white focus:border-rose-400 focus:ring-2 focus:ring-rose-100 transition"
                   placeholder="Nhập mật khẩu..."
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
@@ -99,28 +92,29 @@ const Login = ({ onLogin }) => {
             </div>
 
             {/* Checkbox Ghi nhớ thông tin */}
-            <div 
+            <div
               className="flex items-center gap-2 cursor-pointer group"
               onClick={() => setRemember(!remember)}
             >
-              <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${remember ? 'bg-indigo-600 border-indigo-600' : 'bg-white border-gray-300 group-hover:border-indigo-400'}`}>
+              <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${remember ? 'bg-rose-500 border-rose-500' : 'bg-white border-rose-200 group-hover:border-rose-400'}`}>
                 {remember && <CheckSquare size={14} className="text-white" />}
               </div>
               <span className="text-sm text-gray-600 select-none">Lưu thông tin đăng nhập</span>
             </div>
 
-            <button 
+            <button
               type="submit"
-              className="w-full bg-indigo-600 text-white py-3.5 rounded-xl font-bold text-lg shadow-lg shadow-indigo-200 active:scale-95 transition flex items-center justify-center gap-2 group"
+              className="w-full bg-gradient-to-r from-rose-500 via-orange-400 to-amber-400 text-white py-3.5 rounded-xl font-bold text-lg shadow-lg shadow-rose-200 active:scale-95 transition flex items-center justify-center gap-2 group"
             >
               Đăng Nhập
-              <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform"/>
+              <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
             </button>
           </form>
         </div>
-        
+
         <div className="bg-gray-50 p-4 text-center text-xs text-gray-400 border-t border-gray-100">
-          © 2026 Tiny Beauty
+          © 2026 Tiny Shop. All rights reserved.<br />
+          Phát triển bởi Quý Lăng
         </div>
       </div>
     </div>

@@ -58,14 +58,6 @@ const Dashboard = ({ products, orders }) => {
   const now = new Date();
   const currentKey = monthKey(now);
   const previousKey = monthKey(new Date(now.getFullYear(), now.getMonth() - 1, 1));
-  const currentStats = monthlyStats[currentKey] || { revenue: 0, profit: 0, orders: 0, items: {} };
-  const previousStats = monthlyStats[previousKey] || { revenue: 0, profit: 0, orders: 0, items: {} };
-
-  const revenueDelta = currentStats.revenue - previousStats.revenue;
-  const profitDelta = currentStats.profit - previousStats.profit;
-  const revenuePercent = previousStats.revenue ? (revenueDelta / previousStats.revenue) * 100 : null;
-  const profitPercent = previousStats.profit ? (profitDelta / previousStats.profit) * 100 : null;
-
   const olderMonths = Object.keys(monthlyStats)
     .filter((key) => key !== currentKey && key !== previousKey)
     .sort((a, b) => new Date(`${b}-01`) - new Date(`${a}-01`));
@@ -78,22 +70,42 @@ const Dashboard = ({ products, orders }) => {
       .slice(0, 3);
   };
 
-  // Logic tìm top 3 sản phẩm bán chạy
+  // Chuẩn bị dữ liệu biểu đồ thống kê theo tháng (tối đa 6 tháng gần nhất)
+  const monthlyChartData = Object.keys(monthlyStats)
+    .sort((a, b) => new Date(`${a}-01`) - new Date(`${b}-01`))
+    .slice(-6)
+    .map((key) => ({
+      key,
+      label: monthLabel(key),
+      revenue: monthlyStats[key].revenue,
+      profit: monthlyStats[key].profit,
+    }));
+  const chartMax = Math.max(
+    ...monthlyChartData.flatMap((item) => [item.revenue, item.profit]),
+    1,
+  );
+
+  // Logic tìm top 3 sản phẩm theo lợi nhuận
   const topProducts = products.map(p => {
-    // Chỉ tính bán chạy dựa trên đơn đã thanh toán
-    const sold = paidOrders.reduce((acc, order) => {
+    // Chỉ tính lợi nhuận dựa trên đơn đã thanh toán
+    const profit = paidOrders.reduce((acc, order) => {
       const item = order.items.find(i => i.productId === p.id);
-      return acc + (item ? item.quantity : 0);
+      if (!item) return acc;
+      const cost = Number.isFinite(item.cost) ? item.cost : (costMap.get(item.productId) || 0);
+      return acc + (item.price - cost) * item.quantity;
     }, 0);
-    return { ...p, sold };
-  }).sort((a, b) => b.sold - a.sold).slice(0, 3);
+    return { ...p, profit };
+  }).sort((a, b) => b.profit - a.profit).slice(0, 3);
 
   return (
     <div className="p-4 space-y-4 pb-24 animate-fade-in">
-      <h1 className="text-2xl font-bold text-gray-800">Tổng Quan Shop</h1>
-
+      <img
+        src="/tiny-shop-transparent.png"
+        alt="Tiny Shop"
+        className="h-12 w-auto object-contain"
+      />
       <div className="grid grid-cols-2 gap-3">
-        <div className="bg-indigo-600 text-white p-4 rounded-2xl shadow-lg shadow-indigo-200">
+        <div className="bg-rose-400 text-white p-4 rounded-2xl shadow-lg shadow-rose-200">
           <div className="flex items-center gap-2 opacity-90 mb-2">
             <DollarSign size={18} />
             <span className="text-xs font-bold uppercase">Doanh thu</span>
@@ -101,7 +113,7 @@ const Dashboard = ({ products, orders }) => {
           <div className="text-xl font-bold">{formatNumber(totalRevenue)}đ</div>
         </div>
 
-        <div className="bg-emerald-600 text-white p-4 rounded-2xl shadow-lg shadow-emerald-100">
+        <div className="bg-emerald-400 text-white p-4 rounded-2xl shadow-lg shadow-emerald-100">
           <div className="flex items-center gap-2 opacity-90 mb-2">
             <TrendingUp size={18} />
             <span className="text-xs font-bold uppercase">Lợi nhuận</span>
@@ -121,45 +133,55 @@ const Dashboard = ({ products, orders }) => {
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 space-y-4">
         <div className="flex items-center justify-between">
           <h3 className="font-bold text-gray-700 text-sm uppercase">Thống kê theo tháng</h3>
-          <span className="text-xs text-gray-400">{monthLabel(currentKey)}</span>
+          <span className="text-xs text-gray-400">6 tháng gần nhất</span>
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
-          <div className="bg-gray-50 border border-gray-100 rounded-xl p-3">
-            <div className="text-[11px] text-gray-500 font-semibold uppercase">Tháng này</div>
-            <div className="text-lg font-bold text-gray-800 mt-2">{formatNumber(currentStats.revenue)}đ</div>
-            <div className="text-xs text-gray-500 mt-1">
-              Lợi nhuận: <span className="font-semibold text-emerald-600">{formatNumber(currentStats.profit)}đ</span>
+        {/* Biểu đồ cột đơn giản cho doanh thu và lợi nhuận */}
+        <div className="bg-gray-50 border border-gray-100 rounded-xl p-4">
+          {monthlyChartData.length > 0 ? (
+            <div className="space-y-4">
+              <div className="flex items-center gap-4 text-xs text-gray-500">
+                <div className="flex items-center gap-2">
+                  <span className="inline-block w-3 h-3 rounded-full bg-rose-300"></span>
+                  <span>Doanh thu</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="inline-block w-3 h-3 rounded-full bg-emerald-300"></span>
+                  <span>Lợi nhuận</span>
+                </div>
+              </div>
+              <div className="flex items-end gap-3 h-44">
+                {monthlyChartData.map((item) => (
+                  <div key={item.key} className="flex-1 flex flex-col items-center gap-2">
+                    <div className="w-full flex items-end gap-1 h-36">
+                      <div
+                        className="flex-1 bg-rose-300 rounded-t-md"
+                        style={{ height: `${(item.revenue / chartMax) * 100}%` }}
+                        title={`Doanh thu: ${formatNumber(item.revenue)}đ`}
+                      />
+                      <div
+                        className="flex-1 bg-emerald-300 rounded-t-md"
+                        style={{ height: `${(item.profit / chartMax) * 100}%` }}
+                        title={`Lợi nhuận: ${formatNumber(item.profit)}đ`}
+                      />
+                    </div>
+                    <div className="text-[10px] text-gray-500 text-center leading-tight">
+                      {item.label}
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
-            <div className="text-xs text-gray-400">Đơn: {currentStats.orders}</div>
-          </div>
-
-          <div className="bg-indigo-50 border border-indigo-100 rounded-xl p-3">
-            <div className="text-[11px] text-indigo-600 font-semibold uppercase">So với tháng trước</div>
-            <div className="text-sm text-gray-700 mt-2">
-              Doanh thu: <span className={`font-semibold ${revenueDelta >= 0 ? 'text-emerald-600' : 'text-red-500'}`}>
-                {revenueDelta >= 0 ? '+' : ''}{formatNumber(revenueDelta)}đ
-              </span>
-            </div>
-            <div className="text-xs text-gray-500">
-              {revenuePercent === null ? 'Chưa có dữ liệu tháng trước' : `${revenuePercent >= 0 ? '+' : ''}${revenuePercent.toFixed(1)}%`}
-            </div>
-            <div className="text-sm text-gray-700 mt-2">
-              Lợi nhuận: <span className={`font-semibold ${profitDelta >= 0 ? 'text-emerald-600' : 'text-red-500'}`}>
-                {profitDelta >= 0 ? '+' : ''}{formatNumber(profitDelta)}đ
-              </span>
-            </div>
-            <div className="text-xs text-gray-500">
-              {profitPercent === null ? 'Chưa có dữ liệu tháng trước' : `${profitPercent >= 0 ? '+' : ''}${profitPercent.toFixed(1)}%`}
-            </div>
-          </div>
+          ) : (
+            <div className="text-center text-xs text-gray-400">Chưa có dữ liệu thống kê.</div>
+          )}
         </div>
 
         {olderMonths.length > 0 && (
           <div>
             <button
               onClick={() => setShowHistory(prev => !prev)}
-              className="w-full flex items-center justify-between text-sm font-semibold text-indigo-600 bg-indigo-50 border border-indigo-100 rounded-lg px-3 py-2"
+              className="w-full flex items-center justify-between text-sm font-semibold text-rose-600 bg-rose-50 border border-rose-100 rounded-lg px-3 py-2"
             >
               <span>{showHistory ? 'Ẩn thống kê các tháng trước' : 'Xem thống kê các tháng trước'}</span>
               {showHistory ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
@@ -183,7 +205,7 @@ const Dashboard = ({ products, orders }) => {
                         </div>
                         <button
                           onClick={() => setExpandedMonth(isExpanded ? null : key)}
-                          className="text-xs font-semibold text-indigo-600 bg-indigo-50 px-2.5 py-1.5 rounded-lg"
+                          className="text-xs font-semibold text-rose-600 bg-rose-50 px-2.5 py-1.5 rounded-lg"
                         >
                           {isExpanded ? 'Thu gọn' : 'Xem chi tiết'}
                         </button>
@@ -228,7 +250,7 @@ const Dashboard = ({ products, orders }) => {
               </div>
               <div className="flex-1">
                 <div className="font-medium text-sm text-gray-800">{p.name}</div>
-                <div className="text-xs text-gray-500">Đã bán: {p.sold}</div>
+                <div className="text-xs text-gray-500">Lợi nhuận: {formatNumber(p.profit)}đ</div>
               </div>
             </div>
           ))}
