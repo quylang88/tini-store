@@ -11,8 +11,9 @@ const Dashboard = ({ products, orders }) => {
   const paidOrders = orders.filter(order => order.status === 'paid');
   const totalRevenue = paidOrders.reduce((sum, order) => sum + order.total, 0);
   const totalProfit = paidOrders.reduce((sum, order) => {
+    // Ưu tiên dùng giá vốn đã lưu trong đơn để lợi nhuận không bị lệch khi giá vốn thay đổi
     const orderProfit = order.items.reduce((itemSum, item) => {
-      const cost = costMap.get(item.productId) || 0;
+      const cost = Number.isFinite(item.cost) ? item.cost : (costMap.get(item.productId) || 0);
       return itemSum + (item.price - cost) * item.quantity;
     }, 0);
     // Trừ phí gửi vì đây là chi phí phát sinh của đơn
@@ -36,7 +37,7 @@ const Dashboard = ({ products, orders }) => {
     stats.revenue += order.total;
     stats.orders += 1;
     const orderProfit = order.items.reduce((sum, item) => {
-      const cost = costMap.get(item.productId) || 0;
+      const cost = Number.isFinite(item.cost) ? item.cost : (costMap.get(item.productId) || 0);
       return sum + (item.price - cost) * item.quantity;
     }, 0);
     // Trừ phí gửi vì đây là chi phí phát sinh của đơn
@@ -48,7 +49,7 @@ const Dashboard = ({ products, orders }) => {
       }
       stats.items[item.productId].quantity += item.quantity;
       stats.items[item.productId].revenue += item.price * item.quantity;
-      const cost = costMap.get(item.productId) || 0;
+      const cost = Number.isFinite(item.cost) ? item.cost : (costMap.get(item.productId) || 0);
       stats.items[item.productId].profit += (item.price - cost) * item.quantity;
     });
     return acc;
