@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 // Tách giao diện tạo đơn/danh sách đơn để file Orders.jsx gọn hơn
-import OrderCreateView from './orders/OrderCreateView';
-import OrderListView from './orders/OrderListView';
+import OrderCreateView from '../components/orders/OrderCreateView';
+import OrderListView from '../components/orders/OrderListView';
 import { formatNumber } from '../utils/helpers';
 
 const Orders = ({ products, setProducts, orders, setOrders, settings }) => {
