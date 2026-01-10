@@ -64,15 +64,15 @@ const Orders = ({ products, setProducts, orders, setOrders, settings }) => {
     }
   };
 
-  // --- 3. THANH TOÁN ---
+  // --- 3. TẠO ĐƠN ---
   const totalAmount = Object.entries(cart).reduce((sum, [id, qty]) => {
     const p = products.find(prod => prod.id === id);
     return sum + (p ? p.price * qty : 0);
   }, 0);
 
-  const handleCheckout = () => {
+  const handleCreateOrder = () => {
     if (totalAmount === 0) return;
-    if (!window.confirm(`Xác nhận thanh toán: ${formatNumber(totalAmount)}đ?`)) return;
+    if (!window.confirm(`Xác nhận tạo đơn: ${formatNumber(totalAmount)}đ?`)) return;
 
     const newOrder = {
       id: Date.now().toString(),
@@ -86,7 +86,9 @@ const Orders = ({ products, setProducts, orders, setOrders, settings }) => {
           price: p ? p.price : 0
         };
       }),
-      total: totalAmount
+      total: totalAmount,
+      shippingFee: 0,
+      status: 'pending'
     };
 
     const updatedProducts = products.map(p => {
@@ -98,6 +100,62 @@ const Orders = ({ products, setProducts, orders, setOrders, settings }) => {
     setOrders([newOrder, ...orders]);
     setCart({});
     setView('list');
+  };
+
+  // --- 3.1. XUẤT VỀ VN & NHẬP PHÍ GỬI ---
+  const handleExportToVietnam = (orderId) => {
+    const order = orders.find(item => item.id === orderId);
+    if (!order) return;
+
+    const currentFee = order.shippingFee || 0;
+    const feeInput = window.prompt('Nhập phí gửi về VN (đ)', currentFee || '');
+    if (feeInput === null) return;
+
+    const feeValue = Number(feeInput);
+    if (Number.isNaN(feeValue) || feeValue < 0) {
+      alert('Phí gửi không hợp lệ.');
+      return;
+    }
+
+    const nextOrders = orders.map(item => {
+      if (item.id !== orderId) return item;
+      return {
+        ...item,
+        shippingFee: feeValue,
+        status: 'exported'
+      };
+    });
+
+    setOrders(nextOrders);
+  };
+
+  // --- 3.2. THANH TOÁN ĐƠN ---
+  const handleMarkPaid = (orderId) => {
+    const order = orders.find(item => item.id === orderId);
+    if (!order) return;
+
+    if (!window.confirm(`Xác nhận đã thanh toán cho đơn #${order.id.slice(-4)}?`)) return;
+
+    const nextOrders = orders.map(item => {
+      if (item.id !== orderId) return item;
+      return {
+        ...item,
+        status: 'paid'
+      };
+    });
+
+    setOrders(nextOrders);
+  };
+
+  const getOrderStatusLabel = (status) => {
+    switch (status) {
+      case 'paid':
+        return 'Đã thanh toán';
+      case 'exported':
+        return 'Đã xuất VN';
+      default:
+        return 'Chờ gom';
+    }
   };
 
   // --- 4. BỘ LỌC SẢN PHẨM (Kết hợp Tìm kiếm + Danh mục) ---
@@ -254,15 +312,15 @@ const Orders = ({ products, setProducts, orders, setOrders, settings }) => {
           )}
         </div>
 
-        {/* Thanh Toán */}
+        {/* Tạo Đơn */}
         {totalAmount > 0 && (
           <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 pb-safe-area z-[60] shadow-[0_-4px_15px_rgba(0,0,0,0.1)] animate-slide-up">
             <div className="flex justify-between items-center mb-3">
-              <span className="text-gray-500 font-medium text-sm">Tổng thanh toán:</span>
+              <span className="text-gray-500 font-medium text-sm">Tổng đơn hàng:</span>
               <span className="text-2xl font-bold text-indigo-600">{formatNumber(totalAmount)}đ</span>
             </div>
-            <button onClick={handleCheckout} className="w-full bg-indigo-600 text-white py-3.5 rounded-xl font-bold shadow-lg shadow-indigo-200 active:scale-95 transition flex items-center justify-center gap-2 text-lg">
-              <ShoppingCart size={20} /> Thanh toán ngay
+            <button onClick={handleCreateOrder} className="w-full bg-indigo-600 text-white py-3.5 rounded-xl font-bold shadow-lg shadow-indigo-200 active:scale-95 transition flex items-center justify-center gap-2 text-lg">
+              <ShoppingCart size={20} /> Lên đơn
             </button>
           </div>
         )}
@@ -284,7 +342,15 @@ const Orders = ({ products, setProducts, orders, setOrders, settings }) => {
           <div key={order.id} className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 hover:border-indigo-100 transition">
             <div className="flex justify-between mb-2">
               <span className="font-bold text-gray-800 text-lg">#{order.id.slice(-4)}</span>
-               <span className="text-indigo-600 font-bold text-lg bg-indigo-50 px-2 py-0.5 rounded">{formatNumber(order.total)}đ</span>
+              <span className="text-indigo-600 font-bold text-lg bg-indigo-50 px-2 py-0.5 rounded">{formatNumber(order.total)}đ</span>
+            </div>
+            <div className="flex items-center justify-between text-xs text-gray-500 mb-2">
+              <span className="inline-flex items-center gap-1 bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full border border-gray-200">
+                {getOrderStatusLabel(order.status)}
+              </span>
+              <span className="text-gray-400">
+                Phí gửi: {formatNumber(order.shippingFee || 0)}đ
+              </span>
             </div>
             <div className="text-xs text-gray-400 mb-3 flex items-center gap-1">
               {new Date(order.date).toLocaleString()}
@@ -293,9 +359,23 @@ const Orders = ({ products, setProducts, orders, setOrders, settings }) => {
               {order.items.map((item, i) => (
                 <div key={i} className="flex justify-between text-sm text-gray-600">
                   <span>{item.name} <span className="text-gray-400 text-xs">x{item.quantity}</span></span>
-                   <span className="font-medium text-gray-500">{formatNumber(item.price * item.quantity)}đ</span>
+                  <span className="font-medium text-gray-500">{formatNumber(item.price * item.quantity)}đ</span>
                 </div>
               ))}
+            </div>
+            <div className="mt-3 flex flex-wrap justify-end gap-2">
+              <button
+                onClick={() => handleMarkPaid(order.id)}
+                className="text-xs font-semibold text-emerald-600 bg-emerald-50 border border-emerald-100 px-3 py-1.5 rounded-full hover:bg-emerald-100 transition"
+              >
+                {order.status === 'paid' ? 'Đã thanh toán' : 'Thanh toán'}
+              </button>
+              <button
+                onClick={() => handleExportToVietnam(order.id)}
+                className="text-xs font-semibold text-indigo-600 bg-indigo-50 border border-indigo-100 px-3 py-1.5 rounded-full hover:bg-indigo-100 transition"
+              >
+                {order.status === 'exported' ? 'Cập nhật phí gửi' : 'Xuất về VN'}
+              </button>
             </div>
           </div>
         ))}
