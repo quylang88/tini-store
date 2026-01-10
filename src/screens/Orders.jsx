@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 // Tách giao diện tạo đơn/danh sách đơn để file Orders.jsx gọn hơn
 import OrderCreateView from './orders/OrderCreateView';
 import OrderListView from './orders/OrderListView';
@@ -74,15 +74,28 @@ const Orders = ({ products, setProducts, orders, setOrders, settings }) => {
     return sum + (p ? p.price * qty : 0);
   }, 0);
 
+  // Lưu giá vốn ngay trong item để lợi nhuận không bị sai khi giá vốn thay đổi về sau
   const buildOrderItems = () => Object.entries(cart).map(([id, qty]) => {
     const p = products.find(prod => prod.id === id);
     return {
       productId: id,
       quantity: qty,
       name: p ? p.name : 'SP đã xóa',
-      price: p ? p.price : 0
+      price: p ? p.price : 0,
+      cost: p ? p.cost || 0 : 0
     };
   });
+
+  // Tự động chuyển dữ liệu cũ: trạng thái "exported" -> lưu cờ phí gửi, trả về pending
+  useEffect(() => {
+    const hasLegacyExported = orders.some(order => order.status === 'exported' && !order.shippingUpdated);
+    if (!hasLegacyExported) return;
+    const nextOrders = orders.map(order => {
+      if (order.status !== 'exported') return order;
+      return { ...order, status: 'pending', shippingUpdated: true };
+    });
+    setOrders(nextOrders);
+  }, [orders, setOrders]);
 
   const handleCreateOrder = () => {
     if (totalAmount === 0) return;
@@ -94,6 +107,7 @@ const Orders = ({ products, setProducts, orders, setOrders, settings }) => {
       items: buildOrderItems(),
       total: totalAmount,
       shippingFee: 0,
+      shippingUpdated: false,
       status: 'pending'
     };
 
@@ -131,6 +145,7 @@ const Orders = ({ products, setProducts, orders, setOrders, settings }) => {
       ...orderBeingEdited,
       items: buildOrderItems(),
       total: totalAmount,
+      shippingUpdated: orderBeingEdited.shippingUpdated || false,
       status: shouldResetPaid ? 'pending' : orderBeingEdited.status
     };
 
@@ -182,25 +197,31 @@ const Orders = ({ products, setProducts, orders, setOrders, settings }) => {
       return {
         ...item,
         shippingFee: feeValue,
-        status: 'exported'
+        shippingUpdated: true,
+        // Chỉ cập nhật phí gửi, không đổi trạng thái thanh toán
+        status: item.status
       };
     });
 
     setOrders(nextOrders);
   };
 
-  // --- 3.2. THANH TOÁN ĐƠN ---
-  const handleMarkPaid = (orderId) => {
+  // --- 3.2. THANH TOÁN / HUỶ THANH TOÁN ---
+  const handleTogglePaid = (orderId) => {
     const order = orders.find(item => item.id === orderId);
     if (!order) return;
 
-    if (!window.confirm(`Xác nhận đã thanh toán cho đơn #${order.id.slice(-4)}?`)) return;
+    if (order.status === 'paid') {
+      if (!window.confirm(`Huỷ trạng thái đã thanh toán cho đơn #${order.id.slice(-4)}?`)) return;
+    } else {
+      if (!window.confirm(`Xác nhận đã thanh toán cho đơn #${order.id.slice(-4)}?`)) return;
+    }
 
     const nextOrders = orders.map(item => {
       if (item.id !== orderId) return item;
       return {
         ...item,
-        status: 'paid'
+        status: item.status === 'paid' ? 'pending' : 'paid'
       };
     });
 
@@ -223,15 +244,16 @@ const Orders = ({ products, setProducts, orders, setOrders, settings }) => {
     setOrders(orders.filter(item => item.id !== orderId));
   };
 
-  const getOrderStatusLabel = (status) => {
-    switch (status) {
-      case 'paid':
-        return 'Đã thanh toán';
-      case 'exported':
-        return 'Đã xuất VN';
-      default:
-        return 'Chờ gom';
+  // Trả về nhãn + màu sắc để trạng thái nhìn rõ ràng, dễ phân biệt
+  const getOrderStatusInfo = (order) => {
+    const hasShipping = order.shippingUpdated || order.shippingFee > 0;
+    if (order.status === 'paid') {
+      return { label: 'Đã thanh toán', dotClass: 'bg-emerald-500', badgeClass: 'bg-emerald-50 text-emerald-700 border-emerald-100' };
     }
+    if (hasShipping) {
+      return { label: 'Đã xuất VN', dotClass: 'bg-indigo-500', badgeClass: 'bg-indigo-50 text-indigo-700 border-indigo-100' };
+    }
+    return { label: 'Chờ gom', dotClass: 'bg-amber-500', badgeClass: 'bg-amber-50 text-amber-700 border-amber-100' };
   };
 
   // --- 4. BỘ LỌC SẢN PHẨM (Kết hợp Tìm kiếm + Danh mục) ---
@@ -276,8 +298,8 @@ const Orders = ({ products, setProducts, orders, setOrders, settings }) => {
     <OrderListView
       orders={orders}
       setView={setView}
-      getOrderStatusLabel={getOrderStatusLabel}
-      handleMarkPaid={handleMarkPaid}
+      getOrderStatusInfo={getOrderStatusInfo}
+      handleTogglePaid={handleTogglePaid}
       handleExportToVietnam={handleExportToVietnam}
       handleEditOrder={handleEditOrder}
       handleCancelOrder={handleCancelOrder}
