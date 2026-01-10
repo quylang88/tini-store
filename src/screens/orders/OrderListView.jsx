@@ -1,0 +1,86 @@
+import React from 'react';
+import { Plus, ShoppingCart } from 'lucide-react';
+import { formatNumber } from '../../utils/helpers';
+
+// Giao diện danh sách đơn tách riêng để dễ quản lý và thêm nút huỷ đơn
+const OrderListView = ({
+  orders,
+  setView,
+  getOrderStatusLabel,
+  handleMarkPaid,
+  handleExportToVietnam,
+  handleEditOrder,
+  handleCancelOrder
+}) => (
+  <div className="flex flex-col h-full bg-gray-50 pb-20">
+    <div className="bg-white p-4 border-b border-gray-200 sticky top-0 z-10 flex justify-between items-center shadow-sm">
+      <h2 className="text-xl font-bold text-gray-800">Lịch sử đơn</h2>
+      <button onClick={() => setView('create')} className="bg-indigo-600 text-white px-4 py-2 rounded-xl text-sm font-bold shadow-md shadow-indigo-200 active:scale-95 transition flex items-center gap-2">
+        <Plus size={18} /> Đơn mới
+      </button>
+    </div>
+    <div className="flex-1 overflow-y-auto p-3 space-y-3">
+      {orders.map(order => (
+        <div key={order.id} className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 hover:border-indigo-100 transition">
+          <div className="flex justify-between mb-2">
+            <span className="font-bold text-gray-800 text-lg">#{order.id.slice(-4)}</span>
+            <span className="text-indigo-600 font-bold text-lg bg-indigo-50 px-2 py-0.5 rounded">{formatNumber(order.total)}đ</span>
+          </div>
+          <div className="flex items-center justify-between text-xs text-gray-500 mb-2">
+            <span className="inline-flex items-center gap-1 bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full border border-gray-200">
+              {getOrderStatusLabel(order.status)}
+            </span>
+            <span className="text-gray-400">
+              Phí gửi: {formatNumber(order.shippingFee || 0)}đ
+            </span>
+          </div>
+          <div className="text-xs text-gray-400 mb-3 flex items-center gap-1">
+            {new Date(order.date).toLocaleString()}
+          </div>
+          <div className="border-t border-dashed border-gray-200 pt-2 space-y-1">
+            {order.items.map((item, i) => (
+              <div key={i} className="flex justify-between text-sm text-gray-600">
+                <span>{item.name} <span className="text-gray-400 text-xs">x{item.quantity}</span></span>
+                <span className="font-medium text-gray-500">{formatNumber(item.price * item.quantity)}đ</span>
+              </div>
+            ))}
+          </div>
+          <div className="mt-3 flex flex-wrap justify-end gap-2">
+            <button
+              onClick={() => handleMarkPaid(order.id)}
+              className="text-xs font-semibold text-emerald-600 bg-emerald-50 border border-emerald-100 px-3 py-1.5 rounded-full hover:bg-emerald-100 transition"
+            >
+              {order.status === 'paid' ? 'Đã thanh toán' : 'Thanh toán'}
+            </button>
+            <button
+              onClick={() => handleExportToVietnam(order.id)}
+              className="text-xs font-semibold text-indigo-600 bg-indigo-50 border border-indigo-100 px-3 py-1.5 rounded-full hover:bg-indigo-100 transition"
+            >
+              {order.status === 'exported' ? 'Cập nhật phí gửi' : 'Xuất về VN'}
+            </button>
+            <button
+              onClick={() => handleEditOrder(order)}
+              className="text-xs font-semibold text-amber-600 bg-amber-50 border border-amber-100 px-3 py-1.5 rounded-full hover:bg-amber-100 transition"
+            >
+              Sửa đơn
+            </button>
+            <button
+              onClick={() => handleCancelOrder(order.id)}
+              className="text-xs font-semibold text-red-600 bg-red-50 border border-red-100 px-3 py-1.5 rounded-full hover:bg-red-100 transition"
+            >
+              Huỷ đơn
+            </button>
+          </div>
+        </div>
+      ))}
+      {orders.length === 0 && (
+        <div className="flex flex-col items-center justify-center mt-20 text-gray-400">
+          <ShoppingCart size={48} className="mb-2 opacity-20" />
+          <p>Chưa có đơn hàng nào</p>
+        </div>
+      )}
+    </div>
+  </div>
+);
+
+export default OrderListView;
