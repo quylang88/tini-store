@@ -7,13 +7,18 @@ const Dashboard = ({ products, orders }) => {
   const [expandedMonth, setExpandedMonth] = useState(null);
 
   const costMap = new Map(products.map(product => [product.id, product.cost || 0]));
-  const totalRevenue = orders.reduce((sum, order) => sum + order.total, 0);
-  const totalProfit = orders.reduce((sum, order) => {
+  // Chỉ tính doanh thu/lợi nhuận với đơn đã thanh toán để tránh âm do đơn chưa chốt
+  const paidOrders = orders.filter(order => order.status === 'paid');
+  const totalRevenue = paidOrders.reduce((sum, order) => sum + order.total, 0);
+  const totalProfit = paidOrders.reduce((sum, order) => {
+    // Ưu tiên dùng giá vốn đã lưu trong đơn để lợi nhuận không bị lệch khi giá vốn thay đổi
     const orderProfit = order.items.reduce((itemSum, item) => {
-      const cost = costMap.get(item.productId) || 0;
+      const cost = Number.isFinite(item.cost) ? item.cost : (costMap.get(item.productId) || 0);
       return itemSum + (item.price - cost) * item.quantity;
     }, 0);
-    return sum + orderProfit;
+    // Trừ phí gửi vì đây là chi phí phát sinh của đơn
+    const shippingFee = order.shippingFee || 0;
+    return sum + orderProfit - shippingFee;
   }, 0);
   const totalOrders = orders.length;
 
@@ -23,7 +28,7 @@ const Dashboard = ({ products, orders }) => {
     return `Tháng ${month}/${year}`;
   };
 
-  const monthlyStats = orders.reduce((acc, order) => {
+  const monthlyStats = paidOrders.reduce((acc, order) => {
     const key = monthKey(new Date(order.date));
     if (!acc[key]) {
       acc[key] = { revenue: 0, profit: 0, orders: 0, items: {} };
@@ -32,17 +37,19 @@ const Dashboard = ({ products, orders }) => {
     stats.revenue += order.total;
     stats.orders += 1;
     const orderProfit = order.items.reduce((sum, item) => {
-      const cost = costMap.get(item.productId) || 0;
+      const cost = Number.isFinite(item.cost) ? item.cost : (costMap.get(item.productId) || 0);
       return sum + (item.price - cost) * item.quantity;
     }, 0);
-    stats.profit += orderProfit;
+    // Trừ phí gửi vì đây là chi phí phát sinh của đơn
+    const shippingFee = order.shippingFee || 0;
+    stats.profit += orderProfit - shippingFee;
     order.items.forEach((item) => {
       if (!stats.items[item.productId]) {
         stats.items[item.productId] = { name: item.name, quantity: 0, revenue: 0, profit: 0 };
       }
       stats.items[item.productId].quantity += item.quantity;
       stats.items[item.productId].revenue += item.price * item.quantity;
-      const cost = costMap.get(item.productId) || 0;
+      const cost = Number.isFinite(item.cost) ? item.cost : (costMap.get(item.productId) || 0);
       stats.items[item.productId].profit += (item.price - cost) * item.quantity;
     });
     return acc;
@@ -73,7 +80,8 @@ const Dashboard = ({ products, orders }) => {
 
   // Logic tìm top 3 sản phẩm bán chạy
   const topProducts = products.map(p => {
-    const sold = orders.reduce((acc, order) => {
+    // Chỉ tính bán chạy dựa trên đơn đã thanh toán
+    const sold = paidOrders.reduce((acc, order) => {
       const item = order.items.find(i => i.productId === p.id);
       return acc + (item ? item.quantity : 0);
     }, 0);
