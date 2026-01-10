@@ -45,10 +45,16 @@ const Login = ({ onLogin }) => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-amber-50 via-rose-50 to-orange-100 flex items-center justify-center p-4">
       <div className="bg-white/90 w-full max-w-sm rounded-2xl shadow-xl backdrop-blur overflow-hidden animate-fade-in border border-white/70">
-        <div
-          className="h-32 bg-cover bg-center"
-          style={{ backgroundImage: "url('/tiny-shop.png')" }}
-        />
+        <div className="h-32 overflow-hidden">
+          <img
+            src="/tiny-shop.png"
+            alt="Tiny Shop"
+            className="h-full w-full object-cover"
+            loading="eager"
+            fetchPriority="high"
+            decoding="sync"
+          />
+        </div>
 
         {/* Form */}
         <div className="p-8">
