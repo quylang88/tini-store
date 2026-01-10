@@ -7,6 +7,7 @@ const Orders = ({ products, setProducts, orders, setOrders, settings }) => {
   const [view, setView] = useState('list'); // 'list' | 'create'
   const [cart, setCart] = useState({});
   const [showScanner, setShowScanner] = useState(false);
+  const [editingOrderId, setEditingOrderId] = useState(null);
 
   // State cho bộ lọc
   const [activeCategory, setActiveCategory] = useState('Tất cả');
@@ -65,10 +66,27 @@ const Orders = ({ products, setProducts, orders, setOrders, settings }) => {
   };
 
   // --- 3. TẠO ĐƠN ---
+  const orderBeingEdited = editingOrderId ? orders.find(item => item.id === editingOrderId) : null;
+  const getAvailableStock = (productId, stock) => {
+    if (!orderBeingEdited) return stock;
+    const previousQty = orderBeingEdited.items.find(item => item.productId === productId)?.quantity || 0;
+    return stock + previousQty;
+  };
+
   const totalAmount = Object.entries(cart).reduce((sum, [id, qty]) => {
     const p = products.find(prod => prod.id === id);
     return sum + (p ? p.price * qty : 0);
   }, 0);
+
+  const buildOrderItems = () => Object.entries(cart).map(([id, qty]) => {
+    const p = products.find(prod => prod.id === id);
+    return {
+      productId: id,
+      quantity: qty,
+      name: p ? p.name : 'SP đã xóa',
+      price: p ? p.price : 0
+    };
+  });
 
   const handleCreateOrder = () => {
     if (totalAmount === 0) return;
@@ -77,15 +95,7 @@ const Orders = ({ products, setProducts, orders, setOrders, settings }) => {
     const newOrder = {
       id: Date.now().toString(),
       date: new Date().toISOString(),
-      items: Object.entries(cart).map(([id, qty]) => {
-        const p = products.find(prod => prod.id === id);
-        return {
-          productId: id,
-          quantity: qty,
-          name: p ? p.name : 'SP đã xóa',
-          price: p ? p.price : 0
-        };
-      }),
+      items: buildOrderItems(),
       total: totalAmount,
       shippingFee: 0,
       status: 'pending'
@@ -100,6 +110,56 @@ const Orders = ({ products, setProducts, orders, setOrders, settings }) => {
     setOrders([newOrder, ...orders]);
     setCart({});
     setView('list');
+  };
+
+  const handleUpdateOrder = () => {
+    if (!orderBeingEdited) return;
+    if (totalAmount === 0) return;
+    if (!window.confirm(`Cập nhật đơn #${orderBeingEdited.id.slice(-4)}: ${formatNumber(totalAmount)}đ?`)) return;
+
+    const restoredProducts = products.map(p => {
+      const previousQty = orderBeingEdited.items.find(item => item.productId === p.id)?.quantity || 0;
+      return { ...p, stock: p.stock + previousQty };
+    });
+
+    const updatedProducts = restoredProducts.map(p => {
+      const newQty = cart[p.id] || 0;
+      if (newQty) return { ...p, stock: p.stock - newQty };
+      return p;
+    });
+
+    const updatedOrder = {
+      ...orderBeingEdited,
+      items: buildOrderItems(),
+      total: totalAmount
+    };
+
+    const nextOrders = orders.map(item => (item.id === editingOrderId ? updatedOrder : item));
+
+    setProducts(updatedProducts);
+    setOrders(nextOrders);
+    setCart({});
+    setEditingOrderId(null);
+    setView('list');
+  };
+
+  const handleEditOrder = (order) => {
+    const nextCart = {};
+    order.items.forEach(item => {
+      const productExists = products.some(p => p.id === item.productId);
+      if (productExists) nextCart[item.productId] = item.quantity;
+    });
+    setCart(nextCart);
+    setEditingOrderId(order.id);
+    setView('create');
+  };
+
+  const handleExitCreate = () => {
+    setView('list');
+    if (editingOrderId) {
+      setCart({});
+      setEditingOrderId(null);
+    }
   };
 
   // --- 3.1. XUẤT VỀ VN & NHẬP PHÍ GỬI ---
@@ -185,10 +245,17 @@ const Orders = ({ products, setProducts, orders, setOrders, settings }) => {
           {/* Hàng 1: Tiêu đề & Nút chức năng */}
           <div className="p-3 border-b border-gray-100 flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <button onClick={() => setView('list')} className="p-2 hover:bg-gray-100 rounded-full transition">
+              <button onClick={handleExitCreate} className="p-2 hover:bg-gray-100 rounded-full transition">
                 <ChevronRight className="rotate-180 text-gray-600" />
               </button>
-              <h2 className="text-xl font-bold text-gray-800">Tạo Đơn</h2>
+              <div>
+                <h2 className="text-xl font-bold text-gray-800">
+                  {orderBeingEdited ? `Sửa đơn #${orderBeingEdited.id.slice(-4)}` : 'Tạo Đơn'}
+                </h2>
+                {orderBeingEdited && (
+                  <div className="text-xs text-gray-400">Chỉnh sửa số lượng sản phẩm trong đơn</div>
+                )}
+              </div>
             </div>
 
             <div className="flex items-center gap-2">
@@ -249,7 +316,8 @@ const Orders = ({ products, setProducts, orders, setOrders, settings }) => {
         <div className="flex-1 overflow-y-auto p-3 space-y-3 pb-40">
           {filteredProducts.map(p => {
             const qty = cart[p.id] || 0;
-            const isOutOfStock = p.stock <= 0;
+            const availableStock = getAvailableStock(p.id, p.stock);
+            const isOutOfStock = availableStock <= 0;
 
             return (
               <div key={p.id} className={`bg-white p-3 rounded-xl shadow-sm border border-gray-100 flex gap-3 items-center ${isOutOfStock ? 'opacity-50 grayscale' : ''}`}>
@@ -274,29 +342,29 @@ const Orders = ({ products, setProducts, orders, setOrders, settings }) => {
                   <div className="text-xs text-gray-500 mt-0.5">
                     <span className="font-semibold text-indigo-600">{formatNumber(p.price)}đ</span>
                     <span className="mx-1">|</span>
-                    <span>Kho: {p.stock}</span>
+                    <span>Kho: {availableStock}</span>
                   </div>
                 </div>
 
                 {/* Bộ điều khiển số lượng */}
                 {qty > 0 ? (
                   <div className="flex items-center bg-indigo-50 rounded-lg h-9 border border-indigo-100 overflow-hidden shadow-sm">
-                    <button onClick={() => adjustQuantity(p.id, -1, p.stock)} className="w-9 h-full flex items-center justify-center text-indigo-600 hover:bg-indigo-100 active:bg-indigo-200">
+                    <button onClick={() => adjustQuantity(p.id, -1, availableStock)} className="w-9 h-full flex items-center justify-center text-indigo-600 hover:bg-indigo-100 active:bg-indigo-200">
                       <Minus size={16} strokeWidth={2.5} />
                     </button>
                     <input
                       type="number"
                       className="w-12 h-full text-center bg-transparent border-x border-indigo-100 outline-none text-indigo-900 font-bold text-sm m-0 p-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                       value={qty}
-                      onChange={(e) => handleQuantityChange(p.id, e.target.value, p.stock)}
+                      onChange={(e) => handleQuantityChange(p.id, e.target.value, availableStock)}
                       onFocus={(e) => e.target.select()}
                     />
-                    <button onClick={() => adjustQuantity(p.id, 1, p.stock)} disabled={qty >= p.stock} className="w-9 h-full flex items-center justify-center text-indigo-600 hover:bg-indigo-100 active:bg-indigo-200 disabled:opacity-30">
+                    <button onClick={() => adjustQuantity(p.id, 1, availableStock)} disabled={qty >= availableStock} className="w-9 h-full flex items-center justify-center text-indigo-600 hover:bg-indigo-100 active:bg-indigo-200 disabled:opacity-30">
                       <Plus size={16} strokeWidth={2.5} />
                     </button>
                   </div>
                 ) : (
-                  <button onClick={() => adjustQuantity(p.id, 1, p.stock)} disabled={isOutOfStock} className="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg text-xs font-bold hover:bg-gray-200 active:scale-95 transition">
+                  <button onClick={() => adjustQuantity(p.id, 1, availableStock)} disabled={isOutOfStock} className="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg text-xs font-bold hover:bg-gray-200 active:scale-95 transition">
                     {isOutOfStock ? 'Hết' : 'Thêm'}
                   </button>
                 )}
@@ -319,8 +387,11 @@ const Orders = ({ products, setProducts, orders, setOrders, settings }) => {
               <span className="text-gray-500 font-medium text-sm">Tổng đơn hàng:</span>
               <span className="text-2xl font-bold text-indigo-600">{formatNumber(totalAmount)}đ</span>
             </div>
-            <button onClick={handleCreateOrder} className="w-full bg-indigo-600 text-white py-3.5 rounded-xl font-bold shadow-lg shadow-indigo-200 active:scale-95 transition flex items-center justify-center gap-2 text-lg">
-              <ShoppingCart size={20} /> Lên đơn
+            <button
+              onClick={orderBeingEdited ? handleUpdateOrder : handleCreateOrder}
+              className="w-full bg-indigo-600 text-white py-3.5 rounded-xl font-bold shadow-lg shadow-indigo-200 active:scale-95 transition flex items-center justify-center gap-2 text-lg"
+            >
+              <ShoppingCart size={20} /> {orderBeingEdited ? 'Cập nhật đơn' : 'Lên đơn'}
             </button>
           </div>
         )}
@@ -375,6 +446,12 @@ const Orders = ({ products, setProducts, orders, setOrders, settings }) => {
                 className="text-xs font-semibold text-indigo-600 bg-indigo-50 border border-indigo-100 px-3 py-1.5 rounded-full hover:bg-indigo-100 transition"
               >
                 {order.status === 'exported' ? 'Cập nhật phí gửi' : 'Xuất về VN'}
+              </button>
+              <button
+                onClick={() => handleEditOrder(order)}
+                className="text-xs font-semibold text-amber-600 bg-amber-50 border border-amber-100 px-3 py-1.5 rounded-full hover:bg-amber-100 transition"
+              >
+                Sửa đơn
               </button>
             </div>
           </div>
