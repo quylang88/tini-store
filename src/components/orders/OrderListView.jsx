@@ -5,7 +5,7 @@ import { formatNumber } from '../../utils/helpers';
 // Giao diện danh sách đơn tách riêng để dễ quản lý và thêm nút huỷ đơn
 const OrderListView = ({
   orders,
-  setView,
+  onCreateOrder,
   getOrderStatusInfo,
   handleTogglePaid,
   handleExportToVietnam,
@@ -20,7 +20,7 @@ const OrderListView = ({
         alt="Tiny Shop"
         className="h-12 w-auto object-contain"
       />
-      <button onClick={() => setView('create')} className="bg-rose-500 text-white px-4 py-2 rounded-xl text-sm font-bold shadow-md shadow-rose-200 active:scale-95 transition flex items-center gap-2">
+      <button onClick={onCreateOrder} className="bg-rose-500 text-white px-4 py-2 rounded-xl text-sm font-bold shadow-md shadow-rose-200 active:scale-95 transition flex items-center gap-2">
         <Plus size={18} /> Đơn mới
       </button>
     </div>
@@ -30,6 +30,11 @@ const OrderListView = ({
         const hasShipping = order.shippingUpdated || order.shippingFee > 0;
         const isPaid = order.status === 'paid';
         const orderLabel = order.orderNumber ? `#${order.orderNumber}` : `#${order.id.slice(-4)}`;
+        // Lợi nhuận dự kiến = (giá bán - giá vốn) - phí gửi để xem nhanh hiệu quả đơn hàng.
+        const estimatedProfit = order.items.reduce((sum, item) => {
+          const cost = item.cost || 0;
+          return sum + (item.price - cost) * item.quantity;
+        }, 0) - (order.shippingFee || 0);
         return (
           <div
             key={order.id}
@@ -52,13 +57,11 @@ const OrderListView = ({
             <div className="text-xs text-gray-400 mb-3 flex items-center gap-1">
               {new Date(order.date).toLocaleString()}
             </div>
-            <div className="border-t border-dashed border-gray-200 pt-2 space-y-1">
-              {order.items.map((item, i) => (
-                <div key={i} className="flex justify-between text-sm text-gray-600">
-                  <span>{item.name} <span className="text-gray-400 text-xs">x{item.quantity}</span></span>
-                  <span className="font-medium text-gray-500">{formatNumber(item.price * item.quantity)}đ</span>
-                </div>
-              ))}
+            <div className="border-t border-dashed border-gray-200 pt-2">
+              <div className="flex items-center justify-between text-sm text-gray-600">
+                <span>Lợi nhuận dự kiến</span>
+                <span className="font-semibold text-emerald-600">{formatNumber(estimatedProfit)}đ</span>
+              </div>
             </div>
             <div className="mt-3 flex flex-wrap justify-end gap-2">
               <button
