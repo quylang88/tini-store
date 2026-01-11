@@ -1,5 +1,5 @@
 import React from 'react';
-import { Image as ImageIcon, Edit, Trash2 } from 'lucide-react';
+import { Image as ImageIcon, Trash2 } from 'lucide-react';
 import { formatNumber } from '../../utils/helpers';
 
 const ProductList = ({ products, onEdit, onDelete }) => {
@@ -11,7 +11,11 @@ const ProductList = ({ products, onEdit, onDelete }) => {
         const hasProfitData = Number(product.price) > 0 && Number(product.cost) > 0;
 
         return (
-        <div key={product.id} className="bg-white p-3 rounded-xl shadow-sm border border-amber-100 flex gap-3 items-center">
+        <div
+          key={product.id}
+          onClick={() => onEdit(product)}
+          className="bg-white p-3 rounded-xl shadow-sm border border-amber-100 flex gap-3 items-center cursor-pointer hover:shadow-md transition"
+        >
           <div className="w-16 h-16 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0 border border-gray-200 relative">
             {product.image ? (
               <img src={product.image} className="w-full h-full object-cover" alt={product.name} />
@@ -30,19 +34,10 @@ const ProductList = ({ products, onEdit, onDelete }) => {
             <div className="flex justify-between items-end mt-1">
               <div>
                 <div className="text-amber-700 font-bold text-sm">{formatNumber(product.price)}đ</div>
-                {product.cost > 0 && (
-                  <>
-                    <div className="text-[10px] text-gray-400">
-                      {product.costJPY > 0
-                        ? `Vốn: ¥${formatNumber(product.costJPY)} (${formatNumber(product.cost)}đ)`
-                        : `Vốn: ${formatNumber(product.cost)}đ`}
-                    </div>
-                    {hasProfitData && (
-                      <div className="text-[10px] text-emerald-600">
-                        Lợi nhuận dự kiến: {formatNumber(expectedProfit)}đ
-                      </div>
-                    )}
-                  </>
+                {hasProfitData && (
+                  <div className="text-[10px] text-emerald-600">
+                    Lợi nhuận dự kiến: {formatNumber(expectedProfit)}đ
+                  </div>
                 )}
               </div>
               <div className={`text-xs font-medium ${product.stock < 5 ? 'text-red-500' : 'text-gray-500'}`}>
@@ -50,9 +45,17 @@ const ProductList = ({ products, onEdit, onDelete }) => {
               </div>
             </div>
           </div>
-          <div className="flex flex-col gap-2 pl-2 border-l border-amber-100">
-            <button onClick={() => onEdit(product)} className="text-gray-400 hover:text-rose-600"><Edit size={18} /></button>
-            <button onClick={() => onDelete(product.id)} className="text-gray-400 hover:text-red-500"><Trash2 size={18} /></button>
+          <div className="pl-2 border-l border-amber-100">
+            <button
+              onClick={(event) => {
+                event.stopPropagation();
+                onDelete(product.id);
+              }}
+              className="w-9 h-9 rounded-full bg-rose-50 text-rose-600 hover:bg-rose-100 flex items-center justify-center shadow-sm"
+              aria-label={`Xoá ${product.name}`}
+            >
+              <Trash2 size={20} />
+            </button>
           </div>
         </div>
         );

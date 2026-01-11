@@ -121,8 +121,8 @@ const Dashboard = ({ products, orders }) => {
           <div className="text-xl font-bold">{formatNumber(totalProfit)}đ</div>
         </div>
 
-        <div className="bg-white text-gray-800 p-4 rounded-2xl shadow-sm border border-gray-100 col-span-2">
-          <div className="flex items-center gap-2 text-gray-500 mb-2">
+        <div className="bg-white text-amber-900 p-4 rounded-2xl shadow-sm border border-gray-100 col-span-2">
+          <div className="flex items-center gap-2 text-amber-700 mb-2">
             <ShoppingCart size={18} />
             <span className="text-xs font-bold uppercase">Đơn hàng</span>
           </div>
@@ -132,15 +132,15 @@ const Dashboard = ({ products, orders }) => {
 
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 space-y-4">
         <div className="flex items-center justify-between">
-          <h3 className="font-bold text-gray-700 text-sm uppercase">Thống kê theo tháng</h3>
-          <span className="text-xs text-gray-400">6 tháng gần nhất</span>
+          <h3 className="font-bold text-amber-800 text-sm uppercase">Thống kê theo tháng</h3>
+          <span className="text-xs text-amber-500">6 tháng gần nhất</span>
         </div>
 
         {/* Biểu đồ cột đơn giản cho doanh thu và lợi nhuận */}
         <div className="bg-gray-50 border border-gray-100 rounded-xl p-4">
           {monthlyChartData.length > 0 ? (
             <div className="space-y-4">
-              <div className="flex items-center gap-4 text-xs text-gray-500">
+              <div className="flex items-center gap-4 text-xs text-amber-700">
                 <div className="flex items-center gap-2">
                   <span className="inline-block w-3 h-3 rounded-full bg-rose-300"></span>
                   <span>Doanh thu</span>
@@ -165,7 +165,7 @@ const Dashboard = ({ products, orders }) => {
                         title={`Lợi nhuận: ${formatNumber(item.profit)}đ`}
                       />
                     </div>
-                    <div className="text-[10px] text-gray-500 text-center leading-tight">
+                    <div className="text-[10px] text-amber-700 text-center leading-tight">
                       {item.label}
                     </div>
                   </div>
@@ -173,7 +173,7 @@ const Dashboard = ({ products, orders }) => {
               </div>
             </div>
           ) : (
-            <div className="text-center text-xs text-gray-400">Chưa có dữ liệu thống kê.</div>
+            <div className="text-center text-xs text-amber-500">Chưa có dữ liệu thống kê.</div>
           )}
         </div>
 
@@ -197,11 +197,11 @@ const Dashboard = ({ products, orders }) => {
                     <div key={key} className="border border-gray-100 rounded-xl p-3">
                       <div className="flex items-center justify-between">
                         <div>
-                          <div className="text-sm font-semibold text-gray-800">{monthLabel(key)}</div>
-                          <div className="text-xs text-gray-500">
+                          <div className="text-sm font-semibold text-amber-900">{monthLabel(key)}</div>
+                          <div className="text-xs text-amber-700">
                             Doanh thu: {formatNumber(stats.revenue)}đ • Lợi nhuận: {formatNumber(stats.profit)}đ
                           </div>
-                          <div className="text-xs text-gray-400">Đơn: {stats.orders}</div>
+                          <div className="text-xs text-amber-500">Đơn: {stats.orders}</div>
                         </div>
                         <button
                           onClick={() => setExpandedMonth(isExpanded ? null : key)}
@@ -213,16 +213,16 @@ const Dashboard = ({ products, orders }) => {
 
                       {isExpanded && (
                         <div className="mt-3 border-t border-dashed border-gray-200 pt-3 space-y-2">
-                          <div className="text-[11px] font-semibold uppercase text-gray-400">Top sản phẩm</div>
+                          <div className="text-[11px] font-semibold uppercase text-amber-500">Top sản phẩm</div>
                           {topItems.length > 0 ? (
                             topItems.map((item) => (
-                              <div key={item.name} className="flex justify-between text-sm text-gray-600">
-                                <span>{item.name} <span className="text-xs text-gray-400">x{item.quantity}</span></span>
+                              <div key={item.name} className="flex justify-between text-sm text-amber-800">
+                                <span>{item.name} <span className="text-xs text-amber-500">x{item.quantity}</span></span>
                                 <span className="font-medium">{formatNumber(item.revenue)}đ</span>
                               </div>
                             ))
                           ) : (
-                            <div className="text-xs text-gray-400">Không có dữ liệu chi tiết.</div>
+                            <div className="text-xs text-amber-500">Không có dữ liệu chi tiết.</div>
                           )}
                         </div>
                       )}
@@ -236,11 +236,11 @@ const Dashboard = ({ products, orders }) => {
       </div>
 
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4">
-        <h3 className="font-bold text-gray-700 mb-3 text-sm uppercase">Top bán chạy</h3>
+        <h3 className="font-bold text-amber-800 mb-3 text-sm uppercase">Top bán chạy</h3>
         <div className="space-y-3">
           {topProducts.map((p, idx) => (
             <div key={p.id} className="flex items-center gap-3">
-              <div className="font-bold text-gray-300 w-4">#{idx + 1}</div>
+              <div className="font-bold text-amber-300 w-4">#{idx + 1}</div>
               <div className="w-10 h-10 rounded-lg bg-gray-100 overflow-hidden flex-shrink-0 border border-gray-200">
                 {p.image ? (
                   <img src={p.image} className="w-full h-full object-cover" alt="" />
@@ -249,12 +249,12 @@ const Dashboard = ({ products, orders }) => {
                 )}
               </div>
               <div className="flex-1">
-                <div className="font-medium text-sm text-gray-800">{p.name}</div>
-                <div className="text-xs text-gray-500">Lợi nhuận: {formatNumber(p.profit)}đ</div>
+                <div className="font-medium text-sm text-amber-900">{p.name}</div>
+                <div className="text-xs text-amber-700">Lợi nhuận: {formatNumber(p.profit)}đ</div>
               </div>
             </div>
           ))}
-          {topProducts.length === 0 && <div className="text-center text-gray-400 text-sm">Chưa có dữ liệu bán hàng</div>}
+          {topProducts.length === 0 && <div className="text-center text-amber-500 text-sm">Chưa có dữ liệu bán hàng</div>}
         </div>
       </div>
     </div>

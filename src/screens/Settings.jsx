@@ -117,20 +117,20 @@ const Settings = ({ products, orders, setProducts, setOrders, settings, setSetti
 
       {/* 1. Cấu hình Tiền tệ */}
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-        <div className="p-4 border-b border-gray-50 font-bold text-gray-700 flex items-center gap-2">
+        <div className="p-4 border-b border-gray-50 font-bold text-amber-800 flex items-center gap-2">
           <RefreshCw size={18} className="text-blue-500" />
           Cấu hình Tiền tệ
         </div>
         <div className="p-4 space-y-4">
           <div>
-            <label className="block text-xs font-bold text-gray-500 uppercase mb-2">
+            <label className="block text-xs font-bold text-amber-700 uppercase mb-2">
               Tỷ giá nhập hàng (JPY ➔ VND)
             </label>
             <div className="flex gap-2">
               <div className="relative flex-1">
                 <input
                   inputMode="numeric"
-                  className="w-full border border-gray-200 rounded-lg pl-3 pr-12 py-3 outline-none focus:border-rose-400 font-medium text-lg"
+                  className="w-full border border-gray-200 rounded-lg pl-3 pr-12 py-3 outline-none focus:border-rose-400 font-medium text-lg text-amber-900"
                   value={formatInputNumber(settings.exchangeRate)}
                   onChange={(e) => {
                     const rawValue = sanitizeNumberInput(e.target.value);
@@ -139,7 +139,7 @@ const Settings = ({ products, orders, setProducts, setOrders, settings, setSetti
                   }}
                   placeholder="Ví dụ: 175"
                 />
-                <span className="absolute right-3 top-3.5 text-gray-400 text-sm font-bold">VND</span>
+                <span className="absolute right-3 top-3.5 text-amber-500 text-sm font-bold">VND</span>
               </div>
               <button
                 onClick={fetchOnlineRate}
@@ -156,7 +156,7 @@ const Settings = ({ products, orders, setProducts, setOrders, settings, setSetti
                 )}
               </button>
             </div>
-            <p className="text-xs text-gray-400 mt-2">
+            <p className="text-xs text-amber-600 mt-2">
               * Tỷ giá này sẽ được tự động điền khi bạn nhập hàng mới. Bạn nên nhập tỷ giá thực tế mua vào.
             </p>
           </div>
@@ -165,14 +165,14 @@ const Settings = ({ products, orders, setProducts, setOrders, settings, setSetti
 
       {/* 2. Quản lý Danh mục */}
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-        <div className="p-4 border-b border-gray-50 font-bold text-gray-700 flex items-center gap-2">
+        <div className="p-4 border-b border-gray-50 font-bold text-amber-800 flex items-center gap-2">
           <Plus size={18} className="text-green-500" />
           Danh mục sản phẩm
         </div>
         <div className="p-4 space-y-4">
           <div className="flex gap-2">
             <input
-              className="flex-1 border border-gray-200 rounded-lg px-3 py-2 outline-none focus:border-rose-400 text-sm"
+              className="flex-1 border border-gray-200 rounded-lg px-3 py-2 outline-none focus:border-rose-400 text-sm text-amber-900"
               placeholder="Nhập tên danh mục mới..."
               value={newCategory}
               onChange={(e) => setNewCategory(e.target.value)}
@@ -188,12 +188,12 @@ const Settings = ({ products, orders, setProducts, setOrders, settings, setSetti
 
           <div className="flex flex-wrap gap-2 pt-2">
             {settings.categories.map(cat => (
-              <div key={cat} className="bg-gray-100 text-gray-700 px-3 py-1.5 rounded-full text-sm flex items-center gap-2 border border-gray-200">
+              <div key={cat} className="bg-gray-100 text-amber-800 px-3 py-1.5 rounded-full text-sm flex items-center gap-2 border border-gray-200">
                 {cat}
                 {cat !== 'Chung' && (
                   <button
                     onClick={() => handleDeleteCategory(cat)}
-                    className="text-gray-400 hover:text-red-500 p-0.5 rounded-full hover:bg-gray-200 transition"
+                    className="text-amber-500 hover:text-red-500 p-0.5 rounded-full hover:bg-gray-200 transition"
                   >
                     <X size={14} />
                   </button>
@@ -206,12 +206,12 @@ const Settings = ({ products, orders, setProducts, setOrders, settings, setSetti
 
       {/* 3. Sao lưu & Khôi phục */}
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-        <div className="p-4 border-b border-gray-50 font-bold text-gray-700 flex items-center gap-2">
+        <div className="p-4 border-b border-gray-50 font-bold text-amber-800 flex items-center gap-2">
           <Download size={18} className="text-orange-500" />
           Sao lưu & Khôi phục
         </div>
         <div className="p-4 space-y-4">
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-amber-700">
             Dữ liệu hiện tại chỉ lưu trên trình duyệt này. Hãy tải về máy thường xuyên để tránh mất dữ liệu.
           </p>
 
@@ -227,7 +227,7 @@ const Settings = ({ products, orders, setProducts, setOrders, settings, setSetti
               <div className="w-full border-t border-gray-200"></div>
             </div>
             <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-white text-gray-400">hoặc</span>
+              <span className="px-2 bg-white text-amber-500">hoặc</span>
             </div>
           </div>
 
@@ -238,7 +238,7 @@ const Settings = ({ products, orders, setProducts, setOrders, settings, setSetti
               className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
               accept=".json"
             />
-            <button className="w-full flex items-center justify-center gap-2 bg-gray-100 text-gray-700 py-3 rounded-xl font-bold group-hover:bg-gray-200 transition border border-gray-200">
+            <button className="w-full flex items-center justify-center gap-2 bg-gray-100 text-amber-800 py-3 rounded-xl font-bold group-hover:bg-gray-200 transition border border-gray-200">
               <Upload size={20} /> Khôi Phục Dữ Liệu (Restore)
             </button>
           </div>
@@ -254,7 +254,7 @@ const Settings = ({ products, orders, setProducts, setOrders, settings, setSetti
       </button>
 
       {/* Footer info */}
-      <div className="text-center text-xs text-gray-400 pb-4">
+      <div className="text-center text-xs text-amber-500 pb-4">
         Phiên bản 3.0 - Tiny Shop<br />
         Dữ liệu được lưu trữ cục bộ (Local Storage)
       </div>
