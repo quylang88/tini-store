@@ -14,6 +14,7 @@ const Orders = ({ products, setProducts, orders, setOrders, settings }) => {
   const [editingOrderId, setEditingOrderId] = useState(null);
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [isReviewOpen, setIsReviewOpen] = useState(false);
+  const [orderComment, setOrderComment] = useState('');
   // Dùng modal riêng để đồng bộ giao diện xác nhận/nhập phí gửi
   const [confirmModal, setConfirmModal] = useState(null);
   const [shippingModal, setShippingModal] = useState({
@@ -28,15 +29,26 @@ const Orders = ({ products, setProducts, orders, setOrders, settings }) => {
   const [searchTerm, setSearchTerm] = useState('');
 
   // --- 1. LOGIC GIỎ HÀNG ---
-  const handleClearCart = () => {
-    if (Object.keys(cart).length === 0) return;
-    setConfirmModal({
-      title: 'Xoá tất cả sản phẩm đã chọn?',
-      message: 'Danh sách sản phẩm trong giỏ sẽ bị xoá toàn bộ.',
-      confirmLabel: 'Xoá hết',
-      tone: 'danger',
-      onConfirm: () => setCart({})
+  // Chuẩn hoá giỏ hàng chỉnh sửa để so sánh thay đổi khi sửa đơn
+  const getEditableOrderCart = (order) => {
+    const nextCart = {};
+    if (!order) return nextCart;
+    order.items.forEach(item => {
+      const productExists = products.some(p => p.id === item.productId);
+      if (productExists) nextCart[item.productId] = item.quantity;
     });
+    return nextCart;
+  };
+
+  // Kiểm tra xem người dùng đã thay đổi gì khi sửa đơn hay chưa
+  const hasOrderChanges = () => {
+    if (!orderBeingEdited) return Object.keys(cart).length > 0 || orderComment.trim() !== '';
+    const originalCart = getEditableOrderCart(orderBeingEdited);
+    const allKeys = new Set([...Object.keys(originalCart), ...Object.keys(cart)]);
+    for (const key of allKeys) {
+      if ((originalCart[key] || 0) !== (cart[key] || 0)) return true;
+    }
+    return (orderComment || '').trim() !== (orderBeingEdited.comment || '').trim();
   };
 
   const handleQuantityChange = (productId, value, stock) => {
@@ -140,7 +152,9 @@ const Orders = ({ products, setProducts, orders, setOrders, settings }) => {
       total: totalAmount,
       shippingFee: 0,
       shippingUpdated: false,
-      status: 'pending'
+      status: 'pending',
+      // Ghi chú để gợi nhớ đơn hàng khi xem lại
+      comment: orderComment.trim()
     };
 
     const updatedProducts = products.map(p => {
@@ -151,6 +165,7 @@ const Orders = ({ products, setProducts, orders, setOrders, settings }) => {
     setProducts(updatedProducts);
     setOrders([newOrder, ...orders]);
     setCart({});
+    setOrderComment('');
     setView('list');
   };
 
@@ -177,7 +192,8 @@ const Orders = ({ products, setProducts, orders, setOrders, settings }) => {
       items: buildOrderItems(),
       total: totalAmount,
       shippingUpdated: orderBeingEdited.shippingUpdated || false,
-      status: shouldResetPaid ? 'pending' : orderBeingEdited.status
+      status: shouldResetPaid ? 'pending' : orderBeingEdited.status,
+      comment: orderComment.trim()
     };
 
     const nextOrders = orders.map(item => (item.id === editingOrderId ? updatedOrder : item));
@@ -186,17 +202,22 @@ const Orders = ({ products, setProducts, orders, setOrders, settings }) => {
     setOrders(nextOrders);
     setCart({});
     setEditingOrderId(null);
+    setOrderComment('');
     setView('list');
   };
 
   const handleEditOrder = (order) => {
-    const nextCart = {};
-    order.items.forEach(item => {
-      const productExists = products.some(p => p.id === item.productId);
-      if (productExists) nextCart[item.productId] = item.quantity;
-    });
+    const nextCart = getEditableOrderCart(order);
     setCart(nextCart);
     setEditingOrderId(order.id);
+    setOrderComment(order.comment || '');
+    setView('create');
+  };
+
+  const handleStartCreate = () => {
+    setCart({});
+    setEditingOrderId(null);
+    setOrderComment('');
     setView('create');
   };
 
@@ -206,6 +227,41 @@ const Orders = ({ products, setProducts, orders, setOrders, settings }) => {
       setCart({});
       setEditingOrderId(null);
     }
+    setOrderComment('');
+  };
+
+  const handleCancelCreate = () => {
+    if (orderBeingEdited) {
+      if (!hasOrderChanges()) {
+        handleExitCreate();
+        return;
+      }
+      setConfirmModal({
+        title: 'Huỷ cập nhật đơn?',
+        message: `Các thay đổi của đơn ${getOrderLabel(orderBeingEdited)} sẽ không được lưu.`,
+        confirmLabel: 'Huỷ cập nhật',
+        tone: 'danger',
+        onConfirm: () => {
+          setCart({});
+          setEditingOrderId(null);
+          setOrderComment('');
+          setView('list');
+        }
+      });
+      return;
+    }
+
+    setConfirmModal({
+      title: 'Huỷ tạo đơn?',
+      message: 'Đơn đang tạo sẽ bị huỷ và quay lại danh sách.',
+      confirmLabel: 'Huỷ tạo',
+      tone: 'danger',
+      onConfirm: () => {
+        setCart({});
+        setOrderComment('');
+        setView('list');
+      }
+    });
   };
 
   // --- 3.1. XUẤT VỀ VN & NHẬP PHÍ GỬI ---
@@ -321,12 +377,12 @@ const Orders = ({ products, setProducts, orders, setOrders, settings }) => {
           reviewItems={reviewItems}
           isReviewOpen={isReviewOpen}
           handleExitCreate={handleExitCreate}
-          handleClearCart={handleClearCart}
           handleScanForSale={handleScanForSale}
           handleQuantityChange={handleQuantityChange}
           adjustQuantity={adjustQuantity}
           handleOpenReview={() => setIsReviewOpen(true)}
           handleCloseReview={() => setIsReviewOpen(false)}
+          handleCancelCreate={handleCancelCreate}
           handleConfirmOrder={() => {
             if (orderBeingEdited) {
               handleUpdateOrder();
@@ -335,6 +391,9 @@ const Orders = ({ products, setProducts, orders, setOrders, settings }) => {
             }
             setIsReviewOpen(false);
           }}
+          orderComment={orderComment}
+          setOrderComment={setOrderComment}
+          isCommentValid={orderComment.trim().length > 0}
         />
       );
     }
@@ -343,7 +402,7 @@ const Orders = ({ products, setProducts, orders, setOrders, settings }) => {
       <>
         <OrderListView
           orders={orders}
-          setView={setView}
+          onCreateNew={handleStartCreate}
           getOrderStatusInfo={getOrderStatusInfo}
           handleTogglePaid={handleTogglePaid}
           handleExportToVietnam={handleExportToVietnam}

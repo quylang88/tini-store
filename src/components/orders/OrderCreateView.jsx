@@ -19,15 +19,17 @@ const OrderCreateView = ({
   reviewItems,
   isReviewOpen,
   handleExitCreate,
-  handleClearCart,
   handleScanForSale,
   handleQuantityChange,
   adjustQuantity,
   handleOpenReview,
   handleCloseReview,
-  handleConfirmOrder
+  handleConfirmOrder,
+  orderComment,
+  setOrderComment,
+  isCommentValid,
+  handleCancelCreate
 }) => {
-  const hasItems = Object.keys(cart).length > 0;
   const categories = settings?.categories || ['Chung'];
 
   // Khi đang sửa đơn, cộng lại số lượng cũ để hiển thị tồn kho chính xác
@@ -60,11 +62,6 @@ const OrderCreateView = ({
           </div>
 
           <div className="flex items-center gap-2">
-            {hasItems && (
-              <button onClick={handleClearCart} className="p-2 text-red-500 bg-red-50 rounded-lg hover:bg-red-100 active:scale-95 transition">
-                <Trash2 size={18} />
-              </button>
-            )}
             <button onClick={() => setShowScanner(true)} className="flex items-center gap-1 text-rose-600 bg-rose-50 px-3 py-2 rounded-lg text-sm font-bold active:scale-95 transition">
               <ScanBarcode size={18} /> <span className="hidden sm:inline">Quét</span>
             </button>
@@ -188,12 +185,21 @@ const OrderCreateView = ({
             <span className="text-gray-500 font-medium text-sm">Tổng đơn hàng:</span>
             <span className="text-2xl font-bold text-rose-600">{formatNumber(totalAmount)}đ</span>
           </div>
-          <button
-            onClick={handleOpenReview}
-            className="w-full bg-rose-500 text-white py-3.5 rounded-xl font-bold shadow-lg shadow-rose-200 active:scale-95 transition flex items-center justify-center gap-2 text-lg"
-          >
-            <ShoppingCart size={20} /> {orderBeingEdited ? 'Cập nhật đơn' : 'Lên đơn'}
-          </button>
+          <div className="flex gap-3">
+            {/* Nút huỷ thao tác để quay lại danh sách nhanh hơn */}
+            <button
+              onClick={handleCancelCreate}
+              className="w-1/2 bg-white text-amber-700 py-3.5 rounded-xl font-bold border border-amber-200 shadow-sm active:scale-95 transition flex items-center justify-center gap-2 text-lg"
+            >
+              <Trash2 size={20} /> {orderBeingEdited ? 'Huỷ sửa' : 'Huỷ tạo'}
+            </button>
+            <button
+              onClick={handleOpenReview}
+              className="w-1/2 bg-rose-500 text-white py-3.5 rounded-xl font-bold shadow-lg shadow-rose-200 active:scale-95 transition flex items-center justify-center gap-2 text-lg"
+            >
+              <ShoppingCart size={20} /> {orderBeingEdited ? 'Cập nhật đơn' : 'Lên đơn'}
+            </button>
+          </div>
         </div>
       )}
 
@@ -224,6 +230,20 @@ const OrderCreateView = ({
               {reviewItems.length === 0 && (
                 <div className="text-sm text-gray-400 text-center">Chưa có sản phẩm nào.</div>
               )}
+              {/* Bắt buộc ghi chú để dễ gợi nhớ đơn hàng */}
+              <div className="pt-2 space-y-2">
+                <label className="text-xs font-semibold text-amber-700">Ghi chú đơn hàng</label>
+                <textarea
+                  rows={3}
+                  className="w-full rounded-xl border border-amber-200 bg-amber-50/40 px-3 py-2 text-sm text-amber-900 focus:outline-none focus:ring-2 focus:ring-rose-200"
+                  placeholder="Ví dụ: Khách muốn giao sau 2 ngày..."
+                  value={orderComment}
+                  onChange={(event) => setOrderComment(event.target.value)}
+                />
+                {!isCommentValid && (
+                  <div className="text-xs text-red-500">Vui lòng nhập ghi chú để tiếp tục.</div>
+                )}
+              </div>
             </div>
             <div className="p-4 border-t border-amber-100 bg-amber-50 space-y-3">
               <div className="flex justify-between items-center text-sm">
@@ -239,7 +259,8 @@ const OrderCreateView = ({
                 </button>
                 <button
                   onClick={handleConfirmOrder}
-                  className="flex-1 py-2.5 rounded-xl bg-rose-500 text-white font-semibold shadow-md shadow-rose-200 hover:bg-rose-600 transition"
+                  className="flex-1 py-2.5 rounded-xl bg-rose-500 text-white font-semibold shadow-md shadow-rose-200 hover:bg-rose-600 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                  disabled={!isCommentValid}
                 >
                   {orderBeingEdited ? 'Cập nhật' : 'Xác nhận'}
                 </button>

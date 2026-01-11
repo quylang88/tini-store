@@ -23,6 +23,12 @@ const OrderDetailModal = ({ order, onClose }) => {
           <div className="text-xs text-amber-600 mt-1">{new Date(order.date).toLocaleString()}</div>
         </div>
         <div className="p-4 space-y-3 max-h-[55vh] overflow-y-auto">
+          {order.comment && (
+            <div className="rounded-xl border border-amber-100 bg-amber-50/60 px-3 py-2 text-sm text-amber-700">
+              <div className="text-xs font-semibold text-amber-600 mb-1">Ghi chú</div>
+              <div className="whitespace-pre-line">{order.comment}</div>
+            </div>
+          )}
           {order.items.map((item, index) => (
             <div key={`${item.productId}-${index}`} className="flex justify-between text-sm text-gray-600">
               <div className="min-w-0">
