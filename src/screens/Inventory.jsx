@@ -4,12 +4,15 @@ import BarcodeScanner from '../components/BarcodeScanner';
 import InventoryHeader from '../components/inventory/InventoryHeader';
 import ProductList from '../components/inventory/ProductList';
 import ProductModal from '../components/inventory/ProductModal';
+import ConfirmModal from '../components/modals/ConfirmModal';
 
 const Inventory = ({ products, setProducts, settings }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [showScanner, setShowScanner] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
+  // Modal xác nhận xoá sản phẩm để giao diện đồng bộ
+  const [confirmModal, setConfirmModal] = useState(null);
 
   // State quản lý danh mục đang xem
   const [activeCategory, setActiveCategory] = useState('Tất cả');
@@ -170,9 +173,14 @@ const Inventory = ({ products, setProducts, settings }) => {
   };
 
   const handleDelete = (id) => {
-    if (window.confirm('Xóa sản phẩm này?')) {
-      setProducts(products.filter(p => p.id !== id));
-    }
+    const product = products.find(p => p.id === id);
+    setConfirmModal({
+      title: 'Xoá sản phẩm?',
+      message: product ? `Bạn có chắc muốn xoá \"${product.name}\" khỏi kho?` : 'Bạn có chắc muốn xoá sản phẩm này?',
+      confirmLabel: 'Xoá sản phẩm',
+      tone: 'danger',
+      onConfirm: () => setProducts(products.filter(p => p.id !== id))
+    });
   };
 
   // LỌC SẢN PHẨM: Theo Tìm kiếm + Theo Danh mục
@@ -219,6 +227,20 @@ const Inventory = ({ products, setProducts, settings }) => {
         onImageSelect={handleImageSelect}
         onCurrencyChange={handleCurrencyChange}
         onMoneyChange={handleMoneyChange}
+      />
+
+      {/* Modal xác nhận xoá để thay thế popup mặc định */}
+      <ConfirmModal
+        open={Boolean(confirmModal)}
+        title={confirmModal?.title}
+        message={confirmModal?.message}
+        confirmLabel={confirmModal?.confirmLabel}
+        tone={confirmModal?.tone}
+        onCancel={() => setConfirmModal(null)}
+        onConfirm={() => {
+          confirmModal?.onConfirm?.();
+          setConfirmModal(null);
+        }}
       />
     </div>
   );

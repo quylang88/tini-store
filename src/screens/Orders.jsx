@@ -3,6 +3,9 @@ import React, { useState, useEffect } from 'react';
 import OrderCreateView from '../components/orders/OrderCreateView';
 import OrderListView from '../components/orders/OrderListView';
 import OrderDetailModal from '../components/orders/OrderDetailModal';
+import ConfirmModal from '../components/modals/ConfirmModal';
+import InputModal from '../components/modals/InputModal';
+import { formatInputNumber, sanitizeNumberInput } from '../utils/helpers';
 
 const Orders = ({ products, setProducts, orders, setOrders, settings }) => {
   const [view, setView] = useState('list'); // 'list' | 'create'
@@ -11,6 +14,14 @@ const Orders = ({ products, setProducts, orders, setOrders, settings }) => {
   const [editingOrderId, setEditingOrderId] = useState(null);
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [isReviewOpen, setIsReviewOpen] = useState(false);
+  // Dùng modal riêng để đồng bộ giao diện xác nhận/nhập phí gửi
+  const [confirmModal, setConfirmModal] = useState(null);
+  const [shippingModal, setShippingModal] = useState({
+    open: false,
+    orderId: null,
+    fee: '',
+    error: ''
+  });
 
   // State cho bộ lọc
   const [activeCategory, setActiveCategory] = useState('Tất cả');
@@ -19,9 +30,13 @@ const Orders = ({ products, setProducts, orders, setOrders, settings }) => {
   // --- 1. LOGIC GIỎ HÀNG ---
   const handleClearCart = () => {
     if (Object.keys(cart).length === 0) return;
-    if (window.confirm("Bạn chắc chắn muốn xóa hết các sản phẩm đã chọn?")) {
-      setCart({});
-    }
+    setConfirmModal({
+      title: 'Xoá tất cả sản phẩm đã chọn?',
+      message: 'Danh sách sản phẩm trong giỏ sẽ bị xoá toàn bộ.',
+      confirmLabel: 'Xoá hết',
+      tone: 'danger',
+      onConfirm: () => setCart({})
+    });
   };
 
   const handleQuantityChange = (productId, value, stock) => {
@@ -199,27 +214,12 @@ const Orders = ({ products, setProducts, orders, setOrders, settings }) => {
     if (!order) return;
 
     const currentFee = order.shippingFee || 0;
-    const feeInput = window.prompt('Nhập phí gửi về VN (đ)', currentFee || '');
-    if (feeInput === null) return;
-
-    const feeValue = Number(feeInput);
-    if (Number.isNaN(feeValue) || feeValue < 0) {
-      alert('Phí gửi không hợp lệ.');
-      return;
-    }
-
-    const nextOrders = orders.map(item => {
-      if (item.id !== orderId) return item;
-      return {
-        ...item,
-        shippingFee: feeValue,
-        shippingUpdated: true,
-        // Chỉ cập nhật phí gửi, không đổi trạng thái thanh toán
-        status: item.status
-      };
+    setShippingModal({
+      open: true,
+      orderId,
+      fee: currentFee ? String(currentFee) : '',
+      error: ''
     });
-
-    setOrders(nextOrders);
   };
 
   // --- 3.2. THANH TOÁN / HUỶ THANH TOÁN ---
@@ -227,21 +227,23 @@ const Orders = ({ products, setProducts, orders, setOrders, settings }) => {
     const order = orders.find(item => item.id === orderId);
     if (!order) return;
 
-    if (order.status === 'paid') {
-      if (!window.confirm(`Huỷ trạng thái đã thanh toán cho đơn ${getOrderLabel(order)}?`)) return;
-    } else {
-      if (!window.confirm(`Xác nhận đã thanh toán cho đơn ${getOrderLabel(order)}?`)) return;
-    }
-
-    const nextOrders = orders.map(item => {
-      if (item.id !== orderId) return item;
-      return {
-        ...item,
-        status: item.status === 'paid' ? 'pending' : 'paid'
-      };
+    const isPaid = order.status === 'paid';
+    setConfirmModal({
+      title: isPaid ? 'Huỷ thanh toán đơn hàng?' : 'Xác nhận thanh toán?',
+      message: `Đơn ${getOrderLabel(order)} sẽ được ${isPaid ? 'đưa về trạng thái chờ gom' : 'đánh dấu đã thanh toán'}.`,
+      confirmLabel: isPaid ? 'Huỷ thanh toán' : 'Xác nhận',
+      tone: isPaid ? 'danger' : 'rose',
+      onConfirm: () => {
+        const nextOrders = orders.map(item => {
+          if (item.id !== orderId) return item;
+          return {
+            ...item,
+            status: item.status === 'paid' ? 'pending' : 'paid'
+          };
+        });
+        setOrders(nextOrders);
+      }
     });
-
-    setOrders(nextOrders);
   };
 
   // Thêm logic huỷ đơn: hoàn kho và xoá đơn để có thể tạo đơn mới
@@ -249,15 +251,21 @@ const Orders = ({ products, setProducts, orders, setOrders, settings }) => {
     const order = orders.find(item => item.id === orderId);
     if (!order) return;
 
-    if (!window.confirm(`Xác nhận huỷ đơn ${getOrderLabel(order)}?`)) return;
+    setConfirmModal({
+      title: 'Huỷ đơn hàng?',
+      message: `Đơn ${getOrderLabel(order)} sẽ bị huỷ và hoàn kho lại sản phẩm.`,
+      confirmLabel: 'Huỷ đơn',
+      tone: 'danger',
+      onConfirm: () => {
+        const restoredProducts = products.map(p => {
+          const qty = order.items.find(item => item.productId === p.id)?.quantity || 0;
+          return qty ? { ...p, stock: p.stock + qty } : p;
+        });
 
-    const restoredProducts = products.map(p => {
-      const qty = order.items.find(item => item.productId === p.id)?.quantity || 0;
-      return qty ? { ...p, stock: p.stock + qty } : p;
+        setProducts(restoredProducts);
+        setOrders(orders.filter(item => item.id !== orderId));
+      }
     });
-
-    setProducts(restoredProducts);
-    setOrders(orders.filter(item => item.id !== orderId));
   };
 
   // Trả về nhãn + màu sắc để trạng thái nhìn rõ ràng, dễ phân biệt
@@ -285,66 +293,123 @@ const Orders = ({ products, setProducts, orders, setOrders, settings }) => {
     return matchCategory && matchSearch;
   });
 
-  if (view === 'create') {
-    const reviewItems = Object.entries(cart).map(([id, qty]) => {
-      const product = products.find(item => item.id === id);
-      return {
-        id,
-        name: product?.name || 'SP đã xóa',
-        price: product?.price || 0,
-        quantity: qty
-      };
-    });
+  const renderContent = () => {
+    if (view === 'create') {
+      const reviewItems = Object.entries(cart).map(([id, qty]) => {
+        const product = products.find(item => item.id === id);
+        return {
+          id,
+          name: product?.name || 'SP đã xóa',
+          price: product?.price || 0,
+          quantity: qty
+        };
+      });
+
+      return (
+        <OrderCreateView
+          settings={settings}
+          cart={cart}
+          showScanner={showScanner}
+          setShowScanner={setShowScanner}
+          orderBeingEdited={orderBeingEdited}
+          activeCategory={activeCategory}
+          setActiveCategory={setActiveCategory}
+          searchTerm={searchTerm}
+          setSearchTerm={setSearchTerm}
+          filteredProducts={filteredProducts}
+          totalAmount={totalAmount}
+          reviewItems={reviewItems}
+          isReviewOpen={isReviewOpen}
+          handleExitCreate={handleExitCreate}
+          handleClearCart={handleClearCart}
+          handleScanForSale={handleScanForSale}
+          handleQuantityChange={handleQuantityChange}
+          adjustQuantity={adjustQuantity}
+          handleOpenReview={() => setIsReviewOpen(true)}
+          handleCloseReview={() => setIsReviewOpen(false)}
+          handleConfirmOrder={() => {
+            if (orderBeingEdited) {
+              handleUpdateOrder();
+            } else {
+              handleCreateOrder();
+            }
+            setIsReviewOpen(false);
+          }}
+        />
+      );
+    }
 
     return (
-      <OrderCreateView
-        settings={settings}
-        cart={cart}
-        showScanner={showScanner}
-        setShowScanner={setShowScanner}
-        orderBeingEdited={orderBeingEdited}
-        activeCategory={activeCategory}
-        setActiveCategory={setActiveCategory}
-        searchTerm={searchTerm}
-        setSearchTerm={setSearchTerm}
-        filteredProducts={filteredProducts}
-        totalAmount={totalAmount}
-        reviewItems={reviewItems}
-        isReviewOpen={isReviewOpen}
-        handleExitCreate={handleExitCreate}
-        handleClearCart={handleClearCart}
-        handleScanForSale={handleScanForSale}
-        handleQuantityChange={handleQuantityChange}
-        adjustQuantity={adjustQuantity}
-        handleOpenReview={() => setIsReviewOpen(true)}
-        handleCloseReview={() => setIsReviewOpen(false)}
-        handleConfirmOrder={() => {
-          if (orderBeingEdited) {
-            handleUpdateOrder();
-          } else {
-            handleCreateOrder();
-          }
-          setIsReviewOpen(false);
-        }}
-      />
+      <>
+        <OrderListView
+          orders={orders}
+          setView={setView}
+          getOrderStatusInfo={getOrderStatusInfo}
+          handleTogglePaid={handleTogglePaid}
+          handleExportToVietnam={handleExportToVietnam}
+          handleEditOrder={handleEditOrder}
+          handleCancelOrder={handleCancelOrder}
+          onSelectOrder={setSelectedOrder}
+        />
+        {selectedOrder && (
+          <OrderDetailModal order={selectedOrder} onClose={() => setSelectedOrder(null)} />
+        )}
+      </>
     );
-  }
+  };
 
   return (
     <>
-      <OrderListView
-        orders={orders}
-        setView={setView}
-        getOrderStatusInfo={getOrderStatusInfo}
-        handleTogglePaid={handleTogglePaid}
-        handleExportToVietnam={handleExportToVietnam}
-        handleEditOrder={handleEditOrder}
-        handleCancelOrder={handleCancelOrder}
-        onSelectOrder={setSelectedOrder}
+      {renderContent()}
+      {/* Modal chung cho các hành động xác nhận/nhập phí gửi */}
+      <ConfirmModal
+        open={Boolean(confirmModal)}
+        title={confirmModal?.title}
+        message={confirmModal?.message}
+        confirmLabel={confirmModal?.confirmLabel}
+        tone={confirmModal?.tone}
+        onCancel={() => setConfirmModal(null)}
+        onConfirm={() => {
+          confirmModal?.onConfirm?.();
+          setConfirmModal(null);
+        }}
       />
-      {selectedOrder && (
-        <OrderDetailModal order={selectedOrder} onClose={() => setSelectedOrder(null)} />
-      )}
+      <InputModal
+        open={shippingModal.open}
+        title="Nhập phí gửi về VN"
+        message="Vui lòng nhập số tiền phí gửi cho đơn hàng."
+        error={shippingModal.error}
+        value={formatInputNumber(shippingModal.fee)}
+        inputProps={{ inputMode: 'numeric', placeholder: 'Ví dụ: 25,000' }}
+        confirmLabel="Lưu phí gửi"
+        onChange={(value) => setShippingModal(prev => ({
+          ...prev,
+          fee: sanitizeNumberInput(value),
+          error: ''
+        }))}
+        onCancel={() => setShippingModal({ open: false, orderId: null, fee: '', error: '' })}
+        onConfirm={() => {
+          const feeValue = Number(shippingModal.fee || 0);
+          if (Number.isNaN(feeValue) || feeValue < 0) {
+            setShippingModal(prev => ({ ...prev, error: 'Phí gửi không hợp lệ. Vui lòng nhập số >= 0.' }));
+            return;
+          }
+
+          const nextOrders = orders.map(item => {
+            if (item.id !== shippingModal.orderId) return item;
+            return {
+              ...item,
+              shippingFee: feeValue,
+              shippingUpdated: true,
+              // Chỉ cập nhật phí gửi, không đổi trạng thái thanh toán
+              status: item.status
+            };
+          });
+
+          setOrders(nextOrders);
+          setShippingModal({ open: false, orderId: null, fee: '', error: '' });
+        }}
+      />
     </>
   );
 };
