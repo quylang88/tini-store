@@ -125,11 +125,12 @@ const ProductModal = ({
           </div>
 
           {/* Khu vực giá nhập */}
-          <div className="bg-blue-50 p-3 rounded-lg border border-blue-100">
+          {/* Đổi tông sang ấm để đồng bộ với nền vàng/hồng của trang */}
+          <div className="bg-amber-50 p-3 rounded-lg border border-amber-100">
             <div className="flex items-center justify-between mb-3">
-              <label className="text-[10px] font-bold text-blue-800 uppercase">Giá nhập</label>
+              <label className="text-[10px] font-bold text-amber-800 uppercase">Giá nhập</label>
               <select
-                className="bg-transparent text-[10px] font-semibold text-blue-700 border border-blue-200 rounded px-2 py-1"
+                className="bg-transparent text-[10px] font-semibold text-amber-700 border border-amber-200 rounded px-2 py-1"
                 value={formData.costCurrency}
                 onChange={onCurrencyChange}
               >
@@ -142,12 +143,12 @@ const ProductModal = ({
               <>
                 <div className="grid grid-cols-2 gap-4 mb-2">
                   <div>
-                    <label className="text-[10px] font-bold text-blue-800 uppercase">Giá nhập (Yên)</label>
+                    <label className="text-[10px] font-bold text-amber-800 uppercase">Giá nhập (Yên)</label>
                     <div className="relative">
-                      <span className="absolute left-0 top-2 text-blue-500">¥</span>
+                      <span className="absolute left-0 top-2 text-amber-500">¥</span>
                       <input
                         inputMode="numeric"
-                        className="w-full bg-transparent border-b border-blue-200 py-2 pl-4 focus:border-blue-500 outline-none text-blue-900 font-bold"
+                        className="w-full bg-transparent border-b border-amber-100 py-2 pl-4 focus:border-amber-400 outline-none text-amber-900 font-bold"
                         value={formatInputNumber(formData.costJPY)}
                         onChange={onMoneyChange('costJPY')}
                         placeholder="0"
@@ -155,27 +156,27 @@ const ProductModal = ({
                     </div>
                   </div>
                   <div>
-                    <label className="text-[10px] font-bold text-blue-800 uppercase">Tỷ giá</label>
+                    <label className="text-[10px] font-bold text-amber-800 uppercase">Tỷ giá</label>
                     <input
                       inputMode="numeric"
-                      className="w-full bg-transparent border-b border-blue-200 py-2 focus:border-blue-500 outline-none text-blue-900 text-right"
+                      className="w-full bg-transparent border-b border-amber-100 py-2 focus:border-amber-400 outline-none text-amber-900 text-right"
                       value={formatInputNumber(formData.exchangeRate)}
                       onChange={onMoneyChange('exchangeRate')}
                     />
                   </div>
                 </div>
-                <div className="text-right text-xs text-blue-600 font-medium">
+                <div className="text-right text-xs text-amber-600 font-medium">
                   = {formatNumber(formData.cost)} VNĐ (Vốn)
                 </div>
               </>
             ) : (
               <div>
-                <label className="text-[10px] font-bold text-blue-800 uppercase">Giá nhập (VNĐ)</label>
+                <label className="text-[10px] font-bold text-amber-800 uppercase">Giá nhập (VNĐ)</label>
                 <div className="relative">
-                  <span className="absolute left-0 top-2 text-blue-500">đ</span>
+                  <span className="absolute left-0 top-2 text-amber-500">đ</span>
                   <input
                     inputMode="numeric"
-                    className="w-full bg-transparent border-b border-blue-200 py-2 pl-4 focus:border-blue-500 outline-none text-blue-900 font-bold"
+                    className="w-full bg-transparent border-b border-amber-100 py-2 pl-4 focus:border-amber-400 outline-none text-amber-900 font-bold"
                     value={formatInputNumber(formData.cost)}
                     onChange={onMoneyChange('cost')}
                     placeholder="0"

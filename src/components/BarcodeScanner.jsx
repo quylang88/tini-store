@@ -22,7 +22,8 @@ const BarcodeScanner = ({ onScanSuccess, onClose }) => {
   }, [onScanSuccess]);
 
   return (
-    <div className="fixed inset-0 z-[70] bg-black/70 backdrop-blur-sm flex flex-col items-center justify-center p-4">
+    // Nâng z-index để khung quét luôn nổi trên modal thêm sản phẩm.
+    <div className="fixed inset-0 z-[80] bg-black/70 backdrop-blur-sm flex flex-col items-center justify-center p-4">
       <div className="w-full max-w-sm bg-white rounded-2xl shadow-xl p-4">
         <div className="flex items-center justify-between mb-3">
           <h3 className="font-bold text-gray-800">Quét mã vạch</h3>
