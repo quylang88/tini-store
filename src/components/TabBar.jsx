@@ -11,7 +11,7 @@ const TabBar = ({ activeTab, setActiveTab }) => {
 
   // Nâng thanh tabbar lên nhẹ để hợp với giao diện iPhone
   return (
-    <div className="fixed bottom-2 left-0 right-0 bg-amber-50/90 border-t border-amber-200 pb-safe-area z-50 backdrop-blur">
+    <div className="fixed bottom-0 left-0 right-0 bg-amber-50/90 border-t border-amber-200 pb-safe-area z-50 backdrop-blur">
       <div className="flex justify-around items-center h-16">
         {tabs.map((tab) => {
           const Icon = tab.icon;
