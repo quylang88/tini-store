@@ -45,7 +45,7 @@ const ProductModal = ({
         <div className="space-y-4">
           {/* Khu vực ảnh: tách riêng nút tải ảnh và nút mở camera */}
           <div className="flex flex-col gap-3">
-            <div className="w-full h-32 bg-gray-50 border-2 border-dashed border-gray-300 rounded-xl flex items-center justify-center text-gray-400 overflow-hidden relative">
+            <div className="w-full h-32 bg-gray-50 border-2 border-dashed border-gray-300 rounded-xl flex items-center justify-center text-amber-400 overflow-hidden relative">
               {formData.image ? (
                 <img src={formData.image} className="w-full h-full object-contain absolute inset-0" alt="Preview" />
               ) : (
@@ -59,14 +59,14 @@ const ProductModal = ({
               {/* Dùng label để trình duyệt mở đúng luồng chọn file */}
               <label
                 htmlFor="inventory-upload"
-                className="w-full border border-amber-200 rounded-lg py-2 text-xs font-semibold text-gray-600 flex items-center justify-center gap-2 hover:border-rose-400 hover:text-rose-600 cursor-pointer"
+                className="w-full border border-amber-200 rounded-lg py-2 text-xs font-semibold text-amber-700 flex items-center justify-center gap-2 hover:border-rose-400 hover:text-rose-600 cursor-pointer"
               >
                 <Upload size={16} /> Tải ảnh
               </label>
               {/* Dùng label để ưu tiên mở camera trên thiết bị hỗ trợ */}
               <label
                 htmlFor="inventory-camera"
-                className="w-full border border-amber-200 rounded-lg py-2 text-xs font-semibold text-gray-600 flex items-center justify-center gap-2 hover:border-rose-400 hover:text-rose-600 cursor-pointer"
+                className="w-full border border-amber-200 rounded-lg py-2 text-xs font-semibold text-amber-700 flex items-center justify-center gap-2 hover:border-rose-400 hover:text-rose-600 cursor-pointer"
               >
                 <Camera size={16} /> Chụp ảnh
               </label>
@@ -93,20 +93,20 @@ const ProductModal = ({
           {/* Barcode & Category */}
           <div className="grid grid-cols-2 gap-4 items-end">
             <div className="flex flex-col gap-1">
-              <label className="text-xs font-bold text-gray-500 uppercase flex justify-between">
+              <label className="text-xs font-bold text-amber-700 uppercase flex justify-between">
                 Mã Vạch <ScanBarcode size={14} className="text-rose-600 cursor-pointer" onClick={onShowScanner} />
               </label>
               <input
-                className="w-full border-b border-gray-200 py-2 focus:border-rose-400 outline-none text-gray-800 font-mono text-sm"
+                className="w-full border-b border-gray-200 py-2 focus:border-rose-400 outline-none text-amber-900 font-mono text-sm"
                 value={formData.barcode}
                 onChange={e => setFormData({ ...formData, barcode: e.target.value })}
                 placeholder="Quét/Nhập..."
               />
             </div>
             <div className="flex flex-col gap-1">
-              <label className="text-xs font-bold text-gray-500 uppercase">Danh mục</label>
+              <label className="text-xs font-bold text-amber-700 uppercase">Danh mục</label>
               <select
-                className="w-full border-b border-gray-200 py-2 focus:border-rose-400 outline-none text-gray-800 text-sm bg-transparent"
+                className="w-full border-b border-gray-200 py-2 focus:border-rose-400 outline-none text-amber-900 text-sm bg-transparent"
                 value={formData.category}
                 onChange={e => setFormData({ ...formData, category: e.target.value })}
               >
@@ -119,9 +119,9 @@ const ProductModal = ({
 
           {/* Name */}
           <div>
-            <label className="text-xs font-bold text-gray-500 uppercase">Tên sản phẩm</label>
+            <label className="text-xs font-bold text-amber-700 uppercase">Tên sản phẩm</label>
             <input
-              className="w-full border-b border-gray-200 py-2 focus:border-rose-400 outline-none text-gray-800 font-medium"
+              className="w-full border-b border-gray-200 py-2 focus:border-rose-400 outline-none text-amber-900 font-medium"
               value={formData.name}
               onChange={e => setFormData({ ...formData, name: e.target.value })}
               placeholder="Nhập tên..."
@@ -193,20 +193,20 @@ const ProductModal = ({
           {/* VND Pricing & Stock */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="text-xs font-bold text-gray-500 uppercase">Giá bán (VNĐ)</label>
+              <label className="text-xs font-bold text-amber-700 uppercase">Giá bán (VNĐ)</label>
               <input
                 inputMode="numeric"
-                className="w-full border-b border-gray-200 py-2 focus:border-rose-400 outline-none text-gray-800 font-bold text-lg"
+                className="w-full border-b border-gray-200 py-2 focus:border-rose-400 outline-none text-amber-900 font-bold text-lg"
                 value={formatInputNumber(formData.price)}
                 onChange={onMoneyChange('price')}
                 placeholder="0"
               />
             </div>
             <div>
-              <label className="text-xs font-bold text-gray-500 uppercase">Tồn kho</label>
+              <label className="text-xs font-bold text-amber-700 uppercase">Tồn kho</label>
               <input
                 type="number"
-                className="w-full border-b border-gray-200 py-2 focus:border-rose-400 outline-none text-gray-800 font-bold text-lg"
+                className="w-full border-b border-gray-200 py-2 focus:border-rose-400 outline-none text-amber-900 font-bold text-lg"
                 value={formData.stock}
                 onChange={e => setFormData({ ...formData, stock: e.target.value })}
                 placeholder="0"
