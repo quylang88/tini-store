@@ -59,7 +59,13 @@ const Settings = ({ products, orders, setProducts, setOrders, settings, setSetti
       if (rate) {
         const roundedRate = Math.round(rate);
         saveSettings({ ...settings, exchangeRate: roundedRate });
-        alert(`Đã cập nhật tỷ giá thị trường: 1 JPY = ${formatNumber(roundedRate)} VND`);
+        setConfirmModal({
+          title: 'Cập nhật tỷ giá thành công',
+          message: `1 JPY = ${formatNumber(roundedRate)} VND`,
+          confirmLabel: 'Đã hiểu',
+          tone: 'rose',
+          onConfirm: () => {}
+        });
       } else {
         alert("Không tìm thấy dữ liệu tỷ giá.");
       }
@@ -159,14 +165,7 @@ const Settings = ({ products, orders, setProducts, setOrders, settings, setSetti
               <button
                 onClick={() => {
                   if (isFetchingRate) return;
-                  // Modal xác nhận trước khi gọi API lấy tỷ giá online
-                  setConfirmModal({
-                    title: 'Cập nhật tỷ giá online?',
-                    message: 'Hệ thống sẽ lấy tỷ giá JPY ➔ VND mới nhất từ Internet.',
-                    confirmLabel: 'Cập nhật',
-                    tone: 'rose',
-                    onConfirm: () => fetchOnlineRate()
-                  });
+                  fetchOnlineRate();
                 }}
                 disabled={isFetchingRate}
                 className="bg-rose-50 text-rose-600 px-4 py-2 rounded-lg font-medium text-sm flex flex-col items-center justify-center min-w-[80px] hover:bg-rose-100 transition"
