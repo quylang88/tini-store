@@ -66,14 +66,14 @@ const Login = ({ onLogin }) => {
             )}
 
             <div>
-              <label className="block text-xs font-bold text-gray-500 uppercase mb-2 ml-1">Tài khoản</label>
+              <label className="block text-xs font-bold text-amber-700 uppercase mb-2 ml-1">Tài khoản</label>
               <div className="relative">
-                <span className="absolute left-3 top-3 text-gray-400">
+                <span className="absolute left-3 top-3 text-amber-500">
                   <User size={20} />
                 </span>
                 <input
                   type="text"
-                  className="w-full bg-white/90 border border-rose-200 rounded-xl py-3 pl-10 pr-4 outline-none focus:bg-white focus:border-rose-400 focus:ring-2 focus:ring-rose-100 transition"
+                  className="w-full bg-white/90 border border-rose-200 rounded-xl py-3 pl-10 pr-4 outline-none focus:bg-white focus:border-rose-400 focus:ring-2 focus:ring-rose-100 transition text-amber-900"
                   placeholder="Nhập tài khoản..."
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
@@ -82,14 +82,14 @@ const Login = ({ onLogin }) => {
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-gray-500 uppercase mb-2 ml-1">Mật khẩu</label>
+              <label className="block text-xs font-bold text-amber-700 uppercase mb-2 ml-1">Mật khẩu</label>
               <div className="relative">
-                <span className="absolute left-3 top-3 text-gray-400">
+                <span className="absolute left-3 top-3 text-amber-500">
                   <Lock size={20} />
                 </span>
                 <input
                   type="password"
-                  className="w-full bg-white/90 border border-rose-200 rounded-xl py-3 pl-10 pr-4 outline-none focus:bg-white focus:border-rose-400 focus:ring-2 focus:ring-rose-100 transition"
+                  className="w-full bg-white/90 border border-rose-200 rounded-xl py-3 pl-10 pr-4 outline-none focus:bg-white focus:border-rose-400 focus:ring-2 focus:ring-rose-100 transition text-amber-900"
                   placeholder="Nhập mật khẩu..."
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
@@ -105,7 +105,7 @@ const Login = ({ onLogin }) => {
               <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${remember ? 'bg-rose-500 border-rose-500' : 'bg-white border-rose-200 group-hover:border-rose-400'}`}>
                 {remember && <CheckSquare size={14} className="text-white" />}
               </div>
-              <span className="text-sm text-gray-600 select-none">Lưu thông tin đăng nhập</span>
+              <span className="text-sm text-amber-700 select-none">Lưu thông tin đăng nhập</span>
             </div>
 
             <button
@@ -118,7 +118,7 @@ const Login = ({ onLogin }) => {
           </form>
         </div>
 
-        <div className="bg-gray-50 p-4 text-center text-xs text-gray-400 border-t border-gray-100">
+        <div className="bg-gray-50 p-4 text-center text-xs text-amber-500 border-t border-gray-100">
           © 2026 Tiny Shop. All rights reserved.<br />
           Phát triển bởi Quý Lăng
         </div>

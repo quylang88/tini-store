@@ -10,6 +10,7 @@ import Settings from './screens/Settings';
 
 // --- IMPORT COMPONENT CHUNG ---
 import TabBar from './components/TabBar';
+import ConfirmModal from './components/modals/ConfirmModal';
 
 const App = () => {
   // --- 1. QUẢN LÝ TRẠNG THÁI ĐĂNG NHẬP ---
@@ -19,6 +20,8 @@ const App = () => {
   });
 
   const [activeTab, setActiveTab] = useState('dashboard');
+  // Modal xác nhận đăng xuất để giao diện đồng bộ
+  const [logoutModalOpen, setLogoutModalOpen] = useState(false);
 
   // --- 2. KHỞI TẠO DỮ LIỆU TỪ LOCALSTORAGE ---
   // Dữ liệu Sản phẩm
@@ -66,11 +69,7 @@ const App = () => {
   };
 
   const handleLogout = () => {
-    if (window.confirm('Bạn có chắc chắn muốn đăng xuất?')) {
-      setIsAuthenticated(false);
-      sessionStorage.removeItem('tini_auth'); // Xóa phiên làm việc
-      setActiveTab('dashboard'); // Reset tab về mặc định
-    }
+    setLogoutModalOpen(true);
   };
 
   // --- 5. RENDERING ---
@@ -121,6 +120,22 @@ const App = () => {
       </div>
 
       <TabBar activeTab={activeTab} setActiveTab={setActiveTab} />
+
+      {/* Modal xác nhận đăng xuất thay thế confirm */}
+      <ConfirmModal
+        open={logoutModalOpen}
+        title="Đăng xuất khỏi hệ thống?"
+        message="Bạn có chắc chắn muốn đăng xuất không?"
+        confirmLabel="Đăng xuất"
+        tone="danger"
+        onCancel={() => setLogoutModalOpen(false)}
+        onConfirm={() => {
+          setIsAuthenticated(false);
+          sessionStorage.removeItem('tini_auth'); // Xóa phiên làm việc
+          setActiveTab('dashboard'); // Reset tab về mặc định
+          setLogoutModalOpen(false);
+        }}
+      />
 
       {/* CSS Global */}
       <style>{`
