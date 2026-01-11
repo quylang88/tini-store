@@ -10,7 +10,8 @@ const OrderListView = ({
   handleTogglePaid,
   handleExportToVietnam,
   handleEditOrder,
-  handleCancelOrder
+  handleCancelOrder,
+  onSelectOrder
 }) => (
   <div className="flex flex-col h-full bg-transparent pb-20">
     <div className="bg-amber-50/90 p-4 border-b border-amber-100 sticky top-0 z-10 flex justify-between items-center shadow-sm backdrop-blur">
@@ -24,14 +25,19 @@ const OrderListView = ({
       </button>
     </div>
     <div className="flex-1 overflow-y-auto p-3 space-y-3">
-      {orders.map(order => {
+      {orders.map((order) => {
         const statusInfo = getOrderStatusInfo(order);
         const hasShipping = order.shippingUpdated || order.shippingFee > 0;
         const isPaid = order.status === 'paid';
+        const orderLabel = order.orderNumber ? `#${order.orderNumber}` : `#${order.id.slice(-4)}`;
         return (
-          <div key={order.id} className="bg-white p-4 rounded-xl shadow-sm border border-amber-100 hover:border-rose-200 transition">
+          <div
+            key={order.id}
+            className="bg-white p-4 rounded-xl shadow-sm border border-amber-100 hover:border-rose-200 transition cursor-pointer"
+            onClick={() => onSelectOrder?.(order)}
+          >
             <div className="flex justify-between mb-2">
-              <span className="font-bold text-gray-800 text-lg">#{order.id.slice(-4)}</span>
+              <span className="font-bold text-amber-900 text-lg">{orderLabel}</span>
               <span className="text-rose-600 font-bold text-lg bg-rose-50 px-2 py-0.5 rounded">{formatNumber(order.total)}đ</span>
             </div>
             <div className="flex items-center justify-between text-xs text-gray-500 mb-2">

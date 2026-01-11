@@ -16,12 +16,16 @@ const OrderCreateView = ({
   setSearchTerm,
   filteredProducts,
   totalAmount,
+  reviewItems,
+  isReviewOpen,
   handleExitCreate,
   handleClearCart,
   handleScanForSale,
   handleQuantityChange,
   adjustQuantity,
-  handleSubmitOrder
+  handleOpenReview,
+  handleCloseReview,
+  handleConfirmOrder
 }) => {
   const hasItems = Object.keys(cart).length > 0;
   const categories = settings?.categories || ['Chung'];
@@ -46,11 +50,11 @@ const OrderCreateView = ({
               <ChevronRight className="rotate-180 text-amber-700" />
             </button>
             <div>
-              <h2 className="text-xl font-bold text-gray-800">
-                {orderBeingEdited ? `Sửa đơn #${orderBeingEdited.id.slice(-4)}` : 'Tạo Đơn'}
+              <h2 className="text-xl font-bold text-amber-900">
+                {orderBeingEdited ? `Sửa đơn #${orderBeingEdited.orderNumber ?? orderBeingEdited.id.slice(-4)}` : 'Tạo Đơn'}
               </h2>
               {orderBeingEdited && (
-                <div className="text-xs text-gray-400">Chỉnh sửa số lượng sản phẩm trong đơn</div>
+                <div className="text-xs text-amber-500">Chỉnh sửa số lượng sản phẩm trong đơn</div>
               )}
             </div>
           </div>
@@ -128,7 +132,7 @@ const OrderCreateView = ({
 
               <div className="flex-1 min-w-0">
                 <div className="flex justify-between items-start">
-                  <div className="font-bold text-sm text-gray-800 truncate pr-1">{p.name}</div>
+                  <div className="font-bold text-sm text-amber-900 truncate pr-1">{p.name}</div>
                   {/* Badge danh mục */}
                   {activeCategory === 'Tất cả' && (
                     <span className="text-[10px] text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded border border-gray-200 whitespace-nowrap">
@@ -137,7 +141,7 @@ const OrderCreateView = ({
                   )}
                 </div>
                 <div className="text-xs text-gray-500 mt-0.5">
-                  <span className="font-semibold text-rose-600">{formatNumber(p.price)}đ</span>
+                  <span className="font-semibold text-amber-700">{formatNumber(p.price)}đ</span>
                   <span className="mx-1">|</span>
                   <span>Kho: {availableStock}</span>
                 </div>
@@ -179,17 +183,69 @@ const OrderCreateView = ({
 
       {/* Tạo Đơn */}
       {totalAmount > 0 && (
-        <div className="fixed bottom-0 left-0 right-0 bg-amber-50/90 border-t border-amber-200 p-4 pb-safe-area z-[60] shadow-[0_-4px_15px_rgba(0,0,0,0.1)] animate-slide-up backdrop-blur">
+        <div className="fixed bottom-0 left-0 right-0 bg-amber-50/90 border-t border-amber-200 p-4 pb-[calc(env(safe-area-inset-bottom)+28px)] z-[60] shadow-[0_-4px_15px_rgba(0,0,0,0.1)] animate-slide-up backdrop-blur">
           <div className="flex justify-between items-center mb-3">
             <span className="text-gray-500 font-medium text-sm">Tổng đơn hàng:</span>
             <span className="text-2xl font-bold text-rose-600">{formatNumber(totalAmount)}đ</span>
           </div>
           <button
-            onClick={handleSubmitOrder}
+            onClick={handleOpenReview}
             className="w-full bg-rose-500 text-white py-3.5 rounded-xl font-bold shadow-lg shadow-rose-200 active:scale-95 transition flex items-center justify-center gap-2 text-lg"
           >
             <ShoppingCart size={20} /> {orderBeingEdited ? 'Cập nhật đơn' : 'Lên đơn'}
           </button>
+        </div>
+      )}
+
+      {isReviewOpen && (
+        <div className="fixed inset-0 z-[80] flex items-end justify-center bg-black/40 p-4" onClick={handleCloseReview}>
+          <div
+            className="w-full max-w-md bg-white rounded-2xl shadow-xl border border-amber-100 overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="p-4 border-b border-amber-100 bg-amber-50">
+              <div className="text-lg font-bold text-amber-900">
+                {orderBeingEdited ? 'Xác nhận cập nhật đơn' : 'Xác nhận tạo đơn'}
+              </div>
+              <div className="text-xs text-amber-600">Kiểm tra lại danh sách sản phẩm trước khi xác nhận.</div>
+            </div>
+            <div className="p-4 space-y-3 max-h-[50vh] overflow-y-auto">
+              {reviewItems.map(item => (
+                <div key={item.id} className="flex justify-between text-sm text-gray-600">
+                  <div className="min-w-0">
+                    <div className="font-semibold text-amber-900 truncate">{item.name}</div>
+                    <div className="text-xs text-gray-400">x{item.quantity}</div>
+                  </div>
+                  <div className="font-semibold text-amber-700">
+                    {formatNumber(item.price * item.quantity)}đ
+                  </div>
+                </div>
+              ))}
+              {reviewItems.length === 0 && (
+                <div className="text-sm text-gray-400 text-center">Chưa có sản phẩm nào.</div>
+              )}
+            </div>
+            <div className="p-4 border-t border-amber-100 bg-amber-50 space-y-3">
+              <div className="flex justify-between items-center text-sm">
+                <span className="text-gray-500">Tổng đơn hàng</span>
+                <span className="text-lg font-bold text-rose-600">{formatNumber(totalAmount)}đ</span>
+              </div>
+              <div className="flex gap-2">
+                <button
+                  onClick={handleCloseReview}
+                  className="flex-1 py-2.5 rounded-xl border border-amber-200 text-amber-700 font-semibold bg-white hover:bg-amber-50 transition"
+                >
+                  Xem lại
+                </button>
+                <button
+                  onClick={handleConfirmOrder}
+                  className="flex-1 py-2.5 rounded-xl bg-rose-500 text-white font-semibold shadow-md shadow-rose-200 hover:bg-rose-600 transition"
+                >
+                  {orderBeingEdited ? 'Cập nhật' : 'Xác nhận'}
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>
