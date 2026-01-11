@@ -1,10 +1,13 @@
 import React, { useState } from 'react';
 import { Download, Upload, Plus, Trash2, RefreshCw, X, LogOut } from 'lucide-react';
 import { formatInputNumber, formatNumber, sanitizeNumberInput } from '../utils/helpers';
+import ConfirmModal from '../components/modals/ConfirmModal';
 
 const Settings = ({ products, orders, setProducts, setOrders, settings, setSettings, onLogout }) => {
   const [newCategory, setNewCategory] = useState('');
   const [isFetchingRate, setIsFetchingRate] = useState(false);
+  // Modal xác nhận để thay thế popup mặc định
+  const [confirmModal, setConfirmModal] = useState(null);
 
   // Hàm lưu cài đặt chung
   const saveSettings = (newSettings) => {
@@ -30,12 +33,18 @@ const Settings = ({ products, orders, setProducts, setOrders, settings, setSetti
       alert("Không thể xóa danh mục mặc định!");
       return;
     }
-    if (window.confirm(`Bạn có chắc muốn xóa danh mục "${cat}" không?`)) {
-      saveSettings({
-        ...settings,
-        categories: settings.categories.filter(c => c !== cat)
-      });
-    }
+    setConfirmModal({
+      title: 'Xoá danh mục?',
+      message: `Bạn có chắc muốn xoá danh mục "${cat}" không?`,
+      confirmLabel: 'Xoá danh mục',
+      tone: 'danger',
+      onConfirm: () => {
+        saveSettings({
+          ...settings,
+          categories: settings.categories.filter(c => c !== cat)
+        });
+      }
+    });
   };
 
   // Lấy tỷ giá từ API miễn phí (Tham khảo)
@@ -87,14 +96,20 @@ const Settings = ({ products, orders, setProducts, setOrders, settings, setSetti
       try {
         const data = JSON.parse(event.target.result);
         if (data.products && data.orders) {
-          if (window.confirm('CẢNH BÁO: Hành động này sẽ GHI ĐÈ toàn bộ dữ liệu hiện tại. Bạn có chắc chắn muốn tiếp tục?')) {
-            setProducts(data.products);
-            setOrders(data.orders);
-            if (data.settings) {
-              setSettings(data.settings);
+          setConfirmModal({
+            title: 'Xác nhận khôi phục dữ liệu?',
+            message: 'CẢNH BÁO: Hành động này sẽ ghi đè toàn bộ dữ liệu hiện tại.',
+            confirmLabel: 'Khôi phục',
+            tone: 'danger',
+            onConfirm: () => {
+              setProducts(data.products);
+              setOrders(data.orders);
+              if (data.settings) {
+                setSettings(data.settings);
+              }
+              alert('Khôi phục dữ liệu thành công!');
             }
-            alert('Khôi phục dữ liệu thành công!');
-          }
+          });
         } else {
           alert('File không hợp lệ hoặc thiếu dữ liệu.');
         }
@@ -142,7 +157,17 @@ const Settings = ({ products, orders, setProducts, setOrders, settings, setSetti
                 <span className="absolute right-3 top-3.5 text-amber-500 text-sm font-bold">VND</span>
               </div>
               <button
-                onClick={fetchOnlineRate}
+                onClick={() => {
+                  if (isFetchingRate) return;
+                  // Modal xác nhận trước khi gọi API lấy tỷ giá online
+                  setConfirmModal({
+                    title: 'Cập nhật tỷ giá online?',
+                    message: 'Hệ thống sẽ lấy tỷ giá JPY ➔ VND mới nhất từ Internet.',
+                    confirmLabel: 'Cập nhật',
+                    tone: 'rose',
+                    onConfirm: () => fetchOnlineRate()
+                  });
+                }}
                 disabled={isFetchingRate}
                 className="bg-rose-50 text-rose-600 px-4 py-2 rounded-lg font-medium text-sm flex flex-col items-center justify-center min-w-[80px] hover:bg-rose-100 transition"
               >
@@ -258,6 +283,22 @@ const Settings = ({ products, orders, setProducts, setOrders, settings, setSetti
         Phiên bản 3.0 - Tiny Shop<br />
         Dữ liệu được lưu trữ cục bộ (Local Storage)
       </div>
+
+      {/* Modal xác nhận dùng chung cho thao tác xoá/khôi phục */}
+      <ConfirmModal
+        open={Boolean(confirmModal)}
+        title={confirmModal?.title}
+        message={confirmModal?.message}
+        confirmLabel={confirmModal?.confirmLabel}
+        tone={confirmModal?.tone}
+        onCancel={() => {
+          setConfirmModal(null);
+        }}
+        onConfirm={() => {
+          confirmModal?.onConfirm?.();
+          setConfirmModal(null);
+        }}
+      />
     </div>
   )
 }
