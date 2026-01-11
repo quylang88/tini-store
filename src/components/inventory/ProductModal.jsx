@@ -18,6 +18,10 @@ const ProductModal = ({
   const uploadInputRef = useRef(null);
   const cameraInputRef = useRef(null);
 
+  // Lợi nhuận dự kiến hiển thị ngay trong form để user ước lượng nhanh
+  const expectedProfit = (Number(formData.price) || 0) - (Number(formData.cost) || 0);
+  const hasProfitData = Number(formData.price) > 0 && Number(formData.cost) > 0;
+
   if (!isOpen) {
     return null;
   }
@@ -34,7 +38,7 @@ const ProductModal = ({
     <div className="fixed inset-0 bg-black/50 z-[70] flex items-end sm:items-center justify-center backdrop-blur-sm">
       <div className="bg-white w-full sm:w-96 rounded-t-2xl sm:rounded-2xl p-5 pb-[calc(env(safe-area-inset-bottom)+1.25rem)] animate-slide-up max-h-[90vh] overflow-y-auto">
         <div className="flex justify-between items-center mb-5">
-          <h3 className="font-bold text-lg">{editingProduct ? 'Sửa Sản Phẩm' : 'Thêm Mới'}</h3>
+          <h3 className="font-bold text-lg text-amber-900">{editingProduct ? 'Sửa Sản Phẩm' : 'Thêm Mới'}</h3>
           <button onClick={onClose} className="bg-amber-100 p-1.5 rounded-full"><X size={18} /></button>
         </div>
 
@@ -207,6 +211,14 @@ const ProductModal = ({
                 onChange={e => setFormData({ ...formData, stock: e.target.value })}
                 placeholder="0"
               />
+            </div>
+          </div>
+
+          {/* Hiển thị lợi nhuận dự kiến để user tham khảo khi nhập giá */}
+          <div className="bg-emerald-50 border border-emerald-100 rounded-lg p-3">
+            <div className="text-[10px] font-bold text-emerald-700 uppercase">Lợi nhuận dự kiến</div>
+            <div className="text-sm font-semibold text-emerald-700">
+              {hasProfitData ? `${formatNumber(expectedProfit)}đ` : 'Chưa đủ dữ liệu'}
             </div>
           </div>
 
