@@ -7,8 +7,10 @@ const InventoryHeader = ({
   onClearSearch,
   onOpenModal,
   onShowScanner,
-  activeCategory,
-  onCategoryChange,
+  activeCategories,
+  onToggleCategory,
+  warehouseFilter,
+  onWarehouseChange,
   categories
 }) => {
   return (
@@ -53,23 +55,58 @@ const InventoryHeader = ({
         </div>
       </div>
 
-      {/* Thanh Tab Danh mục */}
-      <div className="px-3 pb-0 overflow-x-auto flex gap-2 no-scrollbar border-b border-amber-100">
-        <button
-          onClick={() => onCategoryChange('Tất cả')}
-          className={`whitespace-nowrap py-3 px-2 border-b-2 text-sm font-medium transition-colors ${activeCategory === 'Tất cả' ? 'border-rose-500 text-rose-600' : 'border-transparent text-amber-500'}`}
-        >
-          Tất cả
-        </button>
-        {categories.map(cat => (
-          <button
-            key={cat}
-            onClick={() => onCategoryChange(cat)}
-            className={`whitespace-nowrap py-3 px-2 border-b-2 text-sm font-medium transition-colors ${activeCategory === cat ? 'border-rose-500 text-rose-600' : 'border-transparent text-amber-500'}`}
-          >
-            {cat}
-          </button>
-        ))}
+      {/* Bộ lọc kho + danh mục (cho phép chọn nhiều) để lọc nhanh danh sách. */}
+      <div className="px-3 py-3 border-b border-amber-100 space-y-3">
+        <div className="flex items-center justify-between">
+          <div className="text-[10px] font-bold text-amber-700 uppercase">Kho lọc</div>
+          <div className="flex gap-2">
+            {[
+              { key: 'all', label: 'Tất cả' },
+              { key: 'daLat', label: 'Lâm Đồng' },
+              { key: 'vinhPhuc', label: 'Vĩnh Phúc' },
+            ].map((warehouse) => (
+              <button
+                key={warehouse.key}
+                onClick={() => onWarehouseChange(warehouse.key)}
+                className={`px-2 py-1 text-[10px] font-semibold rounded border transition ${
+                  warehouseFilter === warehouse.key
+                    ? 'bg-amber-500 text-white border-amber-500'
+                    : 'bg-transparent text-amber-700 border-amber-200 hover:border-rose-400'
+                }`}
+              >
+                {warehouse.label}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div>
+          <div className="text-[10px] font-bold text-amber-700 uppercase mb-2">Danh mục</div>
+          <div className="flex flex-wrap gap-2">
+            <button
+              onClick={() => onToggleCategory('Tất cả')}
+              className={`px-2 py-1 text-[10px] font-semibold rounded border transition ${
+                activeCategories.length === 0
+                  ? 'bg-rose-500 text-white border-rose-500'
+                  : 'bg-transparent text-amber-700 border-amber-200 hover:border-rose-400'
+              }`}
+            >
+              Tất cả
+            </button>
+            {categories.map(cat => (
+              <button
+                key={cat}
+                onClick={() => onToggleCategory(cat)}
+                className={`px-2 py-1 text-[10px] font-semibold rounded border transition ${
+                  activeCategories.includes(cat)
+                    ? 'bg-rose-500 text-white border-rose-500'
+                    : 'bg-transparent text-amber-700 border-amber-200 hover:border-rose-400'
+                }`}
+              >
+                {cat}
+              </button>
+            ))}
+          </div>
+        </div>
       </div>
     </div>
   );

@@ -1,13 +1,12 @@
 import { useState } from 'react';
 import { formatNumber } from '../utils/helpers';
+import { normalizePurchaseLots } from '../utils/purchaseUtils';
 
 const useSettingsLogic = ({
   products,
   orders,
-  inboundShipments,
   setProducts,
   setOrders,
-  setInboundShipments,
   settings,
   setSettings,
 }) => {
@@ -89,7 +88,6 @@ const useSettingsLogic = ({
     const data = JSON.stringify({
       products,
       orders,
-      inboundShipments,
       settings,
     });
     const blob = new Blob([data], { type: 'application/json' });
@@ -120,9 +118,8 @@ const useSettingsLogic = ({
             confirmLabel: 'Khôi phục',
             tone: 'danger',
             onConfirm: () => {
-              setProducts(data.products);
+              setProducts(data.products.map((product) => normalizePurchaseLots(product)));
               setOrders(data.orders);
-              setInboundShipments(data.inboundShipments || []);
               if (data.settings) {
                 setSettings(data.settings);
               }
