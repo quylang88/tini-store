@@ -54,10 +54,10 @@ const OrderCreateView = ({
         <div className="p-3 border-b border-amber-100 flex items-center justify-between">
           <div>
             <h2 className="text-xl font-bold text-amber-900">
-              {orderBeingEdited ? `Sửa đơn #${orderBeingEdited.orderNumber ?? orderBeingEdited.id.slice(-4)}` : 'Tạo Đơn'}
+              {orderBeingEdited ? `Sửa đơn #${orderBeingEdited.orderNumber ?? orderBeingEdited.id.slice(-4)}` : 'Tạo đơn hàng'}
             </h2>
             {orderBeingEdited && (
-              <div className="text-xs text-amber-500">Chỉnh sửa số lượng sản phẩm trong đơn</div>
+              <div className="text-xs text-amber-500">Chỉnh sửa số lượng sản phẩm trong đơn hàng</div>
             )}
           </div>
 
@@ -95,7 +95,7 @@ const OrderCreateView = ({
 
         {/* Hàng 3: Chọn kho xuất */}
         <div className="px-3 py-2 border-b border-amber-100 flex items-center gap-2 text-xs font-semibold text-amber-700">
-          <span>Xuất kho:</span>
+          <span>Đơn hàng:</span>
           <div className="flex gap-2">
             {WAREHOUSES.map((warehouse) => (
               <button
@@ -205,7 +205,7 @@ const OrderCreateView = ({
         )}
       </div>
 
-      {/* Nút back nổi góc phải, né tabbar/setting và ẩn khi modal xác nhận/review hoặc tổng đơn hàng đang mở. */}
+      {/* Nút back nổi góc phải, né tabbar/setting và ẩn khi modal xác nhận/review hoặc tổng đơn đang mở. */}
       {!isReviewOpen && !hideBackButton && totalAmount <= 0 && (
         <button
           onClick={handleExitCreate}
@@ -216,11 +216,11 @@ const OrderCreateView = ({
         </button>
       )}
 
-      {/* Tạo Đơn */}
+      {/* Tạo đơn hàng */}
       {totalAmount > 0 && (
         <div className="fixed bottom-0 left-0 right-0 bg-amber-50/90 border-t border-amber-200 p-4 pb-[calc(env(safe-area-inset-bottom)+28px)] z-[60] shadow-[0_-4px_15px_rgba(0,0,0,0.1)] animate-slide-up backdrop-blur">
           <div className="flex justify-between items-center mb-3">
-            <span className="text-gray-500 font-medium text-sm">Tổng đơn hàng:</span>
+            <span className="text-gray-500 font-medium text-sm">Tổng đơn:</span>
             <span className="text-2xl font-bold text-rose-600">{formatNumber(totalAmount)}đ</span>
           </div>
           <div className="flex gap-3">
@@ -248,7 +248,7 @@ const OrderCreateView = ({
           >
             <div className="p-4 border-b border-amber-100 bg-amber-50">
               <div className="text-lg font-bold text-amber-900">
-                {orderBeingEdited ? 'Xác nhận cập nhật đơn' : 'Xác nhận tạo đơn'}
+                {orderBeingEdited ? 'Xác nhận cập nhật đơn' : 'Xác nhận tạo đơn hàng'}
               </div>
               <div className="text-xs text-amber-600">Kiểm tra lại danh sách sản phẩm trước khi xác nhận.</div>
             </div>
@@ -281,7 +281,7 @@ const OrderCreateView = ({
             </div>
             <div className="p-4 border-t border-amber-100 bg-amber-50 space-y-3">
               <div className="flex justify-between items-center text-sm">
-                <span className="text-gray-500">Tổng đơn hàng</span>
+                <span className="text-gray-500">Tổng đơn</span>
                 <span className="text-lg font-bold text-rose-600">{formatNumber(totalAmount)}đ</span>
               </div>
               <div className="flex gap-2">

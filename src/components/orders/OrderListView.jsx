@@ -22,7 +22,7 @@ const OrderListView = ({
         className="h-12 w-auto object-contain"
       />
       <button onClick={onCreateOrder} className="bg-rose-500 text-white px-4 py-2 rounded-xl text-sm font-bold shadow-md shadow-rose-200 active:scale-95 transition flex items-center gap-2">
-        <Plus size={18} /> Đơn mới
+        <Plus size={18} /> Đơn hàng mới
       </button>
     </div>
     <div className="flex-1 overflow-y-auto p-3 space-y-3">
@@ -57,7 +57,7 @@ const OrderListView = ({
               </span>
             </div>
             <div className="text-xs text-amber-600 font-semibold mb-2">
-              Xuất kho: {warehouseLabel}
+              Đơn hàng: {warehouseLabel}
             </div>
             <div className="text-xs text-gray-400 mb-3 flex items-center gap-1">
               {new Date(order.date).toLocaleString()}

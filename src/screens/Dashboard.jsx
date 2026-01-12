@@ -1,9 +1,9 @@
 import React from 'react';
-import { DollarSign, ShoppingCart, TrendingUp, Image as ImageIcon, ChevronDown, ChevronUp, Settings } from 'lucide-react';
+import { DollarSign, ShoppingCart, TrendingUp, Image as ImageIcon, ChevronDown, ChevronUp } from 'lucide-react';
 import { formatNumber } from '../utils/helpers';
 import useDashboardLogic from '../hooks/useDashboardLogic';
 
-const Dashboard = ({ products, orders, onOpenSettings }) => {
+const Dashboard = ({ products, orders }) => {
   const {
     showHistory,
     setShowHistory,
@@ -29,13 +29,6 @@ const Dashboard = ({ products, orders, onOpenSettings }) => {
           alt="Tiny Shop"
           className="h-12 w-auto object-contain"
         />
-        <button
-          onClick={onOpenSettings}
-          className="w-10 h-10 rounded-full bg-white border border-amber-200 text-amber-700 flex items-center justify-center shadow-sm hover:bg-amber-50"
-          aria-label="Mở cài đặt"
-        >
-          <Settings size={18} />
-        </button>
       </div>
       <div className="grid grid-cols-2 gap-3">
         <div className="bg-rose-400 text-white p-4 rounded-2xl shadow-lg shadow-rose-200">
@@ -134,7 +127,7 @@ const Dashboard = ({ products, orders, onOpenSettings }) => {
                           <div className="text-xs text-amber-700">
                             Doanh thu: {formatNumber(stats.revenue)}đ • Lợi nhuận: {formatNumber(stats.profit)}đ
                           </div>
-                          <div className="text-xs text-amber-500">Đơn: {stats.orders}</div>
+                          <div className="text-xs text-amber-500">Đơn hàng: {stats.orders}</div>
                         </div>
                         <button
                           onClick={() => setExpandedMonth(isExpanded ? null : key)}

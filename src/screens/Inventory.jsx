@@ -1,37 +1,47 @@
-import React from 'react';
+import React, { useState } from 'react';
 import BarcodeScanner from '../components/BarcodeScanner';
 import InventoryHeader from '../components/inventory/InventoryHeader';
 import ProductList from '../components/inventory/ProductList';
+import ProductDetailModal from '../components/inventory/ProductDetailModal';
 import ProductModal from '../components/inventory/ProductModal';
 import ConfirmModal from '../components/modals/ConfirmModal';
 import ErrorModal from '../components/modals/ErrorModal';
 import useInventoryLogic from '../hooks/useInventoryLogic';
 
 const Inventory = ({ products, setProducts, settings }) => {
+  const [detailProduct, setDetailProduct] = useState(null);
   const {
     isModalOpen,
     showScanner,
     setShowScanner,
     editingProduct,
+    editingLotId,
     searchTerm,
     setSearchTerm,
     confirmModal,
     setConfirmModal,
     errorModal,
     setErrorModal,
-    activeCategory,
-    setActiveCategory,
+    activeCategories,
+    warehouseFilter,
     formData,
     setFormData,
     handleMoneyChange,
+    handleDecimalChange,
     handleCurrencyChange,
+    handleShippingMethodChange,
     handleScanSuccess,
     handleImageSelect,
     handleSave,
     openModal,
+    openEditLot,
     closeModal,
     handleDelete,
     filteredProducts,
+    nameSuggestions,
+    handleSelectExistingProduct,
+    toggleCategory,
+    setWarehouseFilter,
   } = useInventoryLogic({ products, setProducts, settings });
 
   return (
@@ -45,31 +55,49 @@ const Inventory = ({ products, setProducts, settings }) => {
         onClearSearch={() => setSearchTerm('')}
         onOpenModal={() => openModal()}
         onShowScanner={() => setShowScanner(true)}
-        activeCategory={activeCategory}
-        onCategoryChange={setActiveCategory}
+        activeCategories={activeCategories}
+        onToggleCategory={toggleCategory}
+        warehouseFilter={warehouseFilter}
+        onWarehouseChange={setWarehouseFilter}
         categories={settings.categories}
       />
 
       {/* Tách danh sách sản phẩm thành component riêng */}
       <ProductList
         products={filteredProducts}
-        onEdit={openModal}
         onDelete={handleDelete}
+        onOpenDetail={setDetailProduct}
       />
 
       {/* Tách form modal và bổ sung nút chụp ảnh từ camera */}
       <ProductModal
         isOpen={isModalOpen}
         editingProduct={editingProduct}
+        editingLotId={editingLotId}
         formData={formData}
         setFormData={setFormData}
+        settings={settings}
+        nameSuggestions={nameSuggestions}
+        onSelectExistingProduct={handleSelectExistingProduct}
         categories={settings.categories}
         onClose={closeModal}
         onSave={handleSave}
         onShowScanner={() => setShowScanner(true)}
         onImageSelect={handleImageSelect}
-        onCurrencyChange={handleCurrencyChange}
         onMoneyChange={handleMoneyChange}
+        onDecimalChange={handleDecimalChange}
+        onCurrencyChange={handleCurrencyChange}
+        onShippingMethodChange={handleShippingMethodChange}
+      />
+
+      {/* Modal chi tiết sản phẩm khi chạm vào item */}
+      <ProductDetailModal
+        product={detailProduct}
+        onClose={() => setDetailProduct(null)}
+        onEditLot={(lot) => {
+          openEditLot(detailProduct, lot);
+          setDetailProduct(null);
+        }}
       />
 
       {/* Modal xác nhận xoá để thay thế popup mặc định */}

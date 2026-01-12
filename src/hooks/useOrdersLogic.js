@@ -1,6 +1,13 @@
 import { useMemo, useState } from 'react';
 import { sanitizeNumberInput } from '../utils/helpers';
 import { normalizeWarehouseStock } from '../utils/warehouseUtils';
+import {
+  consumePurchaseLots,
+  getLatestCost,
+  getLatestUnitCost,
+  normalizePurchaseLots,
+  restockPurchaseLots,
+} from '../utils/purchaseUtils';
 
 const DEFAULT_STATUS = 'pending';
 const DEFAULT_WAREHOUSE = 'daLat';
@@ -63,7 +70,8 @@ const useOrdersLogic = ({ products, setProducts, orders, setOrders }) => {
         name: product.name,
         price: product.price,
         quantity,
-        cost: product.cost || 0,
+        // Giá vốn dùng cho đơn hàng cần gồm cả phí gửi/đơn vị.
+        cost: getLatestUnitCost(product),
       };
     })
     .filter(Boolean), [cart, productMap]);
@@ -154,10 +162,10 @@ const useOrdersLogic = ({ products, setProducts, orders, setOrders }) => {
   const handleExitCreate = () => {
     if (hasDraftChanges()) {
       setConfirmModal({
-        title: orderBeingEdited ? 'Thoát sửa đơn?' : 'Thoát tạo đơn?',
+        title: orderBeingEdited ? 'Thoát sửa đơn?' : 'Thoát tạo đơn hàng?',
         message: orderBeingEdited
           ? 'Bạn có chắc muốn thoát? Các chỉnh sửa sẽ bị huỷ.'
-          : 'Bạn có chắc muốn thoát? Các sản phẩm trong đơn sẽ bị xoá.',
+          : 'Bạn có chắc muốn thoát? Các sản phẩm trong đơn hàng sẽ bị xoá.',
         confirmLabel: 'Thoát',
         tone: 'danger',
         onConfirm: () => {
@@ -177,7 +185,7 @@ const useOrdersLogic = ({ products, setProducts, orders, setOrders }) => {
       return;
     }
     setConfirmModal({
-      title: orderBeingEdited ? 'Huỷ chỉnh sửa?' : 'Huỷ đơn hàng?',
+      title: orderBeingEdited ? 'Huỷ chỉnh sửa?' : 'Huỷ đơn?',
       message: 'Bạn có chắc muốn huỷ thao tác hiện tại không?',
       confirmLabel: 'Huỷ',
       tone: 'danger',
@@ -196,7 +204,8 @@ const useOrdersLogic = ({ products, setProducts, orders, setOrders }) => {
     return Math.max(...numbers) + 1;
   };
 
-  const updateWarehouseStock = (product, warehouseKey, delta) => {
+  // Đồng bộ tồn kho + trừ/hoàn lô giá nhập theo từng kho khi xuất hàng.
+  const updateWarehouseStock = (product, warehouseKey, delta, restockCost) => {
     const current = normalizeWarehouseStock(product);
     const nextStock = { ...current };
     if (warehouseKey === 'vinhPhuc') {
@@ -204,11 +213,19 @@ const useOrdersLogic = ({ products, setProducts, orders, setOrders }) => {
     } else {
       nextStock.daLat = Math.max(0, current.daLat + delta);
     }
-    return {
+    const nextProduct = {
       ...product,
       stockByWarehouse: nextStock,
       stock: nextStock.daLat + nextStock.vinhPhuc,
     };
+
+    if (delta < 0) {
+      return consumePurchaseLots(normalizePurchaseLots(nextProduct), warehouseKey, Math.abs(delta));
+    }
+    if (delta > 0) {
+      return restockPurchaseLots(normalizePurchaseLots(nextProduct), warehouseKey, delta, restockCost);
+    }
+    return nextProduct;
   };
 
   const syncProductsStock = (
@@ -219,6 +236,7 @@ const useOrdersLogic = ({ products, setProducts, orders, setOrders }) => {
   ) => {
     const previousMap = new Map(previousItems.map(item => [item.productId, item.quantity]));
     const nextMap = new Map(orderItems.map(item => [item.productId, item.quantity]));
+    const previousItemMap = new Map(previousItems.map(item => [item.productId, item]));
 
     setProducts((prevProducts) => prevProducts.map((product) => {
       const previousQty = previousMap.get(product.id) || 0;
@@ -228,12 +246,14 @@ const useOrdersLogic = ({ products, setProducts, orders, setOrders }) => {
       if (previousWarehouseKey === nextWarehouseKey) {
         const delta = previousQty - nextQty;
         if (!delta) return product;
-        return updateWarehouseStock(product, nextWarehouseKey, delta);
+        const previousCost = previousItemMap.get(product.id)?.cost;
+        return updateWarehouseStock(product, nextWarehouseKey, delta, previousCost);
       }
 
       let nextProduct = product;
       if (previousQty) {
-        nextProduct = updateWarehouseStock(nextProduct, previousWarehouseKey, previousQty);
+        const previousCost = previousItemMap.get(product.id)?.cost;
+        nextProduct = updateWarehouseStock(nextProduct, previousWarehouseKey, previousQty, previousCost);
       }
       if (nextQty) {
         nextProduct = updateWarehouseStock(nextProduct, nextWarehouseKey, -nextQty);
@@ -332,8 +352,8 @@ const useOrdersLogic = ({ products, setProducts, orders, setOrders }) => {
     setConfirmModal({
       title: isPaid ? 'Huỷ thanh toán?' : 'Xác nhận thanh toán?',
       message: isPaid
-        ? 'Bạn có chắc muốn huỷ trạng thái đã thanh toán cho đơn này không?'
-        : 'Bạn có chắc đơn này đã được thanh toán đầy đủ chưa?',
+        ? 'Bạn có chắc muốn huỷ trạng thái đã thanh toán cho đơn hàng này không?'
+        : 'Bạn có chắc đơn hàng này đã được thanh toán đầy đủ chưa?',
       confirmLabel: isPaid ? 'Huỷ thanh toán' : 'Đã thanh toán',
       tone: isPaid ? 'danger' : 'rose',
       onConfirm: () => {
@@ -388,7 +408,7 @@ const useOrdersLogic = ({ products, setProducts, orders, setOrders }) => {
     const order = orders.find(item => item.id === orderId);
     if (!order) return;
     setConfirmModal({
-      title: 'Huỷ đơn hàng?',
+      title: 'Huỷ đơn?',
       message: `Bạn có chắc muốn huỷ đơn ${order.orderNumber ? `#${order.orderNumber}` : ''}?`,
       confirmLabel: 'Huỷ đơn',
       tone: 'danger',
@@ -415,7 +435,7 @@ const useOrdersLogic = ({ products, setProducts, orders, setOrders }) => {
       };
     }
     return {
-      label: 'Chờ xuất kho',
+      label: 'Chờ lên đơn',
       badgeClass: 'border-amber-200 bg-amber-50 text-amber-600',
       dotClass: 'bg-amber-500',
     };
