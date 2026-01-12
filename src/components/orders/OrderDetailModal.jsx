@@ -1,11 +1,10 @@
 import React from 'react';
 import { formatNumber } from '../../utils/helpers';
 
-const OrderDetailModal = ({ order, onClose }) => {
+const OrderDetailModal = ({ order, onClose, getOrderStatusInfo }) => {
   if (!order) return null;
   const orderLabel = order.orderNumber ? `#${order.orderNumber}` : `#${order.id.slice(-4)}`;
-  const hasShipping = order.shippingUpdated || order.shippingFee > 0;
-  const statusLabel = order.status === 'paid' ? 'Đã thanh toán' : hasShipping ? 'Đã xuất VN' : 'Chờ gom';
+  const statusInfo = getOrderStatusInfo?.(order);
 
   return (
     <div className="fixed inset-0 z-[90] flex items-end justify-center bg-black/40 p-4" onClick={onClose}>
@@ -16,9 +15,12 @@ const OrderDetailModal = ({ order, onClose }) => {
         <div className="p-4 border-b border-amber-100 bg-amber-50">
           <div className="flex items-center justify-between">
             <div className="text-lg font-bold text-amber-900">Chi tiết đơn {orderLabel}</div>
-            <span className="text-xs font-semibold text-amber-700 bg-amber-100 px-2 py-1 rounded-full">
-              {statusLabel}
-            </span>
+            {statusInfo && (
+              <span className={`inline-flex items-center gap-2 px-2 py-1 rounded-full border text-xs font-semibold ${statusInfo.badgeClass}`}>
+                <span className={`w-2 h-2 rounded-full ${statusInfo.dotClass}`} />
+                {statusInfo.label}
+              </span>
+            )}
           </div>
           <div className="text-xs text-amber-600 mt-1">{new Date(order.date).toLocaleString()}</div>
           {order.comment && (

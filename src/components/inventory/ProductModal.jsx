@@ -18,7 +18,7 @@ const ProductModal = ({
   const uploadInputRef = useRef(null);
   const cameraInputRef = useRef(null);
 
-  // Lợi nhuận dự kiến hiển thị ngay trong form để user ước lượng nhanh
+  // Lợi nhuận hiển thị ngay trong form để user ước lượng nhanh
   const expectedProfit = (Number(formData.price) || 0) - (Number(formData.cost) || 0);
   const hasProfitData = Number(formData.price) > 0 && Number(formData.cost) > 0;
 
@@ -133,14 +133,31 @@ const ProductModal = ({
           <div className="bg-amber-50 p-3 rounded-lg border border-amber-100">
             <div className="flex items-center justify-between mb-3">
               <label className="text-[10px] font-bold text-amber-800 uppercase">Giá nhập</label>
-              <select
-                className="bg-transparent text-[10px] font-semibold text-amber-700 border border-amber-200 rounded px-2 py-1"
-                value={formData.costCurrency}
-                onChange={onCurrencyChange}
-              >
-                <option value="JPY">Theo Yên</option>
-                <option value="VND">Theo VNĐ</option>
-              </select>
+              <div className="flex items-center gap-2">
+                {/* Chuyển đổi nhanh giữa Yên và VNĐ bằng nút bấm */}
+                <button
+                  type="button"
+                  onClick={() => onCurrencyChange('JPY')}
+                  className={`px-2 py-1 text-[10px] font-semibold rounded border transition ${
+                    formData.costCurrency === 'JPY'
+                      ? 'bg-amber-500 text-white border-amber-500'
+                      : 'bg-transparent text-amber-700 border-amber-200 hover:border-rose-400'
+                  }`}
+                >
+                  Theo Yên
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onCurrencyChange('VND')}
+                  className={`px-2 py-1 text-[10px] font-semibold rounded border transition ${
+                    formData.costCurrency === 'VND'
+                      ? 'bg-amber-500 text-white border-amber-500'
+                      : 'bg-transparent text-amber-700 border-amber-200 hover:border-rose-400'
+                  }`}
+                >
+                  Theo VNĐ
+                </button>
+              </div>
             </div>
 
             {formData.costCurrency === 'JPY' ? (
@@ -190,8 +207,8 @@ const ProductModal = ({
             )}
           </div>
 
-          {/* VND Pricing & Stock */}
-          <div className="grid grid-cols-2 gap-4">
+          {/* Giá bán & tồn kho nằm cùng một hàng */}
+          <div className="grid grid-cols-2 gap-4 items-end">
             <div>
               <label className="text-xs font-bold text-amber-700 uppercase">Giá bán (VNĐ)</label>
               <input
@@ -214,11 +231,13 @@ const ProductModal = ({
             </div>
           </div>
 
-          {/* Hiển thị lợi nhuận dự kiến để user tham khảo khi nhập giá */}
-          <div className="bg-emerald-50 border border-emerald-100 rounded-lg p-3">
-            <div className="text-[10px] font-bold text-emerald-700 uppercase">Lợi nhuận dự kiến</div>
-            <div className="text-sm font-semibold text-emerald-700">
-              {hasProfitData ? `${formatNumber(expectedProfit)}đ` : 'Chưa đủ dữ liệu'}
+          {/* Lợi nhuận hiển thị phía trên nút lưu */}
+          <div className="bg-emerald-50 border border-emerald-100 rounded-lg px-3 py-2">
+            <div className="flex items-center justify-between gap-2">
+              <div className="text-xs font-bold text-emerald-700 uppercase">Lợi nhuận</div>
+              <div className="text-lg font-bold text-emerald-700">
+                {hasProfitData ? `${formatNumber(expectedProfit)}đ` : '0đ'}
+              </div>
             </div>
           </div>
 

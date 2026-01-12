@@ -5,12 +5,11 @@ import OrderListView from '../components/orders/OrderListView';
 import OrderDetailModal from '../components/orders/OrderDetailModal';
 import ConfirmModal from '../components/modals/ConfirmModal';
 import InputModal from '../components/modals/InputModal';
-import useOrderActions from '../hooks/useOrderActions';
+import useOrdersLogic from '../hooks/useOrdersLogic';
 import { formatInputNumber } from '../utils/helpers';
 
 const Orders = ({ products, setProducts, orders, setOrders, settings }) => {
   const {
-    view,
     cart,
     showScanner,
     setShowScanner,
@@ -46,11 +45,13 @@ const Orders = ({ products, setProducts, orders, setOrders, settings }) => {
     getOrderStatusInfo,
     handleShippingChange,
     handleShippingCancel,
-    handleShippingConfirm
-  } = useOrderActions({ products, setProducts, orders, setOrders });
+    handleShippingConfirm,
+    isCreateView,
+    shouldShowDetailModal,
+  } = useOrdersLogic({ products, setProducts, orders, setOrders });
 
   const renderContent = () => {
-    if (view === 'create') {
+    if (isCreateView) {
       return (
         <OrderCreateView
           settings={settings}
@@ -66,6 +67,7 @@ const Orders = ({ products, setProducts, orders, setOrders, settings }) => {
           totalAmount={totalAmount}
           reviewItems={reviewItems}
           isReviewOpen={isReviewOpen}
+          hideBackButton={Boolean(confirmModal)}
           orderComment={orderComment}
           setOrderComment={setOrderComment}
           handleExitCreate={handleExitCreate}
@@ -99,8 +101,12 @@ const Orders = ({ products, setProducts, orders, setOrders, settings }) => {
           handleCancelOrder={handleCancelOrder}
           onSelectOrder={setSelectedOrder}
         />
-        {selectedOrder && (
-          <OrderDetailModal order={selectedOrder} onClose={() => setSelectedOrder(null)} />
+        {shouldShowDetailModal && (
+          <OrderDetailModal
+            order={selectedOrder}
+            onClose={() => setSelectedOrder(null)}
+            getOrderStatusInfo={getOrderStatusInfo}
+          />
         )}
       </>
     );
