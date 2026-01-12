@@ -16,7 +16,7 @@ const OrderDetailModal = ({ order, onClose, getOrderStatusInfo }) => {
       >
         <div className="p-4 border-b border-amber-100 bg-amber-50">
           <div className="flex items-center justify-between">
-            <div className="text-lg font-bold text-amber-900">Chi tiết xuất kho {orderLabel}</div>
+            <div className="text-lg font-bold text-amber-900">Chi tiết đơn hàng {orderLabel}</div>
             {statusInfo && (
               <span className={`inline-flex items-center gap-2 px-2 py-1 rounded-full border text-xs font-semibold ${statusInfo.badgeClass}`}>
                 <span className={`w-2 h-2 rounded-full ${statusInfo.dotClass}`} />
@@ -27,7 +27,7 @@ const OrderDetailModal = ({ order, onClose, getOrderStatusInfo }) => {
           <div className="text-xs text-amber-600 mt-1">{new Date(order.date).toLocaleString()}</div>
           {order.comment && (
             <div className="mt-2 rounded-lg border border-amber-200 bg-white px-3 py-2 text-xs text-amber-800">
-              {/* Ghi chú xuất kho để gợi nhớ cho user */}
+              {/* Ghi chú đơn hàng để gợi nhớ cho user */}
               {order.comment}
             </div>
           )}
@@ -55,7 +55,7 @@ const OrderDetailModal = ({ order, onClose, getOrderStatusInfo }) => {
             <span className="font-semibold text-amber-700">{formatNumber(order.shippingFee || 0)}đ</span>
           </div>
           <div className="flex justify-between text-sm text-gray-500">
-            <span>Tổng xuất kho</span>
+            <span>Tổng đơn</span>
             <span className="text-lg font-bold text-rose-600">{formatNumber(order.total)}đ</span>
           </div>
           <button

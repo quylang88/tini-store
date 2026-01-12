@@ -50,7 +50,7 @@ const Dashboard = ({ products, orders }) => {
         <div className="bg-white text-amber-900 p-4 rounded-2xl shadow-sm border border-gray-100 col-span-2">
           <div className="flex items-center gap-2 text-amber-700 mb-2">
             <ShoppingCart size={18} />
-            <span className="text-xs font-bold uppercase">Xuất kho</span>
+            <span className="text-xs font-bold uppercase">Đơn hàng</span>
           </div>
           <div className="text-xl font-bold">{totalOrders}</div>
         </div>
@@ -127,7 +127,7 @@ const Dashboard = ({ products, orders }) => {
                           <div className="text-xs text-amber-700">
                             Doanh thu: {formatNumber(stats.revenue)}đ • Lợi nhuận: {formatNumber(stats.profit)}đ
                           </div>
-                          <div className="text-xs text-amber-500">Xuất kho: {stats.orders}</div>
+                          <div className="text-xs text-amber-500">Đơn hàng: {stats.orders}</div>
                         </div>
                         <button
                           onClick={() => setExpandedMonth(isExpanded ? null : key)}

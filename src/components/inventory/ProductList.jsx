@@ -57,7 +57,7 @@ const ProductList = ({ products, onDelete, onOpenDetail }) => {
                 event.stopPropagation();
                 onDelete(product.id);
               }}
-              className="w-8 h-8 rounded-full bg-rose-50 text-rose-600 hover:bg-rose-100 flex items-center justify-center shadow-sm"
+              className="w-8 h-8 rounded-full bg-rose-50 text-rose-600 hover:bg-rose-100 flex items-center justify-center shadow-sm self-center"
               aria-label={`Xoá ${product.name}`}
             >
               <Trash2 size={18} />
