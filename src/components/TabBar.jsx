@@ -1,11 +1,12 @@
 import React from 'react';
-import { LayoutDashboard, ShoppingCart, Package } from 'lucide-react';
+import { LayoutDashboard, ShoppingCart, Package, Settings } from 'lucide-react';
 
 const TabBar = ({ activeTab, setActiveTab }) => {
   const tabs = [
     { id: 'dashboard', icon: LayoutDashboard, label: 'Tổng quan' },
-    { id: 'products', icon: Package, label: 'Nhập hàng' },
-    { id: 'orders', icon: ShoppingCart, label: 'Đơn hàng' },
+    { id: 'products', icon: Package, label: 'Nhập kho' },
+    { id: 'orders', icon: ShoppingCart, label: 'Xuất kho' },
+    { id: 'settings', icon: Settings, label: 'Cài đặt' },
   ];
 
   // Nâng thanh tabbar lên nhẹ để hợp với giao diện iPhone

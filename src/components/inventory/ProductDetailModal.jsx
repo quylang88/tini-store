@@ -25,10 +25,10 @@ const ProductDetailModal = ({ product, onClose }) => {
           <button onClick={onClose} className="bg-amber-100 p-1.5 rounded-full"><X size={18} /></button>
         </div>
 
-        {/* Danh sách tất cả lần nhập hàng */}
+        {/* Danh sách tất cả lần nhập kho */}
         <div className="space-y-3">
           {lots.length === 0 ? (
-            <div className="text-xs text-gray-500 text-center">Chưa có lịch sử nhập hàng.</div>
+            <div className="text-xs text-gray-500 text-center">Chưa có lịch sử nhập kho.</div>
           ) : (
             lots.map((lot) => (
               <div key={lot.id} className="border border-amber-100 rounded-xl p-3 space-y-1">
