@@ -1,21 +1,19 @@
 import React from 'react';
 import { Image as ImageIcon, Pencil, Trash2 } from 'lucide-react';
 import { formatNumber } from '../../utils/helpers';
-import { getLatestCost, getLatestLot, getLatestUnitCost } from '../../utils/purchaseUtils';
-import { getWarehouseLabel, normalizeWarehouseStock } from '../../utils/warehouseUtils';
+import { getLatestCost, getLatestUnitCost } from '../../utils/purchaseUtils';
+import { normalizeWarehouseStock } from '../../utils/warehouseUtils';
 
 const ProductList = ({ products, onEdit, onDelete, onOpenDetail }) => {
   return (
     <div className="flex-1 overflow-y-auto p-3 space-y-3 pb-24">
       {products.map(product => {
-        // Hiển thị nhanh lô mới nhất: giá nhập, lợi nhuận, kho, tồn lô và tổng kho.
-        const latestLot = getLatestLot(product);
+        // Hiển thị nhanh giá nhập, lợi nhuận và tồn kho từng kho.
         const latestCost = getLatestCost(product);
         const latestUnitCost = getLatestUnitCost(product);
         const expectedProfit = (Number(product.price) || 0) - latestUnitCost;
         const hasProfitData = Number(product.price) > 0 && latestUnitCost > 0;
         const stockByWarehouse = normalizeWarehouseStock(product);
-        const totalStock = Number(product.stock) || (stockByWarehouse.daLat + stockByWarehouse.vinhPhuc);
 
         return (
           <div
@@ -50,17 +48,14 @@ const ProductList = ({ products, onEdit, onDelete, onOpenDetail }) => {
                   )}
                 </div>
                 <div className="text-right">
-                  <div className="text-[10px] text-gray-500">
-                    Kho: {latestLot ? getWarehouseLabel(latestLot.warehouse) : '---'}
-                  </div>
                   <div className="text-[10px] text-amber-500">
                     Giá nhập mới nhất: {formatNumber(latestCost)}đ
                   </div>
                 </div>
               </div>
               <div className="mt-2 flex items-center justify-between text-[10px] text-amber-600">
-                <span>Tồn lô mới: {latestLot?.quantity ?? 0} sp</span>
-                <span>Tổng kho: {totalStock} sp</span>
+                <span>Vĩnh Phúc: {stockByWarehouse.vinhPhuc} sp</span>
+                <span>Lâm Đồng: {stockByWarehouse.daLat} sp</span>
               </div>
             </div>
             <div className="pl-2 border-l border-amber-100 flex flex-col gap-2">
