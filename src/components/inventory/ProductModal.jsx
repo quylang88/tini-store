@@ -1,7 +1,6 @@
 import React, { useRef } from 'react';
 import { ScanBarcode, Upload, X, Camera } from 'lucide-react';
 import { formatInputNumber, formatNumber } from '../../utils/helpers';
-import { getTotalStock } from '../../utils/warehouseUtils';
 
 const ProductModal = ({
   isOpen,
@@ -22,8 +21,6 @@ const ProductModal = ({
   // Lợi nhuận hiển thị ngay trong form để user ước lượng nhanh
   const expectedProfit = (Number(formData.price) || 0) - (Number(formData.cost) || 0);
   const hasProfitData = Number(formData.price) > 0 && Number(formData.cost) > 0;
-  const totalStock = getTotalStock(editingProduct);
-
   if (!isOpen) {
     return null;
   }
@@ -223,10 +220,7 @@ const ProductModal = ({
 
           {/* Số lượng đã mua */}
           <div className="bg-amber-50 border border-amber-100 rounded-lg p-3 space-y-2">
-            <div className="flex items-center justify-between">
-              <div className="text-[10px] font-bold text-amber-800 uppercase">Số lượng đã mua</div>
-              <div className="text-xs font-semibold text-amber-700">Tồn kho hiện tại: {formatNumber(totalStock)}</div>
-            </div>
+            <div className="text-[10px] font-bold text-amber-800 uppercase">Số lượng đã mua</div>
             <input
               type="number"
               className="w-full border-b border-amber-100 bg-transparent py-2 focus:border-rose-400 outline-none text-amber-900 font-bold text-lg"

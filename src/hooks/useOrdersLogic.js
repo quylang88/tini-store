@@ -32,14 +32,25 @@ const useOrdersLogic = ({ products, setProducts, orders, setOrders }) => {
     [products],
   );
 
+  const getAvailableStock = (product, warehouseKey) => {
+    const warehouseStock = normalizeWarehouseStock(product);
+    const baseStock = warehouseKey === 'vinhPhuc' ? warehouseStock.vinhPhuc : warehouseStock.daLat;
+    if (!orderBeingEdited) return baseStock;
+    const orderWarehouse = orderBeingEdited.warehouse || DEFAULT_WAREHOUSE;
+    if (orderWarehouse !== warehouseKey) return baseStock;
+    const previousQty = orderBeingEdited.items.find(item => item.productId === product.id)?.quantity || 0;
+    return baseStock + previousQty;
+  };
+
   const filteredProducts = useMemo(
     () => products.filter((product) => {
       const matchSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         (product.barcode && product.barcode.includes(searchTerm));
       const matchCategory = activeCategory === 'Tất cả' || product.category === activeCategory;
-      return matchSearch && matchCategory;
+      const availableStock = getAvailableStock(product, selectedWarehouse);
+      return matchSearch && matchCategory && availableStock > 0;
     }),
-    [products, searchTerm, activeCategory],
+    [products, searchTerm, activeCategory, selectedWarehouse, orderBeingEdited],
   );
 
   const reviewItems = useMemo(() => Object.entries(cart)
@@ -93,16 +104,6 @@ const useOrdersLogic = ({ products, setProducts, orders, setOrders }) => {
       }
       return { ...prev, [productId]: nextValue };
     });
-  };
-
-  const getAvailableStock = (product, warehouseKey) => {
-    const warehouseStock = normalizeWarehouseStock(product);
-    const baseStock = warehouseKey === 'vinhPhuc' ? warehouseStock.vinhPhuc : warehouseStock.daLat;
-    if (!orderBeingEdited) return baseStock;
-    const orderWarehouse = orderBeingEdited.warehouse || DEFAULT_WAREHOUSE;
-    if (orderWarehouse !== warehouseKey) return baseStock;
-    const previousQty = orderBeingEdited.items.find(item => item.productId === product.id)?.quantity || 0;
-    return baseStock + previousQty;
   };
 
   const handleScanForSale = (decodedText) => {
