@@ -29,6 +29,7 @@ const Inbound = ({
     setActiveCategory,
     handleStartCreate,
     handleExitCreate,
+    handleCancelDraft,
     handleShipmentItemChange,
     adjustQuantity,
     handleShipmentFieldChange,
@@ -135,15 +136,17 @@ const Inbound = ({
       searchTerm={searchTerm}
       setSearchTerm={setSearchTerm}
       activeCategory={activeCategory}
-      setActiveCategory={setActiveCategory}
-      filteredProducts={filteredProducts}
-      pendingCount={pendingPurchases.length}
-      shipmentDraft={shipmentDraft}
-      handleExitCreate={handleExitCreate}
-      handleQuantityChange={handleShipmentItemChange}
-      adjustQuantity={adjustQuantity}
-      handleOpenShipmentModal={handleOpenShipmentModal}
-    />
+    setActiveCategory={setActiveCategory}
+    filteredProducts={filteredProducts}
+    pendingCount={pendingPurchases.length}
+    shipmentDraft={shipmentDraft}
+    handleExitCreate={handleExitCreate}
+    handleCancelDraft={handleCancelDraft}
+    handleQuantityChange={handleShipmentItemChange}
+    adjustQuantity={adjustQuantity}
+    handleOpenShipmentModal={handleOpenShipmentModal}
+    hideBackButton={Boolean(confirmModal) || shipmentModalOpen}
+  />
   );
 
   return (

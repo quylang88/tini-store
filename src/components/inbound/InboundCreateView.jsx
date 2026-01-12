@@ -13,9 +13,11 @@ const InboundCreateView = ({
   pendingCount,
   shipmentDraft,
   handleExitCreate,
+  handleCancelDraft,
   handleQuantityChange,
   adjustQuantity,
   handleOpenShipmentModal,
+  hideBackButton,
 }) => {
   const categories = settings?.categories || ['Chung'];
   const totalSelected = Object.values(shipmentDraft.items || {}).reduce((sum, value) => sum + (Number(value) || 0), 0);
@@ -29,13 +31,6 @@ const InboundCreateView = ({
             <h2 className="text-xl font-bold text-amber-900">Tạo kiện hàng</h2>
             <div className="text-xs text-amber-500">Chỉ hiện sản phẩm còn số lượng đã mua.</div>
           </div>
-          <button
-            onClick={handleExitCreate}
-            className="w-10 h-10 rounded-full bg-white text-amber-700 border border-amber-200 shadow-sm hover:bg-amber-50 flex items-center justify-center"
-            aria-label="Quay lại"
-          >
-            <ChevronRight className="rotate-180" size={18} />
-          </button>
         </div>
 
         <div className="px-3 py-2 border-b border-amber-100">
@@ -159,9 +154,9 @@ const InboundCreateView = ({
           <div className="text-xs text-gray-400 text-center py-10">Chưa có hàng mua để gom kiện.</div>
         )}
 
-        {pendingCount > 0 && filteredProducts.length === 0 && (
-          <div className="text-center text-gray-400 mt-10">
-            <div className="flex justify-center mb-2">
+      {pendingCount > 0 && filteredProducts.length === 0 && (
+        <div className="text-center text-gray-400 mt-10">
+          <div className="flex justify-center mb-2">
               <Search size={32} className="opacity-20" />
             </div>
             <p>Không tìm thấy sản phẩm</p>
@@ -173,18 +168,37 @@ const InboundCreateView = ({
         )}
       </div>
 
+      {/* Nút back nổi giống màn hình tạo đơn. */}
+      {!hideBackButton && totalSelected <= 0 && (
+        <button
+          onClick={handleExitCreate}
+          className="fixed right-4 bottom-[calc(env(safe-area-inset-bottom)+88px)] z-[70] flex h-12 w-12 items-center justify-center rounded-full bg-white text-amber-700 shadow-lg border border-amber-200 hover:bg-amber-50 active:scale-95 transition"
+          aria-label="Quay lại"
+        >
+          <ChevronRight className="rotate-180" />
+        </button>
+      )}
+
       {totalSelected > 0 && (
         <div className="fixed bottom-0 left-0 right-0 bg-amber-50/90 border-t border-amber-200 p-4 pb-[calc(env(safe-area-inset-bottom)+28px)] z-[60] shadow-[0_-4px_15px_rgba(0,0,0,0.1)] animate-slide-up backdrop-blur">
           <div className="flex justify-between items-center mb-3">
             <span className="text-gray-500 font-medium text-sm">Đã chọn:</span>
             <span className="text-2xl font-bold text-rose-600">{formatNumber(totalSelected)} sp</span>
           </div>
-          <button
-            onClick={handleOpenShipmentModal}
-            className="w-full bg-rose-500 text-white py-3.5 rounded-xl font-bold shadow-lg shadow-rose-200 active:scale-95 transition"
-          >
-            Lên kiện
-          </button>
+          <div className="flex gap-3">
+            <button
+              onClick={handleCancelDraft}
+              className="flex-1 bg-white text-amber-700 py-3.5 rounded-xl font-bold border border-amber-200 shadow-sm hover:bg-amber-50 active:scale-95 transition"
+            >
+              Huỷ kiện
+            </button>
+            <button
+              onClick={handleOpenShipmentModal}
+              className="flex-1 bg-rose-500 text-white py-3.5 rounded-xl font-bold shadow-lg shadow-rose-200 active:scale-95 transition"
+            >
+              Lên kiện
+            </button>
+          </div>
         </div>
       )}
     </div>

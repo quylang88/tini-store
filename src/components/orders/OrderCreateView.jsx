@@ -2,7 +2,7 @@ import React from 'react';
 import { ChevronRight, ScanBarcode, Image as ImageIcon, Plus, Minus, ShoppingCart, Search, X } from 'lucide-react';
 import BarcodeScanner from '../../components/BarcodeScanner';
 import { formatNumber } from '../../utils/helpers';
-import { WAREHOUSES } from '../../utils/warehouseUtils';
+import { getWarehouseLabel, WAREHOUSES } from '../../utils/warehouseUtils';
 
 // Giao diện tạo/sửa đơn được tách riêng để Orders.jsx gọn hơn
 const OrderCreateView = ({
@@ -167,7 +167,7 @@ const OrderCreateView = ({
                 <div className="text-xs text-gray-500 mt-0.5">
                   <span className="font-semibold text-amber-700">{formatNumber(p.price)}đ</span>
                   <span className="mx-1">|</span>
-                  <span>Kho {selectedWarehouse === 'vinhPhuc' ? 'Vĩnh Phúc' : 'Đà Lạt'}: {availableStock}</span>
+                  <span>Kho {getWarehouseLabel(selectedWarehouse)}: {availableStock}</span>
                 </div>
               </div>
 

@@ -64,14 +64,55 @@ const useInboundLogic = ({
     setActiveCategory('Tất cả');
   };
 
+  const hasDraftChanges = () => {
+    const hasItems = Object.keys(shipmentDraft.items || {}).length > 0;
+    if (hasItems) return true;
+    if (shipmentDraft.comment?.trim()) return true;
+    if (shipmentDraft.method !== 'vn') return true;
+    if (shipmentDraft.warehouse !== DEFAULT_WAREHOUSE) return true;
+    if (Number(shipmentDraft.weightKg) > 0) return true;
+    if (Number(shipmentDraft.feeVnd) > 0) return true;
+    return false;
+  };
+
   const handleStartCreate = () => {
     resetShipmentDraft();
     setView('create');
   };
 
   const handleExitCreate = () => {
+    if (hasDraftChanges()) {
+      setConfirmModal({
+        title: 'Thoát tạo kiện?',
+        message: 'Bạn có chắc muốn thoát? Các sản phẩm đã chọn sẽ bị huỷ.',
+        confirmLabel: 'Thoát',
+        tone: 'danger',
+        onConfirm: () => {
+          resetShipmentDraft();
+          setView('list');
+        },
+      });
+      return;
+    }
     resetShipmentDraft();
     setView('list');
+  };
+
+  const handleCancelDraft = () => {
+    if (!hasDraftChanges()) {
+      handleExitCreate();
+      return;
+    }
+    setConfirmModal({
+      title: 'Huỷ kiện hàng?',
+      message: 'Bạn có chắc muốn huỷ thao tác hiện tại không?',
+      confirmLabel: 'Huỷ',
+      tone: 'danger',
+      onConfirm: () => {
+        resetShipmentDraft();
+        setView('list');
+      },
+    });
   };
 
   const handleShipmentItemChange = (productId, value, maxQuantity) => {
@@ -236,6 +277,7 @@ const useInboundLogic = ({
     setActiveCategory,
     handleStartCreate,
     handleExitCreate,
+    handleCancelDraft,
     handleShipmentItemChange,
     adjustQuantity,
     handleShipmentFieldChange,
