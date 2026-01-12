@@ -24,6 +24,7 @@ const Inventory = ({ products, setProducts, settings }) => {
     formData,
     setFormData,
     handleMoneyChange,
+    handleDecimalChange,
     handleCurrencyChange,
     handleScanSuccess,
     handleImageSelect,
@@ -70,6 +71,7 @@ const Inventory = ({ products, setProducts, settings }) => {
         onImageSelect={handleImageSelect}
         onCurrencyChange={handleCurrencyChange}
         onMoneyChange={handleMoneyChange}
+        onDecimalChange={handleDecimalChange}
       />
 
       {/* Modal xác nhận xoá để thay thế popup mặc định */}

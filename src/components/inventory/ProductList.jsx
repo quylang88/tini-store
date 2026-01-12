@@ -1,6 +1,7 @@
 import React from 'react';
 import { Image as ImageIcon, Trash2 } from 'lucide-react';
 import { formatNumber } from '../../utils/helpers';
+import { normalizeWarehouseStock } from '../../utils/warehouseUtils';
 
 const ProductList = ({ products, onEdit, onDelete }) => {
   return (
@@ -9,6 +10,8 @@ const ProductList = ({ products, onEdit, onDelete }) => {
         // Lợi nhuận để user tham khảo nhanh ngay trong danh sách kho
         const expectedProfit = (Number(product.price) || 0) - (Number(product.cost) || 0);
         const hasProfitData = Number(product.price) > 0 && Number(product.cost) > 0;
+        const { daLat, vinhPhuc } = normalizeWarehouseStock(product);
+        const totalStock = daLat + vinhPhuc;
 
         return (
         <div
@@ -40,8 +43,11 @@ const ProductList = ({ products, onEdit, onDelete }) => {
                   </div>
                 )}
               </div>
-              <div className={`text-xs font-medium ${product.stock < 5 ? 'text-red-500' : 'text-gray-500'}`}>
-                Kho: {product.stock}
+              <div className="text-right">
+                <div className="text-[10px] text-gray-500">Đà Lạt: {daLat} • VP: {vinhPhuc}</div>
+                <div className={`text-xs font-medium ${totalStock < 5 ? 'text-red-500' : 'text-gray-500'}`}>
+                  Tổng kho: {totalStock}
+                </div>
               </div>
             </div>
           </div>

@@ -1,6 +1,7 @@
 import React, { useRef } from 'react';
 import { ScanBarcode, Upload, X, Camera } from 'lucide-react';
 import { formatInputNumber, formatNumber } from '../../utils/helpers';
+import { getTotalStock } from '../../utils/warehouseUtils';
 
 const ProductModal = ({
   isOpen,
@@ -13,6 +14,7 @@ const ProductModal = ({
   onImageSelect,
   onCurrencyChange,
   onMoneyChange,
+  onDecimalChange,
   categories
 }) => {
   const uploadInputRef = useRef(null);
@@ -21,6 +23,16 @@ const ProductModal = ({
   // Lợi nhuận hiển thị ngay trong form để user ước lượng nhanh
   const expectedProfit = (Number(formData.price) || 0) - (Number(formData.cost) || 0);
   const hasProfitData = Number(formData.price) > 0 && Number(formData.cost) > 0;
+  const totalStock = getTotalStock({
+    stockByWarehouse: {
+      daLat: Number(formData.stockDaLat) || 0,
+      vinhPhuc: Number(formData.stockVinhPhuc) || 0,
+    },
+    stock: Number(formData.stockDaLat) || 0,
+  });
+  const inboundWeight = Number(formData.inboundWeight) || 0;
+  const inboundFeeJpy = Math.round(inboundWeight * 900);
+  const inboundFeeVnd = inboundFeeJpy * (Number(formData.exchangeRate) || 0);
 
   if (!isOpen) {
     return null;
@@ -207,28 +219,110 @@ const ProductModal = ({
             )}
           </div>
 
-          {/* Giá bán & tồn kho nằm cùng một hàng */}
-          <div className="grid grid-cols-2 gap-4 items-end">
-            <div>
-              <label className="text-xs font-bold text-amber-700 uppercase">Giá bán (VNĐ)</label>
-              <input
-                inputMode="numeric"
-                className="w-full border-b border-gray-200 py-2 focus:border-rose-400 outline-none text-amber-900 font-bold text-lg"
-                value={formatInputNumber(formData.price)}
-                onChange={onMoneyChange('price')}
-                placeholder="0"
-              />
+          {/* Giá bán */}
+          <div>
+            <label className="text-xs font-bold text-amber-700 uppercase">Giá bán (VNĐ)</label>
+            <input
+              inputMode="numeric"
+              className="w-full border-b border-gray-200 py-2 focus:border-rose-400 outline-none text-amber-900 font-bold text-lg"
+              value={formatInputNumber(formData.price)}
+              onChange={onMoneyChange('price')}
+              placeholder="0"
+            />
+          </div>
+
+          {/* Tồn kho theo kho */}
+          <div className="bg-amber-50 border border-amber-100 rounded-lg p-3 space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="text-[10px] font-bold text-amber-800 uppercase">Tồn kho theo kho</div>
+              <div className="text-xs font-semibold text-amber-700">Tổng: {formatNumber(totalStock)}</div>
             </div>
-            <div>
-              <label className="text-xs font-bold text-amber-700 uppercase">Tồn kho</label>
-              <input
-                type="number"
-                className="w-full border-b border-gray-200 py-2 focus:border-rose-400 outline-none text-amber-900 font-bold text-lg"
-                value={formData.stock}
-                onChange={e => setFormData({ ...formData, stock: e.target.value })}
-                placeholder="0"
-              />
+            <div className="grid grid-cols-2 gap-4 items-end">
+              <div>
+                <label className="text-xs font-bold text-amber-700 uppercase">Đà Lạt</label>
+                <input
+                  type="number"
+                  className="w-full border-b border-amber-100 bg-transparent py-2 focus:border-rose-400 outline-none text-amber-900 font-bold text-lg"
+                  value={formData.stockDaLat}
+                  onChange={e => setFormData({ ...formData, stockDaLat: e.target.value })}
+                  placeholder="0"
+                />
+              </div>
+              <div>
+                <label className="text-xs font-bold text-amber-700 uppercase">Vĩnh Phúc</label>
+                <input
+                  type="number"
+                  className="w-full border-b border-amber-100 bg-transparent py-2 focus:border-rose-400 outline-none text-amber-900 font-bold text-lg"
+                  value={formData.stockVinhPhuc}
+                  onChange={e => setFormData({ ...formData, stockVinhPhuc: e.target.value })}
+                  placeholder="0"
+                />
+              </div>
             </div>
+          </div>
+
+          {/* Phí gửi về kho */}
+          <div className="bg-white border border-amber-100 rounded-lg p-3 space-y-3">
+            <div className="flex items-center justify-between">
+              <label className="text-[10px] font-bold text-amber-800 uppercase">Phí gửi về kho</label>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setFormData({ ...formData, inboundMethod: 'vn' })}
+                  className={`px-2 py-1 text-[10px] font-semibold rounded border transition ${
+                    formData.inboundMethod === 'vn'
+                      ? 'bg-amber-500 text-white border-amber-500'
+                      : 'bg-transparent text-amber-700 border-amber-200 hover:border-rose-400'
+                  }`}
+                >
+                  Mua tại VN
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setFormData({ ...formData, inboundMethod: 'jp' })}
+                  className={`px-2 py-1 text-[10px] font-semibold rounded border transition ${
+                    formData.inboundMethod === 'jp'
+                      ? 'bg-amber-500 text-white border-amber-500'
+                      : 'bg-transparent text-amber-700 border-amber-200 hover:border-rose-400'
+                  }`}
+                >
+                  Mua tại Nhật
+                </button>
+              </div>
+            </div>
+
+            {formData.inboundMethod === 'vn' ? (
+              <div>
+                <label className="text-[10px] font-bold text-amber-800 uppercase">Phí gửi (VNĐ)</label>
+                <div className="relative">
+                  <span className="absolute left-0 top-2 text-amber-500">đ</span>
+                  <input
+                    inputMode="numeric"
+                    className="w-full bg-transparent border-b border-amber-100 py-2 pl-4 focus:border-amber-400 outline-none text-amber-900 font-bold"
+                    value={formatInputNumber(formData.inboundFeeVnd)}
+                    onChange={onMoneyChange('inboundFeeVnd')}
+                    placeholder="0"
+                  />
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <div>
+                  <label className="text-[10px] font-bold text-amber-800 uppercase">Nhập cân (kg)</label>
+                  <input
+                    inputMode="decimal"
+                    className="w-full bg-transparent border-b border-amber-100 py-2 focus:border-amber-400 outline-none text-amber-900 font-bold"
+                    value={formData.inboundWeight}
+                    onChange={onDecimalChange('inboundWeight')}
+                    placeholder="0"
+                  />
+                </div>
+                <div className="text-xs text-amber-700 font-semibold">
+                  Phí gửi: {formatNumber(inboundFeeJpy)}¥ (~{formatNumber(inboundFeeVnd)}đ)
+                </div>
+                <div className="text-[10px] text-amber-500">Tự tính theo 900 yên / 1kg.</div>
+              </div>
+            )}
           </div>
 
           {/* Lợi nhuận hiển thị phía trên nút lưu */}
