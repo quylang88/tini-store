@@ -15,6 +15,7 @@ const Inventory = ({ products, setProducts, settings }) => {
     showScanner,
     setShowScanner,
     editingProduct,
+    editingLotId,
     searchTerm,
     setSearchTerm,
     confirmModal,
@@ -28,10 +29,12 @@ const Inventory = ({ products, setProducts, settings }) => {
     handleMoneyChange,
     handleDecimalChange,
     handleCurrencyChange,
+    handleShippingMethodChange,
     handleScanSuccess,
     handleImageSelect,
     handleSave,
     openModal,
+    openEditLot,
     closeModal,
     handleDelete,
     filteredProducts,
@@ -62,7 +65,6 @@ const Inventory = ({ products, setProducts, settings }) => {
       {/* Tách danh sách sản phẩm thành component riêng */}
       <ProductList
         products={filteredProducts}
-        onEdit={openModal}
         onDelete={handleDelete}
         onOpenDetail={setDetailProduct}
       />
@@ -71,6 +73,7 @@ const Inventory = ({ products, setProducts, settings }) => {
       <ProductModal
         isOpen={isModalOpen}
         editingProduct={editingProduct}
+        editingLotId={editingLotId}
         formData={formData}
         setFormData={setFormData}
         settings={settings}
@@ -84,12 +87,17 @@ const Inventory = ({ products, setProducts, settings }) => {
         onMoneyChange={handleMoneyChange}
         onDecimalChange={handleDecimalChange}
         onCurrencyChange={handleCurrencyChange}
+        onShippingMethodChange={handleShippingMethodChange}
       />
 
       {/* Modal chi tiết sản phẩm khi chạm vào item */}
       <ProductDetailModal
         product={detailProduct}
         onClose={() => setDetailProduct(null)}
+        onEditLot={(lot) => {
+          openEditLot(detailProduct, lot);
+          setDetailProduct(null);
+        }}
       />
 
       {/* Modal xác nhận xoá để thay thế popup mặc định */}

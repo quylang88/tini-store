@@ -11,6 +11,7 @@ const useInventoryLogic = ({ products, setProducts, settings }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [showScanner, setShowScanner] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
+  const [editingLotId, setEditingLotId] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   // Modal xác nhận xoá sản phẩm để giao diện đồng bộ
   const [confirmModal, setConfirmModal] = useState(null);
@@ -64,6 +65,21 @@ const useInventoryLogic = ({ products, setProducts, settings }) => {
       cost: nextCurrency === 'JPY' ? prev.cost : prev.cost,
       costJPY: nextCurrency === 'VND' ? '' : prev.costJPY,
       exchangeRate: String(settings.exchangeRate),
+      // Đồng bộ phí gửi theo loại tiền nhập.
+      shippingMethod: nextCurrency === 'JPY' ? 'jp' : 'vn',
+      shippingWeightKg: nextCurrency === 'JPY' ? prev.shippingWeightKg : '',
+      shippingFeeVnd: nextCurrency === 'VND' ? prev.shippingFeeVnd : '',
+    }));
+  };
+
+  const handleShippingMethodChange = (nextMethod) => {
+    setFormData(prev => ({
+      ...prev,
+      // Đồng bộ loại tiền nhập theo phương thức gửi.
+      shippingMethod: nextMethod,
+      costCurrency: nextMethod === 'jp' ? 'JPY' : 'VND',
+      shippingWeightKg: nextMethod === 'jp' ? prev.shippingWeightKg : '',
+      shippingFeeVnd: nextMethod === 'vn' ? prev.shippingFeeVnd : '',
     }));
   };
 
@@ -155,6 +171,14 @@ const useInventoryLogic = ({ products, setProducts, settings }) => {
       return;
     }
 
+    if (editingLotId && quantityValue <= 0) {
+      setErrorModal({
+        title: 'Thiếu số lượng',
+        message: 'Vui lòng nhập số lượng cho lần nhập hàng này.'
+      });
+      return;
+    }
+
     if (quantityValue > 0 && costValue <= 0) {
       setErrorModal({
         title: 'Thiếu giá nhập',
@@ -200,7 +224,7 @@ const useInventoryLogic = ({ products, setProducts, settings }) => {
       name: formData.name.trim(),
       barcode: formData.barcode ? formData.barcode.trim() : '',
       category: formData.category,
-      price: Number(formData.price),
+      price: editingLotId ? baseProduct.price : Number(formData.price),
       cost: costValue || getLatestCost(baseProduct),
       image: formData.image,
       stockByWarehouse: nextStockByWarehouse,
@@ -216,12 +240,46 @@ const useInventoryLogic = ({ products, setProducts, settings }) => {
         feeVnd,
         exchangeRate: exchangeRateValue,
       };
-      nextProduct = addPurchaseLot(nextProduct, {
-        cost: costValue,
-        quantity: quantityValue,
-        warehouse: warehouseKey,
-        shipping: shippingInfo,
-      });
+      if (editingLotId) {
+        // Sửa lại thông tin của lô đã nhập.
+        const nextLots = nextProduct.purchaseLots.map((lot) => {
+          if (lot.id !== editingLotId) return lot;
+          return {
+            ...lot,
+            cost: costValue,
+            quantity: quantityValue,
+            warehouse: warehouseKey,
+            shipping: {
+              ...shippingInfo,
+              perUnitVnd: feeVnd,
+            },
+            priceAtPurchase: Number(formData.price) || 0,
+          };
+        });
+        const targetLot = nextProduct.purchaseLots.find(lot => lot.id === editingLotId);
+        const previousWarehouse = targetLot?.warehouse || warehouseKey;
+        const previousQty = Number(targetLot?.quantity) || 0;
+        const adjustedStock = {
+          ...existingStock,
+          [previousWarehouse]: Math.max(0, existingStock[previousWarehouse] - previousQty),
+          [warehouseKey]: (existingStock[warehouseKey] || 0) + quantityValue,
+        };
+        nextProduct = {
+          ...nextProduct,
+          purchaseLots: nextLots,
+          stockByWarehouse: adjustedStock,
+          stock: adjustedStock.daLat + adjustedStock.vinhPhuc,
+          cost: getLatestCost({ ...nextProduct, purchaseLots: nextLots }),
+        };
+      } else {
+        nextProduct = addPurchaseLot(nextProduct, {
+          cost: costValue,
+          quantity: quantityValue,
+          warehouse: warehouseKey,
+          shipping: shippingInfo,
+          priceAtPurchase: Number(formData.price) || 0,
+        });
+      }
     }
 
     if (editingProduct) {
@@ -235,6 +293,7 @@ const useInventoryLogic = ({ products, setProducts, settings }) => {
   const openModal = (product = null) => {
     if (product) {
       setEditingProduct(product);
+      setEditingLotId(null);
       setFormData({
         name: product.name,
         barcode: product.barcode || '',
@@ -246,13 +305,14 @@ const useInventoryLogic = ({ products, setProducts, settings }) => {
         price: product.price,
         quantity: '',
         warehouse: 'vinhPhuc',
-        shippingMethod: 'jp',
+        shippingMethod: 'vn',
         shippingWeightKg: '',
         shippingFeeVnd: '',
         image: product.image || '',
       });
     } else {
       setEditingProduct(null);
+      setEditingLotId(null);
       setFormData({
         name: '',
         barcode: '',
@@ -273,9 +333,34 @@ const useInventoryLogic = ({ products, setProducts, settings }) => {
     setIsModalOpen(true);
   };
 
+  const openEditLot = (product, lot) => {
+    if (!product || !lot) return;
+    const shippingMethod = lot.shipping?.method || 'jp';
+    setEditingProduct(product);
+    setEditingLotId(lot.id);
+    setFormData({
+      name: product.name,
+      barcode: product.barcode || '',
+      category: product.category || 'Chung',
+      costCurrency: shippingMethod === 'jp' ? 'JPY' : 'VND',
+      costJPY: '',
+      exchangeRate: String(lot.shipping?.exchangeRate || settings.exchangeRate),
+      cost: lot.cost || '',
+      price: lot.priceAtPurchase ?? product.price,
+      quantity: lot.quantity || '',
+      warehouse: lot.warehouse || 'vinhPhuc',
+      shippingMethod,
+      shippingWeightKg: lot.shipping?.weightKg || '',
+      shippingFeeVnd: lot.shipping?.feeVnd || '',
+      image: product.image || '',
+    });
+    setIsModalOpen(true);
+  };
+
   const closeModal = () => {
     setIsModalOpen(false);
     setEditingProduct(null);
+    setEditingLotId(null);
   };
 
   const handleDelete = (id) => {
@@ -325,6 +410,7 @@ const useInventoryLogic = ({ products, setProducts, settings }) => {
 
   const handleSelectExistingProduct = (product) => {
     setEditingProduct(product);
+    setEditingLotId(null);
     setFormData({
       name: product.name,
       barcode: product.barcode || '',
@@ -336,7 +422,7 @@ const useInventoryLogic = ({ products, setProducts, settings }) => {
       price: product.price,
       quantity: '',
       warehouse: 'vinhPhuc',
-      shippingMethod: 'jp',
+      shippingMethod: 'vn',
       shippingWeightKg: '',
       shippingFeeVnd: '',
       image: product.image || '',
@@ -348,6 +434,7 @@ const useInventoryLogic = ({ products, setProducts, settings }) => {
     showScanner,
     setShowScanner,
     editingProduct,
+    editingLotId,
     searchTerm,
     setSearchTerm,
     confirmModal,
@@ -360,6 +447,7 @@ const useInventoryLogic = ({ products, setProducts, settings }) => {
     setWarehouseFilter,
     toggleCategory,
     handleCurrencyChange,
+    handleShippingMethodChange,
     formData,
     setFormData,
     handleMoneyChange,
@@ -368,6 +456,7 @@ const useInventoryLogic = ({ products, setProducts, settings }) => {
     handleImageSelect,
     handleSave,
     openModal,
+    openEditLot,
     closeModal,
     handleDelete,
     filteredProducts,

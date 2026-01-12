@@ -6,6 +6,7 @@ import { getWarehouseLabel } from '../../utils/warehouseUtils';
 const ProductModal = ({
   isOpen,
   editingProduct,
+  editingLotId,
   formData,
   setFormData,
   settings,
@@ -18,6 +19,7 @@ const ProductModal = ({
   onCurrencyChange,
   onMoneyChange,
   onDecimalChange,
+  onShippingMethodChange,
   categories
 }) => {
   const uploadInputRef = useRef(null);
@@ -33,6 +35,8 @@ const ProductModal = ({
   const purchaseLots = editingProduct?.purchaseLots || [];
   const hasProfitData = Number(formData.price) > 0 && (Number(formData.cost) + shippingFeeVnd) > 0;
   const finalProfit = (Number(formData.price) || 0) - (Number(formData.cost) || 0) - shippingFeeVnd;
+  const isEditingLot = Boolean(editingProduct && editingLotId);
+  const modalTitle = isEditingLot ? 'Sửa Lần Nhập Hàng' : 'Thêm Mới';
   if (!isOpen) {
     return null;
   }
@@ -49,7 +53,7 @@ const ProductModal = ({
     <div className="fixed inset-0 bg-black/50 z-[70] flex items-end sm:items-center justify-center backdrop-blur-sm">
       <div className="bg-white w-full sm:w-96 rounded-t-2xl sm:rounded-2xl p-5 pb-[calc(env(safe-area-inset-bottom)+1.25rem)] animate-slide-up max-h-[90vh] overflow-y-auto">
         <div className="flex justify-between items-center mb-5">
-          <h3 className="font-bold text-lg text-amber-900">{editingProduct ? 'Sửa Sản Phẩm' : 'Thêm Mới'}</h3>
+          <h3 className="font-bold text-lg text-amber-900">{modalTitle}</h3>
           <button onClick={onClose} className="bg-amber-100 p-1.5 rounded-full"><X size={18} /></button>
         </div>
 
@@ -235,7 +239,7 @@ const ProductModal = ({
               <div className="flex gap-2">
                 <button
                   type="button"
-                  onClick={() => setFormData({ ...formData, shippingMethod: 'jp' })}
+                  onClick={() => onShippingMethodChange('jp')}
                   className={`px-2 py-1 text-[10px] font-semibold rounded border transition ${
                     formData.shippingMethod === 'jp'
                       ? 'bg-amber-500 text-white border-amber-500'
@@ -246,7 +250,7 @@ const ProductModal = ({
                 </button>
                 <button
                   type="button"
-                  onClick={() => setFormData({ ...formData, shippingMethod: 'vn' })}
+                  onClick={() => onShippingMethodChange('vn')}
                   className={`px-2 py-1 text-[10px] font-semibold rounded border transition ${
                     formData.shippingMethod === 'vn'
                       ? 'bg-amber-500 text-white border-amber-500'
