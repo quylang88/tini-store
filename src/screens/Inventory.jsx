@@ -4,6 +4,7 @@ import InventoryHeader from '../components/inventory/InventoryHeader';
 import ProductList from '../components/inventory/ProductList';
 import ProductModal from '../components/inventory/ProductModal';
 import ConfirmModal from '../components/modals/ConfirmModal';
+import ErrorModal from '../components/modals/ErrorModal';
 import useInventoryLogic from '../hooks/useInventoryLogic';
 
 const Inventory = ({ products, setProducts, settings }) => {
@@ -16,6 +17,8 @@ const Inventory = ({ products, setProducts, settings }) => {
     setSearchTerm,
     confirmModal,
     setConfirmModal,
+    errorModal,
+    setErrorModal,
     activeCategory,
     setActiveCategory,
     formData,
@@ -81,6 +84,14 @@ const Inventory = ({ products, setProducts, settings }) => {
           confirmModal?.onConfirm?.();
           setConfirmModal(null);
         }}
+      />
+
+      {/* Modal báo lỗi riêng cho form tạo/sửa sản phẩm */}
+      <ErrorModal
+        open={Boolean(errorModal)}
+        title={errorModal?.title}
+        message={errorModal?.message}
+        onClose={() => setErrorModal(null)}
       />
     </div>
   );

@@ -133,14 +133,31 @@ const ProductModal = ({
           <div className="bg-amber-50 p-3 rounded-lg border border-amber-100">
             <div className="flex items-center justify-between mb-3">
               <label className="text-[10px] font-bold text-amber-800 uppercase">Giá nhập</label>
-              <select
-                className="bg-transparent text-[10px] font-semibold text-amber-700 border border-amber-200 rounded px-2 py-1"
-                value={formData.costCurrency}
-                onChange={onCurrencyChange}
-              >
-                <option value="JPY">Theo Yên</option>
-                <option value="VND">Theo VNĐ</option>
-              </select>
+              <div className="flex items-center gap-2">
+                {/* Chuyển đổi nhanh giữa Yên và VNĐ bằng nút bấm */}
+                <button
+                  type="button"
+                  onClick={() => onCurrencyChange('JPY')}
+                  className={`px-2 py-1 text-[10px] font-semibold rounded border transition ${
+                    formData.costCurrency === 'JPY'
+                      ? 'bg-amber-500 text-white border-amber-500'
+                      : 'bg-transparent text-amber-700 border-amber-200 hover:border-rose-400'
+                  }`}
+                >
+                  Theo Yên
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onCurrencyChange('VND')}
+                  className={`px-2 py-1 text-[10px] font-semibold rounded border transition ${
+                    formData.costCurrency === 'VND'
+                      ? 'bg-amber-500 text-white border-amber-500'
+                      : 'bg-transparent text-amber-700 border-amber-200 hover:border-rose-400'
+                  }`}
+                >
+                  Theo VNĐ
+                </button>
+              </div>
             </div>
 
             {formData.costCurrency === 'JPY' ? (
@@ -190,8 +207,8 @@ const ProductModal = ({
             )}
           </div>
 
-          {/* VND Pricing & Stock */}
-          <div className="grid grid-cols-2 gap-4">
+          {/* Giá bán & lợi nhuận nằm cùng một hàng */}
+          <div className="grid grid-cols-2 gap-4 items-end">
             <div>
               <label className="text-xs font-bold text-amber-700 uppercase">Giá bán (VNĐ)</label>
               <input
@@ -202,24 +219,26 @@ const ProductModal = ({
                 placeholder="0"
               />
             </div>
-            <div>
-              <label className="text-xs font-bold text-amber-700 uppercase">Tồn kho</label>
-              <input
-                type="number"
-                className="w-full border-b border-gray-200 py-2 focus:border-rose-400 outline-none text-amber-900 font-bold text-lg"
-                value={formData.stock}
-                onChange={e => setFormData({ ...formData, stock: e.target.value })}
-                placeholder="0"
-              />
+            <div className="bg-emerald-50 border border-emerald-100 rounded-lg px-3 py-2">
+              <div className="flex items-center justify-between gap-2">
+                <div className="text-[10px] font-bold text-emerald-700 uppercase">Lợi nhuận</div>
+                <div className="text-sm font-semibold text-emerald-700">
+                  {hasProfitData ? `${formatNumber(expectedProfit)}đ` : 'Chưa đủ dữ liệu'}
+                </div>
+              </div>
             </div>
           </div>
 
-          {/* Hiển thị lợi nhuận để user tham khảo khi nhập giá */}
-          <div className="bg-emerald-50 border border-emerald-100 rounded-lg p-3">
-            <div className="text-[10px] font-bold text-emerald-700 uppercase">Lợi nhuận</div>
-            <div className="text-sm font-semibold text-emerald-700">
-              {hasProfitData ? `${formatNumber(expectedProfit)}đ` : 'Chưa đủ dữ liệu'}
-            </div>
+          {/* Tồn kho */}
+          <div>
+            <label className="text-xs font-bold text-amber-700 uppercase">Tồn kho</label>
+            <input
+              type="number"
+              className="w-full border-b border-gray-200 py-2 focus:border-rose-400 outline-none text-amber-900 font-bold text-lg"
+              value={formData.stock}
+              onChange={e => setFormData({ ...formData, stock: e.target.value })}
+              placeholder="0"
+            />
           </div>
 
           <button onClick={onSave} className="w-full bg-rose-500 text-white py-3 rounded-xl font-bold mt-2 shadow-lg shadow-rose-200 active:scale-95 transition">
