@@ -8,13 +8,12 @@ export const normalizePurchaseLots = (product = {}) => {
       if (!lot?.shipping || lot.shipping?.perUnitVnd) {
         return lot;
       }
-      const quantity = Number(lot.quantity) || 0;
       const feeVnd = Number(lot.shipping.feeVnd) || 0;
       return {
         ...lot,
         shipping: {
           ...lot.shipping,
-          perUnitVnd: quantity > 0 ? feeVnd / quantity : 0,
+          perUnitVnd: feeVnd,
         },
       };
     });
@@ -82,7 +81,6 @@ export const getLatestUnitCost = (product = {}) => {
 export const addPurchaseLot = (product, lot) => {
   const quantity = Number(lot.quantity) || 0;
   const shippingFeeVnd = Number(lot.shipping?.feeVnd) || 0;
-  const shippingPerUnit = quantity > 0 ? shippingFeeVnd / quantity : 0;
   const nextLot = {
     id: lot.id || generateLotId(),
     cost: Number(lot.cost) || 0,
@@ -92,7 +90,7 @@ export const addPurchaseLot = (product, lot) => {
     shipping: lot.shipping
       ? {
         ...lot.shipping,
-        perUnitVnd: shippingPerUnit,
+        perUnitVnd: shippingFeeVnd,
       }
       : null,
   };
