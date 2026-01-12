@@ -1,101 +1,25 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { DollarSign, ShoppingCart, TrendingUp, Image as ImageIcon, ChevronDown, ChevronUp } from 'lucide-react';
 import { formatNumber } from '../utils/helpers';
+import useDashboardLogic from '../hooks/useDashboardLogic';
 
 const Dashboard = ({ products, orders }) => {
-  const [showHistory, setShowHistory] = useState(false);
-  const [expandedMonth, setExpandedMonth] = useState(null);
-
-  const costMap = new Map(products.map(product => [product.id, product.cost || 0]));
-  // Chỉ tính doanh thu/lợi nhuận với đơn đã thanh toán để tránh âm do đơn chưa chốt
-  const paidOrders = orders.filter(order => order.status === 'paid');
-  const totalRevenue = paidOrders.reduce((sum, order) => sum + order.total, 0);
-  const totalProfit = paidOrders.reduce((sum, order) => {
-    // Ưu tiên dùng giá vốn đã lưu trong đơn để lợi nhuận không bị lệch khi giá vốn thay đổi
-    const orderProfit = order.items.reduce((itemSum, item) => {
-      const cost = Number.isFinite(item.cost) ? item.cost : (costMap.get(item.productId) || 0);
-      return itemSum + (item.price - cost) * item.quantity;
-    }, 0);
-    // Trừ phí gửi vì đây là chi phí phát sinh của đơn
-    const shippingFee = order.shippingFee || 0;
-    return sum + orderProfit - shippingFee;
-  }, 0);
-  const totalOrders = orders.length;
-
-  const monthKey = (date) => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-  const monthLabel = (key) => {
-    const [year, month] = key.split('-');
-    return `Tháng ${month}/${year}`;
-  };
-
-  const monthlyStats = paidOrders.reduce((acc, order) => {
-    const key = monthKey(new Date(order.date));
-    if (!acc[key]) {
-      acc[key] = { revenue: 0, profit: 0, orders: 0, items: {} };
-    }
-    const stats = acc[key];
-    stats.revenue += order.total;
-    stats.orders += 1;
-    const orderProfit = order.items.reduce((sum, item) => {
-      const cost = Number.isFinite(item.cost) ? item.cost : (costMap.get(item.productId) || 0);
-      return sum + (item.price - cost) * item.quantity;
-    }, 0);
-    // Trừ phí gửi vì đây là chi phí phát sinh của đơn
-    const shippingFee = order.shippingFee || 0;
-    stats.profit += orderProfit - shippingFee;
-    order.items.forEach((item) => {
-      if (!stats.items[item.productId]) {
-        stats.items[item.productId] = { name: item.name, quantity: 0, revenue: 0, profit: 0 };
-      }
-      stats.items[item.productId].quantity += item.quantity;
-      stats.items[item.productId].revenue += item.price * item.quantity;
-      const cost = Number.isFinite(item.cost) ? item.cost : (costMap.get(item.productId) || 0);
-      stats.items[item.productId].profit += (item.price - cost) * item.quantity;
-    });
-    return acc;
-  }, {});
-
-  const now = new Date();
-  const currentKey = monthKey(now);
-  const previousKey = monthKey(new Date(now.getFullYear(), now.getMonth() - 1, 1));
-  const olderMonths = Object.keys(monthlyStats)
-    .filter((key) => key !== currentKey && key !== previousKey)
-    .sort((a, b) => new Date(`${b}-01`) - new Date(`${a}-01`));
-
-  const getTopItems = (key) => {
-    const stats = monthlyStats[key];
-    if (!stats) return [];
-    return Object.values(stats.items)
-      .sort((a, b) => b.revenue - a.revenue)
-      .slice(0, 3);
-  };
-
-  // Chuẩn bị dữ liệu biểu đồ thống kê theo tháng (tối đa 6 tháng gần nhất)
-  const monthlyChartData = Object.keys(monthlyStats)
-    .sort((a, b) => new Date(`${a}-01`) - new Date(`${b}-01`))
-    .slice(-6)
-    .map((key) => ({
-      key,
-      label: monthLabel(key),
-      revenue: monthlyStats[key].revenue,
-      profit: monthlyStats[key].profit,
-    }));
-  const chartMax = Math.max(
-    ...monthlyChartData.flatMap((item) => [item.revenue, item.profit]),
-    1,
-  );
-
-  // Logic tìm top 3 sản phẩm theo lợi nhuận
-  const topProducts = products.map(p => {
-    // Chỉ tính lợi nhuận dựa trên đơn đã thanh toán
-    const profit = paidOrders.reduce((acc, order) => {
-      const item = order.items.find(i => i.productId === p.id);
-      if (!item) return acc;
-      const cost = Number.isFinite(item.cost) ? item.cost : (costMap.get(item.productId) || 0);
-      return acc + (item.price - cost) * item.quantity;
-    }, 0);
-    return { ...p, profit };
-  }).sort((a, b) => b.profit - a.profit).slice(0, 3);
+  const {
+    showHistory,
+    setShowHistory,
+    expandedMonth,
+    setExpandedMonth,
+    totalRevenue,
+    totalProfit,
+    totalOrders,
+    monthLabel,
+    monthlyStats,
+    olderMonths,
+    getTopItems,
+    monthlyChartData,
+    chartMax,
+    topProducts,
+  } = useDashboardLogic({ products, orders });
 
   return (
     <div className="p-4 space-y-4 pb-24 animate-fade-in">
