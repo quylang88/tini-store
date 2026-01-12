@@ -20,6 +20,9 @@ const useOrdersLogic = ({ products, setProducts, orders, setOrders }) => {
   const [activeCategory, setActiveCategory] = useState('Tất cả');
   const [searchTerm, setSearchTerm] = useState('');
   const [orderBeingEdited, setOrderBeingEdited] = useState(null);
+  // Trạng thái hiển thị màn hình tạo đơn và modal chi tiết đơn
+  const isCreateView = view === 'create';
+  const shouldShowDetailModal = view === 'list' && Boolean(selectedOrder);
 
   const productMap = useMemo(
     () => new Map(products.map((product) => [product.id, product])),
@@ -375,6 +378,8 @@ const useOrdersLogic = ({ products, setProducts, orders, setOrders }) => {
     handleShippingChange,
     handleShippingCancel,
     handleShippingConfirm,
+    isCreateView,
+    shouldShowDetailModal,
   };
 };
 

@@ -10,7 +10,6 @@ import { formatInputNumber } from '../utils/helpers';
 
 const Orders = ({ products, setProducts, orders, setOrders, settings }) => {
   const {
-    view,
     cart,
     showScanner,
     setShowScanner,
