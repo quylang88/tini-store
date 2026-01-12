@@ -1,5 +1,6 @@
 import React from 'react';
 import { Search, X } from 'lucide-react';
+import { WAREHOUSES } from '../../utils/warehouseUtils';
 
 const WarehouseHeader = ({
   searchTerm,
@@ -8,6 +9,8 @@ const WarehouseHeader = ({
   activeCategory,
   onCategoryChange,
   categories,
+  activeWarehouse,
+  onWarehouseChange,
 }) => {
   return (
     <div className="bg-amber-50/90 sticky top-0 z-10 shadow-sm backdrop-blur">
@@ -18,7 +21,6 @@ const WarehouseHeader = ({
             alt="Tiny Shop"
             className="h-12 w-auto object-contain"
           />
-          <div className="text-xs font-semibold text-amber-600 uppercase">Kho hàng</div>
         </div>
         <div className="relative">
           <Search className="absolute left-3 top-2.5 text-amber-400" size={16} />
@@ -39,6 +41,25 @@ const WarehouseHeader = ({
               <X size={14} />
             </button>
           )}
+        </div>
+        <div className="mt-3 flex items-center gap-2 text-xs font-semibold text-amber-700">
+          <span>Kho:</span>
+          <div className="flex gap-2">
+            {WAREHOUSES.map((warehouse) => (
+              <button
+                key={warehouse.key}
+                type="button"
+                onClick={() => onWarehouseChange(warehouse.key)}
+                className={`px-2 py-1 rounded-full border transition ${
+                  activeWarehouse === warehouse.key
+                    ? 'bg-rose-500 text-white border-rose-500'
+                    : 'bg-white text-amber-700 border-amber-200 hover:border-rose-300'
+                }`}
+              >
+                {warehouse.label}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
