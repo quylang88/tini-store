@@ -6,7 +6,7 @@ const ProductList = ({ products, onEdit, onDelete }) => {
   return (
     <div className="flex-1 overflow-y-auto p-3 space-y-3 pb-24">
       {products.map(product => {
-        // Lợi nhuận dự kiến để user tham khảo nhanh ngay trong danh sách kho
+        // Lợi nhuận để user tham khảo nhanh ngay trong danh sách kho
         const expectedProfit = (Number(product.price) || 0) - (Number(product.cost) || 0);
         const hasProfitData = Number(product.price) > 0 && Number(product.cost) > 0;
 
@@ -36,7 +36,7 @@ const ProductList = ({ products, onEdit, onDelete }) => {
                 <div className="text-amber-700 font-bold text-sm">{formatNumber(product.price)}đ</div>
                 {hasProfitData && (
                   <div className="text-[10px] text-emerald-600">
-                    Lợi nhuận dự kiến: {formatNumber(expectedProfit)}đ
+                    Lợi nhuận: {formatNumber(expectedProfit)}đ
                   </div>
                 )}
               </div>
