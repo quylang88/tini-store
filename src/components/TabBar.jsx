@@ -5,7 +5,7 @@ const TabBar = ({ activeTab, setActiveTab }) => {
   const tabs = [
     { id: 'dashboard', icon: LayoutDashboard, label: 'Tổng quan' },
     { id: 'products', icon: Package, label: 'Nhập kho' },
-    { id: 'orders', icon: ShoppingCart, label: 'Đơn hàng' },
+    { id: 'orders', icon: ShoppingCart, label: 'Xuất kho' },
     { id: 'settings', icon: Settings, label: 'Cài đặt' },
   ];
 
