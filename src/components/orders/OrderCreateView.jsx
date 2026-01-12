@@ -173,8 +173,8 @@ const OrderCreateView = ({
         )}
       </div>
 
-      {/* Nút back nổi góc phải, né tabbar/setting và ẩn khi modal xác nhận/review đang mở. */}
-      {!isReviewOpen && !hideBackButton && (
+      {/* Nút back nổi góc phải, né tabbar/setting và ẩn khi modal xác nhận/review hoặc tổng đơn hàng đang mở. */}
+      {!isReviewOpen && !hideBackButton && totalAmount <= 0 && (
         <button
           onClick={handleExitCreate}
           className={`fixed right-4 ${totalAmount > 0 ? 'bottom-[calc(env(safe-area-inset-bottom)+140px)]' : 'bottom-[calc(env(safe-area-inset-bottom)+88px)]'} z-[70] flex h-12 w-12 items-center justify-center rounded-full bg-white text-amber-700 shadow-lg border border-amber-200 hover:bg-amber-50 active:scale-95 transition`}
