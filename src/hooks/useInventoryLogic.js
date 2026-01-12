@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { compressImage, sanitizeNumberInput } from '../utils/helpers';
+import { normalizeWarehouseStock } from '../utils/warehouseUtils';
 
 const useInventoryLogic = ({ products, setProducts, settings }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -24,7 +25,7 @@ const useInventoryLogic = ({ products, setProducts, settings }) => {
     exchangeRate: String(settings.exchangeRate), // Lấy tỷ giá mặc định từ Settings
     cost: '', // Giá vốn VNĐ
     price: '', // Giá bán VNĐ
-    stock: '',
+    purchasePending: '',
     image: ''
   });
 
@@ -117,6 +118,8 @@ const useInventoryLogic = ({ products, setProducts, settings }) => {
       }
     }
 
+    const exchangeRateValue = Number(formData.exchangeRate) || settings.exchangeRate;
+    const existingStock = editingProduct ? normalizeWarehouseStock(editingProduct) : { daLat: 0, vinhPhuc: 0 };
     const newProduct = {
       id: editingProduct ? editingProduct.id : Date.now().toString(),
       name: formData.name.trim(),
@@ -124,11 +127,13 @@ const useInventoryLogic = ({ products, setProducts, settings }) => {
       category: formData.category,
       costCurrency: formData.costCurrency,
       costJPY: Number(formData.costJPY) || 0,
-      exchangeRate: Number(formData.exchangeRate) || settings.exchangeRate,
+      exchangeRate: exchangeRateValue,
       cost: Number(formData.cost) || 0, // Giá vốn VNĐ
       price: Number(formData.price), // Giá bán VNĐ
-      stock: Number(formData.stock),
-      image: formData.image
+      purchasePending: Number(formData.purchasePending) || 0,
+      stockByWarehouse: existingStock,
+      stock: existingStock.daLat + existingStock.vinhPhuc,
+      image: formData.image,
     };
 
     if (editingProduct) {
@@ -141,6 +146,7 @@ const useInventoryLogic = ({ products, setProducts, settings }) => {
 
   const openModal = (product = null) => {
     if (product) {
+      const warehouseStock = normalizeWarehouseStock(product);
       setEditingProduct(product);
       setFormData({
         name: product.name,
@@ -151,8 +157,8 @@ const useInventoryLogic = ({ products, setProducts, settings }) => {
         exchangeRate: String(product.exchangeRate || settings.exchangeRate),
         cost: product.cost || '',
         price: product.price,
-        stock: product.stock,
-        image: product.image || ''
+        purchasePending: product.purchasePending || '',
+        image: product.image || '',
       });
     } else {
       setEditingProduct(null);
@@ -165,8 +171,8 @@ const useInventoryLogic = ({ products, setProducts, settings }) => {
         exchangeRate: String(settings.exchangeRate), // Load tỷ giá mặc định
         cost: '',
         price: '',
-        stock: '',
-        image: ''
+        purchasePending: '',
+        image: '',
       });
     }
     setIsModalOpen(true);

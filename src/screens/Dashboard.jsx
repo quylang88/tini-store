@@ -1,9 +1,9 @@
 import React from 'react';
-import { DollarSign, ShoppingCart, TrendingUp, Image as ImageIcon, ChevronDown, ChevronUp } from 'lucide-react';
+import { DollarSign, ShoppingCart, TrendingUp, Image as ImageIcon, ChevronDown, ChevronUp, Settings } from 'lucide-react';
 import { formatNumber } from '../utils/helpers';
 import useDashboardLogic from '../hooks/useDashboardLogic';
 
-const Dashboard = ({ products, orders }) => {
+const Dashboard = ({ products, orders, onOpenSettings }) => {
   const {
     showHistory,
     setShowHistory,
@@ -23,11 +23,20 @@ const Dashboard = ({ products, orders }) => {
 
   return (
     <div className="p-4 space-y-4 pb-24 animate-fade-in">
-      <img
-        src="/tiny-shop-transparent.png"
-        alt="Tiny Shop"
-        className="h-12 w-auto object-contain"
-      />
+      <div className="flex items-center justify-between">
+        <img
+          src="/tiny-shop-transparent.png"
+          alt="Tiny Shop"
+          className="h-12 w-auto object-contain"
+        />
+        <button
+          onClick={onOpenSettings}
+          className="w-10 h-10 rounded-full bg-white border border-amber-200 text-amber-700 flex items-center justify-center shadow-sm hover:bg-amber-50"
+          aria-label="Mở cài đặt"
+        >
+          <Settings size={18} />
+        </button>
+      </div>
       <div className="grid grid-cols-2 gap-3">
         <div className="bg-rose-400 text-white p-4 rounded-2xl shadow-lg shadow-rose-200">
           <div className="flex items-center gap-2 opacity-90 mb-2">

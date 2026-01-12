@@ -4,8 +4,10 @@ import { formatNumber } from '../utils/helpers';
 const useSettingsLogic = ({
   products,
   orders,
+  inboundShipments,
   setProducts,
   setOrders,
+  setInboundShipments,
   settings,
   setSettings,
 }) => {
@@ -84,7 +86,12 @@ const useSettingsLogic = ({
 
   // Sao lưu dữ liệu (Backup)
   const exportData = () => {
-    const data = JSON.stringify({ products, orders, settings });
+    const data = JSON.stringify({
+      products,
+      orders,
+      inboundShipments,
+      settings,
+    });
     const blob = new Blob([data], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
 
@@ -115,6 +122,7 @@ const useSettingsLogic = ({
             onConfirm: () => {
               setProducts(data.products);
               setOrders(data.orders);
+              setInboundShipments(data.inboundShipments || []);
               if (data.settings) {
                 setSettings(data.settings);
               }

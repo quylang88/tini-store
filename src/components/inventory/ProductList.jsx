@@ -9,6 +9,7 @@ const ProductList = ({ products, onEdit, onDelete }) => {
         // Lợi nhuận để user tham khảo nhanh ngay trong danh sách kho
         const expectedProfit = (Number(product.price) || 0) - (Number(product.cost) || 0);
         const hasProfitData = Number(product.price) > 0 && Number(product.cost) > 0;
+        const pendingPurchase = Number(product.purchasePending) || 0;
 
         return (
         <div
@@ -40,8 +41,8 @@ const ProductList = ({ products, onEdit, onDelete }) => {
                   </div>
                 )}
               </div>
-              <div className={`text-xs font-medium ${product.stock < 5 ? 'text-red-500' : 'text-gray-500'}`}>
-                Kho: {product.stock}
+              <div className="text-right">
+                <div className="text-[10px] text-gray-500">Đã mua: {pendingPurchase}</div>
               </div>
             </div>
           </div>

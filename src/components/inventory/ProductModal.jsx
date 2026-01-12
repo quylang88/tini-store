@@ -21,7 +21,6 @@ const ProductModal = ({
   // Lợi nhuận hiển thị ngay trong form để user ước lượng nhanh
   const expectedProfit = (Number(formData.price) || 0) - (Number(formData.cost) || 0);
   const hasProfitData = Number(formData.price) > 0 && Number(formData.cost) > 0;
-
   if (!isOpen) {
     return null;
   }
@@ -207,9 +206,9 @@ const ProductModal = ({
             )}
           </div>
 
-          {/* Giá bán & tồn kho nằm cùng một hàng */}
-          <div className="grid grid-cols-2 gap-4 items-end">
-            <div>
+          {/* Giữ giá bán và lợi nhuận trên cùng một hàng, chia đều chiều ngang */}
+          <div className="flex flex-row flex-nowrap gap-3 items-start">
+            <div className="flex-1 min-w-0">
               <label className="text-xs font-bold text-amber-700 uppercase">Giá bán (VNĐ)</label>
               <input
                 inputMode="numeric"
@@ -219,26 +218,25 @@ const ProductModal = ({
                 placeholder="0"
               />
             </div>
-            <div>
-              <label className="text-xs font-bold text-amber-700 uppercase">Tồn kho</label>
-              <input
-                type="number"
-                className="w-full border-b border-gray-200 py-2 focus:border-rose-400 outline-none text-amber-900 font-bold text-lg"
-                value={formData.stock}
-                onChange={e => setFormData({ ...formData, stock: e.target.value })}
-                placeholder="0"
-              />
+            <div className="flex-1 min-w-0 bg-emerald-50 border border-emerald-100 rounded-lg px-3 py-2">
+              <div className="text-xs font-bold text-emerald-700 uppercase">Lợi nhuận (VNĐ)</div>
+              <div className="text-lg font-bold text-emerald-700">
+                {hasProfitData ? formatNumber(expectedProfit) : '0'}
+              </div>
             </div>
           </div>
 
-          {/* Lợi nhuận hiển thị phía trên nút lưu */}
-          <div className="bg-emerald-50 border border-emerald-100 rounded-lg px-3 py-2">
-            <div className="flex items-center justify-between gap-2">
-              <div className="text-xs font-bold text-emerald-700 uppercase">Lợi nhuận</div>
-              <div className="text-lg font-bold text-emerald-700">
-                {hasProfitData ? `${formatNumber(expectedProfit)}đ` : '0đ'}
-              </div>
-            </div>
+          {/* Số lượng đã mua */}
+          <div className="bg-amber-50 border border-amber-100 rounded-lg p-3 space-y-2">
+            <div className="text-[10px] font-bold text-amber-800 uppercase">Số lượng đã mua</div>
+            <input
+              type="number"
+              className="w-full border-b border-amber-100 bg-transparent py-2 focus:border-rose-400 outline-none text-amber-900 font-bold text-lg"
+              value={formData.purchasePending}
+              onChange={e => setFormData({ ...formData, purchasePending: e.target.value })}
+              placeholder="0"
+            />
+            <div className="text-[10px] text-amber-500">Nhập số lượng đã mua nhưng chưa về kho.</div>
           </div>
 
           <button onClick={onSave} className="w-full bg-rose-500 text-white py-3 rounded-xl font-bold mt-2 shadow-lg shadow-rose-200 active:scale-95 transition">
