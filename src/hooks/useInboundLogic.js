@@ -11,24 +11,19 @@ const useInboundLogic = ({
   setInboundShipments,
   settings,
 }) => {
-  const [activeTab, setActiveTab] = useState('purchases');
-  const [purchaseModalOpen, setPurchaseModalOpen] = useState(false);
+  // Màn hình nhập kho tách 2 trạng thái: danh sách kiện và tạo kiện mới.
+  const [view, setView] = useState('list');
   const [shipmentModalOpen, setShipmentModalOpen] = useState(false);
   const [confirmModal, setConfirmModal] = useState(null);
-  const [purchaseDraft, setPurchaseDraft] = useState({ productId: '', quantity: '' });
   const [shipmentDraft, setShipmentDraft] = useState({
     warehouse: DEFAULT_WAREHOUSE,
     method: 'vn',
     weightKg: '',
     feeVnd: '',
+    comment: '',
     items: {},
     error: '',
   });
-
-  const productOptions = useMemo(
-    () => products.map((product) => ({ id: product.id, name: product.name })),
-    [products],
-  );
 
   const pendingPurchases = useMemo(
     () => products
@@ -37,13 +32,12 @@ const useInboundLogic = ({
         productId: item.id,
         name: item.name,
         quantity: Number(item.purchasePending) || 0,
+        image: item.image || '',
+        barcode: item.barcode || '',
+        category: item.category || 'Chung',
       })),
     [products],
   );
-
-  const resetPurchaseDraft = () => {
-    setPurchaseDraft({ productId: '', quantity: '' });
-  };
 
   const resetShipmentDraft = () => {
     setShipmentDraft({
@@ -51,60 +45,20 @@ const useInboundLogic = ({
       method: 'vn',
       weightKg: '',
       feeVnd: '',
+      comment: '',
       items: {},
       error: '',
     });
   };
 
-  const openPurchaseModal = () => {
-    resetPurchaseDraft();
-    setPurchaseModalOpen(true);
-  };
-
-  const openShipmentModal = () => {
+  const handleStartCreate = () => {
     resetShipmentDraft();
-    setShipmentModalOpen(true);
+    setView('create');
   };
 
-  const handlePurchaseSave = () => {
-    const quantityValue = Number(purchaseDraft.quantity);
-    if (!purchaseDraft.productId || quantityValue <= 0) {
-      setConfirmModal({
-        title: 'Thiếu thông tin',
-        message: 'Vui lòng chọn sản phẩm và nhập số lượng mua.',
-        confirmLabel: 'Đã hiểu',
-        tone: 'rose',
-      });
-      return;
-    }
-    const product = products.find(item => item.id === purchaseDraft.productId);
-    if (!product) return;
-
-    setProducts((prev) => prev.map(item => (
-      item.id === purchaseDraft.productId
-        ? { ...item, purchasePending: (Number(item.purchasePending) || 0) + quantityValue }
-        : item
-    )));
-    setPurchaseModalOpen(false);
-    resetPurchaseDraft();
-  };
-
-  const handlePurchaseRemove = (productId) => {
-    const purchase = pendingPurchases.find(item => item.productId === productId);
-    if (!purchase) return;
-    setConfirmModal({
-      title: 'Xoá hàng mua?',
-      message: `Bạn có chắc muốn xoá "${purchase.name}" khỏi danh sách mua?`,
-      confirmLabel: 'Xoá',
-      tone: 'danger',
-      onConfirm: () => {
-        setProducts((prev) => prev.map(item => (
-          item.id === productId
-            ? { ...item, purchasePending: 0 }
-            : item
-        )));
-      },
-    });
+  const handleExitCreate = () => {
+    resetShipmentDraft();
+    setView('list');
   };
 
   const handleShipmentItemChange = (productId, value, maxQuantity) => {
@@ -133,14 +87,26 @@ const useInboundLogic = ({
     setShipmentDraft(prev => ({ ...prev, [field]: value, error: '' }));
   };
 
+  const getSelectedItems = () => pendingPurchases
+    .map((item) => ({
+      productId: item.productId,
+      name: item.name,
+      quantity: Number(shipmentDraft.items[item.productId]) || 0,
+    }))
+    .filter(item => item.quantity > 0);
+
+  // Chỉ mở modal thông tin kiện sau khi đã chọn sản phẩm.
+  const handleOpenShipmentModal = () => {
+    const selectedItems = getSelectedItems();
+    if (selectedItems.length === 0) {
+      setShipmentDraft(prev => ({ ...prev, error: 'Vui lòng chọn sản phẩm để lên kiện.' }));
+      return;
+    }
+    setShipmentModalOpen(true);
+  };
+
   const handleShipmentSave = () => {
-    const selectedItems = pendingPurchases
-      .map((item) => ({
-        productId: item.productId,
-        name: item.name,
-        quantity: Number(shipmentDraft.items[item.productId]) || 0,
-      }))
-      .filter(item => item.quantity > 0);
+    const selectedItems = getSelectedItems();
 
     if (selectedItems.length === 0) {
       setShipmentDraft(prev => ({ ...prev, error: 'Vui lòng chọn sản phẩm cho kiện hàng.' }));
@@ -167,6 +133,7 @@ const useInboundLogic = ({
       weightKg,
       feeJpy,
       feeVnd,
+      comment: shipmentDraft.comment?.trim() || '',
       status: 'in_transit',
       createdAt: new Date().toISOString(),
     };
@@ -181,6 +148,7 @@ const useInboundLogic = ({
 
     setShipmentModalOpen(false);
     resetShipmentDraft();
+    setView('list');
   };
 
   const handleReceiveShipment = (shipmentId) => {
@@ -216,26 +184,19 @@ const useInboundLogic = ({
   };
 
   return {
-    activeTab,
-    setActiveTab,
-    purchaseModalOpen,
-    setPurchaseModalOpen,
+    view,
     shipmentModalOpen,
     setShipmentModalOpen,
     confirmModal,
     setConfirmModal,
-    purchaseDraft,
-    setPurchaseDraft,
     shipmentDraft,
     setShipmentDraft,
-    productOptions,
     pendingPurchases,
-    openPurchaseModal,
-    openShipmentModal,
-    handlePurchaseSave,
-    handlePurchaseRemove,
+    handleStartCreate,
+    handleExitCreate,
     handleShipmentItemChange,
     handleShipmentFieldChange,
+    handleOpenShipmentModal,
     handleShipmentSave,
     handleReceiveShipment,
   };

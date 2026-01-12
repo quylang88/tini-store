@@ -1,14 +1,15 @@
 import React from 'react';
 import { Image as ImageIcon } from 'lucide-react';
 import { formatNumber } from '../../utils/helpers';
-import { normalizeWarehouseStock } from '../../utils/warehouseUtils';
+import { getWarehouseLabel, normalizeWarehouseStock } from '../../utils/warehouseUtils';
 
-const WarehouseList = ({ products }) => {
+const WarehouseList = ({ products, activeWarehouse }) => {
   return (
     <div className="flex-1 overflow-y-auto p-3 space-y-3 pb-24">
       {products.map(product => {
         const { daLat, vinhPhuc } = normalizeWarehouseStock(product);
         const totalStock = daLat + vinhPhuc;
+        const selectedStock = activeWarehouse === 'vinhPhuc' ? vinhPhuc : daLat;
         return (
           <div
             key={product.id}
@@ -32,7 +33,9 @@ const WarehouseList = ({ products }) => {
                   <div className="text-amber-700 font-bold text-sm">{formatNumber(product.price)}đ</div>
                 </div>
                 <div className="text-right">
-                  <div className="text-[10px] text-gray-500">Đà Lạt: {daLat} • VP: {vinhPhuc}</div>
+                  <div className="text-[10px] text-gray-500">
+                    {getWarehouseLabel(activeWarehouse)}: {selectedStock}
+                  </div>
                   <div className={`text-xs font-medium ${totalStock < 5 ? 'text-red-500' : 'text-gray-500'}`}>
                     Tổng kho: {totalStock}
                   </div>

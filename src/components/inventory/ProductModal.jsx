@@ -1,7 +1,6 @@
 import React, { useRef } from 'react';
 import { ScanBarcode, Upload, X, Camera } from 'lucide-react';
 import { formatInputNumber, formatNumber } from '../../utils/helpers';
-import { getTotalStock } from '../../utils/warehouseUtils';
 
 const ProductModal = ({
   isOpen,
@@ -22,8 +21,6 @@ const ProductModal = ({
   // Lợi nhuận hiển thị ngay trong form để user ước lượng nhanh
   const expectedProfit = (Number(formData.price) || 0) - (Number(formData.cost) || 0);
   const hasProfitData = Number(formData.price) > 0 && Number(formData.cost) > 0;
-  const totalStock = getTotalStock(editingProduct);
-
   if (!isOpen) {
     return null;
   }
@@ -209,24 +206,29 @@ const ProductModal = ({
             )}
           </div>
 
-          {/* Giá bán */}
-          <div>
-            <label className="text-xs font-bold text-amber-700 uppercase">Giá bán (VNĐ)</label>
-            <input
-              inputMode="numeric"
-              className="w-full border-b border-gray-200 py-2 focus:border-rose-400 outline-none text-amber-900 font-bold text-lg"
-              value={formatInputNumber(formData.price)}
-              onChange={onMoneyChange('price')}
-              placeholder="0"
-            />
+          {/* Giá bán + lợi nhuận cùng 1 hàng */}
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+            <div className="flex-1">
+              <label className="text-xs font-bold text-amber-700 uppercase">Giá bán (VNĐ)</label>
+              <input
+                inputMode="numeric"
+                className="w-full border-b border-gray-200 py-2 focus:border-rose-400 outline-none text-amber-900 font-bold text-lg"
+                value={formatInputNumber(formData.price)}
+                onChange={onMoneyChange('price')}
+                placeholder="0"
+              />
+            </div>
+            <div className="sm:w-40 bg-emerald-50 border border-emerald-100 rounded-lg px-3 py-2">
+              <div className="text-[10px] font-bold text-emerald-700 uppercase">Lợi nhuận</div>
+              <div className="text-lg font-bold text-emerald-700">
+                {hasProfitData ? `${formatNumber(expectedProfit)}đ` : '0đ'}
+              </div>
+            </div>
           </div>
 
           {/* Số lượng đã mua */}
           <div className="bg-amber-50 border border-amber-100 rounded-lg p-3 space-y-2">
-            <div className="flex items-center justify-between">
-              <div className="text-[10px] font-bold text-amber-800 uppercase">Số lượng đã mua</div>
-              <div className="text-xs font-semibold text-amber-700">Tồn kho hiện tại: {formatNumber(totalStock)}</div>
-            </div>
+            <div className="text-[10px] font-bold text-amber-800 uppercase">Số lượng đã mua</div>
             <input
               type="number"
               className="w-full border-b border-amber-100 bg-transparent py-2 focus:border-rose-400 outline-none text-amber-900 font-bold text-lg"
@@ -235,16 +237,6 @@ const ProductModal = ({
               placeholder="0"
             />
             <div className="text-[10px] text-amber-500">Nhập số lượng đã mua nhưng chưa về kho.</div>
-          </div>
-
-          {/* Lợi nhuận hiển thị phía trên nút lưu */}
-          <div className="bg-emerald-50 border border-emerald-100 rounded-lg px-3 py-2">
-            <div className="flex items-center justify-between gap-2">
-              <div className="text-xs font-bold text-emerald-700 uppercase">Lợi nhuận</div>
-              <div className="text-lg font-bold text-emerald-700">
-                {hasProfitData ? `${formatNumber(expectedProfit)}đ` : '0đ'}
-              </div>
-            </div>
           </div>
 
           <button onClick={onSave} className="w-full bg-rose-500 text-white py-3 rounded-xl font-bold mt-2 shadow-lg shadow-rose-200 active:scale-95 transition">
