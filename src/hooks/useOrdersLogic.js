@@ -162,10 +162,10 @@ const useOrdersLogic = ({ products, setProducts, orders, setOrders }) => {
   const handleExitCreate = () => {
     if (hasDraftChanges()) {
       setConfirmModal({
-        title: orderBeingEdited ? 'Thoát sửa xuất kho?' : 'Thoát tạo xuất kho?',
+        title: orderBeingEdited ? 'Thoát sửa đơn?' : 'Thoát tạo đơn hàng?',
         message: orderBeingEdited
           ? 'Bạn có chắc muốn thoát? Các chỉnh sửa sẽ bị huỷ.'
-          : 'Bạn có chắc muốn thoát? Các sản phẩm trong xuất kho sẽ bị xoá.',
+          : 'Bạn có chắc muốn thoát? Các sản phẩm trong đơn hàng sẽ bị xoá.',
         confirmLabel: 'Thoát',
         tone: 'danger',
         onConfirm: () => {
@@ -185,7 +185,7 @@ const useOrdersLogic = ({ products, setProducts, orders, setOrders }) => {
       return;
     }
     setConfirmModal({
-      title: orderBeingEdited ? 'Huỷ chỉnh sửa?' : 'Huỷ xuất kho?',
+      title: orderBeingEdited ? 'Huỷ chỉnh sửa?' : 'Huỷ đơn?',
       message: 'Bạn có chắc muốn huỷ thao tác hiện tại không?',
       confirmLabel: 'Huỷ',
       tone: 'danger',
@@ -352,8 +352,8 @@ const useOrdersLogic = ({ products, setProducts, orders, setOrders }) => {
     setConfirmModal({
       title: isPaid ? 'Huỷ thanh toán?' : 'Xác nhận thanh toán?',
       message: isPaid
-        ? 'Bạn có chắc muốn huỷ trạng thái đã thanh toán cho xuất kho này không?'
-        : 'Bạn có chắc xuất kho này đã được thanh toán đầy đủ chưa?',
+        ? 'Bạn có chắc muốn huỷ trạng thái đã thanh toán cho đơn hàng này không?'
+        : 'Bạn có chắc đơn hàng này đã được thanh toán đầy đủ chưa?',
       confirmLabel: isPaid ? 'Huỷ thanh toán' : 'Đã thanh toán',
       tone: isPaid ? 'danger' : 'rose',
       onConfirm: () => {
@@ -408,9 +408,9 @@ const useOrdersLogic = ({ products, setProducts, orders, setOrders }) => {
     const order = orders.find(item => item.id === orderId);
     if (!order) return;
     setConfirmModal({
-      title: 'Huỷ xuất kho?',
-      message: `Bạn có chắc muốn huỷ xuất kho ${order.orderNumber ? `#${order.orderNumber}` : ''}?`,
-      confirmLabel: 'Huỷ xuất kho',
+      title: 'Huỷ đơn?',
+      message: `Bạn có chắc muốn huỷ đơn ${order.orderNumber ? `#${order.orderNumber}` : ''}?`,
+      confirmLabel: 'Huỷ đơn',
       tone: 'danger',
       onConfirm: () => {
         syncProductsStock([], order.items, DEFAULT_WAREHOUSE, order.warehouse || DEFAULT_WAREHOUSE);
@@ -435,7 +435,7 @@ const useOrdersLogic = ({ products, setProducts, orders, setOrders }) => {
       };
     }
     return {
-      label: 'Chờ xuất kho',
+      label: 'Chờ lên đơn',
       badgeClass: 'border-amber-200 bg-amber-50 text-amber-600',
       dotClass: 'bg-amber-500',
     };
