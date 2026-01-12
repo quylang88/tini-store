@@ -23,7 +23,7 @@ const ProductModal = ({
   const uploadInputRef = useRef(null);
   const cameraInputRef = useRef(null);
 
-  // Lợi nhuận = giá bán - (giá nhập + phí gửi/đơn vị) để đủ chi phí.
+  // Lợi nhuận = giá bán - (giá nhập + phí gửi) cho 1 sản phẩm.
   const shippingWeight = Number(formData.shippingWeightKg) || 0;
   const exchangeRateValue = Number(settings?.exchangeRate) || 0;
   const shippingFeeJpy = formData.shippingMethod === 'jp' ? Math.round(shippingWeight * 900) : 0;
@@ -31,10 +31,8 @@ const ProductModal = ({
     ? Math.round(shippingFeeJpy * exchangeRateValue)
     : Number(formData.shippingFeeVnd) || 0;
   const purchaseLots = editingProduct?.purchaseLots || [];
-  const inputQuantity = Number(formData.quantity) || 0;
-  const shippingPerUnit = inputQuantity > 0 ? shippingFeeVnd / inputQuantity : 0;
-  const hasProfitData = Number(formData.price) > 0 && (Number(formData.cost) + shippingPerUnit) > 0;
-  const finalProfit = (Number(formData.price) || 0) - (Number(formData.cost) || 0) - shippingPerUnit;
+  const hasProfitData = Number(formData.price) > 0 && (Number(formData.cost) + shippingFeeVnd) > 0;
+  const finalProfit = (Number(formData.price) || 0) - (Number(formData.cost) || 0) - shippingFeeVnd;
   if (!isOpen) {
     return null;
   }
@@ -303,7 +301,7 @@ const ProductModal = ({
                     onClick={() => setFormData({ ...formData, warehouse: warehouse.key })}
                     className={`px-2 py-1 text-[10px] font-semibold rounded border transition ${
                       formData.warehouse === warehouse.key
-                        ? 'bg-rose-500 text-white border-rose-500'
+                        ? 'bg-amber-500 text-white border-amber-500'
                         : 'bg-transparent text-amber-700 border-amber-200 hover:border-rose-400'
                     }`}
                   >
@@ -328,8 +326,8 @@ const ProductModal = ({
           </div>
 
           {/* Giá bán + lợi nhuận */}
-          <div className="flex flex-row flex-nowrap gap-3 items-start">
-            <div className="flex-1 min-w-0">
+          <div className="grid grid-cols-2 gap-3 items-end">
+            <div className="flex flex-col gap-1 min-w-0">
               <label className="text-xs font-bold text-amber-700 uppercase">Giá bán (VNĐ)</label>
               <input
                 inputMode="numeric"
@@ -339,7 +337,7 @@ const ProductModal = ({
                 placeholder="0"
               />
             </div>
-            <div className="flex-1 min-w-0 bg-emerald-50 border border-emerald-100 rounded-lg px-3 py-2">
+            <div className="min-w-0 bg-emerald-50 border border-emerald-100 rounded-lg px-3 py-2 flex flex-col gap-1">
               <div className="text-xs font-bold text-emerald-700 uppercase">Lợi nhuận (VNĐ)</div>
               <div className="text-lg font-bold text-emerald-700">
                 {hasProfitData ? formatNumber(finalProfit) : '0'}
