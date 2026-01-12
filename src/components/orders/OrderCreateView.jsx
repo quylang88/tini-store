@@ -2,6 +2,7 @@ import React from 'react';
 import { ChevronRight, ScanBarcode, Image as ImageIcon, Plus, Minus, ShoppingCart, Search, X } from 'lucide-react';
 import BarcodeScanner from '../../components/BarcodeScanner';
 import { formatNumber } from '../../utils/helpers';
+import { WAREHOUSES } from '../../utils/warehouseUtils';
 
 // Giao diện tạo/sửa đơn được tách riêng để Orders.jsx gọn hơn
 const OrderCreateView = ({
@@ -10,6 +11,8 @@ const OrderCreateView = ({
   showScanner,
   setShowScanner,
   orderBeingEdited,
+  selectedWarehouse,
+  setSelectedWarehouse,
   activeCategory,
   setActiveCategory,
   searchTerm,
@@ -35,6 +38,8 @@ const OrderCreateView = ({
   // Khi đang sửa đơn, cộng lại số lượng cũ để hiển thị tồn kho chính xác
   const getAvailableStock = (productId, stock) => {
     if (!orderBeingEdited) return stock;
+    const orderWarehouse = orderBeingEdited.warehouse || 'daLat';
+    if (orderWarehouse !== selectedWarehouse) return stock;
     const previousQty = orderBeingEdited.items.find(item => item.productId === productId)?.quantity || 0;
     return stock + previousQty;
   };
@@ -88,7 +93,28 @@ const OrderCreateView = ({
           </div>
         </div>
 
-        {/* Hàng 3: Thanh Tab Danh mục */}
+        {/* Hàng 3: Chọn kho xuất */}
+        <div className="px-3 py-2 border-b border-amber-100 flex items-center gap-2 text-xs font-semibold text-amber-700">
+          <span>Xuất kho:</span>
+          <div className="flex gap-2">
+            {WAREHOUSES.map((warehouse) => (
+              <button
+                key={warehouse.key}
+                type="button"
+                onClick={() => setSelectedWarehouse(warehouse.key)}
+                className={`px-2 py-1 rounded-full border transition ${
+                  selectedWarehouse === warehouse.key
+                    ? 'bg-rose-500 text-white border-rose-500'
+                    : 'bg-white text-amber-700 border-amber-200 hover:border-rose-300'
+                }`}
+              >
+                {warehouse.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Hàng 4: Thanh Tab Danh mục */}
         <div className="px-3 pb-0 overflow-x-auto flex gap-2 no-scrollbar border-b border-amber-100">
           <button
             onClick={() => setActiveCategory('Tất cả')}
@@ -112,7 +138,10 @@ const OrderCreateView = ({
       <div className="flex-1 overflow-y-auto p-3 space-y-3 pb-40">
         {filteredProducts.map(p => {
           const qty = cart[p.id] || 0;
-          const availableStock = getAvailableStock(p.id, p.stock);
+          const warehouseStock = selectedWarehouse === 'vinhPhuc'
+            ? (p.stockByWarehouse?.vinhPhuc ?? 0)
+            : (p.stockByWarehouse?.daLat ?? p.stock ?? 0);
+          const availableStock = getAvailableStock(p.id, warehouseStock);
           const isOutOfStock = availableStock <= 0;
 
           return (
@@ -138,7 +167,7 @@ const OrderCreateView = ({
                 <div className="text-xs text-gray-500 mt-0.5">
                   <span className="font-semibold text-amber-700">{formatNumber(p.price)}đ</span>
                   <span className="mx-1">|</span>
-                  <span>Kho: {availableStock}</span>
+                  <span>Kho {selectedWarehouse === 'vinhPhuc' ? 'Vĩnh Phúc' : 'Đà Lạt'}: {availableStock}</span>
                 </div>
               </div>
 

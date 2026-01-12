@@ -5,6 +5,7 @@ import React, { useState, useEffect } from 'react';
 import Login from './screens/Login';
 import Dashboard from './screens/Dashboard';
 import Inventory from './screens/Inventory';
+import Inbound from './screens/Inbound';
 import Orders from './screens/Orders';
 import Settings from './screens/Settings';
 
@@ -36,6 +37,16 @@ const App = () => {
     return saved ? JSON.parse(saved) : [];
   });
 
+  const [inboundPurchases, setInboundPurchases] = useState(() => {
+    const saved = localStorage.getItem('shop_inbound_purchases');
+    return saved ? JSON.parse(saved) : [];
+  });
+
+  const [inboundShipments, setInboundShipments] = useState(() => {
+    const saved = localStorage.getItem('shop_inbound_shipments');
+    return saved ? JSON.parse(saved) : [];
+  });
+
   // Cài đặt chung (Tỷ giá, Danh mục)
   const [settings, setSettings] = useState(() => {
     const saved = localStorage.getItem('shop_settings');
@@ -57,6 +68,14 @@ const App = () => {
   useEffect(() => {
     localStorage.setItem('shop_orders_v2', JSON.stringify(orders));
   }, [orders]);
+
+  useEffect(() => {
+    localStorage.setItem('shop_inbound_purchases', JSON.stringify(inboundPurchases));
+  }, [inboundPurchases]);
+
+  useEffect(() => {
+    localStorage.setItem('shop_inbound_shipments', JSON.stringify(inboundShipments));
+  }, [inboundShipments]);
 
   useEffect(() => {
     localStorage.setItem('shop_settings', JSON.stringify(settings));
@@ -96,6 +115,18 @@ const App = () => {
           />
         )}
 
+        {activeTab === 'inbound' && (
+          <Inbound
+            products={products}
+            setProducts={setProducts}
+            inboundPurchases={inboundPurchases}
+            setInboundPurchases={setInboundPurchases}
+            inboundShipments={inboundShipments}
+            setInboundShipments={setInboundShipments}
+            settings={settings}
+          />
+        )}
+
         {activeTab === 'orders' && (
           <Orders
             products={products}
@@ -110,8 +141,12 @@ const App = () => {
           <Settings
             products={products}
             orders={orders}
+            inboundPurchases={inboundPurchases}
+            inboundShipments={inboundShipments}
             setProducts={setProducts}
             setOrders={setOrders}
+            setInboundPurchases={setInboundPurchases}
+            setInboundShipments={setInboundShipments}
             settings={settings}
             setSettings={setSettings}
             onLogout={handleLogout}

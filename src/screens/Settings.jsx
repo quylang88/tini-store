@@ -4,7 +4,19 @@ import { formatInputNumber, sanitizeNumberInput } from '../utils/helpers';
 import ConfirmModal from '../components/modals/ConfirmModal';
 import useSettingsLogic from '../hooks/useSettingsLogic';
 
-const Settings = ({ products, orders, setProducts, setOrders, settings, setSettings, onLogout }) => {
+const Settings = ({
+  products,
+  orders,
+  inboundPurchases,
+  inboundShipments,
+  setProducts,
+  setOrders,
+  setInboundPurchases,
+  setInboundShipments,
+  settings,
+  setSettings,
+  onLogout,
+}) => {
   const {
     newCategory,
     setNewCategory,
@@ -20,8 +32,12 @@ const Settings = ({ products, orders, setProducts, setOrders, settings, setSetti
   } = useSettingsLogic({
     products,
     orders,
+    inboundPurchases,
+    inboundShipments,
     setProducts,
     setOrders,
+    setInboundPurchases,
+    setInboundShipments,
     settings,
     setSettings,
   });

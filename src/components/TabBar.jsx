@@ -1,9 +1,10 @@
 import React from 'react';
-import { LayoutDashboard, ShoppingCart, Package, Settings as SettingsIcon } from 'lucide-react';
+import { LayoutDashboard, ShoppingCart, Package, Settings as SettingsIcon, Truck } from 'lucide-react';
 
 const TabBar = ({ activeTab, setActiveTab }) => {
   const tabs = [
     { id: 'dashboard', icon: LayoutDashboard, label: 'Tổng quan' },
+    { id: 'inbound', icon: Truck, label: 'Nhập kho' },
     { id: 'orders', icon: ShoppingCart, label: 'Đơn hàng' },
     { id: 'inventory', icon: Package, label: 'Kho hàng' },
     { id: 'settings', icon: SettingsIcon, label: 'Cài đặt' },
