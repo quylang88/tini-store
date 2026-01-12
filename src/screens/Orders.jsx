@@ -67,6 +67,7 @@ const Orders = ({ products, setProducts, orders, setOrders, settings }) => {
           totalAmount={totalAmount}
           reviewItems={reviewItems}
           isReviewOpen={isReviewOpen}
+          hideBackButton={Boolean(confirmModal)}
           orderComment={orderComment}
           setOrderComment={setOrderComment}
           handleExitCreate={handleExitCreate}
