@@ -207,7 +207,7 @@ const ProductModal = ({
             )}
           </div>
 
-          {/* Giá bán & lợi nhuận nằm cùng một hàng */}
+          {/* Giá bán & tồn kho nằm cùng một hàng */}
           <div className="grid grid-cols-2 gap-4 items-end">
             <div>
               <label className="text-xs font-bold text-amber-700 uppercase">Giá bán (VNĐ)</label>
@@ -219,26 +219,26 @@ const ProductModal = ({
                 placeholder="0"
               />
             </div>
-            <div className="bg-emerald-50 border border-emerald-100 rounded-lg px-3 py-2">
-              <div className="flex items-center justify-between gap-2">
-                <div className="text-[10px] font-bold text-emerald-700 uppercase">Lợi nhuận</div>
-                <div className="text-sm font-semibold text-emerald-700">
-                  {hasProfitData ? `${formatNumber(expectedProfit)}đ` : 'Chưa đủ dữ liệu'}
-                </div>
-              </div>
+            <div>
+              <label className="text-xs font-bold text-amber-700 uppercase">Tồn kho</label>
+              <input
+                type="number"
+                className="w-full border-b border-gray-200 py-2 focus:border-rose-400 outline-none text-amber-900 font-bold text-lg"
+                value={formData.stock}
+                onChange={e => setFormData({ ...formData, stock: e.target.value })}
+                placeholder="0"
+              />
             </div>
           </div>
 
-          {/* Tồn kho */}
-          <div>
-            <label className="text-xs font-bold text-amber-700 uppercase">Tồn kho</label>
-            <input
-              type="number"
-              className="w-full border-b border-gray-200 py-2 focus:border-rose-400 outline-none text-amber-900 font-bold text-lg"
-              value={formData.stock}
-              onChange={e => setFormData({ ...formData, stock: e.target.value })}
-              placeholder="0"
-            />
+          {/* Lợi nhuận hiển thị phía trên nút lưu */}
+          <div className="bg-emerald-50 border border-emerald-100 rounded-lg px-3 py-2">
+            <div className="flex items-center justify-between gap-2">
+              <div className="text-xs font-bold text-emerald-700 uppercase">Lợi nhuận</div>
+              <div className="text-lg font-bold text-emerald-700">
+                {hasProfitData ? `${formatNumber(expectedProfit)}đ` : '0đ'}
+              </div>
+            </div>
           </div>
 
           <button onClick={onSave} className="w-full bg-rose-500 text-white py-3 rounded-xl font-bold mt-2 shadow-lg shadow-rose-200 active:scale-95 transition">
