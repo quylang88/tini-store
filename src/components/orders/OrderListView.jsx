@@ -1,6 +1,7 @@
 import React from 'react';
 import { Plus, ShoppingCart } from 'lucide-react';
 import { formatNumber } from '../../utils/helpers';
+import { getWarehouseLabel } from '../../utils/warehouseUtils';
 
 // Giao diện danh sách đơn tách riêng để dễ quản lý và thêm nút huỷ đơn
 const OrderListView = ({
@@ -8,7 +9,7 @@ const OrderListView = ({
   onCreateOrder,
   getOrderStatusInfo,
   handleTogglePaid,
-  handleExportToVietnam,
+  handleCustomerShipping,
   handleEditOrder,
   handleCancelOrder,
   onSelectOrder
@@ -30,6 +31,7 @@ const OrderListView = ({
         const hasShipping = order.shippingUpdated || order.shippingFee > 0;
         const isPaid = order.status === 'paid';
         const orderLabel = order.orderNumber ? `#${order.orderNumber}` : `#${order.id.slice(-4)}`;
+        const warehouseLabel = getWarehouseLabel(order.warehouse || 'daLat');
         // Lợi nhuận = (giá bán - giá vốn) - phí gửi để xem nhanh hiệu quả đơn hàng.
         const estimatedProfit = order.items.reduce((sum, item) => {
           const cost = item.cost || 0;
@@ -51,8 +53,11 @@ const OrderListView = ({
                 {statusInfo.label}
               </span>
               <span className="text-gray-400">
-                Phí gửi: {formatNumber(order.shippingFee || 0)}đ
+                Phí gửi khách: {formatNumber(order.shippingFee || 0)}đ
               </span>
+            </div>
+            <div className="text-xs text-amber-600 font-semibold mb-2">
+              Xuất kho: {warehouseLabel}
             </div>
             <div className="text-xs text-gray-400 mb-3 flex items-center gap-1">
               {new Date(order.date).toLocaleString()}
@@ -81,14 +86,14 @@ const OrderListView = ({
               <button
                 onClick={(event) => {
                   event.stopPropagation();
-                  handleExportToVietnam(order.id);
+                  handleCustomerShipping(order.id);
                 }}
                 className={`text-xs font-semibold px-3 py-1.5 rounded-full border transition ${hasShipping
                     ? 'text-sky-700 bg-sky-50 border-sky-100 hover:bg-sky-100'
                     : 'text-indigo-700 bg-indigo-50 border-indigo-100 hover:bg-indigo-100'
                   }`}
               >
-                {hasShipping ? 'Cập nhật phí gửi' : 'Xuất về VN'}
+                {hasShipping ? 'Cập nhật phí gửi' : 'Phí gửi khách'}
               </button>
               <button
                 onClick={(event) => {

@@ -1,10 +1,12 @@
 import React from 'react';
 import { formatNumber } from '../../utils/helpers';
+import { getWarehouseLabel } from '../../utils/warehouseUtils';
 
 const OrderDetailModal = ({ order, onClose, getOrderStatusInfo }) => {
   if (!order) return null;
   const orderLabel = order.orderNumber ? `#${order.orderNumber}` : `#${order.id.slice(-4)}`;
   const statusInfo = getOrderStatusInfo?.(order);
+  const warehouseLabel = getWarehouseLabel(order.warehouse || 'daLat');
 
   return (
     <div className="fixed inset-0 z-[90] flex items-end justify-center bg-black/40 p-4" onClick={onClose}>
@@ -45,7 +47,11 @@ const OrderDetailModal = ({ order, onClose, getOrderStatusInfo }) => {
         </div>
         <div className="p-4 border-t border-amber-100 bg-amber-50 space-y-2">
           <div className="flex justify-between text-sm text-gray-500">
-            <span>Phí gửi</span>
+            <span>Kho xuất</span>
+            <span className="font-semibold text-amber-700">{warehouseLabel}</span>
+          </div>
+          <div className="flex justify-between text-sm text-gray-500">
+            <span>Phí gửi khách</span>
             <span className="font-semibold text-amber-700">{formatNumber(order.shippingFee || 0)}đ</span>
           </div>
           <div className="flex justify-between text-sm text-gray-500">

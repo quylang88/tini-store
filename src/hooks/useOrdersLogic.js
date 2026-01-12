@@ -1,7 +1,9 @@
 import { useMemo, useState } from 'react';
 import { sanitizeNumberInput } from '../utils/helpers';
+import { normalizeWarehouseStock } from '../utils/warehouseUtils';
 
 const DEFAULT_STATUS = 'pending';
+const DEFAULT_WAREHOUSE = 'daLat';
 
 const useOrdersLogic = ({ products, setProducts, orders, setOrders }) => {
   const [view, setView] = useState('list');
@@ -17,6 +19,7 @@ const useOrdersLogic = ({ products, setProducts, orders, setOrders }) => {
     orderId: null,
     error: '',
   });
+  const [selectedWarehouse, setSelectedWarehouse] = useState(DEFAULT_WAREHOUSE);
   const [activeCategory, setActiveCategory] = useState('Tất cả');
   const [searchTerm, setSearchTerm] = useState('');
   const [orderBeingEdited, setOrderBeingEdited] = useState(null);
@@ -66,6 +69,7 @@ const useOrdersLogic = ({ products, setProducts, orders, setOrders }) => {
     setSearchTerm('');
     setActiveCategory('Tất cả');
     setIsReviewOpen(false);
+    setSelectedWarehouse(DEFAULT_WAREHOUSE);
   };
 
   const handleQuantityChange = (productId, value, availableStock) => {
@@ -91,10 +95,14 @@ const useOrdersLogic = ({ products, setProducts, orders, setOrders }) => {
     });
   };
 
-  const getAvailableStock = (product) => {
-    if (!orderBeingEdited) return product.stock;
+  const getAvailableStock = (product, warehouseKey) => {
+    const warehouseStock = normalizeWarehouseStock(product);
+    const baseStock = warehouseKey === 'vinhPhuc' ? warehouseStock.vinhPhuc : warehouseStock.daLat;
+    if (!orderBeingEdited) return baseStock;
+    const orderWarehouse = orderBeingEdited.warehouse || DEFAULT_WAREHOUSE;
+    if (orderWarehouse !== warehouseKey) return baseStock;
     const previousQty = orderBeingEdited.items.find(item => item.productId === product.id)?.quantity || 0;
-    return product.stock + previousQty;
+    return baseStock + previousQty;
   };
 
   const handleScanForSale = (decodedText) => {
@@ -104,7 +112,7 @@ const useOrdersLogic = ({ products, setProducts, orders, setOrders }) => {
       alert('Không tìm thấy sản phẩm với mã vạch này.');
       return;
     }
-    const availableStock = getAvailableStock(product);
+    const availableStock = getAvailableStock(product, selectedWarehouse);
     if (availableStock <= 0) {
       alert('Sản phẩm này đã hết hàng.');
       return;
@@ -187,7 +195,27 @@ const useOrdersLogic = ({ products, setProducts, orders, setOrders }) => {
     return Math.max(...numbers) + 1;
   };
 
-  const syncProductsStock = (orderItems, previousItems = []) => {
+  const updateWarehouseStock = (product, warehouseKey, delta) => {
+    const current = normalizeWarehouseStock(product);
+    const nextStock = { ...current };
+    if (warehouseKey === 'vinhPhuc') {
+      nextStock.vinhPhuc = Math.max(0, current.vinhPhuc + delta);
+    } else {
+      nextStock.daLat = Math.max(0, current.daLat + delta);
+    }
+    return {
+      ...product,
+      stockByWarehouse: nextStock,
+      stock: nextStock.daLat + nextStock.vinhPhuc,
+    };
+  };
+
+  const syncProductsStock = (
+    orderItems,
+    previousItems = [],
+    nextWarehouseKey = DEFAULT_WAREHOUSE,
+    previousWarehouseKey = nextWarehouseKey,
+  ) => {
     const previousMap = new Map(previousItems.map(item => [item.productId, item.quantity]));
     const nextMap = new Map(orderItems.map(item => [item.productId, item.quantity]));
 
@@ -195,10 +223,21 @@ const useOrdersLogic = ({ products, setProducts, orders, setOrders }) => {
       const previousQty = previousMap.get(product.id) || 0;
       const nextQty = nextMap.get(product.id) || 0;
       if (!previousQty && !nextQty) return product;
-      return {
-        ...product,
-        stock: Math.max(0, product.stock + previousQty - nextQty),
-      };
+
+      if (previousWarehouseKey === nextWarehouseKey) {
+        const delta = previousQty - nextQty;
+        if (!delta) return product;
+        return updateWarehouseStock(product, nextWarehouseKey, delta);
+      }
+
+      let nextProduct = product;
+      if (previousQty) {
+        nextProduct = updateWarehouseStock(nextProduct, previousWarehouseKey, previousQty);
+      }
+      if (nextQty) {
+        nextProduct = updateWarehouseStock(nextProduct, nextWarehouseKey, -nextQty);
+      }
+      return nextProduct;
     }));
   };
 
@@ -214,6 +253,7 @@ const useOrdersLogic = ({ products, setProducts, orders, setOrders }) => {
     return {
       items: orderItems,
       total: totalAmount,
+      warehouse: selectedWarehouse,
     };
   };
 
@@ -222,13 +262,14 @@ const useOrdersLogic = ({ products, setProducts, orders, setOrders }) => {
       alert('Vui lòng chọn ít nhất 1 sản phẩm.');
       return;
     }
-    const { items, total } = buildOrderPayload();
+    const { items, total, warehouse } = buildOrderPayload();
     const orderId = Date.now().toString();
     const newOrder = {
       id: orderId,
       orderNumber: getNextOrderNumber(),
       items,
       total,
+      warehouse,
       status: DEFAULT_STATUS,
       date: new Date().toISOString(),
       shippingFee: 0,
@@ -236,7 +277,7 @@ const useOrdersLogic = ({ products, setProducts, orders, setOrders }) => {
       comment: orderComment.trim(),
     };
 
-    syncProductsStock(items);
+    syncProductsStock(items, [], warehouse);
     setOrders([...orders, newOrder]);
     clearDraft();
     setView('list');
@@ -249,15 +290,16 @@ const useOrdersLogic = ({ products, setProducts, orders, setOrders }) => {
       return;
     }
 
-    const { items, total } = buildOrderPayload();
+    const { items, total, warehouse } = buildOrderPayload();
     const updatedOrder = {
       ...orderBeingEdited,
       items,
       total,
+      warehouse,
       comment: orderComment.trim(),
     };
 
-    syncProductsStock(items, orderBeingEdited.items);
+    syncProductsStock(items, orderBeingEdited.items, warehouse, orderBeingEdited.warehouse || DEFAULT_WAREHOUSE);
     setOrders(orders.map(order => (order.id === orderBeingEdited.id ? updatedOrder : order)));
     clearDraft();
     setView('list');
@@ -272,6 +314,7 @@ const useOrdersLogic = ({ products, setProducts, orders, setOrders }) => {
     setCart(nextCart);
     setOrderBeingEdited(order);
     setOrderComment(order.comment || '');
+    setSelectedWarehouse(order.warehouse || DEFAULT_WAREHOUSE);
     setSelectedOrder(null);
     setSearchTerm('');
     setActiveCategory('Tất cả');
@@ -302,7 +345,7 @@ const useOrdersLogic = ({ products, setProducts, orders, setOrders }) => {
     });
   };
 
-  const handleExportToVietnam = (orderId) => {
+  const handleCustomerShipping = (orderId) => {
     const order = orders.find(item => item.id === orderId);
     if (!order) return;
     setShippingModal({
@@ -349,7 +392,7 @@ const useOrdersLogic = ({ products, setProducts, orders, setOrders }) => {
       confirmLabel: 'Huỷ đơn',
       tone: 'danger',
       onConfirm: () => {
-        syncProductsStock([], order.items);
+        syncProductsStock([], order.items, DEFAULT_WAREHOUSE, order.warehouse || DEFAULT_WAREHOUSE);
         setOrders(orders.filter(item => item.id !== orderId));
       },
     });
@@ -365,13 +408,13 @@ const useOrdersLogic = ({ products, setProducts, orders, setOrders }) => {
     }
     if (order.shippingUpdated || order.shippingFee > 0) {
       return {
-        label: 'Đã xuất VN',
+        label: 'Đã gửi khách',
         badgeClass: 'border-sky-200 bg-sky-50 text-sky-600',
         dotClass: 'bg-sky-500',
       };
     }
     return {
-      label: 'Chờ gom',
+      label: 'Chờ xuất kho',
       badgeClass: 'border-amber-200 bg-amber-50 text-amber-600',
       dotClass: 'bg-amber-500',
     };
@@ -408,13 +451,15 @@ const useOrdersLogic = ({ products, setProducts, orders, setOrders }) => {
     handleEditOrder,
     handleExitCreate,
     handleCancelDraft,
-    handleExportToVietnam,
+    handleCustomerShipping,
     handleTogglePaid,
     handleCancelOrder,
     getOrderStatusInfo,
     handleShippingChange,
     handleShippingCancel,
     handleShippingConfirm,
+    selectedWarehouse,
+    setSelectedWarehouse,
     isCreateView,
     shouldShowDetailModal,
   };

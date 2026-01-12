@@ -30,6 +30,8 @@ const Orders = ({ products, setProducts, orders, setOrders, settings }) => {
     totalAmount,
     reviewItems,
     filteredProducts,
+    selectedWarehouse,
+    setSelectedWarehouse,
     handleQuantityChange,
     adjustQuantity,
     handleScanForSale,
@@ -39,7 +41,7 @@ const Orders = ({ products, setProducts, orders, setOrders, settings }) => {
     handleEditOrder,
     handleExitCreate,
     handleCancelDraft,
-    handleExportToVietnam,
+    handleCustomerShipping,
     handleTogglePaid,
     handleCancelOrder,
     getOrderStatusInfo,
@@ -59,6 +61,8 @@ const Orders = ({ products, setProducts, orders, setOrders, settings }) => {
           showScanner={showScanner}
           setShowScanner={setShowScanner}
           orderBeingEdited={orderBeingEdited}
+          selectedWarehouse={selectedWarehouse}
+          setSelectedWarehouse={setSelectedWarehouse}
           activeCategory={activeCategory}
           setActiveCategory={setActiveCategory}
           searchTerm={searchTerm}
@@ -96,7 +100,7 @@ const Orders = ({ products, setProducts, orders, setOrders, settings }) => {
           onCreateOrder={handleStartCreate}
           getOrderStatusInfo={getOrderStatusInfo}
           handleTogglePaid={handleTogglePaid}
-          handleExportToVietnam={handleExportToVietnam}
+          handleCustomerShipping={handleCustomerShipping}
           handleEditOrder={handleEditOrder}
           handleCancelOrder={handleCancelOrder}
           onSelectOrder={setSelectedOrder}
@@ -130,8 +134,8 @@ const Orders = ({ products, setProducts, orders, setOrders, settings }) => {
       />
       <InputModal
         open={shippingModal.open}
-        title="Nhập phí gửi về VN"
-        message="Vui lòng nhập số tiền phí gửi cho đơn hàng."
+        title="Nhập phí gửi khách"
+        message="Vui lòng nhập số tiền phí gửi cho khách hàng."
         error={shippingModal.error}
         value={formatInputNumber(shippingModal.fee)}
         inputProps={{ inputMode: 'numeric', placeholder: 'Ví dụ: 25,000' }}
