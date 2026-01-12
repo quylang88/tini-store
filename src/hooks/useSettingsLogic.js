@@ -4,10 +4,8 @@ import { formatNumber } from '../utils/helpers';
 const useSettingsLogic = ({
   products,
   orders,
-  inboundShipments,
   setProducts,
   setOrders,
-  setInboundShipments,
   settings,
   setSettings,
 }) => {
@@ -89,7 +87,6 @@ const useSettingsLogic = ({
     const data = JSON.stringify({
       products,
       orders,
-      inboundShipments,
       settings,
     });
     const blob = new Blob([data], { type: 'application/json' });
@@ -122,7 +119,6 @@ const useSettingsLogic = ({
             onConfirm: () => {
               setProducts(data.products);
               setOrders(data.orders);
-              setInboundShipments(data.inboundShipments || []);
               if (data.settings) {
                 setSettings(data.settings);
               }

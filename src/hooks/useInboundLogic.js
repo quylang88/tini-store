@@ -1,289 +1,186 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { sanitizeDecimalInput, sanitizeNumberInput } from '../utils/helpers';
-import { getWarehouseLabel, normalizeWarehouseStock } from '../utils/warehouseUtils';
+import { normalizeWarehouseStock } from '../utils/warehouseUtils';
+import { getLatestPurchaseCost, normalizePurchaseLots } from '../utils/purchaseUtils';
 
 const DEFAULT_WAREHOUSE = 'daLat';
 
-const useInboundLogic = ({
-  products,
-  setProducts,
-  inboundShipments,
-  setInboundShipments,
-  settings,
-}) => {
-  // Màn hình nhập kho tách 2 trạng thái: danh sách kiện và tạo kiện mới.
-  const [view, setView] = useState('list');
-  const [shipmentModalOpen, setShipmentModalOpen] = useState(false);
-  const [confirmModal, setConfirmModal] = useState(null);
-  // Đồng bộ trạng thái tìm kiếm/danh mục để layout tạo kiện giống tạo đơn hàng.
+const emptyDraft = (settings) => ({
+  productId: null,
+  name: '',
+  price: '',
+  cost: '',
+  quantity: '',
+  warehouse: DEFAULT_WAREHOUSE,
+  method: 'vn',
+  weightKg: '',
+  feeVnd: '',
+  category: 'Chung',
+  barcode: '',
+  error: '',
+  exchangeRate: Number(settings.exchangeRate) || 0,
+});
+
+const useInboundLogic = ({ products, setProducts, settings }) => {
+  const [draft, setDraft] = useState(() => emptyDraft(settings));
   const [searchTerm, setSearchTerm] = useState('');
-  const [activeCategory, setActiveCategory] = useState('Tất cả');
-  const [shipmentDraft, setShipmentDraft] = useState({
-    warehouse: DEFAULT_WAREHOUSE,
-    method: 'vn',
-    weightKg: '',
-    feeVnd: '',
-    comment: '',
-    items: {},
-    error: '',
-  });
 
-  const pendingPurchases = useMemo(
-    () => products
-      .filter(item => (Number(item.purchasePending) || 0) > 0)
-      .map(item => ({
-        productId: item.id,
-        name: item.name,
-        quantity: Number(item.purchasePending) || 0,
-        image: item.image || '',
-        price: item.price || 0,
-        barcode: item.barcode || '',
-        category: item.category || 'Chung',
-      })),
-    [products],
-  );
+  useEffect(() => {
+    setDraft((prev) => ({
+      ...prev,
+      exchangeRate: Number(settings.exchangeRate) || 0,
+    }));
+  }, [settings.exchangeRate]);
 
-  const filteredProducts = useMemo(() => pendingPurchases.filter((item) => {
-    const matchSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (item.barcode && item.barcode.includes(searchTerm));
-    const matchCategory = activeCategory === 'Tất cả' || item.category === activeCategory;
-    return matchSearch && matchCategory;
-  }), [pendingPurchases, searchTerm, activeCategory]);
+  // Gợi ý sản phẩm theo tên để user chọn nhanh sản phẩm đã có.
+  const suggestions = useMemo(() => {
+    const keyword = searchTerm.trim().toLowerCase();
+    if (!keyword) return [];
+    return products.filter((product) => product.name.toLowerCase().includes(keyword));
+  }, [products, searchTerm]);
 
-  const resetShipmentDraft = () => {
-    setShipmentDraft({
+  // Khi chọn sản phẩm đã tồn tại thì tự động đổ dữ liệu để user chỉnh sửa.
+  const handleSelectProduct = (product) => {
+    const purchaseLots = normalizePurchaseLots(product);
+    setDraft((prev) => ({
+      ...prev,
+      productId: product.id,
+      name: product.name,
+      price: product.price ? String(product.price) : '',
+      cost: getLatestPurchaseCost(purchaseLots) ? String(getLatestPurchaseCost(purchaseLots)) : '',
+      category: product.category || 'Chung',
+      barcode: product.barcode || '',
       warehouse: DEFAULT_WAREHOUSE,
-      method: 'vn',
-      weightKg: '',
-      feeVnd: '',
-      comment: '',
-      items: {},
+      quantity: '',
       error: '',
-    });
+    }));
+    setSearchTerm(product.name);
+  };
+
+  const handleClearSelection = () => {
+    setDraft((prev) => ({
+      ...emptyDraft(settings),
+      exchangeRate: prev.exchangeRate,
+    }));
     setSearchTerm('');
-    setActiveCategory('Tất cả');
   };
 
-  const hasDraftChanges = () => {
-    const hasItems = Object.keys(shipmentDraft.items || {}).length > 0;
-    if (hasItems) return true;
-    if (shipmentDraft.comment?.trim()) return true;
-    if (shipmentDraft.method !== 'vn') return true;
-    if (shipmentDraft.warehouse !== DEFAULT_WAREHOUSE) return true;
-    if (Number(shipmentDraft.weightKg) > 0) return true;
-    if (Number(shipmentDraft.feeVnd) > 0) return true;
-    return false;
-  };
-
-  const handleStartCreate = () => {
-    resetShipmentDraft();
-    setView('create');
-  };
-
-  const handleExitCreate = () => {
-    if (hasDraftChanges()) {
-      setConfirmModal({
-        title: 'Thoát tạo kiện?',
-        message: 'Bạn có chắc muốn thoát? Các sản phẩm đã chọn sẽ bị huỷ.',
-        confirmLabel: 'Thoát',
-        tone: 'danger',
-        onConfirm: () => {
-          resetShipmentDraft();
-          setView('list');
-        },
-      });
-      return;
-    }
-    resetShipmentDraft();
-    setView('list');
-  };
-
-  const handleCancelDraft = () => {
-    if (!hasDraftChanges()) {
-      handleExitCreate();
-      return;
-    }
-    setConfirmModal({
-      title: 'Huỷ kiện hàng?',
-      message: 'Bạn có chắc muốn huỷ thao tác hiện tại không?',
-      confirmLabel: 'Huỷ',
-      tone: 'danger',
-      onConfirm: () => {
-        resetShipmentDraft();
-        setView('list');
-      },
-    });
-  };
-
-  const handleShipmentItemChange = (productId, value, maxQuantity) => {
-    const nextValue = Math.max(0, Math.min(maxQuantity, Number(value) || 0));
-    setShipmentDraft((prev) => {
-      const nextItems = { ...prev.items };
-      if (nextValue <= 0) {
-        delete nextItems[productId];
-      } else {
-        nextItems[productId] = nextValue;
-      }
-      return {
-        ...prev,
-        items: nextItems,
-        error: '',
-      };
-    });
-  };
-
-  // Điều chỉnh nhanh +/- số lượng giống thao tác trong màn hình tạo đơn.
-  const adjustQuantity = (productId, delta, maxQuantity) => {
-    setShipmentDraft((prev) => {
-      const current = prev.items[productId] || 0;
-      const nextValue = Math.max(0, Math.min(maxQuantity, current + delta));
-      const nextItems = { ...prev.items };
-      if (nextValue <= 0) {
-        delete nextItems[productId];
-      } else {
-        nextItems[productId] = nextValue;
-      }
-      return {
-        ...prev,
-        items: nextItems,
-        error: '',
-      };
-    });
-  };
-
-  const handleShipmentFieldChange = (field) => (value) => {
+  const handleDraftChange = (field) => (value) => {
     if (field === 'weightKg') {
-      const sanitized = sanitizeDecimalInput(value);
-      setShipmentDraft(prev => ({ ...prev, weightKg: sanitized, error: '' }));
+      setDraft((prev) => ({ ...prev, weightKg: sanitizeDecimalInput(value), error: '' }));
       return;
     }
-    if (field === 'feeVnd') {
-      const sanitized = sanitizeNumberInput(value);
-      setShipmentDraft(prev => ({ ...prev, feeVnd: sanitized, error: '' }));
+    if (['cost', 'price', 'quantity', 'feeVnd'].includes(field)) {
+      setDraft((prev) => ({ ...prev, [field]: sanitizeNumberInput(value), error: '' }));
       return;
     }
-    setShipmentDraft(prev => ({ ...prev, [field]: value, error: '' }));
+    setDraft((prev) => ({ ...prev, [field]: value, error: '' }));
   };
 
-  const getSelectedItems = () => pendingPurchases
-    .map((item) => ({
-      productId: item.productId,
-      name: item.name,
-      quantity: Number(shipmentDraft.items[item.productId]) || 0,
-    }))
-    .filter(item => item.quantity > 0);
+  const feeJpy = draft.method === 'jp'
+    ? Math.round((Number(draft.weightKg) || 0) * 900)
+    : 0;
+  const feeVnd = draft.method === 'jp'
+    ? Math.round(feeJpy * (Number(draft.exchangeRate) || 0))
+    : Number(draft.feeVnd) || 0;
 
-  // Chỉ mở modal thông tin kiện sau khi đã chọn sản phẩm.
-  const handleOpenShipmentModal = () => {
-    const selectedItems = getSelectedItems();
-    if (selectedItems.length === 0) {
-      setShipmentDraft(prev => ({ ...prev, error: 'Vui lòng chọn sản phẩm để lên kiện.' }));
+  // Lưu nhập hàng: tạo lô giá nhập mới và cập nhật tồn kho theo kho chọn.
+  const handleSavePurchase = () => {
+    if (!draft.name.trim()) {
+      setDraft((prev) => ({ ...prev, error: 'Vui lòng nhập tên sản phẩm.' }));
       return;
     }
-    setShipmentModalOpen(true);
-  };
-
-  const handleShipmentSave = () => {
-    const selectedItems = getSelectedItems();
-
-    if (selectedItems.length === 0) {
-      setShipmentDraft(prev => ({ ...prev, error: 'Vui lòng chọn sản phẩm cho kiện hàng.' }));
+    const priceValue = Number(draft.price) || 0;
+    const costValue = Number(draft.cost) || 0;
+    const quantityValue = Number(draft.quantity) || 0;
+    if (priceValue <= 0 || costValue <= 0 || quantityValue <= 0) {
+      setDraft((prev) => ({ ...prev, error: 'Giá nhập, giá bán và tồn kho phải lớn hơn 0.' }));
       return;
     }
 
-    const weightKg = Number(shipmentDraft.weightKg) || 0;
-    if (shipmentDraft.method === 'jp' && weightKg <= 0) {
-      setShipmentDraft(prev => ({ ...prev, error: 'Vui lòng nhập cân nặng kiện hàng.' }));
+    if (draft.method === 'jp' && Number(draft.weightKg) <= 0) {
+      setDraft((prev) => ({ ...prev, error: 'Vui lòng nhập cân nặng kiện hàng.' }));
       return;
     }
 
-    const feeJpy = shipmentDraft.method === 'jp' ? Math.round(weightKg * 900) : 0;
-    const exchangeRate = Number(settings.exchangeRate) || 0;
-    const feeVnd = shipmentDraft.method === 'jp'
-      ? Math.round(feeJpy * exchangeRate)
-      : Number(shipmentDraft.feeVnd) || 0;
-
-    const newShipment = {
+    const purchaseLot = {
       id: Date.now().toString(),
-      items: selectedItems,
-      warehouse: shipmentDraft.warehouse,
-      method: shipmentDraft.method,
-      weightKg,
-      feeJpy,
-      feeVnd,
-      comment: shipmentDraft.comment?.trim() || '',
-      status: 'in_transit',
+      cost: costValue,
+      quantity: quantityValue,
+      warehouse: draft.warehouse,
       createdAt: new Date().toISOString(),
+      shipping: {
+        method: draft.method,
+        weightKg: Number(draft.weightKg) || 0,
+        feeJpy,
+        feeVnd,
+      },
     };
 
-    setInboundShipments(prev => [newShipment, ...prev]);
-    setProducts((prev) => prev.map(item => {
-      const selected = selectedItems.find(selectedItem => selectedItem.productId === item.id);
-      if (!selected) return item;
-      const nextPending = Math.max(0, (Number(item.purchasePending) || 0) - selected.quantity);
-      return { ...item, purchasePending: nextPending };
-    }));
-
-    setShipmentModalOpen(false);
-    resetShipmentDraft();
-    setView('list');
-  };
-
-  const handleReceiveShipment = (shipmentId) => {
-    const shipment = inboundShipments.find(item => item.id === shipmentId);
-    if (!shipment || shipment.status === 'received') return;
-    setConfirmModal({
-      title: 'Nhập kho kiện hàng?',
-      message: `Xác nhận nhập kho ${getWarehouseLabel(shipment.warehouse)} cho kiện #${shipment.id.slice(-4)}?`,
-      confirmLabel: 'Nhập kho',
-      tone: 'rose',
-      onConfirm: () => {
-        setInboundShipments(prev => prev.map(item => (
-          item.id === shipmentId
-            ? { ...item, status: 'received', receivedAt: new Date().toISOString() }
+    setProducts((prev) => {
+      const existing = draft.productId
+        ? prev.find((item) => item.id === draft.productId)
+        : prev.find((item) => item.name.toLowerCase() === draft.name.trim().toLowerCase());
+      if (existing) {
+        const currentStock = normalizeWarehouseStock(existing);
+        const nextStock = {
+          ...currentStock,
+          [draft.warehouse]: currentStock[draft.warehouse] + quantityValue,
+        };
+        const nextLots = [...normalizePurchaseLots(existing), purchaseLot];
+        return prev.map((item) => (
+          item.id === existing.id
+            ? {
+              ...item,
+              name: draft.name.trim(),
+              price: priceValue,
+              category: draft.category || item.category || 'Chung',
+              barcode: draft.barcode || item.barcode || '',
+              purchaseLots: nextLots,
+              stockByWarehouse: nextStock,
+              stock: nextStock.daLat + nextStock.vinhPhuc,
+            }
             : item
-        )));
-        setProducts(prev => prev.map(product => {
-          const shippedItem = shipment.items.find(item => item.productId === product.id);
-          if (!shippedItem) return product;
-          const currentStock = normalizeWarehouseStock(product);
-          const nextStock = {
-            ...currentStock,
-            [shipment.warehouse]: currentStock[shipment.warehouse] + shippedItem.quantity,
-          };
-          return {
-            ...product,
-            stockByWarehouse: nextStock,
-            stock: nextStock.daLat + nextStock.vinhPhuc,
-          };
-        }));
-      },
+        ));
+      }
+
+      const initialStock = {
+        daLat: draft.warehouse === 'daLat' ? quantityValue : 0,
+        vinhPhuc: draft.warehouse === 'vinhPhuc' ? quantityValue : 0,
+      };
+
+      return [
+        ...prev,
+        {
+          id: Date.now().toString(),
+          name: draft.name.trim(),
+          barcode: draft.barcode.trim(),
+          category: draft.category || 'Chung',
+          price: priceValue,
+          purchaseLots: [purchaseLot],
+          stockByWarehouse: initialStock,
+          stock: initialStock.daLat + initialStock.vinhPhuc,
+          image: '',
+        },
+      ];
     });
+
+    setDraft(emptyDraft(settings));
+    setSearchTerm('');
   };
 
   return {
-    view,
-    shipmentModalOpen,
-    setShipmentModalOpen,
-    confirmModal,
-    setConfirmModal,
-    shipmentDraft,
-    setShipmentDraft,
-    pendingPurchases,
-    filteredProducts,
+    draft,
+    setDraft,
     searchTerm,
     setSearchTerm,
-    activeCategory,
-    setActiveCategory,
-    handleStartCreate,
-    handleExitCreate,
-    handleCancelDraft,
-    handleShipmentItemChange,
-    adjustQuantity,
-    handleShipmentFieldChange,
-    handleOpenShipmentModal,
-    handleShipmentSave,
-    handleReceiveShipment,
+    suggestions,
+    feeJpy,
+    feeVnd,
+    handleSelectProduct,
+    handleClearSelection,
+    handleDraftChange,
+    handleSavePurchase,
   };
 };
 

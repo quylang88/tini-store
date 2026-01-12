@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { sanitizeNumberInput } from '../utils/helpers';
 import { normalizeWarehouseStock } from '../utils/warehouseUtils';
+import { getAveragePurchaseCost, normalizePurchaseLots } from '../utils/purchaseUtils';
 
 const DEFAULT_STATUS = 'pending';
 const DEFAULT_WAREHOUSE = 'daLat';
@@ -32,6 +33,59 @@ const useOrdersLogic = ({ products, setProducts, orders, setOrders }) => {
     [products],
   );
 
+  // Gom logic tiêu hao tồn kho theo giá nhập để giữ lịch sử giá nhập chính xác.
+  const consumeLots = (purchaseLots, warehouseKey, quantity, fallbackCost) => {
+    let remaining = quantity;
+    let costTotal = 0;
+    const allocations = [];
+    const nextLots = purchaseLots.map((lot) => ({ ...lot }));
+    const sorted = nextLots
+      .filter((lot) => lot.warehouse === warehouseKey)
+      .sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+
+    sorted.forEach((lot) => {
+      if (remaining <= 0) return;
+      const available = Number(lot.quantity) || 0;
+      if (available <= 0) return;
+      const used = Math.min(available, remaining);
+      lot.quantity = available - used;
+      remaining -= used;
+      costTotal += used * (Number(lot.cost) || 0);
+      allocations.push({ cost: Number(lot.cost) || 0, quantity: used, warehouse: lot.warehouse });
+    });
+
+    if (remaining > 0) {
+      const fallback = Number(fallbackCost) || 0;
+      costTotal += remaining * fallback;
+      allocations.push({ cost: fallback, quantity: remaining, warehouse: warehouseKey });
+      remaining = 0;
+    }
+
+    const cleanedLots = nextLots.filter((lot) => Number(lot.quantity) > 0);
+    const averageCost = quantity > 0 ? Math.round(costTotal / quantity) : 0;
+    return { cleanedLots, allocations, averageCost };
+  };
+
+  const restoreLots = (purchaseLots, costLots, fallbackCost, fallbackQuantity, warehouseKey) => {
+    const nextLots = purchaseLots.map((lot) => ({ ...lot }));
+    const allocations = Array.isArray(costLots) && costLots.length > 0
+      ? costLots
+      : [{ cost: fallbackCost, quantity: fallbackQuantity, warehouse: warehouseKey }];
+
+    allocations.forEach((allocation) => {
+      nextLots.push({
+        id: `${Date.now()}-${Math.random()}`,
+        cost: Number(allocation.cost) || 0,
+        quantity: Number(allocation.quantity) || 0,
+        warehouse: allocation.warehouse || warehouseKey,
+        createdAt: new Date().toISOString(),
+        isReturn: true,
+      });
+    });
+
+    return nextLots;
+  };
+
   const getAvailableStock = (product, warehouseKey) => {
     const warehouseStock = normalizeWarehouseStock(product);
     const baseStock = warehouseKey === 'vinhPhuc' ? warehouseStock.vinhPhuc : warehouseStock.daLat;
@@ -57,13 +111,15 @@ const useOrdersLogic = ({ products, setProducts, orders, setOrders }) => {
     .map(([productId, quantity]) => {
       const product = productMap.get(productId);
       if (!product) return null;
+      const purchaseLots = normalizePurchaseLots(product);
+      const averageCost = getAveragePurchaseCost(purchaseLots);
       return {
         id: product.id,
         productId: product.id,
         name: product.name,
         price: product.price,
         quantity,
-        cost: product.cost || 0,
+        cost: averageCost,
       };
     })
     .filter(Boolean), [cart, productMap]);
@@ -211,35 +267,63 @@ const useOrdersLogic = ({ products, setProducts, orders, setOrders }) => {
     };
   };
 
-  const syncProductsStock = (
-    orderItems,
-    previousItems = [],
-    nextWarehouseKey = DEFAULT_WAREHOUSE,
-    previousWarehouseKey = nextWarehouseKey,
-  ) => {
-    const previousMap = new Map(previousItems.map(item => [item.productId, item.quantity]));
-    const nextMap = new Map(orderItems.map(item => [item.productId, item.quantity]));
+  const consumeProductsForOrder = (currentProducts, items, warehouseKey) => {
+    const itemMap = new Map(items.map((item) => [item.productId, item]));
+    const orderItems = [];
 
-    setProducts((prevProducts) => prevProducts.map((product) => {
-      const previousQty = previousMap.get(product.id) || 0;
-      const nextQty = nextMap.get(product.id) || 0;
-      if (!previousQty && !nextQty) return product;
+    const nextProducts = currentProducts.map((product) => {
+      const item = itemMap.get(product.id);
+      if (!item) return product;
 
-      if (previousWarehouseKey === nextWarehouseKey) {
-        const delta = previousQty - nextQty;
-        if (!delta) return product;
-        return updateWarehouseStock(product, nextWarehouseKey, delta);
-      }
+      const purchaseLots = normalizePurchaseLots(product);
+      const fallbackCost = getAveragePurchaseCost(purchaseLots);
+      const { cleanedLots, allocations, averageCost } = consumeLots(
+        purchaseLots,
+        warehouseKey,
+        item.quantity,
+        fallbackCost,
+      );
 
-      let nextProduct = product;
-      if (previousQty) {
-        nextProduct = updateWarehouseStock(nextProduct, previousWarehouseKey, previousQty);
-      }
-      if (nextQty) {
-        nextProduct = updateWarehouseStock(nextProduct, nextWarehouseKey, -nextQty);
-      }
-      return nextProduct;
-    }));
+      const updatedProduct = updateWarehouseStock(product, warehouseKey, -item.quantity);
+      orderItems.push({
+        productId: item.productId,
+        name: item.name,
+        price: item.price,
+        quantity: item.quantity,
+        cost: averageCost,
+        costLots: allocations,
+      });
+
+      return {
+        ...updatedProduct,
+        purchaseLots: cleanedLots,
+      };
+    });
+
+    return { nextProducts, orderItems };
+  };
+
+  const restoreProductsFromOrder = (currentProducts, items, warehouseKey) => {
+    const itemMap = new Map(items.map((item) => [item.productId, item]));
+
+    return currentProducts.map((product) => {
+      const item = itemMap.get(product.id);
+      if (!item) return product;
+
+      const purchaseLots = normalizePurchaseLots(product);
+      const restoredLots = restoreLots(
+        purchaseLots,
+        item.costLots,
+        item.cost,
+        item.quantity,
+        warehouseKey,
+      );
+      const updatedProduct = updateWarehouseStock(product, warehouseKey, item.quantity);
+      return {
+        ...updatedProduct,
+        purchaseLots: restoredLots,
+      };
+    });
   };
 
   const buildOrderPayload = () => {
@@ -263,12 +347,13 @@ const useOrdersLogic = ({ products, setProducts, orders, setOrders }) => {
       alert('Vui lòng chọn ít nhất 1 sản phẩm.');
       return;
     }
-    const { items, total, warehouse } = buildOrderPayload();
+    const { total, warehouse } = buildOrderPayload();
+    const { nextProducts, orderItems } = consumeProductsForOrder(products, reviewItems, warehouse);
     const orderId = Date.now().toString();
     const newOrder = {
       id: orderId,
       orderNumber: getNextOrderNumber(),
-      items,
+      items: orderItems,
       total,
       warehouse,
       status: DEFAULT_STATUS,
@@ -278,7 +363,7 @@ const useOrdersLogic = ({ products, setProducts, orders, setOrders }) => {
       comment: orderComment.trim(),
     };
 
-    syncProductsStock(items, [], warehouse);
+    setProducts(nextProducts);
     setOrders([...orders, newOrder]);
     clearDraft();
     setView('list');
@@ -291,16 +376,22 @@ const useOrdersLogic = ({ products, setProducts, orders, setOrders }) => {
       return;
     }
 
-    const { items, total, warehouse } = buildOrderPayload();
+    const { total, warehouse } = buildOrderPayload();
+    const restoredProducts = restoreProductsFromOrder(
+      products,
+      orderBeingEdited.items,
+      orderBeingEdited.warehouse || DEFAULT_WAREHOUSE,
+    );
+    const { nextProducts, orderItems } = consumeProductsForOrder(restoredProducts, reviewItems, warehouse);
     const updatedOrder = {
       ...orderBeingEdited,
-      items,
+      items: orderItems,
       total,
       warehouse,
       comment: orderComment.trim(),
     };
 
-    syncProductsStock(items, orderBeingEdited.items, warehouse, orderBeingEdited.warehouse || DEFAULT_WAREHOUSE);
+    setProducts(nextProducts);
     setOrders(orders.map(order => (order.id === orderBeingEdited.id ? updatedOrder : order)));
     clearDraft();
     setView('list');
@@ -393,7 +484,12 @@ const useOrdersLogic = ({ products, setProducts, orders, setOrders }) => {
       confirmLabel: 'Huỷ đơn',
       tone: 'danger',
       onConfirm: () => {
-        syncProductsStock([], order.items, DEFAULT_WAREHOUSE, order.warehouse || DEFAULT_WAREHOUSE);
+        const nextProducts = restoreProductsFromOrder(
+          products,
+          order.items,
+          order.warehouse || DEFAULT_WAREHOUSE,
+        );
+        setProducts(nextProducts);
         setOrders(orders.filter(item => item.id !== orderId));
       },
     });

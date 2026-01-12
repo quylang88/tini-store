@@ -1,15 +1,19 @@
 import React from 'react';
 import { Image as ImageIcon, Trash2 } from 'lucide-react';
 import { formatNumber } from '../../utils/helpers';
+import { getAveragePurchaseCost, normalizePurchaseLots } from '../../utils/purchaseUtils';
+import { normalizeWarehouseStock } from '../../utils/warehouseUtils';
 
 const ProductList = ({ products, onEdit, onDelete }) => {
   return (
     <div className="flex-1 overflow-y-auto p-3 space-y-3 pb-24">
       {products.map(product => {
         // Lợi nhuận để user tham khảo nhanh ngay trong danh sách kho
-        const expectedProfit = (Number(product.price) || 0) - (Number(product.cost) || 0);
-        const hasProfitData = Number(product.price) > 0 && Number(product.cost) > 0;
-        const pendingPurchase = Number(product.purchasePending) || 0;
+        const purchaseLots = normalizePurchaseLots(product);
+        const averageCost = getAveragePurchaseCost(purchaseLots);
+        const expectedProfit = (Number(product.price) || 0) - averageCost;
+        const hasProfitData = Number(product.price) > 0 && averageCost > 0;
+        const stockByWarehouse = normalizeWarehouseStock(product);
 
         return (
         <div
@@ -42,7 +46,8 @@ const ProductList = ({ products, onEdit, onDelete }) => {
                 )}
               </div>
               <div className="text-right">
-                <div className="text-[10px] text-gray-500">Đã mua: {pendingPurchase}</div>
+                <div className="text-[10px] text-gray-500">Tồn kho: {stockByWarehouse.daLat} LD • {stockByWarehouse.vinhPhuc} VP</div>
+                <div className="text-[10px] text-amber-500">Giá nhập: {purchaseLots.length} mức</div>
               </div>
             </div>
           </div>

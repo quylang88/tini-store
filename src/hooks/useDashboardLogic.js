@@ -1,12 +1,16 @@
 import { useMemo, useState } from 'react';
+import { getAveragePurchaseCost, normalizePurchaseLots } from '../utils/purchaseUtils';
 
 const useDashboardLogic = ({ products, orders }) => {
   const [showHistory, setShowHistory] = useState(false);
   const [expandedMonth, setExpandedMonth] = useState(null);
 
-  // Map giá vốn theo sản phẩm để tính lợi nhuận ổn định
+  // Map giá vốn theo sản phẩm để tính lợi nhuận ổn định (lấy trung bình tồn kho).
   const costMap = useMemo(
-    () => new Map(products.map(product => [product.id, product.cost || 0])),
+    () => new Map(products.map(product => {
+      const purchaseLots = normalizePurchaseLots(product);
+      return [product.id, getAveragePurchaseCost(purchaseLots)];
+    })),
     [products],
   );
 

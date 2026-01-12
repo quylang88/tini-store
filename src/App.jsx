@@ -6,7 +6,6 @@ import Login from './screens/Login';
 import Dashboard from './screens/Dashboard';
 import Inventory from './screens/Inventory';
 import Inbound from './screens/Inbound';
-import Warehouse from './screens/Warehouse';
 import Orders from './screens/Orders';
 import Settings from './screens/Settings';
 
@@ -38,10 +37,6 @@ const App = () => {
     return saved ? JSON.parse(saved) : [];
   });
 
-  const [inboundShipments, setInboundShipments] = useState(() => {
-    const saved = localStorage.getItem('shop_inbound_shipments');
-    return saved ? JSON.parse(saved) : [];
-  });
 
   // Cài đặt chung (Tỷ giá, Danh mục)
   const [settings, setSettings] = useState(() => {
@@ -64,10 +59,6 @@ const App = () => {
   useEffect(() => {
     localStorage.setItem('shop_orders_v2', JSON.stringify(orders));
   }, [orders]);
-
-  useEffect(() => {
-    localStorage.setItem('shop_inbound_shipments', JSON.stringify(inboundShipments));
-  }, [inboundShipments]);
 
   useEffect(() => {
     localStorage.setItem('shop_settings', JSON.stringify(settings));
@@ -115,16 +106,6 @@ const App = () => {
           <Inbound
             products={products}
             setProducts={setProducts}
-            inboundShipments={inboundShipments}
-            setInboundShipments={setInboundShipments}
-            settings={settings}
-          />
-        )}
-
-        {activeTab === 'warehouse' && (
-          <Warehouse
-            products={products}
-            setProducts={setProducts}
             settings={settings}
           />
         )}
@@ -143,10 +124,8 @@ const App = () => {
           <Settings
             products={products}
             orders={orders}
-            inboundShipments={inboundShipments}
             setProducts={setProducts}
             setOrders={setOrders}
-            setInboundShipments={setInboundShipments}
             settings={settings}
             setSettings={setSettings}
             onLogout={handleLogout}

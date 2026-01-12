@@ -24,7 +24,6 @@ const Inventory = ({ products, setProducts, settings }) => {
     formData,
     setFormData,
     handleMoneyChange,
-    handleCurrencyChange,
     handleScanSuccess,
     handleImageSelect,
     handleSave,
@@ -68,7 +67,6 @@ const Inventory = ({ products, setProducts, settings }) => {
         onSave={handleSave}
         onShowScanner={() => setShowScanner(true)}
         onImageSelect={handleImageSelect}
-        onCurrencyChange={handleCurrencyChange}
         onMoneyChange={handleMoneyChange}
       />
 

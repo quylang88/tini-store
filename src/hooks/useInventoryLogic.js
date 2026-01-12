@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { compressImage, sanitizeNumberInput } from '../utils/helpers';
 import { normalizeWarehouseStock } from '../utils/warehouseUtils';
+import { normalizePurchaseLots } from '../utils/purchaseUtils';
 
 const useInventoryLogic = ({ products, setProducts, settings }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -15,48 +16,18 @@ const useInventoryLogic = ({ products, setProducts, settings }) => {
   // State quản lý danh mục đang xem
   const [activeCategory, setActiveCategory] = useState('Tất cả');
 
-  // Form data có thêm các trường mới: category, costJPY, exchangeRate
+  // Form data chỉ giữ thông tin cơ bản để chỉnh sửa nhanh sản phẩm.
   const [formData, setFormData] = useState({
     name: '',
     barcode: '',
     category: 'Chung',
-    costCurrency: 'JPY',
-    costJPY: '', // Giá vốn tiền Yên
-    exchangeRate: String(settings.exchangeRate), // Lấy tỷ giá mặc định từ Settings
-    cost: '', // Giá vốn VNĐ
     price: '', // Giá bán VNĐ
-    purchasePending: '',
     image: ''
   });
-
-  // Tự động tính giá vốn VNĐ khi nhập Yên hoặc thay đổi Tỷ giá
-  useEffect(() => {
-    if (formData.costCurrency !== 'JPY') {
-      return;
-    }
-    const costJPYValue = Number(formData.costJPY || 0);
-    const exchangeRateValue = Number(formData.exchangeRate || 0);
-    if (costJPYValue > 0 && exchangeRateValue > 0) {
-      const calculatedCost = Math.round(costJPYValue * exchangeRateValue);
-      setFormData(prev => ({ ...prev, cost: calculatedCost }));
-    } else {
-      setFormData(prev => ({ ...prev, cost: 0 }));
-    }
-  }, [formData.costCurrency, formData.costJPY, formData.exchangeRate]);
 
   const handleMoneyChange = (field) => (event) => {
     const rawValue = sanitizeNumberInput(event.target.value);
     setFormData(prev => ({ ...prev, [field]: rawValue }));
-  };
-
-  const handleCurrencyChange = (nextCurrency) => {
-    setFormData(prev => ({
-      ...prev,
-      costCurrency: nextCurrency,
-      cost: nextCurrency === 'JPY' ? '' : prev.cost,
-      costJPY: nextCurrency === 'VND' ? '' : prev.costJPY,
-      exchangeRate: String(settings.exchangeRate)
-    }));
   };
 
   const handleScanSuccess = (decodedText) => {
@@ -93,16 +64,7 @@ const useInventoryLogic = ({ products, setProducts, settings }) => {
       });
       return;
     }
-
-    const costValue = Number(formData.cost) || 0;
     const priceValue = Number(formData.price) || 0;
-    if (costValue > 0 && priceValue <= costValue) {
-      setErrorModal({
-        title: 'Giá bán chưa hợp lệ',
-        message: 'Giá bán phải cao hơn giá vốn để đảm bảo có lợi nhuận.'
-      });
-      return;
-    }
 
     // Check trùng Barcode
     if (formData.barcode) {
@@ -118,19 +80,15 @@ const useInventoryLogic = ({ products, setProducts, settings }) => {
       }
     }
 
-    const exchangeRateValue = Number(formData.exchangeRate) || settings.exchangeRate;
     const existingStock = editingProduct ? normalizeWarehouseStock(editingProduct) : { daLat: 0, vinhPhuc: 0 };
+    const existingLots = editingProduct ? normalizePurchaseLots(editingProduct) : [];
     const newProduct = {
       id: editingProduct ? editingProduct.id : Date.now().toString(),
       name: formData.name.trim(),
       barcode: formData.barcode ? formData.barcode.trim() : '',
       category: formData.category,
-      costCurrency: formData.costCurrency,
-      costJPY: Number(formData.costJPY) || 0,
-      exchangeRate: exchangeRateValue,
-      cost: Number(formData.cost) || 0, // Giá vốn VNĐ
       price: Number(formData.price), // Giá bán VNĐ
-      purchasePending: Number(formData.purchasePending) || 0,
+      purchaseLots: existingLots,
       stockByWarehouse: existingStock,
       stock: existingStock.daLat + existingStock.vinhPhuc,
       image: formData.image,
@@ -152,12 +110,7 @@ const useInventoryLogic = ({ products, setProducts, settings }) => {
         name: product.name,
         barcode: product.barcode || '',
         category: product.category || 'Chung',
-        costCurrency: product.costCurrency || (product.costJPY > 0 ? 'JPY' : 'VND'),
-        costJPY: product.costJPY || '',
-        exchangeRate: String(product.exchangeRate || settings.exchangeRate),
-        cost: product.cost || '',
         price: product.price,
-        purchasePending: product.purchasePending || '',
         image: product.image || '',
       });
     } else {
@@ -166,12 +119,7 @@ const useInventoryLogic = ({ products, setProducts, settings }) => {
         name: '',
         barcode: '',
         category: activeCategory === 'Tất cả' ? 'Chung' : activeCategory,
-        costCurrency: 'JPY',
-        costJPY: '',
-        exchangeRate: String(settings.exchangeRate), // Load tỷ giá mặc định
-        cost: '',
         price: '',
-        purchasePending: '',
         image: '',
       });
     }
@@ -219,7 +167,6 @@ const useInventoryLogic = ({ products, setProducts, settings }) => {
     formData,
     setFormData,
     handleMoneyChange,
-    handleCurrencyChange,
     handleScanSuccess,
     handleImageSelect,
     handleSave,
