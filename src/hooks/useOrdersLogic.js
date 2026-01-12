@@ -122,11 +122,33 @@ const useOrdersLogic = ({ products, setProducts, orders, setOrders }) => {
     setView('create');
   };
 
+  // So sánh giỏ hiện tại với đơn gốc để biết user đã chỉnh sửa gì chưa.
+  const hasDraftChanges = () => {
+    if (!orderBeingEdited) {
+      return Object.keys(cart).length > 0 || orderComment.trim().length > 0;
+    }
+
+    const originalCart = orderBeingEdited.items.reduce((acc, item) => {
+      acc[item.productId] = item.quantity;
+      return acc;
+    }, {});
+
+    const currentKeys = Object.keys(cart);
+    const originalKeys = Object.keys(originalCart);
+    const isSameCart = currentKeys.length === originalKeys.length
+      && currentKeys.every((key) => cart[key] === originalCart[key]);
+    const isSameComment = orderComment.trim() === (orderBeingEdited.comment || '').trim();
+
+    return !(isSameCart && isSameComment);
+  };
+
   const handleExitCreate = () => {
-    if (Object.keys(cart).length > 0) {
+    if (hasDraftChanges()) {
       setConfirmModal({
-        title: 'Thoát tạo đơn?',
-        message: 'Bạn có chắc muốn thoát? Các sản phẩm trong đơn sẽ bị xoá.',
+        title: orderBeingEdited ? 'Thoát sửa đơn?' : 'Thoát tạo đơn?',
+        message: orderBeingEdited
+          ? 'Bạn có chắc muốn thoát? Các chỉnh sửa sẽ bị huỷ.'
+          : 'Bạn có chắc muốn thoát? Các sản phẩm trong đơn sẽ bị xoá.',
         confirmLabel: 'Thoát',
         tone: 'danger',
         onConfirm: () => {
@@ -141,7 +163,7 @@ const useOrdersLogic = ({ products, setProducts, orders, setOrders }) => {
   };
 
   const handleCancelDraft = () => {
-    if (Object.keys(cart).length === 0) {
+    if (!hasDraftChanges()) {
       handleExitCreate();
       return;
     }
@@ -258,11 +280,26 @@ const useOrdersLogic = ({ products, setProducts, orders, setOrders }) => {
   };
 
   const handleTogglePaid = (orderId) => {
-    setOrders((prev) => prev.map((order) => {
-      if (order.id !== orderId) return order;
-      const nextStatus = order.status === 'paid' ? DEFAULT_STATUS : 'paid';
-      return { ...order, status: nextStatus };
-    }));
+    const order = orders.find(item => item.id === orderId);
+    if (!order) return;
+    const isPaid = order.status === 'paid';
+
+    // Hiển thị popup xác nhận trước khi đổi trạng thái thanh toán.
+    setConfirmModal({
+      title: isPaid ? 'Huỷ thanh toán?' : 'Xác nhận thanh toán?',
+      message: isPaid
+        ? 'Bạn có chắc muốn huỷ trạng thái đã thanh toán cho đơn này không?'
+        : 'Bạn có chắc đơn này đã được thanh toán đầy đủ chưa?',
+      confirmLabel: isPaid ? 'Huỷ thanh toán' : 'Đã thanh toán',
+      tone: isPaid ? 'danger' : 'rose',
+      onConfirm: () => {
+        setOrders((prev) => prev.map((item) => {
+          if (item.id !== orderId) return item;
+          const nextStatus = item.status === 'paid' ? DEFAULT_STATUS : 'paid';
+          return { ...item, status: nextStatus };
+        }));
+      },
+    });
   };
 
   const handleExportToVietnam = (orderId) => {
