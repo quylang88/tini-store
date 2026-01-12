@@ -5,6 +5,8 @@ import React, { useState, useEffect } from 'react';
 import Login from './screens/Login';
 import Dashboard from './screens/Dashboard';
 import Inventory from './screens/Inventory';
+import Inbound from './screens/Inbound';
+import Warehouse from './screens/Warehouse';
 import Orders from './screens/Orders';
 import Settings from './screens/Settings';
 
@@ -36,6 +38,11 @@ const App = () => {
     return saved ? JSON.parse(saved) : [];
   });
 
+  const [inboundShipments, setInboundShipments] = useState(() => {
+    const saved = localStorage.getItem('shop_inbound_shipments');
+    return saved ? JSON.parse(saved) : [];
+  });
+
   // Cài đặt chung (Tỷ giá, Danh mục)
   const [settings, setSettings] = useState(() => {
     const saved = localStorage.getItem('shop_settings');
@@ -57,6 +64,10 @@ const App = () => {
   useEffect(() => {
     localStorage.setItem('shop_orders_v2', JSON.stringify(orders));
   }, [orders]);
+
+  useEffect(() => {
+    localStorage.setItem('shop_inbound_shipments', JSON.stringify(inboundShipments));
+  }, [inboundShipments]);
 
   useEffect(() => {
     localStorage.setItem('shop_settings', JSON.stringify(settings));
@@ -85,13 +96,34 @@ const App = () => {
       <div className="flex-1 overflow-hidden relative">
 
         {activeTab === 'dashboard' && (
-          <Dashboard products={products} orders={orders} />
+          <Dashboard
+            products={products}
+            orders={orders}
+            onOpenSettings={() => setActiveTab('settings')}
+          />
         )}
 
-        {activeTab === 'inventory' && (
+        {activeTab === 'products' && (
           <Inventory
             products={products}
             setProducts={setProducts}
+            settings={settings}
+          />
+        )}
+
+        {activeTab === 'inbound' && (
+          <Inbound
+            products={products}
+            setProducts={setProducts}
+            inboundShipments={inboundShipments}
+            setInboundShipments={setInboundShipments}
+            settings={settings}
+          />
+        )}
+
+        {activeTab === 'warehouse' && (
+          <Warehouse
+            products={products}
             settings={settings}
           />
         )}
@@ -110,8 +142,10 @@ const App = () => {
           <Settings
             products={products}
             orders={orders}
+            inboundShipments={inboundShipments}
             setProducts={setProducts}
             setOrders={setOrders}
+            setInboundShipments={setInboundShipments}
             settings={settings}
             setSettings={setSettings}
             onLogout={handleLogout}
