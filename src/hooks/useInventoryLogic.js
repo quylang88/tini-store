@@ -8,6 +8,8 @@ const useInventoryLogic = ({ products, setProducts, settings }) => {
   const [searchTerm, setSearchTerm] = useState('');
   // Modal xác nhận xoá sản phẩm để giao diện đồng bộ
   const [confirmModal, setConfirmModal] = useState(null);
+  // Modal báo lỗi riêng cho form tạo/sửa sản phẩm
+  const [errorModal, setErrorModal] = useState(null);
 
   // State quản lý danh mục đang xem
   const [activeCategory, setActiveCategory] = useState('Tất cả');
@@ -46,8 +48,7 @@ const useInventoryLogic = ({ products, setProducts, settings }) => {
     setFormData(prev => ({ ...prev, [field]: rawValue }));
   };
 
-  const handleCurrencyChange = (event) => {
-    const nextCurrency = event.target.value;
+  const handleCurrencyChange = (nextCurrency) => {
     setFormData(prev => ({
       ...prev,
       costCurrency: nextCurrency,
@@ -85,14 +86,20 @@ const useInventoryLogic = ({ products, setProducts, settings }) => {
 
   const handleSave = () => {
     if (!formData.name || !formData.price) {
-      alert('Vui lòng nhập Tên và Giá bán!');
+      setErrorModal({
+        title: 'Thiếu thông tin',
+        message: 'Vui lòng nhập Tên sản phẩm và Giá bán trước khi lưu.'
+      });
       return;
     }
 
     const costValue = Number(formData.cost) || 0;
     const priceValue = Number(formData.price) || 0;
     if (costValue > 0 && priceValue <= costValue) {
-      alert('Giá bán phải cao hơn giá vốn!');
+      setErrorModal({
+        title: 'Giá bán chưa hợp lệ',
+        message: 'Giá bán phải cao hơn giá vốn để đảm bảo có lợi nhuận.'
+      });
       return;
     }
 
@@ -102,7 +109,10 @@ const useInventoryLogic = ({ products, setProducts, settings }) => {
         p.barcode === formData.barcode && p.id !== (editingProduct ? editingProduct.id : null)
       );
       if (duplicateBarcode) {
-        alert(`LỖI: Mã vạch này trùng với SP "${duplicateBarcode.name}"`);
+        setErrorModal({
+          title: 'Mã vạch bị trùng',
+          message: `Mã vạch này đã được dùng cho "${duplicateBarcode.name}". Vui lòng kiểm tra lại.`
+        });
         return;
       }
     }
@@ -196,6 +206,8 @@ const useInventoryLogic = ({ products, setProducts, settings }) => {
     setSearchTerm,
     confirmModal,
     setConfirmModal,
+    errorModal,
+    setErrorModal,
     activeCategory,
     setActiveCategory,
     formData,
