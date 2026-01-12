@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { formatNumber } from '../../utils/helpers';
+import { formatNumber } from '../utils/helpers';
 
 const useSettingsLogic = ({
   products,
