@@ -15,6 +15,9 @@ const useInboundLogic = ({
   const [view, setView] = useState('list');
   const [shipmentModalOpen, setShipmentModalOpen] = useState(false);
   const [confirmModal, setConfirmModal] = useState(null);
+  // Đồng bộ trạng thái tìm kiếm/danh mục để layout tạo kiện giống tạo đơn hàng.
+  const [searchTerm, setSearchTerm] = useState('');
+  const [activeCategory, setActiveCategory] = useState('Tất cả');
   const [shipmentDraft, setShipmentDraft] = useState({
     warehouse: DEFAULT_WAREHOUSE,
     method: 'vn',
@@ -33,11 +36,19 @@ const useInboundLogic = ({
         name: item.name,
         quantity: Number(item.purchasePending) || 0,
         image: item.image || '',
+        price: item.price || 0,
         barcode: item.barcode || '',
         category: item.category || 'Chung',
       })),
     [products],
   );
+
+  const filteredProducts = useMemo(() => pendingPurchases.filter((item) => {
+    const matchSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (item.barcode && item.barcode.includes(searchTerm));
+    const matchCategory = activeCategory === 'Tất cả' || item.category === activeCategory;
+    return matchSearch && matchCategory;
+  }), [pendingPurchases, searchTerm, activeCategory]);
 
   const resetShipmentDraft = () => {
     setShipmentDraft({
@@ -49,6 +60,8 @@ const useInboundLogic = ({
       items: {},
       error: '',
     });
+    setSearchTerm('');
+    setActiveCategory('Tất cả');
   };
 
   const handleStartCreate = () => {
@@ -63,14 +76,38 @@ const useInboundLogic = ({
 
   const handleShipmentItemChange = (productId, value, maxQuantity) => {
     const nextValue = Math.max(0, Math.min(maxQuantity, Number(value) || 0));
-    setShipmentDraft((prev) => ({
-      ...prev,
-      items: {
-        ...prev.items,
-        [productId]: nextValue,
-      },
-      error: '',
-    }));
+    setShipmentDraft((prev) => {
+      const nextItems = { ...prev.items };
+      if (nextValue <= 0) {
+        delete nextItems[productId];
+      } else {
+        nextItems[productId] = nextValue;
+      }
+      return {
+        ...prev,
+        items: nextItems,
+        error: '',
+      };
+    });
+  };
+
+  // Điều chỉnh nhanh +/- số lượng giống thao tác trong màn hình tạo đơn.
+  const adjustQuantity = (productId, delta, maxQuantity) => {
+    setShipmentDraft((prev) => {
+      const current = prev.items[productId] || 0;
+      const nextValue = Math.max(0, Math.min(maxQuantity, current + delta));
+      const nextItems = { ...prev.items };
+      if (nextValue <= 0) {
+        delete nextItems[productId];
+      } else {
+        nextItems[productId] = nextValue;
+      }
+      return {
+        ...prev,
+        items: nextItems,
+        error: '',
+      };
+    });
   };
 
   const handleShipmentFieldChange = (field) => (value) => {
@@ -192,9 +229,15 @@ const useInboundLogic = ({
     shipmentDraft,
     setShipmentDraft,
     pendingPurchases,
+    filteredProducts,
+    searchTerm,
+    setSearchTerm,
+    activeCategory,
+    setActiveCategory,
     handleStartCreate,
     handleExitCreate,
     handleShipmentItemChange,
+    adjustQuantity,
     handleShipmentFieldChange,
     handleOpenShipmentModal,
     handleShipmentSave,

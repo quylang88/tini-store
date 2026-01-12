@@ -124,6 +124,7 @@ const App = () => {
         {activeTab === 'warehouse' && (
           <Warehouse
             products={products}
+            setProducts={setProducts}
             settings={settings}
           />
         )}

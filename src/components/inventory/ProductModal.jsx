@@ -206,9 +206,9 @@ const ProductModal = ({
             )}
           </div>
 
-          {/* Giá bán + lợi nhuận cùng 1 hàng */}
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
-            <div className="flex-1">
+          {/* Giá bán + lợi nhuận giữ cùng 1 hàng trên mobile để không bị xuống dòng */}
+          <div className="flex flex-row flex-nowrap gap-3 items-end">
+            <div className="flex-1 min-w-0">
               <label className="text-xs font-bold text-amber-700 uppercase">Giá bán (VNĐ)</label>
               <input
                 inputMode="numeric"
@@ -218,7 +218,7 @@ const ProductModal = ({
                 placeholder="0"
               />
             </div>
-            <div className="sm:w-40 bg-emerald-50 border border-emerald-100 rounded-lg px-3 py-2">
+            <div className="w-32 sm:w-40 flex-shrink-0 bg-emerald-50 border border-emerald-100 rounded-lg px-3 py-2">
               <div className="text-[10px] font-bold text-emerald-700 uppercase">Lợi nhuận</div>
               <div className="text-lg font-bold text-emerald-700">
                 {hasProfitData ? `${formatNumber(expectedProfit)}đ` : '0đ'}
