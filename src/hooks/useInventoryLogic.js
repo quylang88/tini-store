@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { compressImage, sanitizeNumberInput } from '../../utils/helpers';
+import { compressImage, sanitizeNumberInput } from '../utils/helpers';
 
 const useInventoryLogic = ({ products, setProducts, settings }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
