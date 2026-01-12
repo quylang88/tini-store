@@ -22,7 +22,7 @@ const OrderListView = ({
         className="h-12 w-auto object-contain"
       />
       <button onClick={onCreateOrder} className="bg-rose-500 text-white px-4 py-2 rounded-xl text-sm font-bold shadow-md shadow-rose-200 active:scale-95 transition flex items-center gap-2">
-        <Plus size={18} /> Đơn mới
+        <Plus size={18} /> Xuất kho mới
       </button>
     </div>
     <div className="flex-1 overflow-y-auto p-3 space-y-3">
@@ -102,7 +102,7 @@ const OrderListView = ({
                 }}
                 className="text-xs font-semibold text-amber-600 bg-amber-50 border border-amber-100 px-3 py-1.5 rounded-full hover:bg-amber-100 transition"
               >
-                Sửa đơn
+                Sửa xuất kho
               </button>
               <button
                 onClick={(event) => {
@@ -111,7 +111,7 @@ const OrderListView = ({
                 }}
                 className="text-xs font-semibold text-red-600 bg-red-50 border border-red-100 px-3 py-1.5 rounded-full hover:bg-red-100 transition"
               >
-                Huỷ đơn
+                Huỷ xuất kho
               </button>
             </div>
           </div>
@@ -120,7 +120,7 @@ const OrderListView = ({
       {orders.length === 0 && (
         <div className="flex flex-col items-center justify-center mt-20 text-gray-400">
           <ShoppingCart size={48} className="mb-2 opacity-20" />
-          <p>Chưa có đơn hàng nào</p>
+          <p>Chưa có xuất kho nào</p>
         </div>
       )}
     </div>

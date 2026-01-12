@@ -228,9 +228,6 @@ const ProductModal = ({
                 />
               </div>
             )}
-            <div className="text-[10px] text-amber-500">
-              Giá nhập sẽ được lưu theo từng lần nhập để quản lý tồn kho.
-            </div>
           </div>
 
           {/* Phí gửi nằm ngay sau phần giá nhập */}
@@ -238,28 +235,28 @@ const ProductModal = ({
             <div className="flex items-center justify-between">
               <div className="text-[10px] font-bold text-amber-800 uppercase">Phí gửi</div>
               <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={() => setFormData({ ...formData, shippingMethod: 'vn' })}
-                className={`px-2 py-1 text-[10px] font-semibold rounded border transition ${
-                  formData.shippingMethod === 'vn'
-                    ? 'bg-amber-500 text-white border-amber-500'
-                    : 'bg-transparent text-amber-700 border-amber-200 hover:border-rose-400'
-                }`}
-              >
-                Mua tại VN
-              </button>
-              <button
-                type="button"
-                onClick={() => setFormData({ ...formData, shippingMethod: 'jp' })}
-                className={`px-2 py-1 text-[10px] font-semibold rounded border transition ${
-                  formData.shippingMethod === 'jp'
-                    ? 'bg-amber-500 text-white border-amber-500'
-                    : 'bg-transparent text-amber-700 border-amber-200 hover:border-rose-400'
-                }`}
-              >
-                Mua tại Nhật
-              </button>
+                <button
+                  type="button"
+                  onClick={() => setFormData({ ...formData, shippingMethod: 'jp' })}
+                  className={`px-2 py-1 text-[10px] font-semibold rounded border transition ${
+                    formData.shippingMethod === 'jp'
+                      ? 'bg-amber-500 text-white border-amber-500'
+                      : 'bg-transparent text-amber-700 border-amber-200 hover:border-rose-400'
+                  }`}
+                >
+                  Mua tại Nhật
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setFormData({ ...formData, shippingMethod: 'vn' })}
+                  className={`px-2 py-1 text-[10px] font-semibold rounded border transition ${
+                    formData.shippingMethod === 'vn'
+                      ? 'bg-amber-500 text-white border-amber-500'
+                      : 'bg-transparent text-amber-700 border-amber-200 hover:border-rose-400'
+                  }`}
+                >
+                  Mua tại VN
+                </button>
               </div>
             </div>
             {formData.shippingMethod === 'jp' ? (
@@ -272,10 +269,10 @@ const ProductModal = ({
                   onChange={onDecimalChange('shippingWeightKg')}
                   placeholder="0"
                 />
-                <div className="text-xs text-amber-700 font-semibold">
-                  Phí gửi: {formatNumber(shippingFeeJpy)}¥ (~{formatNumber(shippingFeeVnd)}đ)
+                <div className="flex items-center justify-between text-xs font-semibold text-amber-700">
+                  <span>Phí gửi: {formatNumber(shippingFeeJpy)}¥ (~{formatNumber(shippingFeeVnd)}đ)</span>
+                  <span className="text-[10px] text-amber-500">900 yên / 1kg</span>
                 </div>
-                <div className="text-[10px] text-amber-500">Tự tính theo 900 yên / 1kg.</div>
               </div>
             ) : (
               <div>
@@ -293,7 +290,28 @@ const ProductModal = ({
 
           {/* Tồn kho nhập vào */}
           <div className="bg-amber-50 border border-amber-100 rounded-lg p-3 space-y-3">
-            <div className="text-[10px] font-bold text-amber-800 uppercase">Tồn kho nhập về</div>
+            <div className="flex items-center justify-between">
+              <div className="text-[10px] font-bold text-amber-800 uppercase">Tồn kho nhập về</div>
+              <div className="flex gap-2">
+                {[
+                  { key: 'vinhPhuc', label: 'Vĩnh Phúc' },
+                  { key: 'daLat', label: 'Lâm Đồng' },
+                ].map((warehouse) => (
+                  <button
+                    key={warehouse.key}
+                    type="button"
+                    onClick={() => setFormData({ ...formData, warehouse: warehouse.key })}
+                    className={`px-2 py-1 text-[10px] font-semibold rounded border transition ${
+                      formData.warehouse === warehouse.key
+                        ? 'bg-rose-500 text-white border-rose-500'
+                        : 'bg-transparent text-amber-700 border-amber-200 hover:border-rose-400'
+                    }`}
+                  >
+                    {warehouse.label}
+                  </button>
+                ))}
+              </div>
+            </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="text-[10px] font-bold text-amber-800 uppercase">Số lượng</label>
@@ -305,30 +323,8 @@ const ProductModal = ({
                   placeholder="0"
                 />
               </div>
-              <div>
-                <label className="text-[10px] font-bold text-amber-800 uppercase">Kho nhận</label>
-                <div className="flex gap-2 mt-1">
-                  {[
-                    { key: 'daLat', label: 'Lâm Đồng' },
-                    { key: 'vinhPhuc', label: 'Vĩnh Phúc' },
-                  ].map((warehouse) => (
-                    <button
-                      key={warehouse.key}
-                      type="button"
-                      onClick={() => setFormData({ ...formData, warehouse: warehouse.key })}
-                      className={`px-2 py-1 text-[10px] font-semibold rounded border transition ${
-                        formData.warehouse === warehouse.key
-                          ? 'bg-rose-500 text-white border-rose-500'
-                          : 'bg-transparent text-amber-700 border-amber-200 hover:border-rose-400'
-                      }`}
-                    >
-                      {warehouse.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
+              <div />
             </div>
-            <div className="text-[10px] text-amber-500">Nhập số lượng thực tế về kho.</div>
           </div>
 
           {/* Giá bán + lợi nhuận */}
@@ -347,9 +343,6 @@ const ProductModal = ({
               <div className="text-xs font-bold text-emerald-700 uppercase">Lợi nhuận (VNĐ)</div>
               <div className="text-lg font-bold text-emerald-700">
                 {hasProfitData ? formatNumber(finalProfit) : '0'}
-              </div>
-              <div className="text-[10px] text-emerald-600">
-                (Đã trừ phí gửi)
               </div>
             </div>
           </div>

@@ -21,19 +21,19 @@ const useInventoryLogic = ({ products, setProducts, settings }) => {
   const [activeCategories, setActiveCategories] = useState([]);
   const [warehouseFilter, setWarehouseFilter] = useState('all');
 
-  // Form data phục vụ nhập hàng: nhập giá, tồn kho, phí gửi theo từng kho.
+  // Form data phục vụ nhập kho: nhập giá, tồn kho, phí gửi theo từng kho.
   const [formData, setFormData] = useState({
     name: '',
     barcode: '',
     category: 'Chung',
-    costCurrency: 'VND',
+    costCurrency: 'JPY',
     costJPY: '',
     exchangeRate: String(settings.exchangeRate),
     cost: '', // Giá nhập VNĐ
     price: '', // Giá bán VNĐ
     quantity: '',
-    warehouse: 'daLat',
-    shippingMethod: 'vn',
+    warehouse: 'vinhPhuc',
+    shippingMethod: 'jp',
     shippingWeightKg: '',
     shippingFeeVnd: '',
     image: '',
@@ -245,8 +245,8 @@ const useInventoryLogic = ({ products, setProducts, settings }) => {
         cost: getLatestCost(product) || '',
         price: product.price,
         quantity: '',
-        warehouse: 'daLat',
-        shippingMethod: 'vn',
+        warehouse: 'vinhPhuc',
+        shippingMethod: 'jp',
         shippingWeightKg: '',
         shippingFeeVnd: '',
         image: product.image || '',
@@ -257,14 +257,14 @@ const useInventoryLogic = ({ products, setProducts, settings }) => {
         name: '',
         barcode: '',
         category: activeCategories.length === 1 ? activeCategories[0] : 'Chung',
-        costCurrency: 'VND',
+        costCurrency: 'JPY',
         costJPY: '',
         exchangeRate: String(settings.exchangeRate),
         cost: '',
         price: '',
         quantity: '',
-        warehouse: 'daLat',
-        shippingMethod: 'vn',
+        warehouse: 'vinhPhuc',
+        shippingMethod: 'jp',
         shippingWeightKg: '',
         shippingFeeVnd: '',
         image: '',
@@ -335,8 +335,8 @@ const useInventoryLogic = ({ products, setProducts, settings }) => {
       cost: getLatestCost(product) || '',
       price: product.price,
       quantity: '',
-      warehouse: 'daLat',
-      shippingMethod: 'vn',
+      warehouse: 'vinhPhuc',
+      shippingMethod: 'jp',
       shippingWeightKg: '',
       shippingFeeVnd: '',
       image: product.image || '',

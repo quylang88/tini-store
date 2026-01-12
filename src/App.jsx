@@ -90,7 +90,6 @@ const App = () => {
           <Dashboard
             products={products}
             orders={orders}
-            onOpenSettings={() => setActiveTab('settings')}
           />
         )}
 

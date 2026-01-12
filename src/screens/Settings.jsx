@@ -52,7 +52,7 @@ const Settings = ({
           <div className="p-4 space-y-4">
             <div>
               <label className="block text-xs font-bold text-amber-700 uppercase mb-2">
-                Tỷ giá nhập hàng (JPY ➔ VND)
+                Tỷ giá nhập kho (JPY ➔ VND)
               </label>
               <div className="flex gap-2">
                 <div className="relative flex-1">
@@ -88,7 +88,7 @@ const Settings = ({
                 </button>
               </div>
               <p className="text-xs text-amber-600 mt-2">
-                * Tỷ giá này sẽ được tự động điền khi bạn nhập hàng mới. Bạn nên nhập tỷ giá thực tế mua vào.
+                * Tỷ giá này sẽ được tự động điền khi bạn nhập kho mới. Bạn nên nhập tỷ giá thực tế mua vào.
               </p>
             </div>
           </div>
