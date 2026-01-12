@@ -1,7 +1,8 @@
 import React from 'react';
-import { ChevronRight, Package, Plus, Truck } from 'lucide-react';
+import { Package, Plus, Truck } from 'lucide-react';
 import ConfirmModal from '../components/modals/ConfirmModal';
 import ModalShell from '../components/modals/ModalShell';
+import InboundCreateView from '../components/inbound/InboundCreateView';
 import useInboundLogic from '../hooks/useInboundLogic';
 import { formatInputNumber, formatNumber } from '../utils/helpers';
 import { getWarehouseLabel } from '../utils/warehouseUtils';
@@ -21,9 +22,15 @@ const Inbound = ({
     setConfirmModal,
     shipmentDraft,
     pendingPurchases,
+    filteredProducts,
+    searchTerm,
+    setSearchTerm,
+    activeCategory,
+    setActiveCategory,
     handleStartCreate,
     handleExitCreate,
     handleShipmentItemChange,
+    adjustQuantity,
     handleShipmentFieldChange,
     handleOpenShipmentModal,
     handleShipmentSave,
@@ -123,59 +130,20 @@ const Inbound = ({
 
   // Màn hình lên kiện: chọn sản phẩm trước, sau đó mới nhập kho nhận + phí gửi.
   const renderCreateView = () => (
-    <>
-      <div className="bg-amber-50/90 sticky top-0 z-10 shadow-sm backdrop-blur">
-        <div className="p-4 border-b border-amber-100 flex items-center justify-between">
-          <div>
-            <div className="text-lg font-bold text-amber-900">Tạo kiện hàng</div>
-            <div className="text-xs text-amber-600">Chọn sản phẩm đã mua nhưng chưa nhập kho.</div>
-          </div>
-          <button
-            onClick={handleExitCreate}
-            className="w-10 h-10 rounded-full bg-white text-amber-700 border border-amber-200 shadow-sm hover:bg-amber-50 flex items-center justify-center"
-            aria-label="Quay lại"
-          >
-            <ChevronRight className="rotate-180" size={18} />
-          </button>
-        </div>
-      </div>
-
-      <div className="flex-1 overflow-y-auto p-4 space-y-3 pb-32">
-        {pendingPurchases.map(item => (
-          <div key={item.productId} className="flex items-center justify-between border border-amber-100 rounded-xl px-3 py-2 bg-white">
-            <div>
-              <div className="text-sm font-semibold text-amber-900">{item.name}</div>
-              <div className="text-[10px] text-amber-500">Còn {item.quantity} chưa nhập kho</div>
-            </div>
-            <input
-              type="number"
-              min="0"
-              max={item.quantity}
-              className="w-16 border border-amber-200 rounded-lg px-2 py-1 text-sm text-amber-900 text-right"
-              value={shipmentDraft.items[item.productId] ?? ''}
-              onChange={(event) => handleShipmentItemChange(item.productId, event.target.value, item.quantity)}
-              placeholder="0"
-            />
-          </div>
-        ))}
-        {pendingPurchases.length === 0 && (
-          <div className="text-xs text-gray-400 text-center py-10">Chưa có hàng mua để gom kiện.</div>
-        )}
-        {shipmentDraft.error && (
-          <div className="text-xs text-red-500">{shipmentDraft.error}</div>
-        )}
-      </div>
-
-      <div className="fixed bottom-0 left-0 right-0 bg-amber-50/90 border-t border-amber-200 p-4 pb-[calc(env(safe-area-inset-bottom)+28px)] z-[60] shadow-[0_-4px_15px_rgba(0,0,0,0.1)] animate-slide-up backdrop-blur">
-        <button
-          onClick={handleOpenShipmentModal}
-          className="w-full bg-rose-500 text-white py-3.5 rounded-xl font-bold shadow-lg shadow-rose-200 active:scale-95 transition"
-          disabled={pendingPurchases.length === 0}
-        >
-          Lên kiện
-        </button>
-      </div>
-    </>
+    <InboundCreateView
+      settings={settings}
+      searchTerm={searchTerm}
+      setSearchTerm={setSearchTerm}
+      activeCategory={activeCategory}
+      setActiveCategory={setActiveCategory}
+      filteredProducts={filteredProducts}
+      pendingCount={pendingPurchases.length}
+      shipmentDraft={shipmentDraft}
+      handleExitCreate={handleExitCreate}
+      handleQuantityChange={handleShipmentItemChange}
+      adjustQuantity={adjustQuantity}
+      handleOpenShipmentModal={handleOpenShipmentModal}
+    />
   );
 
   return (

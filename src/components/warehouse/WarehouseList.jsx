@@ -1,9 +1,9 @@
 import React from 'react';
-import { Image as ImageIcon } from 'lucide-react';
+import { Image as ImageIcon, Pencil, Trash2 } from 'lucide-react';
 import { formatNumber } from '../../utils/helpers';
 import { getWarehouseLabel, normalizeWarehouseStock } from '../../utils/warehouseUtils';
 
-const WarehouseList = ({ products, activeWarehouse }) => {
+const WarehouseList = ({ products, activeWarehouse, onEdit, onDelete }) => {
   return (
     <div className="flex-1 overflow-y-auto p-3 space-y-3 pb-24">
       {products.map(product => {
@@ -41,6 +41,24 @@ const WarehouseList = ({ products, activeWarehouse }) => {
                   </div>
                 </div>
               </div>
+            </div>
+            <div className="flex flex-col gap-2">
+              <button
+                type="button"
+                onClick={() => onEdit(product)}
+                className="w-9 h-9 rounded-lg border border-amber-200 text-amber-700 bg-white hover:bg-amber-50 flex items-center justify-center"
+                aria-label={`Chỉnh sửa tồn kho ${product.name}`}
+              >
+                <Pencil size={16} />
+              </button>
+              <button
+                type="button"
+                onClick={() => onDelete(product)}
+                className="w-9 h-9 rounded-lg border border-rose-200 text-rose-600 bg-rose-50 hover:bg-rose-100 flex items-center justify-center"
+                aria-label={`Xoá ${product.name}`}
+              >
+                <Trash2 size={16} />
+              </button>
             </div>
           </div>
         );
