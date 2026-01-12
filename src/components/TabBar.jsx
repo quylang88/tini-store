@@ -1,12 +1,10 @@
 import React from 'react';
-import { LayoutDashboard, ShoppingCart, Package, Truck, Boxes } from 'lucide-react';
+import { LayoutDashboard, ShoppingCart, Package } from 'lucide-react';
 
 const TabBar = ({ activeTab, setActiveTab }) => {
   const tabs = [
     { id: 'dashboard', icon: LayoutDashboard, label: 'Tổng quan' },
-    { id: 'products', icon: Package, label: 'Sản phẩm' },
-    { id: 'inbound', icon: Truck, label: 'Nhập kho' },
-    { id: 'warehouse', icon: Boxes, label: 'Kho hàng' },
+    { id: 'products', icon: Package, label: 'Nhập hàng' },
     { id: 'orders', icon: ShoppingCart, label: 'Đơn hàng' },
   ];
 

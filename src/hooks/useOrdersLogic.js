@@ -1,6 +1,12 @@
 import { useMemo, useState } from 'react';
 import { sanitizeNumberInput } from '../utils/helpers';
 import { normalizeWarehouseStock } from '../utils/warehouseUtils';
+import {
+  consumePurchaseLots,
+  getLatestCost,
+  normalizePurchaseLots,
+  restockPurchaseLots,
+} from '../utils/purchaseUtils';
 
 const DEFAULT_STATUS = 'pending';
 const DEFAULT_WAREHOUSE = 'daLat';
@@ -63,7 +69,7 @@ const useOrdersLogic = ({ products, setProducts, orders, setOrders }) => {
         name: product.name,
         price: product.price,
         quantity,
-        cost: product.cost || 0,
+        cost: getLatestCost(product),
       };
     })
     .filter(Boolean), [cart, productMap]);
@@ -196,7 +202,8 @@ const useOrdersLogic = ({ products, setProducts, orders, setOrders }) => {
     return Math.max(...numbers) + 1;
   };
 
-  const updateWarehouseStock = (product, warehouseKey, delta) => {
+  // Đồng bộ tồn kho + trừ/hoàn lô giá nhập theo từng kho khi xuất hàng.
+  const updateWarehouseStock = (product, warehouseKey, delta, restockCost) => {
     const current = normalizeWarehouseStock(product);
     const nextStock = { ...current };
     if (warehouseKey === 'vinhPhuc') {
@@ -204,11 +211,19 @@ const useOrdersLogic = ({ products, setProducts, orders, setOrders }) => {
     } else {
       nextStock.daLat = Math.max(0, current.daLat + delta);
     }
-    return {
+    const nextProduct = {
       ...product,
       stockByWarehouse: nextStock,
       stock: nextStock.daLat + nextStock.vinhPhuc,
     };
+
+    if (delta < 0) {
+      return consumePurchaseLots(normalizePurchaseLots(nextProduct), warehouseKey, Math.abs(delta));
+    }
+    if (delta > 0) {
+      return restockPurchaseLots(normalizePurchaseLots(nextProduct), warehouseKey, delta, restockCost);
+    }
+    return nextProduct;
   };
 
   const syncProductsStock = (
@@ -219,6 +234,7 @@ const useOrdersLogic = ({ products, setProducts, orders, setOrders }) => {
   ) => {
     const previousMap = new Map(previousItems.map(item => [item.productId, item.quantity]));
     const nextMap = new Map(orderItems.map(item => [item.productId, item.quantity]));
+    const previousItemMap = new Map(previousItems.map(item => [item.productId, item]));
 
     setProducts((prevProducts) => prevProducts.map((product) => {
       const previousQty = previousMap.get(product.id) || 0;
@@ -228,12 +244,14 @@ const useOrdersLogic = ({ products, setProducts, orders, setOrders }) => {
       if (previousWarehouseKey === nextWarehouseKey) {
         const delta = previousQty - nextQty;
         if (!delta) return product;
-        return updateWarehouseStock(product, nextWarehouseKey, delta);
+        const previousCost = previousItemMap.get(product.id)?.cost;
+        return updateWarehouseStock(product, nextWarehouseKey, delta, previousCost);
       }
 
       let nextProduct = product;
       if (previousQty) {
-        nextProduct = updateWarehouseStock(nextProduct, previousWarehouseKey, previousQty);
+        const previousCost = previousItemMap.get(product.id)?.cost;
+        nextProduct = updateWarehouseStock(nextProduct, previousWarehouseKey, previousQty, previousCost);
       }
       if (nextQty) {
         nextProduct = updateWarehouseStock(nextProduct, nextWarehouseKey, -nextQty);

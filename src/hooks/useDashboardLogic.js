@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { getLatestCost } from '../utils/purchaseUtils';
 
 const useDashboardLogic = ({ products, orders }) => {
   const [showHistory, setShowHistory] = useState(false);
@@ -6,7 +7,7 @@ const useDashboardLogic = ({ products, orders }) => {
 
   // Map giá vốn theo sản phẩm để tính lợi nhuận ổn định
   const costMap = useMemo(
-    () => new Map(products.map(product => [product.id, product.cost || 0])),
+    () => new Map(products.map(product => [product.id, getLatestCost(product)])),
     [products],
   );
 

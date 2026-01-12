@@ -1,15 +1,19 @@
 import React from 'react';
 import { Image as ImageIcon, Trash2 } from 'lucide-react';
 import { formatNumber } from '../../utils/helpers';
+import { getLatestCost } from '../../utils/purchaseUtils';
+import { getWarehouseLabel, normalizeWarehouseStock } from '../../utils/warehouseUtils';
 
 const ProductList = ({ products, onEdit, onDelete }) => {
   return (
     <div className="flex-1 overflow-y-auto p-3 space-y-3 pb-24">
       {products.map(product => {
         // Lợi nhuận để user tham khảo nhanh ngay trong danh sách kho
-        const expectedProfit = (Number(product.price) || 0) - (Number(product.cost) || 0);
-        const hasProfitData = Number(product.price) > 0 && Number(product.cost) > 0;
-        const pendingPurchase = Number(product.purchasePending) || 0;
+        const latestCost = getLatestCost(product);
+        const expectedProfit = (Number(product.price) || 0) - latestCost;
+        const hasProfitData = Number(product.price) > 0 && latestCost > 0;
+        const stockByWarehouse = normalizeWarehouseStock(product);
+        const purchaseLots = product.purchaseLots || [];
 
         return (
         <div
@@ -42,9 +46,20 @@ const ProductList = ({ products, onEdit, onDelete }) => {
                 )}
               </div>
               <div className="text-right">
-                <div className="text-[10px] text-gray-500">Đã mua: {pendingPurchase}</div>
+                <div className="text-[10px] text-gray-500">LĐ: {stockByWarehouse.daLat} • VP: {stockByWarehouse.vinhPhuc}</div>
+                <div className="text-[10px] text-amber-500">Giá nhập: {formatNumber(latestCost)}đ</div>
               </div>
             </div>
+            {purchaseLots.length > 0 && (
+              <div className="mt-2 space-y-1">
+                {purchaseLots.map((lot) => (
+                  <div key={lot.id} className="text-[10px] text-amber-600 flex justify-between">
+                    <span>{formatNumber(lot.cost)}đ • {lot.quantity} sp</span>
+                    <span>{getWarehouseLabel(lot.warehouse)}</span>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
           <div className="pl-2 border-l border-amber-100">
             <button

@@ -9,7 +9,6 @@ const Settings = ({
   orders,
   setProducts,
   setOrders,
-  setInboundShipments,
   settings,
   setSettings,
   onLogout,
@@ -31,7 +30,6 @@ const Settings = ({
     orders,
     setProducts,
     setOrders,
-    setInboundShipments,
     settings,
     setSettings,
   });

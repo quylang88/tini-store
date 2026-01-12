@@ -5,10 +5,9 @@ import React, { useState, useEffect } from 'react';
 import Login from './screens/Login';
 import Dashboard from './screens/Dashboard';
 import Inventory from './screens/Inventory';
-import Inbound from './screens/Inbound';
-import Warehouse from './screens/Warehouse';
 import Orders from './screens/Orders';
 import Settings from './screens/Settings';
+import { normalizePurchaseLots } from './utils/purchaseUtils';
 
 // --- IMPORT COMPONENT CHUNG ---
 import TabBar from './components/TabBar';
@@ -26,20 +25,16 @@ const App = () => {
   const [logoutModalOpen, setLogoutModalOpen] = useState(false);
 
   // --- 2. KHỞI TẠO DỮ LIỆU TỪ LOCALSTORAGE ---
-  // Dữ liệu Sản phẩm
+  // Dữ liệu Sản phẩm (chuẩn hoá thêm danh sách lô giá nhập).
   const [products, setProducts] = useState(() => {
     const saved = localStorage.getItem('shop_products_v2');
-    return saved ? JSON.parse(saved) : [];
+    const parsed = saved ? JSON.parse(saved) : [];
+    return parsed.map((product) => normalizePurchaseLots(product));
   });
 
   // Dữ liệu Đơn hàng
   const [orders, setOrders] = useState(() => {
     const saved = localStorage.getItem('shop_orders_v2');
-    return saved ? JSON.parse(saved) : [];
-  });
-
-  const [inboundShipments, setInboundShipments] = useState(() => {
-    const saved = localStorage.getItem('shop_inbound_shipments');
     return saved ? JSON.parse(saved) : [];
   });
 
@@ -64,10 +59,6 @@ const App = () => {
   useEffect(() => {
     localStorage.setItem('shop_orders_v2', JSON.stringify(orders));
   }, [orders]);
-
-  useEffect(() => {
-    localStorage.setItem('shop_inbound_shipments', JSON.stringify(inboundShipments));
-  }, [inboundShipments]);
 
   useEffect(() => {
     localStorage.setItem('shop_settings', JSON.stringify(settings));
@@ -111,24 +102,6 @@ const App = () => {
           />
         )}
 
-        {activeTab === 'inbound' && (
-          <Inbound
-            products={products}
-            setProducts={setProducts}
-            inboundShipments={inboundShipments}
-            setInboundShipments={setInboundShipments}
-            settings={settings}
-          />
-        )}
-
-        {activeTab === 'warehouse' && (
-          <Warehouse
-            products={products}
-            setProducts={setProducts}
-            settings={settings}
-          />
-        )}
-
         {activeTab === 'orders' && (
           <Orders
             products={products}
@@ -143,10 +116,8 @@ const App = () => {
           <Settings
             products={products}
             orders={orders}
-            inboundShipments={inboundShipments}
             setProducts={setProducts}
             setOrders={setOrders}
-            setInboundShipments={setInboundShipments}
             settings={settings}
             setSettings={setSettings}
             onLogout={handleLogout}

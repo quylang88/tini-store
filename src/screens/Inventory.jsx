@@ -24,7 +24,7 @@ const Inventory = ({ products, setProducts, settings }) => {
     formData,
     setFormData,
     handleMoneyChange,
-    handleCurrencyChange,
+    handleDecimalChange,
     handleScanSuccess,
     handleImageSelect,
     handleSave,
@@ -32,6 +32,8 @@ const Inventory = ({ products, setProducts, settings }) => {
     closeModal,
     handleDelete,
     filteredProducts,
+    nameSuggestions,
+    handleSelectExistingProduct,
   } = useInventoryLogic({ products, setProducts, settings });
 
   return (
@@ -63,13 +65,16 @@ const Inventory = ({ products, setProducts, settings }) => {
         editingProduct={editingProduct}
         formData={formData}
         setFormData={setFormData}
+        settings={settings}
+        nameSuggestions={nameSuggestions}
+        onSelectExistingProduct={handleSelectExistingProduct}
         categories={settings.categories}
         onClose={closeModal}
         onSave={handleSave}
         onShowScanner={() => setShowScanner(true)}
         onImageSelect={handleImageSelect}
-        onCurrencyChange={handleCurrencyChange}
         onMoneyChange={handleMoneyChange}
+        onDecimalChange={handleDecimalChange}
       />
 
       {/* Modal xác nhận xoá để thay thế popup mặc định */}
