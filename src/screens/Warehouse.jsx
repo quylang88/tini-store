@@ -1,6 +1,8 @@
 import React, { useMemo, useState } from 'react';
+import BarcodeScanner from '../components/BarcodeScanner';
 import ConfirmModal from '../components/modals/ConfirmModal';
 import InputModal from '../components/modals/InputModal';
+import WarehouseAddView from '../components/warehouse/WarehouseAddView';
 import WarehouseHeader from '../components/warehouse/WarehouseHeader';
 import WarehouseList from '../components/warehouse/WarehouseList';
 import { normalizeWarehouseStock } from '../utils/warehouseUtils';
@@ -9,10 +11,14 @@ const Warehouse = ({ products, setProducts, settings }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [activeCategory, setActiveCategory] = useState('Tất cả');
   const [activeWarehouse, setActiveWarehouse] = useState('daLat');
+  const [view, setView] = useState('list');
   const [editingProduct, setEditingProduct] = useState(null);
   const [editQuantity, setEditQuantity] = useState('');
   const [editError, setEditError] = useState('');
-  const [deleteModal, setDeleteModal] = useState(null);
+  const [confirmModal, setConfirmModal] = useState(null);
+  const [showScanner, setShowScanner] = useState(false);
+  const [addSearchTerm, setAddSearchTerm] = useState('');
+  const [addActiveCategory, setAddActiveCategory] = useState('Tất cả');
 
   const filteredProducts = useMemo(
     () => products.filter((product) => {
@@ -27,6 +33,49 @@ const Warehouse = ({ products, setProducts, settings }) => {
     }),
     [products, searchTerm, activeCategory, activeWarehouse],
   );
+
+  const addFilteredProducts = useMemo(() => {
+    if (!addSearchTerm.trim()) return [];
+    const matchTerm = addSearchTerm.toLowerCase();
+    return products.filter((product) => {
+      const matchSearch = product.name.toLowerCase().includes(matchTerm) ||
+        (product.barcode && product.barcode.includes(addSearchTerm));
+      const matchCategory = addActiveCategory === 'Tất cả' || product.category === addActiveCategory;
+      return matchSearch && matchCategory;
+    });
+  }, [products, addSearchTerm, addActiveCategory]);
+
+  const resetAddView = () => {
+    setAddSearchTerm('');
+    setAddActiveCategory('Tất cả');
+  };
+
+  const handleStartAdd = () => {
+    setConfirmModal({
+      title: 'Thêm sản phẩm vào kho?',
+      message: 'Thao tác quan trọng: Bạn sắp cập nhật tồn kho. Hãy kiểm tra kỹ trước khi tiếp tục.',
+      confirmLabel: 'Tiếp tục',
+      tone: 'danger',
+      onConfirm: () => {
+        resetAddView();
+        setView('add');
+      },
+    });
+  };
+
+  const handleExitAdd = () => {
+    resetAddView();
+    setView('list');
+  };
+
+  const handleScanSuccess = (decodedText) => {
+    setShowScanner(false);
+    if (view === 'add') {
+      setAddSearchTerm(decodedText);
+    } else {
+      setSearchTerm(decodedText);
+    }
+  };
 
   const handleOpenEdit = (product) => {
     const warehouseStock = normalizeWarehouseStock(product);
@@ -65,32 +114,55 @@ const Warehouse = ({ products, setProducts, settings }) => {
 
   const handleOpenDelete = (product) => {
     // Cảnh báo người dùng vì thao tác xoá ảnh hưởng tồn kho.
-    setDeleteModal({
-      product,
+    setConfirmModal({
       title: 'Xoá sản phẩm khỏi kho?',
       message: `Thao tác quan trọng: Xoá "${product.name}" sẽ loại bỏ dữ liệu tồn kho. Hãy kiểm tra kỹ trước khi tiếp tục.`,
       confirmLabel: 'Xoá sản phẩm',
+      tone: 'danger',
+      onConfirm: () => {
+        setProducts(prev => prev.filter(item => item.id !== product.id));
+      },
     });
   };
 
   return (
     <div className="flex flex-col h-full bg-transparent">
-      <WarehouseHeader
-        searchTerm={searchTerm}
-        onSearchChange={(e) => setSearchTerm(e.target.value)}
-        onClearSearch={() => setSearchTerm('')}
-        activeCategory={activeCategory}
-        onCategoryChange={setActiveCategory}
-        categories={settings.categories}
-        activeWarehouse={activeWarehouse}
-        onWarehouseChange={setActiveWarehouse}
-      />
-      <WarehouseList
-        products={filteredProducts}
-        activeWarehouse={activeWarehouse}
-        onEdit={handleOpenEdit}
-        onDelete={handleOpenDelete}
-      />
+      {showScanner && <BarcodeScanner onScanSuccess={handleScanSuccess} onClose={() => setShowScanner(false)} />}
+
+      {view === 'list' ? (
+        <>
+          <WarehouseHeader
+            searchTerm={searchTerm}
+            onSearchChange={(e) => setSearchTerm(e.target.value)}
+            onClearSearch={() => setSearchTerm('')}
+            onAdd={handleStartAdd}
+            onShowScanner={() => setShowScanner(true)}
+            activeCategory={activeCategory}
+            onCategoryChange={setActiveCategory}
+            categories={settings.categories}
+            activeWarehouse={activeWarehouse}
+            onWarehouseChange={setActiveWarehouse}
+          />
+          <WarehouseList
+            products={filteredProducts}
+            activeWarehouse={activeWarehouse}
+            onEdit={handleOpenEdit}
+            onDelete={handleOpenDelete}
+          />
+        </>
+      ) : (
+        <WarehouseAddView
+          settings={settings}
+          searchTerm={addSearchTerm}
+          setSearchTerm={setAddSearchTerm}
+          activeCategory={addActiveCategory}
+          setActiveCategory={setAddActiveCategory}
+          filteredProducts={addFilteredProducts}
+          onSelectProduct={handleOpenEdit}
+          handleExitCreate={handleExitAdd}
+          hideBackButton={Boolean(confirmModal)}
+        />
+      )}
 
       <InputModal
         open={Boolean(editingProduct)}
@@ -110,17 +182,15 @@ const Warehouse = ({ products, setProducts, settings }) => {
       />
 
       <ConfirmModal
-        open={Boolean(deleteModal)}
-        title={deleteModal?.title}
-        message={deleteModal?.message}
-        confirmLabel={deleteModal?.confirmLabel}
-        tone="danger"
-        onCancel={() => setDeleteModal(null)}
+        open={Boolean(confirmModal)}
+        title={confirmModal?.title}
+        message={confirmModal?.message}
+        confirmLabel={confirmModal?.confirmLabel}
+        tone={confirmModal?.tone}
+        onCancel={() => setConfirmModal(null)}
         onConfirm={() => {
-          if (deleteModal?.product) {
-            setProducts(prev => prev.filter(product => product.id !== deleteModal.product.id));
-          }
-          setDeleteModal(null);
+          confirmModal?.onConfirm?.();
+          setConfirmModal(null);
         }}
       />
     </div>

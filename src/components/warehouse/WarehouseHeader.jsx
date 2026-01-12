@@ -1,11 +1,13 @@
 import React from 'react';
-import { Search, X } from 'lucide-react';
+import { Plus, ScanBarcode, Search, X } from 'lucide-react';
 import { WAREHOUSES } from '../../utils/warehouseUtils';
 
 const WarehouseHeader = ({
   searchTerm,
   onSearchChange,
   onClearSearch,
+  onAdd,
+  onShowScanner,
   activeCategory,
   onCategoryChange,
   categories,
@@ -21,6 +23,22 @@ const WarehouseHeader = ({
             alt="Tiny Shop"
             className="h-12 w-auto object-contain"
           />
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={onShowScanner}
+              className="bg-amber-100 text-amber-700 w-9 h-9 rounded-full flex items-center justify-center hover:bg-amber-200"
+            >
+              <ScanBarcode size={20} />
+            </button>
+            <button
+              type="button"
+              onClick={onAdd}
+              className="bg-rose-500 text-white w-9 h-9 rounded-full flex items-center justify-center shadow-md shadow-rose-200 active:scale-95"
+            >
+              <Plus size={20} />
+            </button>
+          </div>
         </div>
         <div className="relative">
           <Search className="absolute left-3 top-2.5 text-amber-400" size={16} />

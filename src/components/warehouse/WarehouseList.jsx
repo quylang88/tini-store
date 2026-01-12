@@ -1,7 +1,7 @@
 import React from 'react';
 import { Image as ImageIcon, Pencil, Trash2 } from 'lucide-react';
 import { formatNumber } from '../../utils/helpers';
-import { getWarehouseLabel, normalizeWarehouseStock } from '../../utils/warehouseUtils';
+import { normalizeWarehouseStock } from '../../utils/warehouseUtils';
 
 const WarehouseList = ({ products, activeWarehouse, onEdit, onDelete }) => {
   return (
@@ -33,11 +33,8 @@ const WarehouseList = ({ products, activeWarehouse, onEdit, onDelete }) => {
                   <div className="text-amber-700 font-bold text-sm">{formatNumber(product.price)}đ</div>
                 </div>
                 <div className="text-right">
-                  <div className="text-[10px] text-gray-500">
-                    {getWarehouseLabel(activeWarehouse)}: {selectedStock}
-                  </div>
                   <div className={`text-xs font-medium ${totalStock < 5 ? 'text-red-500' : 'text-gray-500'}`}>
-                    Tổng kho: {totalStock}
+                    Tồn kho: {totalStock}
                   </div>
                 </div>
               </div>

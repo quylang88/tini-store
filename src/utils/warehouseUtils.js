@@ -1,5 +1,5 @@
 export const WAREHOUSES = [
-  { key: 'daLat', label: 'Đà Lạt' },
+  { key: 'daLat', label: 'Lâm Đồng' },
   { key: 'vinhPhuc', label: 'Vĩnh Phúc' },
 ];
 
