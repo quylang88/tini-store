@@ -30,7 +30,7 @@ const OrderListView = ({
         const hasShipping = order.shippingUpdated || order.shippingFee > 0;
         const isPaid = order.status === 'paid';
         const orderLabel = order.orderNumber ? `#${order.orderNumber}` : `#${order.id.slice(-4)}`;
-        // Lợi nhuận dự kiến = (giá bán - giá vốn) - phí gửi để xem nhanh hiệu quả đơn hàng.
+        // Lợi nhuận = (giá bán - giá vốn) - phí gửi để xem nhanh hiệu quả đơn hàng.
         const estimatedProfit = order.items.reduce((sum, item) => {
           const cost = item.cost || 0;
           return sum + (item.price - cost) * item.quantity;
@@ -57,10 +57,15 @@ const OrderListView = ({
             <div className="text-xs text-gray-400 mb-3 flex items-center gap-1">
               {new Date(order.date).toLocaleString()}
             </div>
+            {order.comment && (
+              <div className="mb-3 rounded-lg border border-amber-100 bg-amber-50 px-3 py-2 text-xs text-amber-700">
+                {order.comment}
+              </div>
+            )}
             <div className="border-t border-dashed border-gray-200 pt-2">
-              <div className="flex items-center justify-between text-sm text-gray-600">
-                <span>Lợi nhuận dự kiến</span>
-                <span className="font-semibold text-emerald-600">{formatNumber(estimatedProfit)}đ</span>
+              <div className="flex items-center justify-between text-sm text-emerald-700">
+                <span>Lợi nhuận</span>
+                <span className="font-semibold text-emerald-700">{formatNumber(estimatedProfit)}đ</span>
               </div>
             </div>
             <div className="mt-3 flex flex-wrap justify-end gap-2">

@@ -18,7 +18,7 @@ const ProductModal = ({
   const uploadInputRef = useRef(null);
   const cameraInputRef = useRef(null);
 
-  // Lợi nhuận dự kiến hiển thị ngay trong form để user ước lượng nhanh
+  // Lợi nhuận hiển thị ngay trong form để user ước lượng nhanh
   const expectedProfit = (Number(formData.price) || 0) - (Number(formData.cost) || 0);
   const hasProfitData = Number(formData.price) > 0 && Number(formData.cost) > 0;
 
@@ -214,9 +214,9 @@ const ProductModal = ({
             </div>
           </div>
 
-          {/* Hiển thị lợi nhuận dự kiến để user tham khảo khi nhập giá */}
+          {/* Hiển thị lợi nhuận để user tham khảo khi nhập giá */}
           <div className="bg-emerald-50 border border-emerald-100 rounded-lg p-3">
-            <div className="text-[10px] font-bold text-emerald-700 uppercase">Lợi nhuận dự kiến</div>
+            <div className="text-[10px] font-bold text-emerald-700 uppercase">Lợi nhuận</div>
             <div className="text-sm font-semibold text-emerald-700">
               {hasProfitData ? `${formatNumber(expectedProfit)}đ` : 'Chưa đủ dữ liệu'}
             </div>

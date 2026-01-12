@@ -102,7 +102,11 @@ const Orders = ({ products, setProducts, orders, setOrders, settings }) => {
           onSelectOrder={setSelectedOrder}
         />
         {shouldShowDetailModal && (
-          <OrderDetailModal order={selectedOrder} onClose={() => setSelectedOrder(null)} />
+          <OrderDetailModal
+            order={selectedOrder}
+            onClose={() => setSelectedOrder(null)}
+            getOrderStatusInfo={getOrderStatusInfo}
+          />
         )}
       </>
     );
