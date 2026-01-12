@@ -39,6 +39,7 @@ const Inventory = ({ products, setProducts, settings }) => {
       <InventoryHeader
         searchTerm={searchTerm}
         onSearchChange={e => setSearchTerm(e.target.value)}
+        onClearSearch={() => setSearchTerm('')}
         onOpenModal={() => openModal()}
         onShowScanner={() => setShowScanner(true)}
         activeCategory={activeCategory}
