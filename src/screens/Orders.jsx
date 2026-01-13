@@ -3,7 +3,7 @@ import React from 'react';
 import OrderCreateView from '../components/orders/OrderCreateView';
 import OrderListView from '../components/orders/OrderListView';
 import OrderDetailModal from '../components/orders/OrderDetailModal';
-import ConfirmModal from '../components/modals/ConfirmModal';
+import ConfirmModalHost from '../components/modals/ConfirmModalHost';
 import InputModal from '../components/modals/InputModal';
 import useOrdersLogic from '../hooks/useOrdersLogic';
 import { formatInputNumber } from '../utils/helpers';
@@ -120,17 +120,9 @@ const Orders = ({ products, setProducts, orders, setOrders, settings }) => {
     <>
       {renderContent()}
       {/* Modal chung cho các hành động xác nhận/nhập phí gửi */}
-      <ConfirmModal
-        open={Boolean(confirmModal)}
-        title={confirmModal?.title}
-        message={confirmModal?.message}
-        confirmLabel={confirmModal?.confirmLabel}
-        tone={confirmModal?.tone}
-        onCancel={() => setConfirmModal(null)}
-        onConfirm={() => {
-          confirmModal?.onConfirm?.();
-          setConfirmModal(null);
-        }}
+      <ConfirmModalHost
+        modal={confirmModal}
+        onClose={() => setConfirmModal(null)}
       />
       <InputModal
         open={shippingModal.open}

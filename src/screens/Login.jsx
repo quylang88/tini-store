@@ -2,6 +2,24 @@ import React from 'react';
 import { Lock, User, ArrowRight, CheckSquare } from 'lucide-react';
 import useLoginLogic from '../hooks/useLoginLogic';
 
+const AuthField = ({ label, icon: Icon, type, value, onChange, placeholder }) => (
+  <div>
+    <label className="block text-xs font-bold text-amber-700 uppercase mb-2 ml-1">{label}</label>
+    <div className="relative">
+      <span className="absolute left-3 top-3 text-amber-500">
+        <Icon size={20} />
+      </span>
+      <input
+        type={type}
+        className="w-full bg-white/90 border border-rose-200 rounded-xl py-3 pl-10 pr-4 outline-none focus:bg-white focus:border-rose-400 focus:ring-2 focus:ring-rose-100 transition text-amber-900"
+        placeholder={placeholder}
+        value={value}
+        onChange={onChange}
+      />
+    </div>
+  </div>
+);
+
 const Login = ({ onLogin }) => {
   const {
     username,
@@ -37,37 +55,23 @@ const Login = ({ onLogin }) => {
               </div>
             )}
 
-            <div>
-              <label className="block text-xs font-bold text-amber-700 uppercase mb-2 ml-1">Tài khoản</label>
-              <div className="relative">
-                <span className="absolute left-3 top-3 text-amber-500">
-                  <User size={20} />
-                </span>
-                <input
-                  type="text"
-                  className="w-full bg-white/90 border border-rose-200 rounded-xl py-3 pl-10 pr-4 outline-none focus:bg-white focus:border-rose-400 focus:ring-2 focus:ring-rose-100 transition text-amber-900"
-                  placeholder="Nhập tài khoản..."
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                />
-              </div>
-            </div>
+            <AuthField
+              label="Tài khoản"
+              icon={User}
+              type="text"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              placeholder="Nhập tài khoản..."
+            />
 
-            <div>
-              <label className="block text-xs font-bold text-amber-700 uppercase mb-2 ml-1">Mật khẩu</label>
-              <div className="relative">
-                <span className="absolute left-3 top-3 text-amber-500">
-                  <Lock size={20} />
-                </span>
-                <input
-                  type="password"
-                  className="w-full bg-white/90 border border-rose-200 rounded-xl py-3 pl-10 pr-4 outline-none focus:bg-white focus:border-rose-400 focus:ring-2 focus:ring-rose-100 transition text-amber-900"
-                  placeholder="Nhập mật khẩu..."
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                />
-              </div>
-            </div>
+            <AuthField
+              label="Mật khẩu"
+              icon={Lock}
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Nhập mật khẩu..."
+            />
 
             {/* Checkbox Ghi nhớ thông tin */}
             <div
