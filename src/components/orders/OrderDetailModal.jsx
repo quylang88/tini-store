@@ -1,10 +1,13 @@
 import React from 'react';
 import { formatNumber } from '../../utils/helpers';
 import { getWarehouseLabel } from '../../utils/warehouseUtils';
+import { getOrderDisplayName } from '../../utils/orderUtils';
 
 const OrderDetailModal = ({ order, onClose, getOrderStatusInfo }) => {
   if (!order) return null;
   const orderLabel = order.orderNumber ? `#${order.orderNumber}` : `#${order.id.slice(-4)}`;
+  // Gắn tên đơn theo thông tin khách hoặc bán tại kho để dễ nhận diện.
+  const orderName = getOrderDisplayName(order);
   const statusInfo = getOrderStatusInfo?.(order);
   const warehouseLabel = getWarehouseLabel(order.warehouse || 'daLat');
 
@@ -16,7 +19,10 @@ const OrderDetailModal = ({ order, onClose, getOrderStatusInfo }) => {
       >
         <div className="p-4 border-b border-amber-100 bg-amber-50">
           <div className="flex items-center justify-between">
-            <div className="text-lg font-bold text-amber-900">Chi tiết đơn hàng {orderLabel}</div>
+            <div className="text-lg font-bold text-amber-900">
+              Chi tiết đơn hàng {orderLabel}
+              <span className="ml-2 text-xs font-semibold text-amber-600">{orderName}</span>
+            </div>
             {statusInfo && (
               <span className={`inline-flex items-center gap-2 px-2 py-1 rounded-full border text-xs font-semibold ${statusInfo.badgeClass}`}>
                 <span className={`w-2 h-2 rounded-full ${statusInfo.dotClass}`} />
@@ -50,6 +56,22 @@ const OrderDetailModal = ({ order, onClose, getOrderStatusInfo }) => {
             <span>Kho xuất</span>
             <span className="font-semibold text-amber-700">{warehouseLabel}</span>
           </div>
+          <div className="flex justify-between text-sm text-gray-500">
+            <span>Loại đơn</span>
+            <span className="font-semibold text-amber-700">{order.orderType === 'warehouse' ? 'Bán tại kho' : 'Gửi khách'}</span>
+          </div>
+          {order.orderType === 'delivery' && (
+            <>
+              <div className="flex justify-between text-sm text-gray-500">
+                <span>Khách hàng</span>
+                <span className="font-semibold text-amber-700">{order.customerName || '-'}</span>
+              </div>
+              <div className="flex justify-between text-sm text-gray-500">
+                <span>Địa chỉ</span>
+                <span className="font-semibold text-amber-700 text-right">{order.customerAddress || '-'}</span>
+              </div>
+            </>
+          )}
           <div className="flex justify-between text-sm text-gray-500">
             <span>Phí gửi khách</span>
             <span className="font-semibold text-amber-700">{formatNumber(order.shippingFee || 0)}đ</span>
