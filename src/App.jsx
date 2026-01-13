@@ -7,6 +7,7 @@ import Dashboard from './screens/Dashboard';
 import Inventory from './screens/Inventory';
 import Orders from './screens/Orders';
 import Settings from './screens/Settings';
+import StatsDetail from './screens/StatsDetail';
 import { normalizePurchaseLots } from './utils/purchaseUtils';
 
 // --- IMPORT COMPONENT CHUNG ---
@@ -90,6 +91,15 @@ const App = () => {
           <Dashboard
             products={products}
             orders={orders}
+            onOpenDetail={() => setActiveTab('stats-detail')}
+          />
+        )}
+
+        {activeTab === 'stats-detail' && (
+          <StatsDetail
+            products={products}
+            orders={orders}
+            onBack={() => setActiveTab('dashboard')}
           />
         )}
 
