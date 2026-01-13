@@ -10,13 +10,13 @@ import TopListModal from '../components/stats/TopListModal';
 
 const StatsDetail = ({ products, orders, onBack }) => {
   const {
-    rangeOptions,
     topOptions,
     topLimit,
     setTopLimit,
-    activeRange,
-    setActiveRange,
     rangeStart,
+    rangeEnd,
+    customRange,
+    setCustomRange,
     rangeDays,
     paidOrders,
     filteredPaidOrders,
@@ -34,11 +34,64 @@ const StatsDetail = ({ products, orders, onBack }) => {
     [products],
   );
 
+  const availableYears = useMemo(() => {
+    const years = new Set([new Date().getFullYear()]);
+    paidOrders.forEach(order => years.add(new Date(order.date).getFullYear()));
+    return Array.from(years).sort((a, b) => b - a);
+  }, [paidOrders]);
+
+  const [quickMonth, setQuickMonth] = useState('');
+  const [quickYear, setQuickYear] = useState('');
+
+  const formatDateInput = (date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
+  const updateCustomRange = (nextRange) => {
+    setQuickMonth('');
+    setQuickYear('');
+    setCustomRange(prev => ({ ...prev, ...nextRange }));
+  };
+
+  const handleQuickMonthChange = (event) => {
+    const value = event.target.value;
+    setQuickMonth(value);
+    if (!value) return;
+    setQuickYear('');
+    setCustomRange({ start: null, end: null });
+    const year = new Date().getFullYear();
+    const month = Number(value);
+    const start = new Date(year, month - 1, 1);
+    const end = new Date(year, month, 0);
+    setCustomRange({
+      start: formatDateInput(start),
+      end: formatDateInput(end),
+    });
+  };
+
+  const handleQuickYearChange = (event) => {
+    const value = event.target.value;
+    setQuickYear(value);
+    if (!value) return;
+    const year = Number(value);
+    setQuickMonth('');
+    setCustomRange({ start: null, end: null });
+    const start = new Date(year, 0, 1);
+    const end = new Date(year, 11, 31);
+    setCustomRange({
+      start: formatDateInput(start),
+      end: formatDateInput(end),
+    });
+  };
+
   const comparisonStats = useMemo(() => {
     // So sánh kỳ hiện tại với kỳ trước theo số ngày đang chọn (mặc định 30 ngày nếu "Tất cả").
     const compareDays = rangeDays ?? 30;
     const now = new Date();
-    const currentEnd = new Date(now);
+    const currentEnd = rangeEnd ? new Date(rangeEnd) : new Date(now);
     currentEnd.setHours(23, 59, 59, 999);
 
     const currentStart = rangeStart ? new Date(rangeStart) : (() => {
@@ -78,7 +131,7 @@ const StatsDetail = ({ products, orders, onBack }) => {
       current: calcStats(currentStart, currentEnd),
       previous: calcStats(previousStart, previousEnd),
     };
-  }, [paidOrders, rangeDays, rangeStart, costMap]);
+  }, [paidOrders, rangeDays, rangeStart, rangeEnd, costMap]);
 
   const [activeModal, setActiveModal] = useState(null);
 
@@ -97,17 +150,57 @@ const StatsDetail = ({ products, orders, onBack }) => {
 
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-3">
         {/* Bộ lọc thời gian chi tiết hơn để xem theo nhiều khoảng khác nhau. */}
-        <OptionPills
-          options={rangeOptions}
-          activeId={activeRange}
-          onChange={setActiveRange}
-          containerClassName="flex flex-wrap gap-2"
-          buttonClassName="px-3 py-1.5 rounded-full text-xs font-semibold border transition whitespace-nowrap"
-          activeClassName="bg-amber-500 text-white border-amber-400 shadow-sm"
-          inactiveClassName="bg-amber-50 text-amber-700 border-amber-100"
-        />
-        <div className="mt-2 text-[11px] text-amber-500">
-          Gợi ý: chọn 7 ngày để xem nhanh, 3-6 tháng để thấy xu hướng dài hơi.
+        <div className="grid gap-2 text-xs text-amber-700">
+          <div className="flex flex-col gap-1">
+            <span className="text-[11px] font-semibold uppercase text-amber-500">Khoảng ngày</span>
+            <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
+              <input
+                type="date"
+                value={customRange.start || ''}
+                onChange={(event) => updateCustomRange({ start: event.target.value })}
+                className="rounded-lg border border-amber-100 bg-amber-50/70 px-2 py-1.5 text-xs text-amber-900"
+              />
+              <span className="text-[11px] text-amber-400">→</span>
+              <input
+                type="date"
+                value={customRange.end || ''}
+                onChange={(event) => updateCustomRange({ end: event.target.value })}
+                className="rounded-lg border border-amber-100 bg-amber-50/70 px-2 py-1.5 text-xs text-amber-900"
+              />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <label className="flex flex-col gap-1">
+              <span className="text-[11px] font-semibold uppercase text-amber-500">Chọn nhanh theo tháng</span>
+              <select
+                value={quickMonth}
+                onChange={handleQuickMonthChange}
+                className="rounded-lg border border-amber-100 bg-white px-2 py-1.5 text-xs text-amber-900"
+              >
+                <option value="">Chọn tháng</option>
+                {Array.from({ length: 12 }, (_, index) => {
+                  const monthValue = String(index + 1).padStart(2, '0');
+                  return (
+                    <option key={monthValue} value={monthValue}>
+                      Tháng {monthValue}
+                    </option>
+                  );
+                })}
+              </select>
+            </label>
+            <label className="flex flex-col gap-1">
+              <span className="text-[11px] font-semibold uppercase text-amber-500">Chọn nhanh theo năm</span>
+              <input
+                type="number"
+                min={Math.min(...availableYears)}
+                max={Math.max(...availableYears)}
+                value={quickYear}
+                onChange={handleQuickYearChange}
+                placeholder={`Năm ${availableYears[0]}`}
+                className="rounded-lg border border-amber-100 bg-white px-2 py-1.5 text-xs text-amber-900"
+              />
+            </label>
+          </div>
         </div>
       </div>
 
