@@ -4,9 +4,7 @@ import OrderCreateView from '../components/orders/OrderCreateView';
 import OrderListView from '../components/orders/OrderListView';
 import OrderDetailModal from '../components/orders/OrderDetailModal';
 import ConfirmModalHost from '../components/modals/ConfirmModalHost';
-import InputModal from '../components/modals/InputModal';
 import useOrdersLogic from '../hooks/useOrdersLogic';
-import { formatInputNumber } from '../utils/helpers';
 
 const Orders = ({ products, setProducts, orders, setOrders, settings }) => {
   const {
@@ -21,7 +19,14 @@ const Orders = ({ products, setProducts, orders, setOrders, settings }) => {
     setOrderComment,
     confirmModal,
     setConfirmModal,
-    shippingModal,
+    orderType,
+    setOrderType,
+    customerName,
+    setCustomerName,
+    customerAddress,
+    setCustomerAddress,
+    shippingFee,
+    setShippingFee,
     activeCategory,
     setActiveCategory,
     searchTerm,
@@ -41,13 +46,9 @@ const Orders = ({ products, setProducts, orders, setOrders, settings }) => {
     handleEditOrder,
     handleExitCreate,
     handleCancelDraft,
-    handleCustomerShipping,
     handleTogglePaid,
     handleCancelOrder,
     getOrderStatusInfo,
-    handleShippingChange,
-    handleShippingCancel,
-    handleShippingConfirm,
     isCreateView,
     shouldShowDetailModal,
   } = useOrdersLogic({ products, setProducts, orders, setOrders });
@@ -63,6 +64,14 @@ const Orders = ({ products, setProducts, orders, setOrders, settings }) => {
           orderBeingEdited={orderBeingEdited}
           selectedWarehouse={selectedWarehouse}
           setSelectedWarehouse={setSelectedWarehouse}
+          orderType={orderType}
+          setOrderType={setOrderType}
+          customerName={customerName}
+          setCustomerName={setCustomerName}
+          customerAddress={customerAddress}
+          setCustomerAddress={setCustomerAddress}
+          shippingFee={shippingFee}
+          setShippingFee={setShippingFee}
           activeCategory={activeCategory}
           setActiveCategory={setActiveCategory}
           searchTerm={searchTerm}
@@ -100,7 +109,6 @@ const Orders = ({ products, setProducts, orders, setOrders, settings }) => {
           onCreateOrder={handleStartCreate}
           getOrderStatusInfo={getOrderStatusInfo}
           handleTogglePaid={handleTogglePaid}
-          handleCustomerShipping={handleCustomerShipping}
           handleEditOrder={handleEditOrder}
           handleCancelOrder={handleCancelOrder}
           onSelectOrder={setSelectedOrder}
@@ -123,18 +131,6 @@ const Orders = ({ products, setProducts, orders, setOrders, settings }) => {
       <ConfirmModalHost
         modal={confirmModal}
         onClose={() => setConfirmModal(null)}
-      />
-      <InputModal
-        open={shippingModal.open}
-        title="Nhập phí gửi khách"
-        message="Vui lòng nhập số tiền phí gửi cho khách hàng."
-        error={shippingModal.error}
-        value={formatInputNumber(shippingModal.fee)}
-        inputProps={{ inputMode: 'numeric', placeholder: 'Ví dụ: 25,000' }}
-        confirmLabel="Lưu phí gửi"
-        onChange={handleShippingChange}
-        onCancel={handleShippingCancel}
-        onConfirm={handleShippingConfirm}
       />
     </>
   );
