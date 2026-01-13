@@ -158,14 +158,17 @@ export const buildNextProductFromForm = ({
           priceAtPurchase: Number(formData.price) || 0,
         };
       });
-      const targetLot = nextProduct.purchaseLots.find(lot => lot.id === editingLotId);
-      const previousWarehouse = targetLot?.warehouse || warehouseKey;
-      const previousQty = Number(targetLot?.quantity) || 0;
-      const adjustedStock = {
-        ...existingStock,
-        [previousWarehouse]: Math.max(0, existingStock[previousWarehouse] - previousQty),
-        [warehouseKey]: (existingStock[warehouseKey] || 0) + quantityValue,
-      };
+      const adjustedStock = nextLots.reduce(
+        (acc, lot) => {
+          const nextWarehouse = lot.warehouse || 'daLat';
+          const lotQty = Number(lot.quantity) || 0;
+          return {
+            ...acc,
+            [nextWarehouse]: (acc[nextWarehouse] || 0) + lotQty,
+          };
+        },
+        { daLat: 0, vinhPhuc: 0 },
+      );
       nextProduct = {
         ...nextProduct,
         purchaseLots: nextLots,
