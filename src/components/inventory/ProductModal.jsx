@@ -331,7 +331,7 @@ const ProductModal = ({
           </div>
 
           {/* Giá bán + lợi nhuận */}
-          <div className="grid grid-cols-2 gap-3 items-end">
+          <div className="grid grid-cols-2 gap-3 items-start">
             <div className="flex flex-col gap-1 min-w-0">
               <label className="text-xs font-bold text-amber-700 uppercase">Giá bán (VNĐ)</label>
               <input
@@ -342,10 +342,12 @@ const ProductModal = ({
                 placeholder="0"
               />
             </div>
-            <div className="min-w-0 bg-emerald-50 border border-emerald-100 rounded-lg px-3 py-2 flex flex-col gap-1">
-              <div className="text-xs font-bold text-emerald-700 uppercase">Lợi nhuận (VNĐ)</div>
-              <div className="text-lg font-bold text-emerald-700">
-                {hasProfitData ? formatNumber(finalProfit) : '0'}
+            <div className="flex flex-col gap-1 min-w-0">
+              <label className="text-xs font-bold text-emerald-700 uppercase">Lợi nhuận (VNĐ)</label>
+              <div className="bg-emerald-50 border border-emerald-100 rounded-lg px-3 py-2">
+                <div className="text-lg font-bold text-emerald-700">
+                  {hasProfitData ? formatNumber(finalProfit) : '0'}
+                </div>
               </div>
             </div>
           </div>
