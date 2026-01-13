@@ -1,8 +1,10 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { BarChart3, ChevronRight, Layers3, TrendingUp, Wallet } from 'lucide-react';
 import { formatNumber } from '../utils/helpers';
 import useDashboardLogic from '../hooks/useDashboardLogic';
 import { getLatestUnitCost } from '../utils/purchaseUtils';
+import TopProductsModal from '../components/modals/TopProductsModal';
+import RankBadge from '../components/stats/RankBadge';
 import MetricCard from '../components/stats/MetricCard';
 import OptionPills from '../components/stats/OptionPills';
 
@@ -27,10 +29,15 @@ const StatsDetail = ({ products, orders, onBack }) => {
   const orderCount = filteredPaidOrders.length;
   const avgOrder = orderCount ? totalRevenue / orderCount : 0;
   const profitMargin = totalRevenue ? (totalProfit / totalRevenue) * 100 : 0;
+  const [activeTopModal, setActiveTopModal] = useState(null);
   const costMap = useMemo(
     () => new Map(products.map(product => [product.id, getLatestUnitCost(product)])),
     [products],
   );
+
+  // Mở modal chi tiết theo lợi nhuận hoặc số lượng để người dùng xem đầy đủ.
+  const handleOpenTopModal = (type) => setActiveTopModal(type);
+  const handleCloseTopModal = () => setActiveTopModal(null);
 
   const comparisonStats = useMemo(() => {
     // So sánh kỳ hiện tại với kỳ trước theo số ngày đang chọn (mặc định 30 ngày nếu "Tất cả").
@@ -149,30 +156,38 @@ const StatsDetail = ({ products, orders, onBack }) => {
           />
         </div>
         <div className="grid grid-cols-2 gap-3">
-          <div className="rounded-xl border border-rose-100 bg-rose-50/60 p-3">
+          <button
+            type="button"
+            onClick={() => handleOpenTopModal('profit')}
+            className="rounded-xl border border-rose-100 bg-rose-50/60 p-3 text-left hover:bg-rose-50 transition"
+          >
             <div className="text-xs font-semibold uppercase text-rose-600 mb-2">Top lợi nhuận</div>
             <div className="space-y-2 text-sm text-rose-800">
-              {topByProfit.map(item => (
-                <div key={item.id || item.name} className="flex justify-between">
-                  <span>{item.name}</span>
-                  <span className="font-semibold">{formatNumber(item.profit)}đ</span>
+              {topByProfit.map((item, idx) => (
+                <div key={item.id || item.name} className="flex items-center gap-2 min-w-0">
+                  <RankBadge rank={idx + 1} />
+                  <span className="truncate min-w-0">{item.name}</span>
                 </div>
               ))}
               {topByProfit.length === 0 && <div className="text-xs text-rose-400">Chưa có dữ liệu</div>}
             </div>
-          </div>
-          <div className="rounded-xl border border-emerald-100 bg-emerald-50/60 p-3">
+          </button>
+          <button
+            type="button"
+            onClick={() => handleOpenTopModal('quantity')}
+            className="rounded-xl border border-emerald-100 bg-emerald-50/60 p-3 text-left hover:bg-emerald-50 transition"
+          >
             <div className="text-xs font-semibold uppercase text-emerald-600 mb-2">Top số lượng</div>
             <div className="space-y-2 text-sm text-emerald-800">
-              {topByQuantity.map(item => (
-                <div key={item.id || item.name} className="flex justify-between">
-                  <span>{item.name}</span>
-                  <span className="font-semibold">x{item.quantity}</span>
+              {topByQuantity.map((item, idx) => (
+                <div key={item.id || item.name} className="flex items-center gap-2 min-w-0">
+                  <RankBadge rank={idx + 1} />
+                  <span className="truncate min-w-0">{item.name}</span>
                 </div>
               ))}
               {topByQuantity.length === 0 && <div className="text-xs text-emerald-400">Chưa có dữ liệu</div>}
             </div>
-          </div>
+          </button>
         </div>
       </div>
 
@@ -224,6 +239,21 @@ const StatsDetail = ({ products, orders, onBack }) => {
       >
         <ChevronRight className="rotate-180" />
       </button>
+
+      <TopProductsModal
+        open={activeTopModal === 'profit'}
+        title="Danh sách theo lợi nhuận"
+        items={topByProfit}
+        variant="profit"
+        onClose={handleCloseTopModal}
+      />
+      <TopProductsModal
+        open={activeTopModal === 'quantity'}
+        title="Danh sách theo số lượng"
+        items={topByQuantity}
+        variant="quantity"
+        onClose={handleCloseTopModal}
+      />
     </div>
   );
 };
