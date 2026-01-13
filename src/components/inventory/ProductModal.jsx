@@ -266,6 +266,7 @@ const ProductModal = ({
                 <label className="text-[10px] font-bold text-amber-800 uppercase">Nhập cân (kg)</label>
                 <input
                   inputMode="decimal"
+                  lang="en"
                   className="w-full bg-transparent border-b border-amber-100 py-2 focus:border-amber-400 outline-none text-amber-900 font-bold"
                   value={formData.shippingWeightKg}
                   onChange={onDecimalChange('shippingWeightKg')}
