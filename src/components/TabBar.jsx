@@ -11,7 +11,7 @@ const TabBar = ({ activeTab, setActiveTab }) => {
 
   return (
     <div className="fixed bottom-0 left-0 right-0 bg-amber-50/90 border-t border-amber-200 pb-safe-area z-50 backdrop-blur">
-      <div className="flex justify-around items-center h-16">
+      <div className="flex justify-around items-center h-20">
         {tabs.map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
