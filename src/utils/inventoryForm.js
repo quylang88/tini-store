@@ -36,11 +36,21 @@ export const createFormDataForProduct = ({ product, settings }) => ({
 });
 
 export const createFormDataForLot = ({ product, lot, settings }) => {
-  const shippingMethod = lot.shipping?.method || 'jp';
+  const inferredShippingMethod = (() => {
+    if (lot.shipping?.method) {
+      return lot.shipping.method;
+    }
+    const weightKg = Number(lot.shipping?.weightKg || 0);
+    const feeJpy = Number(lot.shipping?.feeJpy || 0);
+    if (weightKg > 0 || feeJpy > 0) {
+      return 'jp';
+    }
+    return 'vn';
+  })();
   const exchangeRateValue = Number(lot.shipping?.exchangeRate || settings.exchangeRate) || 0;
   const lotCostValue = Number(lot.cost) || 0;
   // Nếu lô nhập bằng Yên thì nội suy lại giá Yên từ giá VNĐ để hiển thị cho user chỉnh sửa.
-  const costJPYValue = shippingMethod === 'jp' && exchangeRateValue > 0
+  const costJPYValue = inferredShippingMethod === 'jp' && exchangeRateValue > 0
     ? Math.round(lotCostValue / exchangeRateValue)
     : '';
 
@@ -49,14 +59,14 @@ export const createFormDataForLot = ({ product, lot, settings }) => {
     name: product.name,
     barcode: product.barcode || '',
     category: product.category || 'Chung',
-    costCurrency: shippingMethod === 'jp' ? 'JPY' : 'VND',
+    costCurrency: inferredShippingMethod === 'jp' ? 'JPY' : 'VND',
     costJPY: costJPYValue === '' ? '' : String(costJPYValue),
     exchangeRate: String(exchangeRateValue || settings.exchangeRate),
     cost: lot.cost || '',
     price: lot.priceAtPurchase ?? product.price,
     quantity: lot.quantity || '',
     warehouse: lot.warehouse || 'vinhPhuc',
-    shippingMethod,
+    shippingMethod: inferredShippingMethod,
     shippingWeightKg: lot.shipping?.weightKg || '',
     shippingFeeVnd: lot.shipping?.feeVnd || '',
     image: product.image || '',
