@@ -1,13 +1,8 @@
 import { useMemo, useState } from 'react';
 import { sanitizeNumberInput } from '../utils/helpers';
 import { normalizeWarehouseStock } from '../utils/warehouseUtils';
-import {
-  consumePurchaseLots,
-  getLatestCost,
-  getLatestUnitCost,
-  normalizePurchaseLots,
-  restockPurchaseLots,
-} from '../utils/purchaseUtils';
+import { getLatestUnitCost } from '../utils/purchaseUtils';
+import { syncProductsStock } from '../utils/orderStock';
 
 const DEFAULT_STATUS = 'pending';
 const DEFAULT_WAREHOUSE = 'daLat';
@@ -139,16 +134,18 @@ const useOrdersLogic = ({ products, setProducts, orders, setOrders }) => {
     setView('create');
   };
 
+  const buildCartFromItems = (items) => items.reduce((acc, item) => {
+    acc[item.productId] = item.quantity;
+    return acc;
+  }, {});
+
   // So sánh giỏ hiện tại với đơn gốc để biết user đã chỉnh sửa gì chưa.
   const hasDraftChanges = () => {
     if (!orderBeingEdited) {
       return Object.keys(cart).length > 0 || orderComment.trim().length > 0;
     }
 
-    const originalCart = orderBeingEdited.items.reduce((acc, item) => {
-      acc[item.productId] = item.quantity;
-      return acc;
-    }, {});
+    const originalCart = buildCartFromItems(orderBeingEdited.items);
 
     const currentKeys = Object.keys(cart);
     const originalKeys = Object.keys(originalCart);
@@ -204,63 +201,6 @@ const useOrdersLogic = ({ products, setProducts, orders, setOrders }) => {
     return Math.max(...numbers) + 1;
   };
 
-  // Đồng bộ tồn kho + trừ/hoàn lô giá nhập theo từng kho khi xuất hàng.
-  const updateWarehouseStock = (product, warehouseKey, delta, restockCost) => {
-    const current = normalizeWarehouseStock(product);
-    const nextStock = { ...current };
-    if (warehouseKey === 'vinhPhuc') {
-      nextStock.vinhPhuc = Math.max(0, current.vinhPhuc + delta);
-    } else {
-      nextStock.daLat = Math.max(0, current.daLat + delta);
-    }
-    const nextProduct = {
-      ...product,
-      stockByWarehouse: nextStock,
-      stock: nextStock.daLat + nextStock.vinhPhuc,
-    };
-
-    if (delta < 0) {
-      return consumePurchaseLots(normalizePurchaseLots(nextProduct), warehouseKey, Math.abs(delta));
-    }
-    if (delta > 0) {
-      return restockPurchaseLots(normalizePurchaseLots(nextProduct), warehouseKey, delta, restockCost);
-    }
-    return nextProduct;
-  };
-
-  const syncProductsStock = (
-    orderItems,
-    previousItems = [],
-    nextWarehouseKey = DEFAULT_WAREHOUSE,
-    previousWarehouseKey = nextWarehouseKey,
-  ) => {
-    const previousMap = new Map(previousItems.map(item => [item.productId, item.quantity]));
-    const nextMap = new Map(orderItems.map(item => [item.productId, item.quantity]));
-    const previousItemMap = new Map(previousItems.map(item => [item.productId, item]));
-
-    setProducts((prevProducts) => prevProducts.map((product) => {
-      const previousQty = previousMap.get(product.id) || 0;
-      const nextQty = nextMap.get(product.id) || 0;
-      if (!previousQty && !nextQty) return product;
-
-      if (previousWarehouseKey === nextWarehouseKey) {
-        const delta = previousQty - nextQty;
-        if (!delta) return product;
-        const previousCost = previousItemMap.get(product.id)?.cost;
-        return updateWarehouseStock(product, nextWarehouseKey, delta, previousCost);
-      }
-
-      let nextProduct = product;
-      if (previousQty) {
-        const previousCost = previousItemMap.get(product.id)?.cost;
-        nextProduct = updateWarehouseStock(nextProduct, previousWarehouseKey, previousQty, previousCost);
-      }
-      if (nextQty) {
-        nextProduct = updateWarehouseStock(nextProduct, nextWarehouseKey, -nextQty);
-      }
-      return nextProduct;
-    }));
-  };
 
   const buildOrderPayload = () => {
     const orderItems = reviewItems.map((item) => ({
@@ -298,7 +238,12 @@ const useOrdersLogic = ({ products, setProducts, orders, setOrders }) => {
       comment: orderComment.trim(),
     };
 
-    syncProductsStock(items, [], warehouse);
+    setProducts((prevProducts) => syncProductsStock(
+      prevProducts,
+      items,
+      [],
+      warehouse,
+    ));
     setOrders([...orders, newOrder]);
     clearDraft();
     setView('list');
@@ -320,19 +265,20 @@ const useOrdersLogic = ({ products, setProducts, orders, setOrders }) => {
       comment: orderComment.trim(),
     };
 
-    syncProductsStock(items, orderBeingEdited.items, warehouse, orderBeingEdited.warehouse || DEFAULT_WAREHOUSE);
+    setProducts((prevProducts) => syncProductsStock(
+      prevProducts,
+      items,
+      orderBeingEdited.items,
+      warehouse,
+      orderBeingEdited.warehouse || DEFAULT_WAREHOUSE,
+    ));
     setOrders(orders.map(order => (order.id === orderBeingEdited.id ? updatedOrder : order)));
     clearDraft();
     setView('list');
   };
 
   const handleEditOrder = (order) => {
-    const nextCart = order.items.reduce((acc, item) => {
-      acc[item.productId] = item.quantity;
-      return acc;
-    }, {});
-
-    setCart(nextCart);
+    setCart(buildCartFromItems(order.items));
     setOrderBeingEdited(order);
     setOrderComment(order.comment || '');
     setSelectedWarehouse(order.warehouse || DEFAULT_WAREHOUSE);
@@ -413,7 +359,13 @@ const useOrdersLogic = ({ products, setProducts, orders, setOrders }) => {
       confirmLabel: 'Huỷ đơn',
       tone: 'danger',
       onConfirm: () => {
-        syncProductsStock([], order.items, DEFAULT_WAREHOUSE, order.warehouse || DEFAULT_WAREHOUSE);
+        setProducts((prevProducts) => syncProductsStock(
+          prevProducts,
+          [],
+          order.items,
+          DEFAULT_WAREHOUSE,
+          order.warehouse || DEFAULT_WAREHOUSE,
+        ));
         setOrders(orders.filter(item => item.id !== orderId));
       },
     });
@@ -442,7 +394,6 @@ const useOrdersLogic = ({ products, setProducts, orders, setOrders }) => {
   };
 
   return {
-    view,
     cart,
     showScanner,
     setShowScanner,

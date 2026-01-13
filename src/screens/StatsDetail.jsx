@@ -3,6 +3,8 @@ import { BarChart3, ChevronRight, Layers3, TrendingUp, Wallet } from 'lucide-rea
 import { formatNumber } from '../utils/helpers';
 import useDashboardLogic from '../hooks/useDashboardLogic';
 import { getLatestUnitCost } from '../utils/purchaseUtils';
+import MetricCard from '../components/stats/MetricCard';
+import OptionPills from '../components/stats/OptionPills';
 
 const StatsDetail = ({ products, orders, onBack }) => {
   const {
@@ -85,40 +87,33 @@ const StatsDetail = ({ products, orders, onBack }) => {
 
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-3">
         {/* Bộ lọc thời gian chi tiết hơn để xem theo nhiều khoảng khác nhau. */}
-        <div className="flex flex-wrap gap-2">
-          {rangeOptions.map(option => (
-            <button
-              key={option.id}
-              onClick={() => setActiveRange(option.id)}
-              className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition whitespace-nowrap ${activeRange === option.id
-                ? 'bg-amber-500 text-white border-amber-400 shadow-sm'
-                : 'bg-amber-50 text-amber-700 border-amber-100'
-              }`}
-            >
-              {option.label}
-            </button>
-          ))}
-        </div>
+        <OptionPills
+          options={rangeOptions}
+          activeId={activeRange}
+          onChange={setActiveRange}
+          containerClassName="flex flex-wrap gap-2"
+          buttonClassName="px-3 py-1.5 rounded-full text-xs font-semibold border transition whitespace-nowrap"
+          activeClassName="bg-amber-500 text-white border-amber-400 shadow-sm"
+          inactiveClassName="bg-amber-50 text-amber-700 border-amber-100"
+        />
         <div className="mt-2 text-[11px] text-amber-500">
           Gợi ý: chọn 7 ngày để xem nhanh, 3-6 tháng để thấy xu hướng dài hơi.
         </div>
       </div>
 
       <div className="grid grid-cols-2 gap-3">
-        <div className="bg-rose-400 text-white p-4 rounded-2xl shadow-lg shadow-rose-200">
-          <div className="flex items-center gap-2 opacity-90 mb-2">
-            <Wallet size={18} />
-            <span className="text-xs font-bold uppercase">Doanh thu</span>
-          </div>
-          <div className="text-xl font-bold">{formatNumber(totalRevenue)}đ</div>
-        </div>
-        <div className="bg-emerald-400 text-white p-4 rounded-2xl shadow-lg shadow-emerald-100">
-          <div className="flex items-center gap-2 opacity-90 mb-2">
-            <TrendingUp size={18} />
-            <span className="text-xs font-bold uppercase">Lợi nhuận</span>
-          </div>
-          <div className="text-xl font-bold">{formatNumber(totalProfit)}đ</div>
-        </div>
+        <MetricCard
+          icon={Wallet}
+          label="Doanh thu"
+          value={`${formatNumber(totalRevenue)}đ`}
+          className="bg-rose-400 shadow-rose-200"
+        />
+        <MetricCard
+          icon={TrendingUp}
+          label="Lợi nhuận"
+          value={`${formatNumber(totalProfit)}đ`}
+          className="bg-emerald-400 shadow-emerald-100"
+        />
         <div className="bg-white text-amber-900 p-4 rounded-2xl shadow-sm border border-gray-100 col-span-2">
           <div className="grid grid-cols-3 gap-3 text-xs">
             <div>
@@ -143,21 +138,15 @@ const StatsDetail = ({ products, orders, onBack }) => {
             <Layers3 size={18} />
             <h3 className="text-sm font-bold uppercase">Phân rã lợi nhuận</h3>
           </div>
-          <div className="flex items-center gap-1 flex-nowrap overflow-x-auto no-scrollbar">
-            {topOptions.map(option => (
-              <button
-                key={option.id}
-                type="button"
-                onClick={() => setTopLimit(option.id)}
-                className={`px-2 py-1 rounded-full text-[11px] font-semibold border transition whitespace-nowrap ${topLimit === option.id
-                  ? 'bg-rose-500 text-white border-rose-400 shadow-sm'
-                  : 'bg-rose-50 text-rose-600 border-rose-100'
-                }`}
-              >
-                {option.label}
-              </button>
-            ))}
-          </div>
+          <OptionPills
+            options={topOptions}
+            activeId={topLimit}
+            onChange={setTopLimit}
+            containerClassName="flex items-center gap-1 flex-nowrap overflow-x-auto no-scrollbar"
+            buttonClassName="px-2 py-1 rounded-full text-[11px] font-semibold border transition whitespace-nowrap"
+            activeClassName="bg-rose-500 text-white border-rose-400 shadow-sm"
+            inactiveClassName="bg-rose-50 text-rose-600 border-rose-100"
+          />
         </div>
         <div className="grid grid-cols-2 gap-3">
           <div className="rounded-xl border border-rose-100 bg-rose-50/60 p-3">
