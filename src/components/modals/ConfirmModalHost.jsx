@@ -7,6 +7,7 @@ const ConfirmModalHost = ({ modal, onClose }) => (
     title={modal?.title}
     message={modal?.message}
     confirmLabel={modal?.confirmLabel}
+    cancelLabel={modal?.cancelLabel}
     tone={modal?.tone}
     onCancel={onClose}
     onConfirm={() => {

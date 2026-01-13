@@ -37,6 +37,12 @@ export const createFormDataForProduct = ({ product, settings }) => ({
 
 export const createFormDataForLot = ({ product, lot, settings }) => {
   const shippingMethod = lot.shipping?.method || 'jp';
+  const exchangeRateValue = Number(lot.shipping?.exchangeRate || settings.exchangeRate) || 0;
+  const lotCostValue = Number(lot.cost) || 0;
+  // Nếu lô nhập bằng Yên thì nội suy lại giá Yên từ giá VNĐ để hiển thị cho user chỉnh sửa.
+  const costJPYValue = shippingMethod === 'jp' && exchangeRateValue > 0
+    ? Math.round(lotCostValue / exchangeRateValue)
+    : '';
 
   return {
     ...buildBaseFormData(settings),
@@ -44,8 +50,8 @@ export const createFormDataForLot = ({ product, lot, settings }) => {
     barcode: product.barcode || '',
     category: product.category || 'Chung',
     costCurrency: shippingMethod === 'jp' ? 'JPY' : 'VND',
-    costJPY: '',
-    exchangeRate: String(lot.shipping?.exchangeRate || settings.exchangeRate),
+    costJPY: costJPYValue === '' ? '' : String(costJPYValue),
+    exchangeRate: String(exchangeRateValue || settings.exchangeRate),
     cost: lot.cost || '',
     price: lot.priceAtPurchase ?? product.price,
     quantity: lot.quantity || '',

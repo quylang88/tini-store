@@ -1,5 +1,10 @@
 import { useEffect, useState } from 'react';
-import { compressImage, sanitizeDecimalInput, sanitizeNumberInput } from '../../utils/helpers';
+import {
+  compressImage,
+  formatInputNumber,
+  sanitizeDecimalInput,
+  sanitizeNumberInput,
+} from '../../utils/helpers';
 import { createFormDataForNewProduct } from '../../utils/inventoryForm';
 
 // Tách riêng state + handler của form để hook chính gọn hơn, dễ review.
@@ -24,8 +29,41 @@ const useInventoryFormState = ({ settings, activeCategories }) => {
   }, [formData.costCurrency, formData.costJPY, formData.exchangeRate]);
 
   const handleMoneyChange = (field) => (event) => {
-    const rawValue = sanitizeNumberInput(event.target.value);
-    setFormData(prev => ({ ...prev, [field]: rawValue }));
+    const input = event.target;
+    const rawValue = input.value;
+    const caretIndex = input.selectionStart ?? rawValue.length;
+    const digitsBeforeCaret = rawValue.slice(0, caretIndex).replace(/[^\d]/g, '').length;
+    const sanitizedValue = sanitizeNumberInput(rawValue);
+
+    setFormData(prev => ({ ...prev, [field]: sanitizedValue }));
+
+    // Giữ con trỏ ở đúng vị trí sau khi format lại số tiền có dấu phẩy.
+    if (typeof requestAnimationFrame === 'function') {
+      requestAnimationFrame(() => {
+        const formattedValue = formatInputNumber(sanitizedValue);
+        if (!input.setSelectionRange) return;
+        if (!formattedValue) {
+          input.setSelectionRange(0, 0);
+          return;
+        }
+        if (digitsBeforeCaret === 0) {
+          input.setSelectionRange(0, 0);
+          return;
+        }
+        let nextCaretIndex = formattedValue.length;
+        let digitCount = 0;
+        for (let i = 0; i < formattedValue.length; i += 1) {
+          if (/\d/.test(formattedValue[i])) {
+            digitCount += 1;
+          }
+          if (digitCount >= digitsBeforeCaret) {
+            nextCaretIndex = i + 1;
+            break;
+          }
+        }
+        input.setSelectionRange(nextCaretIndex, nextCaretIndex);
+      });
+    }
   };
 
   const handleCurrencyChange = (nextCurrency) => {
