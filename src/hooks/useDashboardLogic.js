@@ -1,15 +1,39 @@
 import { useMemo, useState } from 'react';
 import { getLatestUnitCost } from '../utils/purchaseUtils';
 
-const RANGE_OPTIONS = [
-  { id: 'month', label: '1 tháng', days: 30 },
-  { id: 'quarter', label: '1 quý', days: 90 },
-  { id: 'year', label: '1 năm', days: 365 },
-  { id: 'all', label: 'Tất cả', days: null },
+// Tạo label thời gian động theo tháng/năm hiện tại và tách bộ lọc cho dashboard vs chi tiết.
+const buildRangeOptions = (mode = 'dashboard') => {
+  const now = new Date();
+  const monthLabel = `Tháng ${String(now.getMonth() + 1).padStart(2, '0')}`;
+  const yearLabel = `Năm ${now.getFullYear()}`;
+
+  if (mode === 'detail') {
+    return [
+      { id: 'week', label: '7 ngày', days: 7 },
+      { id: 'month', label: '30 ngày', days: 30 },
+      { id: 'quarter', label: '3 tháng', days: 90 },
+      { id: 'half', label: '6 tháng', days: 180 },
+      { id: 'year', label: yearLabel, days: 365 },
+      { id: 'all', label: 'Tất cả', days: null },
+    ];
+  }
+
+  return [
+    { id: 'month', label: monthLabel, days: 30 },
+    { id: 'year', label: yearLabel, days: 365 },
+    { id: 'all', label: 'Tất cả', days: null },
+  ];
+};
+const TOP_OPTIONS = [
+  { id: 3, label: 'Top 3' },
+  { id: 5, label: 'Top 5' },
+  { id: 10, label: 'Top 10' },
 ];
 
-const useDashboardLogic = ({ products, orders }) => {
+const useDashboardLogic = ({ products, orders, rangeMode = 'dashboard' }) => {
   const [activeRange, setActiveRange] = useState('month');
+  const [topLimit, setTopLimit] = useState(3);
+  const rangeOptions = useMemo(() => buildRangeOptions(rangeMode), [rangeMode]);
 
   // Map giá vốn theo sản phẩm để tính lợi nhuận ổn định
   const costMap = useMemo(
@@ -24,8 +48,8 @@ const useDashboardLogic = ({ products, orders }) => {
   );
 
   const activeOption = useMemo(
-    () => RANGE_OPTIONS.find(option => option.id === activeRange) || RANGE_OPTIONS[0],
-    [activeRange],
+    () => rangeOptions.find(option => option.id === activeRange) || rangeOptions[0],
+    [activeRange, rangeOptions],
   );
 
   const rangeStart = useMemo(() => {
@@ -93,22 +117,28 @@ const useDashboardLogic = ({ products, orders }) => {
     () => [...productStats]
       .filter(item => item.profit > 0 || item.quantity > 0)
       .sort((a, b) => b.profit - a.profit)
-      .slice(0, 3),
-    [productStats],
+      .slice(0, topLimit),
+    [productStats, topLimit],
   );
 
   const topByQuantity = useMemo(
     () => [...productStats]
       .filter(item => item.quantity > 0)
       .sort((a, b) => b.quantity - a.quantity)
-      .slice(0, 3),
-    [productStats],
+      .slice(0, topLimit),
+    [productStats, topLimit],
   );
 
   return {
-    rangeOptions: RANGE_OPTIONS,
+    rangeOptions,
+    topOptions: TOP_OPTIONS,
+    topLimit,
+    setTopLimit,
     activeRange,
     setActiveRange,
+    rangeStart,
+    rangeDays: activeOption?.days ?? null,
+    paidOrders,
     filteredPaidOrders,
     totalRevenue,
     totalProfit,
