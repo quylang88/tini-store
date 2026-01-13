@@ -6,45 +6,51 @@ import useDashboardLogic from '../hooks/useDashboardLogic';
 const Dashboard = ({ products, orders, onOpenDetail }) => {
   const {
     rangeOptions,
+    topOptions,
+    topLimit,
+    setTopLimit,
     activeRange,
     setActiveRange,
     totalRevenue,
     totalProfit,
     topByProfit,
     topByQuantity,
-  } = useDashboardLogic({ products, orders });
+  } = useDashboardLogic({ products, orders, rangeMode: 'dashboard' });
 
   return (
     <div className="p-4 space-y-4 pb-24 animate-fade-in">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-2">
         <img
           src="/tiny-shop-transparent.png"
           alt="Tiny Shop"
           className="h-12 w-auto object-contain"
         />
-        <button
-          onClick={onOpenDetail}
-          className="flex items-center gap-1 text-xs font-semibold text-rose-600 bg-rose-50 border border-rose-100 px-3 py-1.5 rounded-full"
-        >
-          Thống kê chi tiết
-          <ArrowUpRight size={14} />
-        </button>
       </div>
 
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-3">
-        <div className="flex flex-wrap gap-2">
-          {rangeOptions.map(option => (
-            <button
-              key={option.id}
-              onClick={() => setActiveRange(option.id)}
-              className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition ${activeRange === option.id
-                ? 'bg-amber-500 text-white border-amber-400 shadow-sm'
-                : 'bg-amber-50 text-amber-700 border-amber-100'
-              }`}
-            >
-              {option.label}
-            </button>
-          ))}
+        {/* Căn nút thống kê chi tiết cùng hàng với filter thời gian để tránh xuống dòng. */}
+        <div className="flex flex-wrap items-center gap-2 justify-between">
+          <div className="flex flex-wrap gap-2">
+            {rangeOptions.map(option => (
+              <button
+                key={option.id}
+                onClick={() => setActiveRange(option.id)}
+                className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition whitespace-nowrap ${activeRange === option.id
+                  ? 'bg-amber-500 text-white border-amber-400 shadow-sm'
+                  : 'bg-amber-50 text-amber-700 border-amber-100'
+                }`}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+          <button
+            onClick={onOpenDetail}
+            className="flex items-center gap-1 text-xs font-semibold text-rose-600 bg-rose-50 border border-rose-100 px-3 py-1.5 rounded-full whitespace-nowrap"
+          >
+            Thống kê chi tiết
+            <ArrowUpRight size={14} />
+          </button>
         </div>
       </div>
       <div className="grid grid-cols-2 gap-3">
@@ -66,12 +72,28 @@ const Dashboard = ({ products, orders, onOpenDetail }) => {
       </div>
 
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 space-y-4">
-        <h3 className="font-bold text-amber-800 text-sm uppercase">Top bán chạy</h3>
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <div className="flex items-center justify-between gap-2">
+          <h3 className="font-bold text-amber-800 text-sm uppercase">Top bán chạy</h3>
+          <div className="flex items-center gap-1 flex-nowrap overflow-x-auto no-scrollbar">
+            {topOptions.map(option => (
+              <button
+                key={option.id}
+                type="button"
+                onClick={() => setTopLimit(option.id)}
+                className={`px-2 py-1 rounded-full text-[11px] font-semibold border transition ${topLimit === option.id
+                  ? 'bg-rose-500 text-white border-rose-400 shadow-sm'
+                  : 'bg-rose-50 text-rose-600 border-rose-100'
+                }`}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div className="grid grid-cols-2 gap-4">
           <div className="rounded-xl border border-amber-100 bg-amber-50/60 p-3">
             <div className="flex items-center justify-between mb-3">
               <h4 className="text-xs font-semibold uppercase text-amber-700">Theo lợi nhuận</h4>
-              <span className="text-[11px] text-amber-500">Top 3</span>
             </div>
             <div className="space-y-3">
               {topByProfit.map((p, idx) => (
@@ -97,7 +119,6 @@ const Dashboard = ({ products, orders, onOpenDetail }) => {
           <div className="rounded-xl border border-emerald-100 bg-emerald-50/60 p-3">
             <div className="flex items-center justify-between mb-3">
               <h4 className="text-xs font-semibold uppercase text-emerald-700">Theo số lượng</h4>
-              <span className="text-[11px] text-emerald-500">Top 3</span>
             </div>
             <div className="space-y-3">
               {topByQuantity.map((p, idx) => (
