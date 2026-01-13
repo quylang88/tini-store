@@ -7,16 +7,17 @@ import MetricCard from '../components/stats/MetricCard';
 import OptionPills from '../components/stats/OptionPills';
 import RankBadge from '../components/stats/RankBadge';
 import TopListModal from '../components/stats/TopListModal';
+import DateRangeFilter from '../components/stats/DateRangeFilter';
 
 const StatsDetail = ({ products, orders, onBack }) => {
   const {
-    rangeOptions,
     topOptions,
     topLimit,
     setTopLimit,
-    activeRange,
-    setActiveRange,
     rangeStart,
+    rangeEnd,
+    customRange,
+    setCustomRange,
     rangeDays,
     paidOrders,
     filteredPaidOrders,
@@ -38,7 +39,7 @@ const StatsDetail = ({ products, orders, onBack }) => {
     // So sánh kỳ hiện tại với kỳ trước theo số ngày đang chọn (mặc định 30 ngày nếu "Tất cả").
     const compareDays = rangeDays ?? 30;
     const now = new Date();
-    const currentEnd = new Date(now);
+    const currentEnd = rangeEnd ? new Date(rangeEnd) : new Date(now);
     currentEnd.setHours(23, 59, 59, 999);
 
     const currentStart = rangeStart ? new Date(rangeStart) : (() => {
@@ -78,7 +79,7 @@ const StatsDetail = ({ products, orders, onBack }) => {
       current: calcStats(currentStart, currentEnd),
       previous: calcStats(previousStart, previousEnd),
     };
-  }, [paidOrders, rangeDays, rangeStart, costMap]);
+  }, [paidOrders, rangeDays, rangeStart, rangeEnd, costMap]);
 
   const [activeModal, setActiveModal] = useState(null);
 
@@ -97,15 +98,7 @@ const StatsDetail = ({ products, orders, onBack }) => {
 
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-3">
         {/* Bộ lọc thời gian chi tiết hơn để xem theo nhiều khoảng khác nhau. */}
-        <OptionPills
-          options={rangeOptions}
-          activeId={activeRange}
-          onChange={setActiveRange}
-          containerClassName="flex flex-wrap gap-2"
-          buttonClassName="px-3 py-1.5 rounded-full text-xs font-semibold border transition whitespace-nowrap"
-          activeClassName="bg-amber-500 text-white border-amber-400 shadow-sm"
-          inactiveClassName="bg-amber-50 text-amber-700 border-amber-100"
-        />
+        <DateRangeFilter customRange={customRange} setCustomRange={setCustomRange} />
       </div>
 
       <div className="grid grid-cols-2 gap-3">
