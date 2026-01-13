@@ -1,8 +1,8 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { sanitizeNumberInput } from '../utils/helpers';
-import { normalizeWarehouseStock } from '../utils/warehouseUtils';
-import { getLatestUnitCost } from '../utils/purchaseUtils';
 import { syncProductsStock } from '../utils/orderStock';
+import useOrderCatalog from './orders/useOrderCatalog';
+import { buildCartFromItems } from './orders/orderDraftUtils';
 
 const DEFAULT_STATUS = 'pending';
 const DEFAULT_WAREHOUSE = 'daLat';
@@ -29,52 +29,19 @@ const useOrdersLogic = ({ products, setProducts, orders, setOrders }) => {
   const isCreateView = view === 'create';
   const shouldShowDetailModal = view === 'list' && Boolean(selectedOrder);
 
-  const productMap = useMemo(
-    () => new Map(products.map((product) => [product.id, product])),
-    [products],
-  );
-
-  const getAvailableStock = (product, warehouseKey) => {
-    const warehouseStock = normalizeWarehouseStock(product);
-    const baseStock = warehouseKey === 'vinhPhuc' ? warehouseStock.vinhPhuc : warehouseStock.daLat;
-    if (!orderBeingEdited) return baseStock;
-    const orderWarehouse = orderBeingEdited.warehouse || DEFAULT_WAREHOUSE;
-    if (orderWarehouse !== warehouseKey) return baseStock;
-    const previousQty = orderBeingEdited.items.find(item => item.productId === product.id)?.quantity || 0;
-    return baseStock + previousQty;
-  };
-
-  const filteredProducts = useMemo(
-    () => products.filter((product) => {
-      const matchSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (product.barcode && product.barcode.includes(searchTerm));
-      const matchCategory = activeCategory === 'Tất cả' || product.category === activeCategory;
-      const availableStock = getAvailableStock(product, selectedWarehouse);
-      return matchSearch && matchCategory && availableStock > 0;
-    }),
-    [products, searchTerm, activeCategory, selectedWarehouse, orderBeingEdited],
-  );
-
-  const reviewItems = useMemo(() => Object.entries(cart)
-    .map(([productId, quantity]) => {
-      const product = productMap.get(productId);
-      if (!product) return null;
-      return {
-        id: product.id,
-        productId: product.id,
-        name: product.name,
-        price: product.price,
-        quantity,
-        // Giá vốn dùng cho đơn hàng cần gồm cả phí gửi/đơn vị.
-        cost: getLatestUnitCost(product),
-      };
-    })
-    .filter(Boolean), [cart, productMap]);
-
-  const totalAmount = useMemo(
-    () => reviewItems.reduce((sum, item) => sum + item.price * item.quantity, 0),
-    [reviewItems],
-  );
+  const {
+    getAvailableStock,
+    filteredProducts,
+    reviewItems,
+    totalAmount,
+  } = useOrderCatalog({
+    products,
+    cart,
+    searchTerm,
+    activeCategory,
+    selectedWarehouse,
+    orderBeingEdited,
+  });
 
   const clearDraft = () => {
     setCart({});
@@ -133,11 +100,6 @@ const useOrdersLogic = ({ products, setProducts, orders, setOrders }) => {
     setSelectedOrder(null);
     setView('create');
   };
-
-  const buildCartFromItems = (items) => items.reduce((acc, item) => {
-    acc[item.productId] = item.quantity;
-    return acc;
-  }, {});
 
   // So sánh giỏ hiện tại với đơn gốc để biết user đã chỉnh sửa gì chưa.
   const hasDraftChanges = () => {
