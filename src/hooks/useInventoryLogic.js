@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import {
   createFormDataForLot,
   createFormDataForNewProduct,
@@ -18,6 +18,8 @@ const useInventoryLogic = ({ products, setProducts, settings }) => {
   const [confirmModal, setConfirmModal] = useState(null);
   // Modal báo lỗi riêng cho form tạo/sửa sản phẩm
   const [errorModal, setErrorModal] = useState(null);
+  // Lưu lại snapshot form khi mở modal để so sánh thay đổi khi bấm huỷ.
+  const initialFormDataRef = useRef(null);
 
   // State quản lý danh mục đang xem (cho phép chọn nhiều danh mục).
   const [activeCategories, setActiveCategories] = useState([]);
@@ -78,15 +80,40 @@ const useInventoryLogic = ({ products, setProducts, settings }) => {
     closeModal();
   };
 
+  const buildComparableFormData = (data) => {
+    if (!data) return data;
+    // Khi nhập theo Yên, cost được tự tính nên cần chuẩn hoá trước khi so sánh.
+    if (data.costCurrency === 'JPY') {
+      const jpyValue = Number(data.costJPY || 0);
+      const exchangeValue = Number(data.exchangeRate || 0);
+      return {
+        ...data,
+        cost: jpyValue > 0 && exchangeValue > 0 ? Math.round(jpyValue * exchangeValue) : '',
+      };
+    }
+    return data;
+  };
+
+  const hasFormChanges = () => {
+    if (!initialFormDataRef.current) return false;
+    const initialSnapshot = JSON.stringify(buildComparableFormData(initialFormDataRef.current));
+    const currentSnapshot = JSON.stringify(buildComparableFormData(formData));
+    return initialSnapshot !== currentSnapshot;
+  };
+
   const openModal = (product = null) => {
     if (product) {
       setEditingProduct(product);
       setEditingLotId(null);
-      setFormData(createFormDataForProduct({ product, settings }));
+      const nextFormData = createFormDataForProduct({ product, settings });
+      setFormData(nextFormData);
+      initialFormDataRef.current = nextFormData;
     } else {
       setEditingProduct(null);
       setEditingLotId(null);
-      setFormData(createFormDataForNewProduct({ settings, activeCategories }));
+      const nextFormData = createFormDataForNewProduct({ settings, activeCategories });
+      setFormData(nextFormData);
+      initialFormDataRef.current = nextFormData;
     }
     setIsModalOpen(true);
   };
@@ -95,7 +122,9 @@ const useInventoryLogic = ({ products, setProducts, settings }) => {
     if (!product || !lot) return;
     setEditingProduct(product);
     setEditingLotId(lot.id);
-    setFormData(createFormDataForLot({ product, lot, settings }));
+    const nextFormData = createFormDataForLot({ product, lot, settings });
+    setFormData(nextFormData);
+    initialFormDataRef.current = nextFormData;
     setIsModalOpen(true);
   };
 
@@ -103,6 +132,24 @@ const useInventoryLogic = ({ products, setProducts, settings }) => {
     setIsModalOpen(false);
     setEditingProduct(null);
     setEditingLotId(null);
+    initialFormDataRef.current = null;
+  };
+
+  const handleCancelModal = () => {
+    // Nếu không có thay đổi thì đóng luôn, tránh hỏi user.
+    if (!hasFormChanges()) {
+      closeModal();
+      return;
+    }
+    // Có chỉnh sửa thì hiện cảnh báo để tránh mất dữ liệu.
+    setConfirmModal({
+      title: 'Huỷ chỉnh sửa?',
+      message: 'Bạn đang có thay đổi chưa lưu. Bạn có chắc muốn huỷ không?',
+      confirmLabel: 'Huỷ thay đổi',
+      cancelLabel: 'Tiếp tục sửa',
+      tone: 'danger',
+      onConfirm: () => closeModal(),
+    });
   };
 
   const handleDelete = (id) => {
@@ -171,6 +218,7 @@ const useInventoryLogic = ({ products, setProducts, settings }) => {
     openModal,
     openEditLot,
     closeModal,
+    handleCancelModal,
     handleDelete,
     filteredProducts,
     nameSuggestions,

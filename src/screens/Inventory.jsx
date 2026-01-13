@@ -36,6 +36,7 @@ const Inventory = ({ products, setProducts, settings }) => {
     openModal,
     openEditLot,
     closeModal,
+    handleCancelModal,
     handleDelete,
     filteredProducts,
     nameSuggestions,
@@ -80,7 +81,7 @@ const Inventory = ({ products, setProducts, settings }) => {
         nameSuggestions={nameSuggestions}
         onSelectExistingProduct={handleSelectExistingProduct}
         categories={settings.categories}
-        onClose={closeModal}
+        onClose={handleCancelModal}
         onSave={handleSave}
         onShowScanner={() => setShowScanner(true)}
         onImageSelect={handleImageSelect}
