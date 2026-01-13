@@ -18,7 +18,8 @@ const useInventoryFormState = ({ settings, activeCategories }) => {
     const exchangeRateValue = Number(formData.exchangeRate || 0);
     const calculatedCost = costJPYValue > 0 && exchangeRateValue > 0
       ? Math.round(costJPYValue * exchangeRateValue)
-      : 0;
+      : '';
+    // Khi chưa có dữ liệu hợp lệ, để trống để tránh hiển thị "0" khi đổi qua lại giữa VNĐ/Yên.
     setFormData(prev => ({ ...prev, cost: calculatedCost }));
   }, [formData.costCurrency, formData.costJPY, formData.exchangeRate]);
 

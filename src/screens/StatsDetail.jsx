@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { BarChart3, ChevronRight, Layers3, TrendingUp, Wallet } from 'lucide-react';
+import { BarChart3, ChevronRight, DollarSign, TrendingUp, Trophy } from 'lucide-react';
 import { formatNumber } from '../utils/helpers';
 import useDashboardLogic from '../hooks/useDashboardLogic';
 import { getLatestUnitCost } from '../utils/purchaseUtils';
@@ -103,7 +103,7 @@ const StatsDetail = ({ products, orders, onBack }) => {
 
       <div className="grid grid-cols-2 gap-3">
         <MetricCard
-          icon={Wallet}
+          icon={DollarSign}
           label="Doanh thu"
           value={`${formatNumber(totalRevenue)}đ`}
           className="bg-rose-400 shadow-rose-200"
@@ -135,7 +135,7 @@ const StatsDetail = ({ products, orders, onBack }) => {
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 space-y-3">
         <div className="flex items-center justify-between gap-2 text-amber-700">
           <div className="flex items-center gap-2">
-            <Layers3 size={18} />
+            <Trophy size={18} />
             <h3 className="text-sm font-bold uppercase">Top bán chạy</h3>
           </div>
           <OptionPills

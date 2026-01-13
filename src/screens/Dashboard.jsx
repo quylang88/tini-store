@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { DollarSign, TrendingUp, ArrowUpRight } from 'lucide-react';
+import { ArrowUpRight, DollarSign, TrendingUp, Trophy } from 'lucide-react';
 import { formatNumber } from '../utils/helpers';
 import useDashboardLogic from '../hooks/useDashboardLogic';
 import MetricCard from '../components/stats/MetricCard';
@@ -78,7 +78,10 @@ const Dashboard = ({ products, orders, onOpenDetail }) => {
 
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 space-y-4">
         <div className="flex items-center justify-between gap-2">
-          <h3 className="font-bold text-amber-800 text-sm uppercase">Top bán chạy</h3>
+          <div className="flex items-center gap-2 text-amber-700">
+            <Trophy size={18} />
+            <h3 className="font-bold text-amber-800 text-sm uppercase">Top bán chạy</h3>
+          </div>
           <OptionPills
             options={topOptions}
             activeId={topLimit}
