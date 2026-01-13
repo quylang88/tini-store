@@ -2,6 +2,7 @@ import React from 'react';
 import { Plus, ShoppingCart } from 'lucide-react';
 import { formatNumber } from '../../utils/helpers';
 import { getWarehouseLabel } from '../../utils/warehouseUtils';
+import { getOrderDisplayName } from '../../utils/orderUtils';
 
 // Giao diện danh sách đơn tách riêng để dễ quản lý và thêm nút huỷ đơn
 const OrderListView = ({
@@ -9,7 +10,6 @@ const OrderListView = ({
   onCreateOrder,
   getOrderStatusInfo,
   handleTogglePaid,
-  handleCustomerShipping,
   handleEditOrder,
   handleCancelOrder,
   onSelectOrder
@@ -28,10 +28,13 @@ const OrderListView = ({
     <div className="flex-1 overflow-y-auto p-3 space-y-3">
       {orders.map((order) => {
         const statusInfo = getOrderStatusInfo(order);
-        const hasShipping = order.shippingUpdated || order.shippingFee > 0;
         const isPaid = order.status === 'paid';
         const orderLabel = order.orderNumber ? `#${order.orderNumber}` : `#${order.id.slice(-4)}`;
+        // Hiển thị tên đơn theo tên khách + địa chỉ rút gọn hoặc "Tại kho".
+        const orderName = getOrderDisplayName(order);
         const warehouseLabel = getWarehouseLabel(order.warehouse || 'daLat');
+        // Với đơn gửi khách, cần hiển thị kho xuất ở hàng trạng thái bên phải.
+        const shouldShowWarehouseOnStatus = order.orderType !== 'warehouse';
         // Lợi nhuận = (giá bán - giá vốn) - phí gửi để xem nhanh hiệu quả đơn hàng.
         const estimatedProfit = order.items.reduce((sum, item) => {
           const cost = item.cost || 0;
@@ -43,8 +46,13 @@ const OrderListView = ({
             className="bg-white p-4 rounded-xl shadow-sm border border-amber-100 hover:border-rose-200 transition cursor-pointer"
             onClick={() => onSelectOrder?.(order)}
           >
-            <div className="flex justify-between mb-2">
-              <span className="font-bold text-amber-900 text-lg">{orderLabel}</span>
+            <div className="flex justify-between mb-2 gap-2">
+              <div className="min-w-0">
+                <div className="flex items-center gap-2">
+                  <span className="font-bold text-amber-900 text-lg">{orderLabel}</span>
+                  <span className="text-xs font-semibold text-amber-600 truncate">{orderName}</span>
+                </div>
+              </div>
               <span className="text-rose-600 font-bold text-lg bg-rose-50 px-2 py-0.5 rounded">{formatNumber(order.total)}đ</span>
             </div>
             <div className="flex items-center justify-between text-xs text-gray-500 mb-2">
@@ -52,13 +60,17 @@ const OrderListView = ({
                 <span className={`w-2 h-2 rounded-full ${statusInfo.dotClass}`} />
                 {statusInfo.label}
               </span>
-              <span className="text-gray-400">
+              {shouldShowWarehouseOnStatus && (
+                <span className="text-amber-600 font-semibold">
+                  Tại kho: {warehouseLabel}
+                </span>
+              )}
+            </div>
+            {order.orderType === 'delivery' && (
+              <div className="text-xs text-gray-400 mb-2">
                 Phí gửi khách: {formatNumber(order.shippingFee || 0)}đ
-              </span>
-            </div>
-            <div className="text-xs text-amber-600 font-semibold mb-2">
-              Đơn hàng: {warehouseLabel}
-            </div>
+              </div>
+            )}
             <div className="text-xs text-gray-400 mb-3 flex items-center gap-1">
               {new Date(order.date).toLocaleString()}
             </div>
@@ -82,18 +94,6 @@ const OrderListView = ({
                 className={`text-xs font-semibold px-3 py-1.5 rounded-full border transition ${isPaid ? 'text-red-600 bg-red-50 border-red-100 hover:bg-red-100' : 'text-emerald-600 bg-emerald-50 border-emerald-100 hover:bg-emerald-100'}`}
               >
                 {isPaid ? 'Huỷ thanh toán' : 'Thanh toán'}
-              </button>
-              <button
-                onClick={(event) => {
-                  event.stopPropagation();
-                  handleCustomerShipping(order.id);
-                }}
-                className={`text-xs font-semibold px-3 py-1.5 rounded-full border transition ${hasShipping
-                    ? 'text-sky-700 bg-sky-50 border-sky-100 hover:bg-sky-100'
-                    : 'text-indigo-700 bg-indigo-50 border-indigo-100 hover:bg-indigo-100'
-                  }`}
-              >
-                {hasShipping ? 'Cập nhật phí gửi' : 'Phí gửi khách'}
               </button>
               <button
                 onClick={(event) => {
