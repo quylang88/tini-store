@@ -24,14 +24,16 @@ const TopListModal = ({ open, onClose, title, items, mode }) => {
 
   return (
     <ModalShell open={open} onClose={onClose}>
-      <div className="p-4">
-        <div className="flex items-center justify-between gap-2">
-          <h3 className={`text-sm font-bold uppercase ${tone.title}`}>{title}</h3>
-          <span className={`text-[11px] font-semibold border rounded-full px-2 py-0.5 ${tone.badge}`}>
-            {items.length} sản phẩm
-          </span>
+      <div className="flex max-h-[calc(100vh-140px)] min-h-0 flex-col overflow-hidden">
+        <div className="p-4 pb-2">
+          <div className="flex items-center justify-between gap-2">
+            <h3 className={`text-sm font-bold uppercase ${tone.title}`}>{title}</h3>
+            <span className={`text-[11px] font-semibold border rounded-full px-2 py-0.5 ${tone.badge}`}>
+              {items.length} sản phẩm
+            </span>
+          </div>
         </div>
-        <div className="mt-3 space-y-3">
+        <div className="flex-1 overflow-y-auto px-4 pb-4 pt-2 pr-1 space-y-3">
           {items.map((item, index) => (
             <div key={item.id || item.name} className="flex items-center gap-3">
               <RankBadge rank={index + 1} />
