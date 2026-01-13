@@ -1,9 +1,39 @@
 import { useMemo, useState } from 'react';
 import { getLatestUnitCost } from '../utils/purchaseUtils';
 
-const useDashboardLogic = ({ products, orders }) => {
-  const [showHistory, setShowHistory] = useState(false);
-  const [expandedMonth, setExpandedMonth] = useState(null);
+// Tạo label thời gian động theo tháng/năm hiện tại và tách bộ lọc cho dashboard vs chi tiết.
+const buildRangeOptions = (mode = 'dashboard') => {
+  const now = new Date();
+  const monthLabel = `Tháng ${String(now.getMonth() + 1).padStart(2, '0')}`;
+  const yearLabel = `Năm ${now.getFullYear()}`;
+
+  if (mode === 'detail') {
+    return [
+      { id: 'week', label: '7 ngày', days: 7 },
+      { id: 'month', label: '30 ngày', days: 30 },
+      { id: 'quarter', label: '3 tháng', days: 90 },
+      { id: 'half', label: '6 tháng', days: 180 },
+      { id: 'year', label: yearLabel, days: 365 },
+      { id: 'all', label: 'Tất cả', days: null },
+    ];
+  }
+
+  return [
+    { id: 'month', label: monthLabel, days: 30 },
+    { id: 'year', label: yearLabel, days: 365 },
+    { id: 'all', label: 'Tất cả', days: null },
+  ];
+};
+const TOP_OPTIONS = [
+  { id: 3, label: 'Top 3' },
+  { id: 5, label: 'Top 5' },
+  { id: 10, label: 'Top 10' },
+];
+
+const useDashboardLogic = ({ products, orders, rangeMode = 'dashboard' }) => {
+  const [activeRange, setActiveRange] = useState('month');
+  const [topLimit, setTopLimit] = useState(3);
+  const rangeOptions = useMemo(() => buildRangeOptions(rangeMode), [rangeMode]);
 
   // Map giá vốn theo sản phẩm để tính lợi nhuận ổn định
   const costMap = useMemo(
@@ -17,13 +47,31 @@ const useDashboardLogic = ({ products, orders }) => {
     [orders],
   );
 
+  const activeOption = useMemo(
+    () => rangeOptions.find(option => option.id === activeRange) || rangeOptions[0],
+    [activeRange, rangeOptions],
+  );
+
+  const rangeStart = useMemo(() => {
+    if (!activeOption.days) return null;
+    const start = new Date();
+    start.setHours(0, 0, 0, 0);
+    start.setDate(start.getDate() - activeOption.days + 1);
+    return start;
+  }, [activeOption]);
+
+  const filteredPaidOrders = useMemo(() => {
+    if (!rangeStart) return paidOrders;
+    return paidOrders.filter(order => new Date(order.date) >= rangeStart);
+  }, [paidOrders, rangeStart]);
+
   const totalRevenue = useMemo(
-    () => paidOrders.reduce((sum, order) => sum + order.total, 0),
-    [paidOrders],
+    () => filteredPaidOrders.reduce((sum, order) => sum + order.total, 0),
+    [filteredPaidOrders],
   );
 
   const totalProfit = useMemo(
-    () => paidOrders.reduce((sum, order) => {
+    () => filteredPaidOrders.reduce((sum, order) => {
       // Ưu tiên dùng giá vốn trong đơn để không bị lệch khi giá vốn thay đổi
       const orderProfit = order.items.reduce((itemSum, item) => {
         const cost = Number.isFinite(item.cost) ? item.cost : (costMap.get(item.productId) || 0);
@@ -33,115 +81,69 @@ const useDashboardLogic = ({ products, orders }) => {
       const shippingFee = order.shippingFee || 0;
       return sum + orderProfit - shippingFee;
     }, 0),
-    [paidOrders, costMap],
+    [filteredPaidOrders, costMap],
   );
 
-  const totalOrders = orders.length;
-
-  const monthKey = (date) => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-  const monthLabel = (key) => {
-    const [year, month] = key.split('-');
-    return `Tháng ${month}/${year}`;
-  };
-
-  // Thống kê theo tháng để render bảng + biểu đồ
-  const monthlyStats = useMemo(() => paidOrders.reduce((acc, order) => {
-    const key = monthKey(new Date(order.date));
-    if (!acc[key]) {
-      acc[key] = { revenue: 0, profit: 0, orders: 0, items: {} };
-    }
-    const stats = acc[key];
-    stats.revenue += order.total;
-    stats.orders += 1;
-    const orderProfit = order.items.reduce((sum, item) => {
-      const cost = Number.isFinite(item.cost) ? item.cost : (costMap.get(item.productId) || 0);
-      return sum + (item.price - cost) * item.quantity;
-    }, 0);
-    // Trừ phí gửi vì đây là chi phí phát sinh của đơn
-    const shippingFee = order.shippingFee || 0;
-    stats.profit += orderProfit - shippingFee;
-    order.items.forEach((item) => {
-      if (!stats.items[item.productId]) {
-        stats.items[item.productId] = { name: item.name, quantity: 0, revenue: 0, profit: 0 };
-      }
-      stats.items[item.productId].quantity += item.quantity;
-      stats.items[item.productId].revenue += item.price * item.quantity;
-      const cost = Number.isFinite(item.cost) ? item.cost : (costMap.get(item.productId) || 0);
-      stats.items[item.productId].profit += (item.price - cost) * item.quantity;
-    });
-    return acc;
-  }, {}), [paidOrders, costMap]);
-
-  const now = new Date();
-  const currentKey = monthKey(now);
-  const previousKey = monthKey(new Date(now.getFullYear(), now.getMonth() - 1, 1));
-  const olderMonths = useMemo(
-    () => Object.keys(monthlyStats)
-      .filter((key) => key !== currentKey && key !== previousKey)
-      .sort((a, b) => new Date(`${b}-01`) - new Date(`${a}-01`)),
-    [monthlyStats, currentKey, previousKey],
+  const productMeta = useMemo(
+    () => new Map(products.map(product => [product.id, product])),
+    [products],
   );
 
-  const getTopItems = (key) => {
-    const stats = monthlyStats[key];
-    if (!stats) return [];
-    return Object.values(stats.items)
-      .sort((a, b) => b.revenue - a.revenue)
-      .slice(0, 3);
-  };
-
-  // Chuẩn bị dữ liệu biểu đồ thống kê theo tháng (tối đa 6 tháng gần nhất)
-  const monthlyChartData = useMemo(
-    () => Object.keys(monthlyStats)
-      .sort((a, b) => new Date(`${a}-01`) - new Date(`${b}-01`))
-      .slice(-6)
-      .map((key) => ({
-        key,
-        label: monthLabel(key),
-        revenue: monthlyStats[key].revenue,
-        profit: monthlyStats[key].profit,
-      })),
-    [monthlyStats],
-  );
-
-  const chartMax = useMemo(
-    () => Math.max(
-      ...monthlyChartData.flatMap((item) => [item.revenue, item.profit]),
-      1,
-    ),
-    [monthlyChartData],
-  );
-
-  // Logic tìm top 3 sản phẩm theo lợi nhuận
-  const topProducts = useMemo(
-    () => products.map(p => {
-      // Chỉ tính lợi nhuận dựa trên đơn đã thanh toán
-      const profit = paidOrders.reduce((acc, order) => {
-        const item = order.items.find(i => i.productId === p.id);
-        if (!item) return acc;
+  const productStats = useMemo(() => {
+    const stats = new Map();
+    filteredPaidOrders.forEach(order => {
+      order.items.forEach(item => {
+        const product = productMeta.get(item.productId);
+        const key = item.productId || item.name;
+        if (!stats.has(key)) {
+          stats.set(key, {
+            id: item.productId,
+            name: item.name || product?.name || 'Sản phẩm khác',
+            image: product?.image || '',
+            quantity: 0,
+            profit: 0,
+          });
+        }
+        const entry = stats.get(key);
         const cost = Number.isFinite(item.cost) ? item.cost : (costMap.get(item.productId) || 0);
-        return acc + (item.price - cost) * item.quantity;
-      }, 0);
-      return { ...p, profit };
-    }).sort((a, b) => b.profit - a.profit).slice(0, 3),
-    [products, paidOrders, costMap],
+        entry.quantity += item.quantity;
+        entry.profit += (item.price - cost) * item.quantity;
+      });
+    });
+    return Array.from(stats.values());
+  }, [filteredPaidOrders, productMeta, costMap]);
+
+  const topByProfit = useMemo(
+    () => [...productStats]
+      .filter(item => item.profit > 0 || item.quantity > 0)
+      .sort((a, b) => b.profit - a.profit)
+      .slice(0, topLimit),
+    [productStats, topLimit],
+  );
+
+  const topByQuantity = useMemo(
+    () => [...productStats]
+      .filter(item => item.quantity > 0)
+      .sort((a, b) => b.quantity - a.quantity)
+      .slice(0, topLimit),
+    [productStats, topLimit],
   );
 
   return {
-    showHistory,
-    setShowHistory,
-    expandedMonth,
-    setExpandedMonth,
+    rangeOptions,
+    topOptions: TOP_OPTIONS,
+    topLimit,
+    setTopLimit,
+    activeRange,
+    setActiveRange,
+    rangeStart,
+    rangeDays: activeOption?.days ?? null,
+    paidOrders,
+    filteredPaidOrders,
     totalRevenue,
     totalProfit,
-    totalOrders,
-    monthLabel,
-    monthlyStats,
-    olderMonths,
-    getTopItems,
-    monthlyChartData,
-    chartMax,
-    topProducts,
+    topByProfit,
+    topByQuantity,
   };
 };
 

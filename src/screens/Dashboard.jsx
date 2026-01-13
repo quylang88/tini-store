@@ -1,186 +1,134 @@
 import React from 'react';
-import { DollarSign, ShoppingCart, TrendingUp, Image as ImageIcon, ChevronDown, ChevronUp } from 'lucide-react';
+import { DollarSign, TrendingUp, Image as ImageIcon, ArrowUpRight } from 'lucide-react';
 import { formatNumber } from '../utils/helpers';
 import useDashboardLogic from '../hooks/useDashboardLogic';
+import MetricCard from '../components/stats/MetricCard';
+import OptionPills from '../components/stats/OptionPills';
 
-const Dashboard = ({ products, orders }) => {
+const Dashboard = ({ products, orders, onOpenDetail }) => {
   const {
-    showHistory,
-    setShowHistory,
-    expandedMonth,
-    setExpandedMonth,
+    rangeOptions,
+    topOptions,
+    topLimit,
+    setTopLimit,
+    activeRange,
+    setActiveRange,
     totalRevenue,
     totalProfit,
-    totalOrders,
-    monthLabel,
-    monthlyStats,
-    olderMonths,
-    getTopItems,
-    monthlyChartData,
-    chartMax,
-    topProducts,
-  } = useDashboardLogic({ products, orders });
+    topByProfit,
+    topByQuantity,
+  } = useDashboardLogic({ products, orders, rangeMode: 'dashboard' });
 
   return (
     <div className="p-4 space-y-4 pb-24 animate-fade-in">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-2">
         <img
           src="/tiny-shop-transparent.png"
           alt="Tiny Shop"
           className="h-12 w-auto object-contain"
         />
       </div>
+
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-3">
+        {/* Căn nút thống kê chi tiết cùng hàng với filter thời gian để tránh xuống dòng. */}
+        <div className="flex flex-wrap items-center gap-2 justify-between">
+          <OptionPills
+            options={rangeOptions}
+            activeId={activeRange}
+            onChange={setActiveRange}
+            containerClassName="flex flex-wrap gap-2"
+            buttonClassName="px-3 py-1.5 rounded-full text-xs font-semibold border transition whitespace-nowrap"
+            activeClassName="bg-amber-500 text-white border-amber-400 shadow-sm"
+            inactiveClassName="bg-amber-50 text-amber-700 border-amber-100"
+          />
+          <button
+            onClick={onOpenDetail}
+            className="flex items-center gap-1 text-xs font-semibold text-rose-600 bg-rose-50 border border-rose-100 px-3 py-1.5 rounded-full whitespace-nowrap"
+          >
+            Thống kê chi tiết
+            <ArrowUpRight size={14} />
+          </button>
+        </div>
+      </div>
       <div className="grid grid-cols-2 gap-3">
-        <div className="bg-rose-400 text-white p-4 rounded-2xl shadow-lg shadow-rose-200">
-          <div className="flex items-center gap-2 opacity-90 mb-2">
-            <DollarSign size={18} />
-            <span className="text-xs font-bold uppercase">Doanh thu</span>
-          </div>
-          <div className="text-xl font-bold">{formatNumber(totalRevenue)}đ</div>
-        </div>
+        <MetricCard
+          icon={DollarSign}
+          label="Doanh thu"
+          value={`${formatNumber(totalRevenue)}đ`}
+          className="bg-rose-400 shadow-rose-200"
+        />
 
-        <div className="bg-emerald-400 text-white p-4 rounded-2xl shadow-lg shadow-emerald-100">
-          <div className="flex items-center gap-2 opacity-90 mb-2">
-            <TrendingUp size={18} />
-            <span className="text-xs font-bold uppercase">Lợi nhuận</span>
-          </div>
-          <div className="text-xl font-bold">{formatNumber(totalProfit)}đ</div>
-        </div>
-
-        <div className="bg-white text-amber-900 p-4 rounded-2xl shadow-sm border border-gray-100 col-span-2">
-          <div className="flex items-center gap-2 text-amber-700 mb-2">
-            <ShoppingCart size={18} />
-            <span className="text-xs font-bold uppercase">Đơn hàng</span>
-          </div>
-          <div className="text-xl font-bold">{totalOrders}</div>
-        </div>
+        <MetricCard
+          icon={TrendingUp}
+          label="Lợi nhuận"
+          value={`${formatNumber(totalProfit)}đ`}
+          className="bg-emerald-400 shadow-emerald-100"
+        />
       </div>
 
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 space-y-4">
-        <div className="flex items-center justify-between">
-          <h3 className="font-bold text-amber-800 text-sm uppercase">Thống kê theo tháng</h3>
-          <span className="text-xs text-amber-500">6 tháng gần nhất</span>
+        <div className="flex items-center justify-between gap-2">
+          <h3 className="font-bold text-amber-800 text-sm uppercase">Top bán chạy</h3>
+          <OptionPills
+            options={topOptions}
+            activeId={topLimit}
+            onChange={setTopLimit}
+            containerClassName="flex items-center gap-1 flex-nowrap overflow-x-auto no-scrollbar"
+            buttonClassName="px-2 py-1 rounded-full text-[11px] font-semibold border transition"
+            activeClassName="bg-rose-500 text-white border-rose-400 shadow-sm"
+            inactiveClassName="bg-rose-50 text-rose-600 border-rose-100"
+          />
         </div>
-
-        {/* Biểu đồ cột đơn giản cho doanh thu và lợi nhuận */}
-        <div className="bg-gray-50 border border-gray-100 rounded-xl p-4">
-          {monthlyChartData.length > 0 ? (
-            <div className="space-y-4">
-              <div className="flex items-center gap-4 text-xs text-amber-700">
-                <div className="flex items-center gap-2">
-                  <span className="inline-block w-3 h-3 rounded-full bg-rose-300"></span>
-                  <span>Doanh thu</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="inline-block w-3 h-3 rounded-full bg-emerald-300"></span>
-                  <span>Lợi nhuận</span>
-                </div>
-              </div>
-              <div className="flex items-end gap-3 h-44">
-                {monthlyChartData.map((item) => (
-                  <div key={item.key} className="flex-1 flex flex-col items-center gap-2">
-                    <div className="w-full flex items-end gap-1 h-36">
-                      <div
-                        className="flex-1 bg-rose-300 rounded-t-md"
-                        style={{ height: `${(item.revenue / chartMax) * 100}%` }}
-                        title={`Doanh thu: ${formatNumber(item.revenue)}đ`}
-                      />
-                      <div
-                        className="flex-1 bg-emerald-300 rounded-t-md"
-                        style={{ height: `${(item.profit / chartMax) * 100}%` }}
-                        title={`Lợi nhuận: ${formatNumber(item.profit)}đ`}
-                      />
-                    </div>
-                    <div className="text-[10px] text-amber-700 text-center leading-tight">
-                      {item.label}
-                    </div>
+        <div className="grid grid-cols-2 gap-4">
+          <div className="rounded-xl border border-amber-100 bg-amber-50/60 p-3">
+            <div className="flex items-center justify-between mb-3">
+              <h4 className="text-xs font-semibold uppercase text-amber-700">Theo lợi nhuận</h4>
+            </div>
+            <div className="space-y-3">
+              {topByProfit.map((p, idx) => (
+                <div key={p.id || p.name} className="flex items-center gap-3">
+                  <div className="font-bold text-amber-400 w-4">#{idx + 1}</div>
+                  <div className="w-10 h-10 rounded-lg bg-white overflow-hidden flex-shrink-0 border border-amber-100">
+                    {p.image ? (
+                      <img src={p.image} className="w-full h-full object-cover" alt="" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-amber-200"><ImageIcon size={16} /></div>
+                    )}
                   </div>
-                ))}
-              </div>
+                  <div className="flex-1">
+                    <div className="font-medium text-sm text-amber-900">{p.name}</div>
+                    <div className="text-xs text-amber-700">Lợi nhuận: {formatNumber(p.profit)}đ</div>
+                  </div>
+                </div>
+              ))}
+              {topByProfit.length === 0 && <div className="text-center text-amber-500 text-sm">Chưa có dữ liệu</div>}
             </div>
-          ) : (
-            <div className="text-center text-xs text-amber-500">Chưa có dữ liệu thống kê.</div>
-          )}
-        </div>
-
-        {olderMonths.length > 0 && (
-          <div>
-            <button
-              onClick={() => setShowHistory(prev => !prev)}
-              className="w-full flex items-center justify-between text-sm font-semibold text-rose-600 bg-rose-50 border border-rose-100 rounded-lg px-3 py-2"
-            >
-              <span>{showHistory ? 'Ẩn thống kê các tháng trước' : 'Xem thống kê các tháng trước'}</span>
-              {showHistory ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-            </button>
-
-            {showHistory && (
-              <div className="mt-3 space-y-3">
-                {olderMonths.map((key) => {
-                  const stats = monthlyStats[key];
-                  const isExpanded = expandedMonth === key;
-                  const topItems = getTopItems(key);
-                  return (
-                    <div key={key} className="border border-gray-100 rounded-xl p-3">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <div className="text-sm font-semibold text-amber-900">{monthLabel(key)}</div>
-                          <div className="text-xs text-amber-700">
-                            Doanh thu: {formatNumber(stats.revenue)}đ • Lợi nhuận: {formatNumber(stats.profit)}đ
-                          </div>
-                          <div className="text-xs text-amber-500">Đơn hàng: {stats.orders}</div>
-                        </div>
-                        <button
-                          onClick={() => setExpandedMonth(isExpanded ? null : key)}
-                          className="text-xs font-semibold text-rose-600 bg-rose-50 px-2.5 py-1.5 rounded-lg"
-                        >
-                          {isExpanded ? 'Thu gọn' : 'Xem chi tiết'}
-                        </button>
-                      </div>
-
-                      {isExpanded && (
-                        <div className="mt-3 border-t border-dashed border-gray-200 pt-3 space-y-2">
-                          <div className="text-[11px] font-semibold uppercase text-amber-500">Top sản phẩm</div>
-                          {topItems.length > 0 ? (
-                            topItems.map((item) => (
-                              <div key={item.name} className="flex justify-between text-sm text-amber-800">
-                                <span>{item.name} <span className="text-xs text-amber-500">x{item.quantity}</span></span>
-                                <span className="font-medium">{formatNumber(item.revenue)}đ</span>
-                              </div>
-                            ))
-                          ) : (
-                            <div className="text-xs text-amber-500">Không có dữ liệu chi tiết.</div>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            )}
           </div>
-        )}
-      </div>
 
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4">
-        <h3 className="font-bold text-amber-800 mb-3 text-sm uppercase">Top bán chạy</h3>
-        <div className="space-y-3">
-          {topProducts.map((p, idx) => (
-            <div key={p.id} className="flex items-center gap-3">
-              <div className="font-bold text-amber-300 w-4">#{idx + 1}</div>
-              <div className="w-10 h-10 rounded-lg bg-gray-100 overflow-hidden flex-shrink-0 border border-gray-200">
-                {p.image ? (
-                  <img src={p.image} className="w-full h-full object-cover" alt="" />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center text-gray-300"><ImageIcon size={16} /></div>
-                )}
-              </div>
-              <div className="flex-1">
-                <div className="font-medium text-sm text-amber-900">{p.name}</div>
-                <div className="text-xs text-amber-700">Lợi nhuận: {formatNumber(p.profit)}đ</div>
-              </div>
+          <div className="rounded-xl border border-emerald-100 bg-emerald-50/60 p-3">
+            <div className="flex items-center justify-between mb-3">
+              <h4 className="text-xs font-semibold uppercase text-emerald-700">Theo số lượng</h4>
             </div>
-          ))}
-          {topProducts.length === 0 && <div className="text-center text-amber-500 text-sm">Chưa có dữ liệu bán hàng</div>}
+            <div className="space-y-3">
+              {topByQuantity.map((p, idx) => (
+                <div key={p.id || p.name} className="flex items-center gap-3">
+                  <div className="font-bold text-emerald-400 w-4">#{idx + 1}</div>
+                  <div className="w-10 h-10 rounded-lg bg-white overflow-hidden flex-shrink-0 border border-emerald-100">
+                    {p.image ? (
+                      <img src={p.image} className="w-full h-full object-cover" alt="" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-emerald-200"><ImageIcon size={16} /></div>
+                    )}
+                  </div>
+                  <div className="flex-1">
+                    <div className="font-medium text-sm text-emerald-900">{p.name}</div>
+                    <div className="text-xs text-emerald-700">Số lượng: {p.quantity}</div>
+                  </div>
+                </div>
+              ))}
+              {topByQuantity.length === 0 && <div className="text-center text-emerald-500 text-sm">Chưa có dữ liệu</div>}
+            </div>
+          </div>
         </div>
       </div>
     </div>

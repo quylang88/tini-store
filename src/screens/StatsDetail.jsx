@@ -1,0 +1,231 @@
+import React, { useMemo } from 'react';
+import { BarChart3, ChevronRight, Layers3, TrendingUp, Wallet } from 'lucide-react';
+import { formatNumber } from '../utils/helpers';
+import useDashboardLogic from '../hooks/useDashboardLogic';
+import { getLatestUnitCost } from '../utils/purchaseUtils';
+import MetricCard from '../components/stats/MetricCard';
+import OptionPills from '../components/stats/OptionPills';
+
+const StatsDetail = ({ products, orders, onBack }) => {
+  const {
+    rangeOptions,
+    topOptions,
+    topLimit,
+    setTopLimit,
+    activeRange,
+    setActiveRange,
+    rangeStart,
+    rangeDays,
+    paidOrders,
+    filteredPaidOrders,
+    totalRevenue,
+    totalProfit,
+    topByProfit,
+    topByQuantity,
+  } = useDashboardLogic({ products, orders, rangeMode: 'detail' });
+
+  const orderCount = filteredPaidOrders.length;
+  const avgOrder = orderCount ? totalRevenue / orderCount : 0;
+  const profitMargin = totalRevenue ? (totalProfit / totalRevenue) * 100 : 0;
+  const costMap = useMemo(
+    () => new Map(products.map(product => [product.id, getLatestUnitCost(product)])),
+    [products],
+  );
+
+  const comparisonStats = useMemo(() => {
+    // So sánh kỳ hiện tại với kỳ trước theo số ngày đang chọn (mặc định 30 ngày nếu "Tất cả").
+    const compareDays = rangeDays ?? 30;
+    const now = new Date();
+    const currentEnd = new Date(now);
+    currentEnd.setHours(23, 59, 59, 999);
+
+    const currentStart = rangeStart ? new Date(rangeStart) : (() => {
+      const start = new Date(currentEnd);
+      start.setHours(0, 0, 0, 0);
+      start.setDate(start.getDate() - compareDays + 1);
+      return start;
+    })();
+
+    const previousEnd = new Date(currentStart);
+    previousEnd.setDate(previousEnd.getDate() - 1);
+    previousEnd.setHours(23, 59, 59, 999);
+    const previousStart = new Date(currentStart);
+    previousStart.setDate(previousStart.getDate() - compareDays);
+    previousStart.setHours(0, 0, 0, 0);
+
+    const calcStats = (rangeStartDate, rangeEndDate) => {
+      const rangeOrders = paidOrders.filter(order => {
+        const orderDate = new Date(order.date);
+        return orderDate >= rangeStartDate && orderDate <= rangeEndDate;
+      });
+
+      const revenue = rangeOrders.reduce((sum, order) => sum + order.total, 0);
+      const profit = rangeOrders.reduce((sum, order) => {
+        const orderProfit = order.items.reduce((itemSum, item) => {
+          const cost = Number.isFinite(item.cost) ? item.cost : (costMap.get(item.productId) || 0);
+          return itemSum + (item.price - cost) * item.quantity;
+        }, 0);
+        const shippingFee = order.shippingFee || 0;
+        return sum + orderProfit - shippingFee;
+      }, 0);
+
+      return { revenue, profit, count: rangeOrders.length };
+    };
+
+    return {
+      current: calcStats(currentStart, currentEnd),
+      previous: calcStats(previousStart, previousEnd),
+    };
+  }, [paidOrders, rangeDays, rangeStart, costMap]);
+
+  return (
+    <div className="h-full overflow-y-auto p-4 space-y-4 pb-24 animate-fade-in">
+      <div>
+        <div className="text-xs text-amber-500 uppercase font-semibold whitespace-nowrap">Thống kê chi tiết</div>
+        <div className="text-sm font-bold text-amber-900 whitespace-nowrap">Phân tích doanh thu & lợi nhuận</div>
+      </div>
+
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-3">
+        {/* Bộ lọc thời gian chi tiết hơn để xem theo nhiều khoảng khác nhau. */}
+        <OptionPills
+          options={rangeOptions}
+          activeId={activeRange}
+          onChange={setActiveRange}
+          containerClassName="flex flex-wrap gap-2"
+          buttonClassName="px-3 py-1.5 rounded-full text-xs font-semibold border transition whitespace-nowrap"
+          activeClassName="bg-amber-500 text-white border-amber-400 shadow-sm"
+          inactiveClassName="bg-amber-50 text-amber-700 border-amber-100"
+        />
+        <div className="mt-2 text-[11px] text-amber-500">
+          Gợi ý: chọn 7 ngày để xem nhanh, 3-6 tháng để thấy xu hướng dài hơi.
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-3">
+        <MetricCard
+          icon={Wallet}
+          label="Doanh thu"
+          value={`${formatNumber(totalRevenue)}đ`}
+          className="bg-rose-400 shadow-rose-200"
+        />
+        <MetricCard
+          icon={TrendingUp}
+          label="Lợi nhuận"
+          value={`${formatNumber(totalProfit)}đ`}
+          className="bg-emerald-400 shadow-emerald-100"
+        />
+        <div className="bg-white text-amber-900 p-4 rounded-2xl shadow-sm border border-gray-100 col-span-2">
+          <div className="grid grid-cols-3 gap-3 text-xs">
+            <div>
+              <div className="text-amber-500 uppercase font-semibold">Số đơn</div>
+              <div className="text-lg font-bold text-amber-900">{orderCount}</div>
+            </div>
+            <div>
+              <div className="text-amber-500 uppercase font-semibold">Giá trị TB</div>
+              <div className="text-lg font-bold text-amber-900">{formatNumber(avgOrder)}đ</div>
+            </div>
+            <div>
+              <div className="text-amber-500 uppercase font-semibold">Biên lợi nhuận</div>
+              <div className="text-lg font-bold text-amber-900">{profitMargin.toFixed(1)}%</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 space-y-3">
+        <div className="flex items-center justify-between gap-2 text-amber-700">
+          <div className="flex items-center gap-2">
+            <Layers3 size={18} />
+            <h3 className="text-sm font-bold uppercase">Phân rã lợi nhuận</h3>
+          </div>
+          <OptionPills
+            options={topOptions}
+            activeId={topLimit}
+            onChange={setTopLimit}
+            containerClassName="flex items-center gap-1 flex-nowrap overflow-x-auto no-scrollbar"
+            buttonClassName="px-2 py-1 rounded-full text-[11px] font-semibold border transition whitespace-nowrap"
+            activeClassName="bg-rose-500 text-white border-rose-400 shadow-sm"
+            inactiveClassName="bg-rose-50 text-rose-600 border-rose-100"
+          />
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <div className="rounded-xl border border-rose-100 bg-rose-50/60 p-3">
+            <div className="text-xs font-semibold uppercase text-rose-600 mb-2">Top lợi nhuận</div>
+            <div className="space-y-2 text-sm text-rose-800">
+              {topByProfit.map(item => (
+                <div key={item.id || item.name} className="flex justify-between">
+                  <span>{item.name}</span>
+                  <span className="font-semibold">{formatNumber(item.profit)}đ</span>
+                </div>
+              ))}
+              {topByProfit.length === 0 && <div className="text-xs text-rose-400">Chưa có dữ liệu</div>}
+            </div>
+          </div>
+          <div className="rounded-xl border border-emerald-100 bg-emerald-50/60 p-3">
+            <div className="text-xs font-semibold uppercase text-emerald-600 mb-2">Top số lượng</div>
+            <div className="space-y-2 text-sm text-emerald-800">
+              {topByQuantity.map(item => (
+                <div key={item.id || item.name} className="flex justify-between">
+                  <span>{item.name}</span>
+                  <span className="font-semibold">x{item.quantity}</span>
+                </div>
+              ))}
+              {topByQuantity.length === 0 && <div className="text-xs text-emerald-400">Chưa có dữ liệu</div>}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 space-y-3">
+        <div className="flex items-center gap-2 text-amber-700">
+          <BarChart3 size={18} />
+          <h3 className="text-sm font-bold uppercase">So sánh kỳ hiện tại</h3>
+        </div>
+        <div className="grid grid-cols-2 gap-3 text-xs">
+          <div className="rounded-xl border border-amber-100 bg-amber-50/70 p-3">
+            <div className="text-amber-600 font-semibold uppercase mb-2">Kỳ hiện tại</div>
+            <div className="space-y-1 text-amber-900">
+              <div>Doanh thu: <span className="font-semibold">{formatNumber(comparisonStats.current.revenue)}đ</span></div>
+              <div>Lợi nhuận: <span className="font-semibold">{formatNumber(comparisonStats.current.profit)}đ</span></div>
+              <div>Số đơn: <span className="font-semibold">{comparisonStats.current.count}</span></div>
+            </div>
+          </div>
+          <div className="rounded-xl border border-gray-200 bg-gray-50/80 p-3">
+            <div className="text-gray-500 font-semibold uppercase mb-2">Kỳ trước</div>
+            <div className="space-y-1 text-gray-700">
+              <div>Doanh thu: <span className="font-semibold">{formatNumber(comparisonStats.previous.revenue)}đ</span></div>
+              <div>Lợi nhuận: <span className="font-semibold">{formatNumber(comparisonStats.previous.profit)}đ</span></div>
+              <div>Số đơn: <span className="font-semibold">{comparisonStats.previous.count}</span></div>
+            </div>
+          </div>
+        </div>
+        <div className="text-[11px] text-amber-500">
+          So sánh theo cùng số ngày của kỳ đang chọn để dễ theo dõi biến động.
+        </div>
+      </div>
+
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 space-y-2">
+        <div className="flex items-center gap-2 text-amber-700">
+          <TrendingUp size={18} />
+          <h3 className="text-sm font-bold uppercase">Ý tưởng thêm</h3>
+        </div>
+        <ul className="text-xs text-amber-700 space-y-1 list-disc list-inside">
+          <li>Tỉ trọng doanh thu theo danh mục/sản phẩm và mức tăng trưởng theo kỳ.</li>
+          <li>So sánh chi phí vận chuyển & chiết khấu theo từng kênh bán.</li>
+          <li>Bản đồ nhiệt ngày/giờ có nhiều đơn để tối ưu lịch chạy ads.</li>
+          <li>Danh sách đơn hoàn/hủy để theo dõi lý do thất thoát.</li>
+        </ul>
+      </div>
+
+      <button
+        onClick={onBack}
+        className="fixed right-4 bottom-[calc(env(safe-area-inset-bottom)+88px)] z-[70] flex h-12 w-12 items-center justify-center rounded-full bg-white text-amber-700 shadow-lg border border-amber-200 hover:bg-amber-50 active:scale-95 transition"
+        aria-label="Quay lại"
+      >
+        <ChevronRight className="rotate-180" />
+      </button>
+    </div>
+  );
+};
+
+export default StatsDetail;

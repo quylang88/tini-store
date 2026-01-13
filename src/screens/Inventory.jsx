@@ -4,7 +4,7 @@ import InventoryHeader from '../components/inventory/InventoryHeader';
 import ProductList from '../components/inventory/ProductList';
 import ProductDetailModal from '../components/inventory/ProductDetailModal';
 import ProductModal from '../components/inventory/ProductModal';
-import ConfirmModal from '../components/modals/ConfirmModal';
+import ConfirmModalHost from '../components/modals/ConfirmModalHost';
 import ErrorModal from '../components/modals/ErrorModal';
 import useInventoryLogic from '../hooks/useInventoryLogic';
 
@@ -101,17 +101,9 @@ const Inventory = ({ products, setProducts, settings }) => {
       />
 
       {/* Modal xác nhận xoá để thay thế popup mặc định */}
-      <ConfirmModal
-        open={Boolean(confirmModal)}
-        title={confirmModal?.title}
-        message={confirmModal?.message}
-        confirmLabel={confirmModal?.confirmLabel}
-        tone={confirmModal?.tone}
-        onCancel={() => setConfirmModal(null)}
-        onConfirm={() => {
-          confirmModal?.onConfirm?.();
-          setConfirmModal(null);
-        }}
+      <ConfirmModalHost
+        modal={confirmModal}
+        onClose={() => setConfirmModal(null)}
       />
 
       {/* Modal báo lỗi riêng cho form tạo/sửa sản phẩm */}

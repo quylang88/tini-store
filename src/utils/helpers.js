@@ -43,7 +43,8 @@ export const formatInputNumber = (value) => {
 export const sanitizeNumberInput = (value) => value.replace(/[^\d]/g, '');
 
 export const sanitizeDecimalInput = (value) => {
-  const sanitized = value.replace(/[^\d.]/g, '');
+  const normalized = value.replace(/,/g, '.');
+  const sanitized = normalized.replace(/[^\d.]/g, '');
   const [whole, ...rest] = sanitized.split('.');
   if (rest.length === 0) {
     return sanitized;
