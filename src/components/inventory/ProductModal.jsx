@@ -367,9 +367,23 @@ const ProductModal = ({
             </div>
           )}
 
-          <button onClick={onSave} className="w-full bg-rose-500 text-white py-3 rounded-xl font-bold mt-2 shadow-lg shadow-rose-200 active:scale-95 transition">
-            Lưu Sản Phẩm
-          </button>
+          {/* Nút huỷ nằm bên trái nút lưu để user dễ thao tác */}
+          <div className="grid grid-cols-2 gap-3 mt-2">
+            <button
+              type="button"
+              onClick={onClose}
+              className="w-full border border-amber-200 text-amber-700 py-3 rounded-xl font-bold shadow-sm hover:bg-amber-50 active:scale-95 transition"
+            >
+              Huỷ
+            </button>
+            <button
+              type="button"
+              onClick={onSave}
+              className="w-full bg-rose-500 text-white py-3 rounded-xl font-bold shadow-lg shadow-rose-200 active:scale-95 transition"
+            >
+              Lưu Sản Phẩm
+            </button>
+          </div>
         </div>
       </div>
     </div>

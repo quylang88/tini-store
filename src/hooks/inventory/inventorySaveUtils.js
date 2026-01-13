@@ -1,0 +1,191 @@
+import { normalizeWarehouseStock } from '../../utils/warehouseUtils';
+import {
+  addPurchaseLot,
+  getLatestCost,
+  normalizePurchaseLots,
+} from '../../utils/purchaseUtils';
+
+// Gom validation vào 1 chỗ để dễ test và dễ review.
+export const getInventoryValidationError = ({
+  formData,
+  products,
+  editingProduct,
+  editingLotId,
+}) => {
+  if (!formData.name || !formData.price) {
+    return {
+      title: 'Thiếu thông tin',
+      message: 'Vui lòng nhập Tên sản phẩm và Giá bán trước khi lưu.',
+    };
+  }
+
+  if (!editingProduct) {
+    const duplicateName = products.find(
+      (product) => product.name.trim().toLowerCase() === formData.name.trim().toLowerCase(),
+    );
+    if (duplicateName) {
+      return {
+        title: 'Sản phẩm đã tồn tại',
+        message: 'Vui lòng chọn sản phẩm trong gợi ý để nhập thêm hàng.',
+      };
+    }
+  }
+
+  const costValue = Number(formData.cost) || 0;
+  const priceValue = Number(formData.price) || 0;
+  if (costValue > 0 && priceValue <= costValue) {
+    return {
+      title: 'Giá bán chưa hợp lệ',
+      message: 'Giá bán phải cao hơn giá vốn để đảm bảo có lợi nhuận.',
+    };
+  }
+
+  // Check trùng Barcode
+  if (formData.barcode) {
+    const duplicateBarcode = products.find(p =>
+      p.barcode === formData.barcode && p.id !== (editingProduct ? editingProduct.id : null),
+    );
+    if (duplicateBarcode) {
+      return {
+        title: 'Mã vạch bị trùng',
+        message: `Mã vạch này đã được dùng cho "${duplicateBarcode.name}". Vui lòng kiểm tra lại.`,
+      };
+    }
+  }
+
+  const quantityValue = Number(formData.quantity) || 0;
+  if (!editingProduct && quantityValue <= 0) {
+    return {
+      title: 'Thiếu số lượng nhập',
+      message: 'Sản phẩm mới cần có số lượng nhập kho ban đầu.',
+    };
+  }
+
+  if (editingLotId && quantityValue <= 0) {
+    return {
+      title: 'Thiếu số lượng',
+      message: 'Vui lòng nhập số lượng cho lần nhập hàng này.',
+    };
+  }
+
+  if (quantityValue > 0 && costValue <= 0) {
+    return {
+      title: 'Thiếu giá nhập',
+      message: 'Vui lòng nhập giá nhập khi có số lượng nhập kho.',
+    };
+  }
+
+  const shippingWeight = Number(formData.shippingWeightKg) || 0;
+  if (quantityValue > 0 && formData.shippingMethod === 'jp' && shippingWeight <= 0) {
+    return {
+      title: 'Thiếu cân nặng',
+      message: 'Vui lòng nhập cân nặng nếu mua tại Nhật.',
+    };
+  }
+
+  return null;
+};
+
+// Tách logic build dữ liệu sản phẩm để tránh hook chính quá dài.
+export const buildNextProductFromForm = ({
+  formData,
+  editingProduct,
+  editingLotId,
+  settings,
+}) => {
+  const costValue = Number(formData.cost) || 0;
+  const quantityValue = Number(formData.quantity) || 0;
+  const warehouseKey = formData.warehouse || 'daLat';
+
+  const shippingWeight = Number(formData.shippingWeightKg) || 0;
+  const exchangeRateValue = Number(formData.exchangeRate || settings.exchangeRate) || 0;
+  const feeJpy = formData.shippingMethod === 'jp'
+    ? Math.round(shippingWeight * 900)
+    : 0;
+  const feeVnd = formData.shippingMethod === 'jp'
+    ? Math.round(feeJpy * exchangeRateValue)
+    : Number(formData.shippingFeeVnd) || 0;
+
+  const baseProduct = editingProduct
+    ? normalizePurchaseLots(editingProduct)
+    : {
+      id: Date.now().toString(),
+      purchaseLots: [],
+      stockByWarehouse: { daLat: 0, vinhPhuc: 0 },
+      stock: 0,
+    };
+
+  const existingStock = normalizeWarehouseStock(baseProduct);
+  const nextStockByWarehouse = {
+    ...existingStock,
+    [warehouseKey]: existingStock[warehouseKey] + quantityValue,
+  };
+
+  let nextProduct = {
+    ...baseProduct,
+    name: formData.name.trim(),
+    barcode: formData.barcode ? formData.barcode.trim() : '',
+    category: formData.category,
+    price: editingLotId ? baseProduct.price : Number(formData.price),
+    cost: costValue || getLatestCost(baseProduct),
+    image: formData.image,
+    stockByWarehouse: nextStockByWarehouse,
+    stock: nextStockByWarehouse.daLat + nextStockByWarehouse.vinhPhuc,
+  };
+
+  // Lưu lại từng lần nhập hàng thành "lô giá nhập" để quản lý tồn kho theo giá.
+  if (quantityValue > 0) {
+    const shippingInfo = {
+      method: formData.shippingMethod,
+      weightKg: formData.shippingMethod === 'jp' ? shippingWeight : 0,
+      feeJpy,
+      feeVnd,
+      exchangeRate: exchangeRateValue,
+    };
+    if (editingLotId) {
+      // Sửa lại thông tin của lô đã nhập.
+      const nextLots = nextProduct.purchaseLots.map((lot) => {
+        if (lot.id !== editingLotId) return lot;
+        return {
+          ...lot,
+          cost: costValue,
+          quantity: quantityValue,
+          warehouse: warehouseKey,
+          shipping: {
+            ...shippingInfo,
+            perUnitVnd: feeVnd,
+          },
+          priceAtPurchase: Number(formData.price) || 0,
+        };
+      });
+      const adjustedStock = nextLots.reduce(
+        (acc, lot) => {
+          const nextWarehouse = lot.warehouse || 'daLat';
+          const lotQty = Number(lot.quantity) || 0;
+          return {
+            ...acc,
+            [nextWarehouse]: (acc[nextWarehouse] || 0) + lotQty,
+          };
+        },
+        { daLat: 0, vinhPhuc: 0 },
+      );
+      nextProduct = {
+        ...nextProduct,
+        purchaseLots: nextLots,
+        stockByWarehouse: adjustedStock,
+        stock: adjustedStock.daLat + adjustedStock.vinhPhuc,
+        cost: getLatestCost({ ...nextProduct, purchaseLots: nextLots }),
+      };
+    } else {
+      nextProduct = addPurchaseLot(nextProduct, {
+        cost: costValue,
+        quantity: quantityValue,
+        warehouse: warehouseKey,
+        shipping: shippingInfo,
+        priceAtPurchase: Number(formData.price) || 0,
+      });
+    }
+  }
+
+  return nextProduct;
+};

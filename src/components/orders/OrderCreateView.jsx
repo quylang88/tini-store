@@ -1,7 +1,7 @@
 import React from 'react';
 import { ChevronRight, ScanBarcode, Image as ImageIcon, Plus, Minus, ShoppingCart, Search, X } from 'lucide-react';
 import BarcodeScanner from '../../components/BarcodeScanner';
-import { formatNumber } from '../../utils/helpers';
+import { formatInputNumber, formatNumber } from '../../utils/helpers';
 import { getWarehouseLabel, WAREHOUSES } from '../../utils/warehouseUtils';
 
 // Giao diện tạo/sửa đơn được tách riêng để Orders.jsx gọn hơn
@@ -13,6 +13,14 @@ const OrderCreateView = ({
   orderBeingEdited,
   selectedWarehouse,
   setSelectedWarehouse,
+  orderType,
+  setOrderType,
+  customerName,
+  setCustomerName,
+  customerAddress,
+  setCustomerAddress,
+  shippingFee,
+  setShippingFee,
   activeCategory,
   setActiveCategory,
   searchTerm,
@@ -256,8 +264,10 @@ const OrderCreateView = ({
               {reviewItems.map(item => (
                 <div key={item.id} className="flex justify-between text-sm text-gray-600">
                   <div className="min-w-0">
-                    <div className="font-semibold text-amber-900 truncate">{item.name}</div>
-                    <div className="text-xs text-gray-400">x{item.quantity}</div>
+                    <div className="flex items-center gap-2 text-amber-900">
+                      <span className="font-semibold truncate">{item.name}</span>
+                      <span className="text-xs text-gray-400">x{item.quantity}</span>
+                    </div>
                   </div>
                   <div className="font-semibold text-amber-700">
                     {formatNumber(item.price * item.quantity)}đ
@@ -267,9 +277,71 @@ const OrderCreateView = ({
               {reviewItems.length === 0 && (
                 <div className="text-sm text-gray-400 text-center">Chưa có sản phẩm nào.</div>
               )}
-              {/* Ghi chú giúp user nhớ lại tình trạng đơn */}
               <div className="space-y-2">
-                <label className="text-xs font-semibold text-amber-700">Ghi chú đơn hàng</label>
+                <label className="text-xs font-semibold text-amber-700">Loại đơn hàng</label>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setOrderType('delivery')}
+                    className={`flex-1 px-3 py-2 rounded-lg text-xs font-semibold border transition ${
+                      orderType === 'delivery'
+                        ? 'bg-amber-500 text-white border-amber-500'
+                        : 'bg-amber-50 text-amber-700 border-amber-200 hover:border-amber-300'
+                    }`}
+                  >
+                    Gửi khách
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setOrderType('warehouse')}
+                    className={`flex-1 px-3 py-2 rounded-lg text-xs font-semibold border transition ${
+                      orderType === 'warehouse'
+                        ? 'bg-amber-500 text-white border-amber-500'
+                        : 'bg-amber-50 text-amber-700 border-amber-200 hover:border-amber-300'
+                    }`}
+                  >
+                    Bán tại kho
+                  </button>
+                </div>
+              </div>
+              {orderType === 'delivery' ? (
+                <div className="space-y-2">
+                  <label className="text-xs font-semibold text-amber-700">Thông tin khách hàng</label>
+                  <input
+                    type="text"
+                    value={customerName}
+                    onChange={(e) => setCustomerName(e.target.value)}
+                    placeholder="Tên khách hàng"
+                    className="w-full border border-amber-200 rounded-xl px-3 py-2 text-sm text-amber-900 focus:outline-none focus:ring-2 focus:ring-rose-200"
+                  />
+                  <textarea
+                    value={customerAddress}
+                    onChange={(e) => setCustomerAddress(e.target.value)}
+                    placeholder="Địa chỉ giao hàng"
+                    rows={2}
+                    className="w-full border border-amber-200 rounded-xl px-3 py-2 text-sm text-amber-900 focus:outline-none focus:ring-2 focus:ring-rose-200"
+                  />
+                  <div>
+                    <label className="text-xs font-semibold text-amber-700">Phí gửi khách</label>
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      value={formatInputNumber(shippingFee)}
+                      onChange={(e) => setShippingFee(e.target.value)}
+                      placeholder="Ví dụ: 25,000"
+                      className="mt-1 w-full border border-amber-200 rounded-xl px-3 py-2 text-sm text-amber-900 focus:outline-none focus:ring-2 focus:ring-rose-200"
+                    />
+                  </div>
+                </div>
+              ) : (
+                <div className="rounded-xl border border-amber-100 bg-amber-50 px-3 py-2 text-xs text-amber-700">
+                  {/* Bán tại kho không cần thông tin khách hàng và phí gửi */}
+                  Đơn bán tại kho - không cần nhập thông tin khách và phí gửi.
+                </div>
+              )}
+              {/* Ghi chú để user nhớ lại tình trạng đơn, đặt cuối modal theo yêu cầu */}
+              <div className="space-y-2">
+                <label className="text-xs font-semibold text-amber-700">Ghi chú</label>
                 <textarea
                   value={orderComment}
                   onChange={(e) => setOrderComment(e.target.value)}

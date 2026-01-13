@@ -1,20 +1,23 @@
-import React, { useMemo } from 'react';
-import { BarChart3, ChevronRight, Layers3, TrendingUp, Wallet } from 'lucide-react';
+import React, { useMemo, useState } from 'react';
+import { BarChart3, ChevronRight, DollarSign, TrendingUp, Trophy } from 'lucide-react';
 import { formatNumber } from '../utils/helpers';
 import useDashboardLogic from '../hooks/useDashboardLogic';
 import { getLatestUnitCost } from '../utils/purchaseUtils';
 import MetricCard from '../components/stats/MetricCard';
 import OptionPills from '../components/stats/OptionPills';
+import RankBadge from '../components/stats/RankBadge';
+import TopListModal from '../components/stats/TopListModal';
+import DateRangeFilter from '../components/stats/DateRangeFilter';
 
 const StatsDetail = ({ products, orders, onBack }) => {
   const {
-    rangeOptions,
     topOptions,
     topLimit,
     setTopLimit,
-    activeRange,
-    setActiveRange,
     rangeStart,
+    rangeEnd,
+    customRange,
+    setCustomRange,
     rangeDays,
     paidOrders,
     filteredPaidOrders,
@@ -36,7 +39,7 @@ const StatsDetail = ({ products, orders, onBack }) => {
     // So sánh kỳ hiện tại với kỳ trước theo số ngày đang chọn (mặc định 30 ngày nếu "Tất cả").
     const compareDays = rangeDays ?? 30;
     const now = new Date();
-    const currentEnd = new Date(now);
+    const currentEnd = rangeEnd ? new Date(rangeEnd) : new Date(now);
     currentEnd.setHours(23, 59, 59, 999);
 
     const currentStart = rangeStart ? new Date(rangeStart) : (() => {
@@ -76,7 +79,15 @@ const StatsDetail = ({ products, orders, onBack }) => {
       current: calcStats(currentStart, currentEnd),
       previous: calcStats(previousStart, previousEnd),
     };
-  }, [paidOrders, rangeDays, rangeStart, costMap]);
+  }, [paidOrders, rangeDays, rangeStart, rangeEnd, costMap]);
+
+  const [activeModal, setActiveModal] = useState(null);
+
+  const openTopModal = (type) => setActiveModal(type);
+  const closeTopModal = () => setActiveModal(null);
+
+  const modalTitle = activeModal === 'quantity' ? 'Top số lượng' : 'Top lợi nhuận';
+  const modalItems = activeModal === 'quantity' ? topByQuantity : topByProfit;
 
   return (
     <div className="h-full overflow-y-auto p-4 space-y-4 pb-24 animate-fade-in">
@@ -87,23 +98,12 @@ const StatsDetail = ({ products, orders, onBack }) => {
 
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-3">
         {/* Bộ lọc thời gian chi tiết hơn để xem theo nhiều khoảng khác nhau. */}
-        <OptionPills
-          options={rangeOptions}
-          activeId={activeRange}
-          onChange={setActiveRange}
-          containerClassName="flex flex-wrap gap-2"
-          buttonClassName="px-3 py-1.5 rounded-full text-xs font-semibold border transition whitespace-nowrap"
-          activeClassName="bg-amber-500 text-white border-amber-400 shadow-sm"
-          inactiveClassName="bg-amber-50 text-amber-700 border-amber-100"
-        />
-        <div className="mt-2 text-[11px] text-amber-500">
-          Gợi ý: chọn 7 ngày để xem nhanh, 3-6 tháng để thấy xu hướng dài hơi.
-        </div>
+        <DateRangeFilter customRange={customRange} setCustomRange={setCustomRange} />
       </div>
 
       <div className="grid grid-cols-2 gap-3">
         <MetricCard
-          icon={Wallet}
+          icon={DollarSign}
           label="Doanh thu"
           value={`${formatNumber(totalRevenue)}đ`}
           className="bg-rose-400 shadow-rose-200"
@@ -135,8 +135,8 @@ const StatsDetail = ({ products, orders, onBack }) => {
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 space-y-3">
         <div className="flex items-center justify-between gap-2 text-amber-700">
           <div className="flex items-center gap-2">
-            <Layers3 size={18} />
-            <h3 className="text-sm font-bold uppercase">Phân rã lợi nhuận</h3>
+            <Trophy size={18} />
+            <h3 className="text-sm font-bold uppercase">Top bán chạy</h3>
           </div>
           <OptionPills
             options={topOptions}
@@ -149,30 +149,38 @@ const StatsDetail = ({ products, orders, onBack }) => {
           />
         </div>
         <div className="grid grid-cols-2 gap-3">
-          <div className="rounded-xl border border-rose-100 bg-rose-50/60 p-3">
+          <button
+            type="button"
+            onClick={() => openTopModal('profit')}
+            className="rounded-xl border border-rose-100 bg-rose-50/60 p-3 text-left transition hover:bg-rose-50 focus:outline-none"
+          >
             <div className="text-xs font-semibold uppercase text-rose-600 mb-2">Top lợi nhuận</div>
             <div className="space-y-2 text-sm text-rose-800">
-              {topByProfit.map(item => (
-                <div key={item.id || item.name} className="flex justify-between">
-                  <span>{item.name}</span>
-                  <span className="font-semibold">{formatNumber(item.profit)}đ</span>
+              {topByProfit.map((item, index) => (
+                <div key={item.id || item.name} className="flex items-center gap-2">
+                  <RankBadge rank={index + 1} />
+                  <span className="min-w-0 flex-1 truncate">{item.name}</span>
                 </div>
               ))}
               {topByProfit.length === 0 && <div className="text-xs text-rose-400">Chưa có dữ liệu</div>}
             </div>
-          </div>
-          <div className="rounded-xl border border-emerald-100 bg-emerald-50/60 p-3">
+          </button>
+          <button
+            type="button"
+            onClick={() => openTopModal('quantity')}
+            className="rounded-xl border border-emerald-100 bg-emerald-50/60 p-3 text-left transition hover:bg-emerald-50 focus:outline-none"
+          >
             <div className="text-xs font-semibold uppercase text-emerald-600 mb-2">Top số lượng</div>
             <div className="space-y-2 text-sm text-emerald-800">
-              {topByQuantity.map(item => (
-                <div key={item.id || item.name} className="flex justify-between">
-                  <span>{item.name}</span>
-                  <span className="font-semibold">x{item.quantity}</span>
+              {topByQuantity.map((item, index) => (
+                <div key={item.id || item.name} className="flex items-center gap-2">
+                  <RankBadge rank={index + 1} />
+                  <span className="min-w-0 flex-1 truncate">{item.name}</span>
                 </div>
               ))}
               {topByQuantity.length === 0 && <div className="text-xs text-emerald-400">Chưa có dữ liệu</div>}
             </div>
-          </div>
+          </button>
         </div>
       </div>
 
@@ -224,6 +232,15 @@ const StatsDetail = ({ products, orders, onBack }) => {
       >
         <ChevronRight className="rotate-180" />
       </button>
+
+      {/* Dùng modal chung để xem chi tiết top khi chạm vào từng bảng. */}
+      <TopListModal
+        open={Boolean(activeModal)}
+        onClose={closeTopModal}
+        title={modalTitle}
+        items={modalItems}
+        mode={activeModal === 'quantity' ? 'quantity' : 'profit'}
+      />
     </div>
   );
 };

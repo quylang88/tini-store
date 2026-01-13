@@ -1,11 +1,12 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { sanitizeNumberInput } from '../utils/helpers';
-import { normalizeWarehouseStock } from '../utils/warehouseUtils';
-import { getLatestUnitCost } from '../utils/purchaseUtils';
 import { syncProductsStock } from '../utils/orderStock';
+import useOrderCatalog from './orders/useOrderCatalog';
+import { buildCartFromItems } from './orders/orderDraftUtils';
 
-const DEFAULT_STATUS = 'pending';
+const DEFAULT_STATUS = 'shipping';
 const DEFAULT_WAREHOUSE = 'daLat';
+const DEFAULT_ORDER_TYPE = 'delivery';
 
 const useOrdersLogic = ({ products, setProducts, orders, setOrders }) => {
   const [view, setView] = useState('list');
@@ -15,12 +16,10 @@ const useOrdersLogic = ({ products, setProducts, orders, setOrders }) => {
   const [isReviewOpen, setIsReviewOpen] = useState(false);
   const [orderComment, setOrderComment] = useState('');
   const [confirmModal, setConfirmModal] = useState(null);
-  const [shippingModal, setShippingModal] = useState({
-    open: false,
-    fee: '',
-    orderId: null,
-    error: '',
-  });
+  const [orderType, setOrderType] = useState(DEFAULT_ORDER_TYPE);
+  const [customerName, setCustomerName] = useState('');
+  const [customerAddress, setCustomerAddress] = useState('');
+  const [shippingFee, setShippingFee] = useState('');
   const [selectedWarehouse, setSelectedWarehouse] = useState(DEFAULT_WAREHOUSE);
   const [activeCategory, setActiveCategory] = useState('Tất cả');
   const [searchTerm, setSearchTerm] = useState('');
@@ -29,52 +28,19 @@ const useOrdersLogic = ({ products, setProducts, orders, setOrders }) => {
   const isCreateView = view === 'create';
   const shouldShowDetailModal = view === 'list' && Boolean(selectedOrder);
 
-  const productMap = useMemo(
-    () => new Map(products.map((product) => [product.id, product])),
-    [products],
-  );
-
-  const getAvailableStock = (product, warehouseKey) => {
-    const warehouseStock = normalizeWarehouseStock(product);
-    const baseStock = warehouseKey === 'vinhPhuc' ? warehouseStock.vinhPhuc : warehouseStock.daLat;
-    if (!orderBeingEdited) return baseStock;
-    const orderWarehouse = orderBeingEdited.warehouse || DEFAULT_WAREHOUSE;
-    if (orderWarehouse !== warehouseKey) return baseStock;
-    const previousQty = orderBeingEdited.items.find(item => item.productId === product.id)?.quantity || 0;
-    return baseStock + previousQty;
-  };
-
-  const filteredProducts = useMemo(
-    () => products.filter((product) => {
-      const matchSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (product.barcode && product.barcode.includes(searchTerm));
-      const matchCategory = activeCategory === 'Tất cả' || product.category === activeCategory;
-      const availableStock = getAvailableStock(product, selectedWarehouse);
-      return matchSearch && matchCategory && availableStock > 0;
-    }),
-    [products, searchTerm, activeCategory, selectedWarehouse, orderBeingEdited],
-  );
-
-  const reviewItems = useMemo(() => Object.entries(cart)
-    .map(([productId, quantity]) => {
-      const product = productMap.get(productId);
-      if (!product) return null;
-      return {
-        id: product.id,
-        productId: product.id,
-        name: product.name,
-        price: product.price,
-        quantity,
-        // Giá vốn dùng cho đơn hàng cần gồm cả phí gửi/đơn vị.
-        cost: getLatestUnitCost(product),
-      };
-    })
-    .filter(Boolean), [cart, productMap]);
-
-  const totalAmount = useMemo(
-    () => reviewItems.reduce((sum, item) => sum + item.price * item.quantity, 0),
-    [reviewItems],
-  );
+  const {
+    getAvailableStock,
+    filteredProducts,
+    reviewItems,
+    totalAmount,
+  } = useOrderCatalog({
+    products,
+    cart,
+    searchTerm,
+    activeCategory,
+    selectedWarehouse,
+    orderBeingEdited,
+  });
 
   const clearDraft = () => {
     setCart({});
@@ -84,6 +50,11 @@ const useOrdersLogic = ({ products, setProducts, orders, setOrders }) => {
     setActiveCategory('Tất cả');
     setIsReviewOpen(false);
     setSelectedWarehouse(DEFAULT_WAREHOUSE);
+    // Reset thông tin gửi khách khi tạo đơn mới để tránh sót dữ liệu cũ.
+    setOrderType(DEFAULT_ORDER_TYPE);
+    setCustomerName('');
+    setCustomerAddress('');
+    setShippingFee('');
   };
 
   const handleQuantityChange = (productId, value, availableStock) => {
@@ -134,11 +105,6 @@ const useOrdersLogic = ({ products, setProducts, orders, setOrders }) => {
     setView('create');
   };
 
-  const buildCartFromItems = (items) => items.reduce((acc, item) => {
-    acc[item.productId] = item.quantity;
-    return acc;
-  }, {});
-
   // So sánh giỏ hiện tại với đơn gốc để biết user đã chỉnh sửa gì chưa.
   const hasDraftChanges = () => {
     if (!orderBeingEdited) {
@@ -152,8 +118,12 @@ const useOrdersLogic = ({ products, setProducts, orders, setOrders }) => {
     const isSameCart = currentKeys.length === originalKeys.length
       && currentKeys.every((key) => cart[key] === originalCart[key]);
     const isSameComment = orderComment.trim() === (orderBeingEdited.comment || '').trim();
+    const isSameOrderType = (orderBeingEdited.orderType || DEFAULT_ORDER_TYPE) === orderType;
+    const isSameCustomerName = (orderBeingEdited.customerName || '').trim() === customerName.trim();
+    const isSameCustomerAddress = (orderBeingEdited.customerAddress || '').trim() === customerAddress.trim();
+    const isSameShippingFee = Number(orderBeingEdited.shippingFee || 0) === Number(shippingFee || 0);
 
-    return !(isSameCart && isSameComment);
+    return !(isSameCart && isSameComment && isSameOrderType && isSameCustomerName && isSameCustomerAddress && isSameShippingFee);
   };
 
   const handleExitCreate = () => {
@@ -194,11 +164,25 @@ const useOrdersLogic = ({ products, setProducts, orders, setOrders }) => {
   };
 
   const getNextOrderNumber = () => {
-    const numbers = orders.map((order) => Number(order.orderNumber)).filter(Number.isFinite);
-    if (numbers.length === 0) {
-      return orders.length + 1;
+    // Tạo số đơn 4 chữ số ngẫu nhiên để thay thế STT tuần tự.
+    const usedNumbers = new Set(orders.map((order) => String(order.orderNumber)).filter(Boolean));
+    const generateNumber = () => String(Math.floor(1000 + Math.random() * 9000));
+    let nextNumber = generateNumber();
+    let attempts = 0;
+    while (usedNumbers.has(nextNumber) && attempts < 20) {
+      nextNumber = generateNumber();
+      attempts += 1;
     }
-    return Math.max(...numbers) + 1;
+    // Nếu trùng quá nhiều thì fallback về 4 số cuối của timestamp.
+    if (usedNumbers.has(nextNumber)) {
+      nextNumber = String(Date.now()).slice(-4);
+    }
+    return nextNumber;
+  };
+
+  const normalizeShippingFee = () => {
+    // Chỉ tính phí gửi khi đơn là gửi khách, còn bán tại kho thì 0.
+    return orderType === 'delivery' ? Number(shippingFee || 0) : 0;
   };
 
 
@@ -215,6 +199,10 @@ const useOrdersLogic = ({ products, setProducts, orders, setOrders }) => {
       items: orderItems,
       total: totalAmount,
       warehouse: selectedWarehouse,
+      orderType,
+      customerName: customerName.trim(),
+      customerAddress: customerAddress.trim(),
+      shippingFee: normalizeShippingFee(),
     };
   };
 
@@ -223,7 +211,18 @@ const useOrdersLogic = ({ products, setProducts, orders, setOrders }) => {
       alert('Vui lòng chọn ít nhất 1 sản phẩm.');
       return;
     }
-    const { items, total, warehouse } = buildOrderPayload();
+    if (orderType === 'delivery' && (!customerName.trim() || !customerAddress.trim())) {
+      // Mở modal cảnh báo khi thiếu thông tin gửi khách.
+      setConfirmModal({
+        title: 'Thiếu thông tin khách hàng',
+        message: 'Vui lòng nhập tên và địa chỉ khách hàng trước khi tạo đơn.',
+        confirmLabel: 'Đã hiểu',
+        tone: 'danger',
+        onConfirm: () => setConfirmModal(null),
+      });
+      return;
+    }
+    const { items, total, warehouse, orderType: nextOrderType, customerName: nextCustomerName, customerAddress: nextCustomerAddress, shippingFee: nextShippingFee } = buildOrderPayload();
     const orderId = Date.now().toString();
     const newOrder = {
       id: orderId,
@@ -231,10 +230,12 @@ const useOrdersLogic = ({ products, setProducts, orders, setOrders }) => {
       items,
       total,
       warehouse,
+      orderType: nextOrderType,
+      customerName: nextCustomerName,
+      customerAddress: nextCustomerAddress,
       status: DEFAULT_STATUS,
       date: new Date().toISOString(),
-      shippingFee: 0,
-      shippingUpdated: false,
+      shippingFee: nextShippingFee,
       comment: orderComment.trim(),
     };
 
@@ -256,12 +257,28 @@ const useOrdersLogic = ({ products, setProducts, orders, setOrders }) => {
       return;
     }
 
-    const { items, total, warehouse } = buildOrderPayload();
+    if (orderType === 'delivery' && (!customerName.trim() || !customerAddress.trim())) {
+      // Khi sửa đơn gửi khách cũng cần đủ thông tin tên/địa chỉ.
+      setConfirmModal({
+        title: 'Thiếu thông tin khách hàng',
+        message: 'Vui lòng nhập tên và địa chỉ khách hàng trước khi cập nhật đơn.',
+        confirmLabel: 'Đã hiểu',
+        tone: 'danger',
+        onConfirm: () => setConfirmModal(null),
+      });
+      return;
+    }
+
+    const { items, total, warehouse, orderType: nextOrderType, customerName: nextCustomerName, customerAddress: nextCustomerAddress, shippingFee: nextShippingFee } = buildOrderPayload();
     const updatedOrder = {
       ...orderBeingEdited,
       items,
       total,
       warehouse,
+      orderType: nextOrderType,
+      customerName: nextCustomerName,
+      customerAddress: nextCustomerAddress,
+      shippingFee: nextShippingFee,
       comment: orderComment.trim(),
     };
 
@@ -282,6 +299,13 @@ const useOrdersLogic = ({ products, setProducts, orders, setOrders }) => {
     setOrderBeingEdited(order);
     setOrderComment(order.comment || '');
     setSelectedWarehouse(order.warehouse || DEFAULT_WAREHOUSE);
+    // Ưu tiên orderType đã lưu, nếu thiếu thì đoán theo thông tin giao hàng.
+    const inferredOrderType = order.orderType
+      || (order.customerName || order.customerAddress || order.shippingFee ? 'delivery' : 'warehouse');
+    setOrderType(inferredOrderType);
+    setCustomerName(order.customerName || '');
+    setCustomerAddress(order.customerAddress || '');
+    setShippingFee(order.shippingFee ? String(order.shippingFee) : '');
     setSelectedOrder(null);
     setSearchTerm('');
     setActiveCategory('Tất cả');
@@ -312,42 +336,20 @@ const useOrdersLogic = ({ products, setProducts, orders, setOrders }) => {
     });
   };
 
-  const handleCustomerShipping = (orderId) => {
-    const order = orders.find(item => item.id === orderId);
-    if (!order) return;
-    setShippingModal({
-      open: true,
-      fee: order.shippingFee ? String(order.shippingFee) : '',
-      orderId,
-      error: '',
-    });
+  const handleOrderTypeChange = (value) => {
+    setOrderType(value);
+    if (value === 'warehouse') {
+      // Chuyển sang bán tại kho thì xoá thông tin gửi khách và phí gửi.
+      setCustomerName('');
+      setCustomerAddress('');
+      setShippingFee('');
+    }
   };
 
-  const handleShippingChange = (value) => {
+  const handleShippingFeeChange = (value) => {
+    // Chỉ cho phép nhập số để đảm bảo phí gửi hợp lệ.
     const sanitized = sanitizeNumberInput(value);
-    setShippingModal((prev) => ({
-      ...prev,
-      fee: sanitized,
-      error: '',
-    }));
-  };
-
-  const handleShippingCancel = () => {
-    setShippingModal({ open: false, fee: '', orderId: null, error: '' });
-  };
-
-  const handleShippingConfirm = () => {
-    if (!shippingModal.orderId) return;
-    const shippingFee = Number(shippingModal.fee || 0);
-    setOrders((prev) => prev.map((order) => {
-      if (order.id !== shippingModal.orderId) return order;
-      return {
-        ...order,
-        shippingFee,
-        shippingUpdated: true,
-      };
-    }));
-    handleShippingCancel();
+    setShippingFee(sanitized);
   };
 
   const handleCancelOrder = (orderId) => {
@@ -379,17 +381,11 @@ const useOrdersLogic = ({ products, setProducts, orders, setOrders }) => {
         dotClass: 'bg-emerald-500',
       };
     }
-    if (order.shippingUpdated || order.shippingFee > 0) {
-      return {
-        label: 'Đã gửi khách',
-        badgeClass: 'border-sky-200 bg-sky-50 text-sky-600',
-        dotClass: 'bg-sky-500',
-      };
-    }
     return {
-      label: 'Chờ lên đơn',
-      badgeClass: 'border-amber-200 bg-amber-50 text-amber-600',
-      dotClass: 'bg-amber-500',
+      // Trạng thái mặc định là đang giao hàng theo yêu cầu mới.
+      label: 'Đang giao hàng',
+      badgeClass: 'border-sky-200 bg-sky-50 text-sky-600',
+      dotClass: 'bg-sky-500',
     };
   };
 
@@ -405,7 +401,14 @@ const useOrdersLogic = ({ products, setProducts, orders, setOrders }) => {
     setOrderComment,
     confirmModal,
     setConfirmModal,
-    shippingModal,
+    orderType,
+    setOrderType: handleOrderTypeChange,
+    customerName,
+    setCustomerName,
+    customerAddress,
+    setCustomerAddress,
+    shippingFee,
+    setShippingFee: handleShippingFeeChange,
     activeCategory,
     setActiveCategory,
     searchTerm,
@@ -423,13 +426,9 @@ const useOrdersLogic = ({ products, setProducts, orders, setOrders }) => {
     handleEditOrder,
     handleExitCreate,
     handleCancelDraft,
-    handleCustomerShipping,
     handleTogglePaid,
     handleCancelOrder,
     getOrderStatusInfo,
-    handleShippingChange,
-    handleShippingCancel,
-    handleShippingConfirm,
     selectedWarehouse,
     setSelectedWarehouse,
     isCreateView,
