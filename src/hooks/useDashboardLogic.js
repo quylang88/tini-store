@@ -8,14 +8,7 @@ const buildRangeOptions = (mode = 'dashboard') => {
   const yearLabel = `Năm ${now.getFullYear()}`;
 
   if (mode === 'detail') {
-    return [
-      { id: 'week', label: '7 ngày', days: 7 },
-      { id: 'month', label: '30 ngày', days: 30 },
-      { id: 'quarter', label: '3 tháng', days: 90 },
-      { id: 'half', label: '6 tháng', days: 180 },
-      { id: 'year', label: yearLabel, days: 365 },
-      { id: 'all', label: 'Tất cả', days: null },
-    ];
+    return [];
   }
 
   return [
@@ -31,8 +24,9 @@ const TOP_OPTIONS = [
 ];
 
 const useDashboardLogic = ({ products, orders, rangeMode = 'dashboard' }) => {
-  const [activeRange, setActiveRange] = useState('month');
+  const [activeRange, setActiveRange] = useState(rangeMode === 'detail' ? 'custom' : 'month');
   const [topLimit, setTopLimit] = useState(3);
+  const [customRange, setCustomRange] = useState({ start: null, end: null });
   const rangeOptions = useMemo(() => buildRangeOptions(rangeMode), [rangeMode]);
 
   // Map giá vốn theo sản phẩm để tính lợi nhuận ổn định
@@ -53,17 +47,41 @@ const useDashboardLogic = ({ products, orders, rangeMode = 'dashboard' }) => {
   );
 
   const rangeStart = useMemo(() => {
+    if (activeRange === 'custom') {
+      if (!customRange.start) return null;
+      const start = new Date(customRange.start);
+      start.setHours(0, 0, 0, 0);
+      return start;
+    }
     if (!activeOption.days) return null;
     const start = new Date();
     start.setHours(0, 0, 0, 0);
     start.setDate(start.getDate() - activeOption.days + 1);
     return start;
-  }, [activeOption]);
+  }, [activeOption, activeRange, customRange.start]);
+
+  const rangeEnd = useMemo(() => {
+    if (activeRange === 'custom') {
+      if (!customRange.end) return null;
+      const end = new Date(customRange.end);
+      end.setHours(23, 59, 59, 999);
+      return end;
+    }
+    if (!activeOption.days) return null;
+    const end = new Date();
+    end.setHours(23, 59, 59, 999);
+    return end;
+  }, [activeOption, activeRange, customRange.end]);
 
   const filteredPaidOrders = useMemo(() => {
-    if (!rangeStart) return paidOrders;
-    return paidOrders.filter(order => new Date(order.date) >= rangeStart);
-  }, [paidOrders, rangeStart]);
+    if (!rangeStart && !rangeEnd) return paidOrders;
+    return paidOrders.filter(order => {
+      const orderDate = new Date(order.date);
+      if (rangeStart && orderDate < rangeStart) return false;
+      if (rangeEnd && orderDate > rangeEnd) return false;
+      return true;
+    });
+  }, [paidOrders, rangeStart, rangeEnd]);
 
   const totalRevenue = useMemo(
     () => filteredPaidOrders.reduce((sum, order) => sum + order.total, 0),
@@ -136,8 +154,19 @@ const useDashboardLogic = ({ products, orders, rangeMode = 'dashboard' }) => {
     setTopLimit,
     activeRange,
     setActiveRange,
+    customRange,
+    setCustomRange,
     rangeStart,
-    rangeDays: activeOption?.days ?? null,
+    rangeEnd,
+    rangeDays: activeRange === 'custom' && rangeStart && rangeEnd
+      ? (() => {
+        const startDay = new Date(rangeStart);
+        const endDay = new Date(rangeEnd);
+        startDay.setHours(0, 0, 0, 0);
+        endDay.setHours(0, 0, 0, 0);
+        return Math.max(1, Math.round((endDay - startDay) / 86400000) + 1);
+      })()
+      : (activeOption?.days ?? null),
     paidOrders,
     filteredPaidOrders,
     totalRevenue,
