@@ -1,8 +1,13 @@
 import React, { useEffect } from 'react';
 import { Html5QrcodeScanner } from 'html5-qrcode';
+import useModalPresence from '../hooks/useModalPresence';
 
-const BarcodeScanner = ({ onScanSuccess, onClose }) => {
+const BarcodeScanner = ({ open, onScanSuccess, onClose }) => {
+  // Giữ modal trong DOM thêm một nhịp để chạy animation đóng.
+  const { isMounted, animationState } = useModalPresence(open, 280);
+
   useEffect(() => {
+    if (!open) return undefined;
     const scanner = new Html5QrcodeScanner(
       "reader",
       { fps: 10, qrbox: { width: 250, height: 250 } },
@@ -19,13 +24,18 @@ const BarcodeScanner = ({ onScanSuccess, onClose }) => {
     return () => {
       scanner.clear().catch(error => console.error("Failed to clear scanner", error));
     };
-  }, [onScanSuccess]);
+  }, [onScanSuccess, open]);
+
+  if (!isMounted) return null;
+
+  const overlayAnimationClass = animationState === 'enter' ? 'modal-overlay-enter' : 'modal-overlay-exit';
+  const panelAnimationClass = animationState === 'enter' ? 'modal-panel-enter' : 'modal-panel-exit';
 
   return (
     // Nâng z-index để khung quét luôn nổi trên modal thêm sản phẩm.
-    <div className="fixed inset-0 z-[80] bg-black/70 backdrop-blur-sm flex flex-col items-center justify-center p-4 modal-overlay-animate">
-      {/* Khung quét dùng animation chung để đồng bộ cảm giác mở modal. */}
-      <div className="w-full max-w-sm bg-white rounded-2xl shadow-xl p-4 modal-panel-animate">
+    <div className={`fixed inset-0 z-[80] bg-black/70 backdrop-blur-sm flex flex-col items-center justify-center p-4 ${overlayAnimationClass}`}>
+      {/* Khung quét dùng animation enter/exit để mở/đóng đều mượt. */}
+      <div className={`w-full max-w-sm bg-white rounded-2xl shadow-xl p-4 ${panelAnimationClass}`}>
         <div className="flex items-center justify-between mb-3">
           <h3 className="font-bold text-amber-900">Quét mã vạch</h3>
           <button

@@ -2,20 +2,28 @@ import React from 'react';
 import { formatNumber } from '../../utils/helpers';
 import { getWarehouseLabel } from '../../utils/warehouseUtils';
 import { getOrderDisplayName } from '../../utils/orderUtils';
+import useModalPresence from '../../hooks/useModalPresence';
 
 const OrderDetailModal = ({ order, onClose, getOrderStatusInfo }) => {
-  if (!order) return null;
+  // Giữ modal khi đóng để animation exit chạy xong trước khi unmount.
+  const { isMounted, animationState } = useModalPresence(Boolean(order), 280);
+  if (!isMounted || !order) return null;
   const orderLabel = order.orderNumber ? `#${order.orderNumber}` : `#${order.id.slice(-4)}`;
   // Gắn tên đơn theo thông tin khách hoặc bán tại kho để dễ nhận diện.
   const orderName = getOrderDisplayName(order);
   const statusInfo = getOrderStatusInfo?.(order);
   const warehouseLabel = getWarehouseLabel(order.warehouse || 'daLat');
+  const overlayAnimationClass = animationState === 'enter' ? 'modal-overlay-enter' : 'modal-overlay-exit';
+  const panelAnimationClass = animationState === 'enter' ? 'modal-panel-enter' : 'modal-panel-exit';
 
   return (
-    <div className="fixed inset-0 z-[90] flex items-end justify-center bg-black/40 p-4 modal-overlay-animate" onClick={onClose}>
-      {/* Overlay có animation để modal mở mượt, giữ trải nghiệm đồng bộ với các modal khác. */}
+    <div
+      className={`fixed inset-0 z-[90] flex items-end sm:items-center justify-center bg-black/40 p-4 backdrop-blur-sm ${overlayAnimationClass}`}
+      onClick={onClose}
+    >
+      {/* Dùng overlay blur và animation enter/exit để giống modal thêm mới/chi tiết sản phẩm. */}
       <div
-        className="w-full max-w-md bg-white rounded-2xl shadow-xl border border-amber-100 overflow-hidden modal-panel-animate"
+        className={`w-full sm:w-[420px] max-h-[90vh] bg-white rounded-t-2xl sm:rounded-2xl shadow-xl border border-amber-100 overflow-hidden ${panelAnimationClass}`}
         onClick={(event) => event.stopPropagation()}
       >
         <div className="p-4 border-b border-amber-100 bg-amber-50">
@@ -53,7 +61,7 @@ const OrderDetailModal = ({ order, onClose, getOrderStatusInfo }) => {
             </div>
           ))}
         </div>
-        <div className="p-4 border-t border-amber-100 bg-amber-50 space-y-2">
+        <div className="p-4 border-t border-amber-100 bg-amber-50 space-y-2 pb-[calc(env(safe-area-inset-bottom)+1rem)]">
           <div className="flex justify-between text-sm text-gray-500">
             <span>Tại kho</span>
             <span className="font-semibold text-amber-700">{warehouseLabel}</span>
@@ -80,9 +88,9 @@ const OrderDetailModal = ({ order, onClose, getOrderStatusInfo }) => {
           </div>
           <button
             onClick={onClose}
-            className="w-full py-2.5 rounded-xl bg-rose-500 text-white font-semibold shadow-md shadow-rose-200 active:bg-rose-600 transition"
+            className="w-full py-2.5 rounded-xl border border-amber-300 bg-amber-200 text-amber-900 font-semibold shadow-sm active:bg-amber-300 transition"
           >
-            Xác nhận
+            Đóng
           </button>
         </div>
       </div>

@@ -2,9 +2,15 @@ import React from 'react';
 import { formatNumber } from '../../utils/helpers';
 import { getLatestCost, getLatestLot } from '../../utils/purchaseUtils';
 import { getWarehouseLabel } from '../../utils/warehouseUtils';
+import useModalPresence from '../../hooks/useModalPresence';
 
 const ProductDetailModal = ({ product, onClose, onEditLot }) => {
-  if (!product) return null;
+  // Dùng hook để giữ modal khi đóng, giúp chạy animation exit mượt.
+  const { isMounted, animationState } = useModalPresence(Boolean(product), 280);
+  if (!isMounted || !product) return null;
+
+  const overlayAnimationClass = animationState === 'enter' ? 'modal-overlay-enter' : 'modal-overlay-exit';
+  const panelAnimationClass = animationState === 'enter' ? 'modal-panel-enter' : 'modal-panel-exit';
 
   const latestLot = getLatestLot(product);
   const latestCost = getLatestCost(product);
@@ -12,12 +18,12 @@ const ProductDetailModal = ({ product, onClose, onEditLot }) => {
 
   return (
     <div
-      className="fixed inset-0 bg-black/50 z-[70] flex items-end sm:items-center justify-center backdrop-blur-sm modal-overlay-animate"
+      className={`fixed inset-0 bg-black/50 z-[70] flex items-end sm:items-center justify-center backdrop-blur-sm ${overlayAnimationClass}`}
       onClick={onClose}
     >
-      {/* Overlay và panel dùng animation chung để hiệu ứng đồng nhất giữa các modal. */}
+      {/* Overlay và panel dùng animation enter/exit để hiệu ứng đồng nhất giữa các modal. */}
       <div
-        className="bg-white w-full sm:w-96 rounded-t-2xl sm:rounded-2xl p-5 pb-[calc(env(safe-area-inset-bottom)+1.25rem)] modal-panel-animate max-h-[90vh] overflow-y-auto"
+        className={`bg-white w-full sm:w-96 rounded-t-2xl sm:rounded-2xl p-5 pb-[calc(env(safe-area-inset-bottom)+1.25rem)] ${panelAnimationClass} max-h-[90vh] overflow-y-auto`}
         onClick={(event) => event.stopPropagation()}
       >
         <div className="flex justify-between items-center mb-4">
@@ -45,7 +51,7 @@ const ProductDetailModal = ({ product, onClose, onEditLot }) => {
                   key={lot.id}
                   type="button"
                   onClick={() => onEditLot?.(lot)}
-                  className="w-full text-left border border-amber-100 rounded-xl p-3 space-y-1 active:border-amber-200 active:bg-amber-50 transition"
+                  className="w-full text-left border border-amber-100 rounded-xl p-3 space-y-1 bg-amber-50 active:border-amber-200 active:bg-amber-100 transition"
                 >
                   <div className="flex items-center justify-between text-sm text-amber-800">
                     <span className="font-semibold">{formatNumber(lot.cost)}đ</span>
@@ -74,7 +80,7 @@ const ProductDetailModal = ({ product, onClose, onEditLot }) => {
         <button
           type="button"
           onClick={onClose}
-          className="mt-4 w-full rounded-xl border border-amber-200 bg-amber-50 py-2 text-sm font-semibold text-amber-800 transition active:border-amber-300 active:bg-amber-100"
+          className="mt-4 w-full rounded-xl border border-amber-300 bg-amber-200 py-2 text-sm font-semibold text-amber-900 transition active:border-amber-400 active:bg-amber-300"
         >
           Đóng
         </button>

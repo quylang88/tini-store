@@ -23,8 +23,16 @@ const TopListModal = ({ open, onClose, title, items, mode }) => {
   const valueLabel = mode === 'quantity' ? 'Số lượng' : 'Lợi nhuận';
 
   return (
-    <ModalShell open={open} onClose={onClose}>
-      <div className="flex max-h-[calc(100vh-140px)] min-h-0 flex-col overflow-hidden">
+    <ModalShell
+      open={open}
+      onClose={onClose}
+      align="end"
+      overlayClassName="backdrop-blur-sm"
+      panelClassName="w-full sm:w-[420px] rounded-t-2xl sm:rounded-2xl max-h-[90vh]"
+      paddingClassName="px-4 pb-4 pt-6"
+    >
+      {/* Dàn layout bottom sheet để giống modal thêm mới/chi tiết sản phẩm trên mobile. */}
+      <div className="flex min-h-0 flex-col overflow-hidden">
         <div className="p-4 pb-2">
           <div className="flex items-center justify-between gap-2">
             <h3 className={`text-sm font-bold uppercase ${tone.title}`}>{title}</h3>
@@ -57,6 +65,15 @@ const TopListModal = ({ open, onClose, title, items, mode }) => {
           {items.length === 0 && (
             <div className="text-center text-sm text-gray-400">Chưa có dữ liệu</div>
           )}
+        </div>
+        <div className="px-4 pb-[calc(env(safe-area-inset-bottom)+1rem)]">
+          <button
+            type="button"
+            onClick={onClose}
+            className="w-full rounded-xl border border-amber-300 bg-amber-200 py-2 text-sm font-semibold text-amber-900 transition active:bg-amber-300"
+          >
+            Đóng
+          </button>
         </div>
       </div>
     </ModalShell>

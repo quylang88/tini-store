@@ -28,6 +28,15 @@
   }
 }
 
+@keyframes modal-overlay-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
 @keyframes modal-panel-in {
   from {
     opacity: 0;
@@ -39,12 +48,31 @@
   }
 }
 
-.modal-overlay-animate {
-  animation: modal-overlay-in 0.25s ease-out;
+@keyframes modal-panel-out {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(16px) scale(0.97);
+  }
 }
 
-.modal-panel-animate {
-  animation: modal-panel-in 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+.modal-overlay-enter {
+  animation: modal-overlay-in 0.25s ease-out forwards;
+}
+
+.modal-overlay-exit {
+  animation: modal-overlay-out 0.2s ease-in forwards;
+}
+
+.modal-panel-enter {
+  animation: modal-panel-in 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.modal-panel-exit {
+  animation: modal-panel-out 0.2s ease-in forwards;
 }
 
 /* Hiệu ứng chuyển cảnh riêng cho danh sách khi đổi filter. */
@@ -61,4 +89,11 @@
 
 .filter-transition {
   animation: filter-change 0.2s ease-out;
+}
+
+/* Ẩn tabbar khi vào màn tạo/sửa đơn để chuyển cảnh mượt, tránh nháy. */
+.tabbar-hidden .app-tabbar {
+  opacity: 0;
+  transform: translateY(110%);
+  pointer-events: none;
 }

@@ -52,7 +52,8 @@ const Inventory = ({ products, setProducts, settings }) => {
 
   return (
     <div className="flex flex-col h-full bg-transparent">
-      {showScanner && <BarcodeScanner onScanSuccess={handleScanSuccess} onClose={() => setShowScanner(false)} />}
+      {/* Dùng prop open để modal quét mã có thể chạy animation đóng. */}
+      <BarcodeScanner open={showScanner} onScanSuccess={handleScanSuccess} onClose={() => setShowScanner(false)} />
 
       {/* Tách phần header & tab danh mục để Inventory gọn hơn */}
       <InventoryHeader

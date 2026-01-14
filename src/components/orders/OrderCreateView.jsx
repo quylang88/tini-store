@@ -6,6 +6,7 @@ import { formatInputNumber, formatNumber } from '../../utils/helpers';
 import { getWarehouseLabel, WAREHOUSES } from '../../utils/warehouseUtils';
 import FloatingBackButton from '../common/FloatingBackButton';
 import useFilterTransition from '../../hooks/useFilterTransition';
+import useModalPresence from '../../hooks/useModalPresence';
 
 // Giao diện tạo/sửa đơn được tách riêng để Orders.jsx gọn hơn
 const OrderCreateView = ({
@@ -47,6 +48,8 @@ const OrderCreateView = ({
   const categories = settings?.categories || ['Chung'];
   // Khi filter tìm kiếm/danh mục/kho thay đổi thì list remount để có animation.
   const listTransition = useFilterTransition([searchTerm, activeCategory, selectedWarehouse]);
+  // Giữ modal tổng đơn khi đóng để animation exit chạy mượt.
+  const reviewModalPresence = useModalPresence(isReviewOpen, 280);
 
   // Khi đang sửa đơn, cộng lại số lượng cũ để hiển thị tồn kho chính xác
   const getAvailableStock = (productId, stock) => {
@@ -59,7 +62,8 @@ const OrderCreateView = ({
 
   return (
     <div className="flex flex-col h-full bg-transparent pb-safe-area relative">
-      {showScanner && <BarcodeScanner onScanSuccess={handleScanForSale} onClose={() => setShowScanner(false)} />}
+      {/* Dùng prop open để modal quét mã vẫn chạy animation đóng khi ẩn. */}
+      <BarcodeScanner open={showScanner} onScanSuccess={handleScanForSale} onClose={() => setShowScanner(false)} />
 
       {/* Header Cố định */}
       <div className="bg-amber-50/90 sticky top-0 z-10 shadow-sm backdrop-blur">
@@ -240,10 +244,17 @@ const OrderCreateView = ({
         </div>
       )}
 
-      {isReviewOpen && (
-        <div className="fixed inset-0 z-[80] flex items-end justify-center bg-black/40 p-4" onClick={handleCloseReview}>
+      {reviewModalPresence.isMounted && (
+        <div
+          className={`fixed inset-0 z-[80] flex items-end justify-center bg-black/40 p-4 ${
+            reviewModalPresence.animationState === 'enter' ? 'modal-overlay-enter' : 'modal-overlay-exit'
+          }`}
+          onClick={handleCloseReview}
+        >
           <div
-            className="w-full max-w-md bg-white rounded-2xl shadow-xl border border-amber-100 overflow-hidden"
+            className={`w-full max-w-md bg-white rounded-2xl shadow-xl border border-amber-100 overflow-hidden ${
+              reviewModalPresence.animationState === 'enter' ? 'modal-panel-enter' : 'modal-panel-exit'
+            }`}
             onClick={(e) => e.stopPropagation()}
           >
             <div className="p-4 border-b border-amber-100 bg-amber-50">

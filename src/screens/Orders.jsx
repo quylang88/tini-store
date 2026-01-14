@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useLayoutEffect } from 'react';
 // Tách giao diện tạo đơn/danh sách đơn để file Orders.jsx gọn hơn
 import OrderCreateView from '../components/orders/OrderCreateView';
 import OrderListView from '../components/orders/OrderListView';
@@ -56,6 +56,17 @@ const Orders = ({ products, setProducts, orders, setOrders, settings }) => {
     isCreateView,
     shouldShowDetailModal,
   } = useOrdersLogic({ products, setProducts, orders, setOrders });
+
+  useLayoutEffect(() => {
+    // Khi vào màn tạo/sửa đơn thì ẩn tabbar bằng class, giúp tabbar biến mất mượt.
+    if (isCreateView) {
+      document.body.classList.add('tabbar-hidden');
+    } else {
+      document.body.classList.remove('tabbar-hidden');
+    }
+
+    return () => document.body.classList.remove('tabbar-hidden');
+  }, [isCreateView]);
 
   const renderContent = () => {
     if (isCreateView) {

@@ -2,6 +2,7 @@ import React, { useRef } from 'react';
 import { ScanBarcode, Upload, X, Camera } from 'lucide-react';
 import { formatInputNumber, formatNumber } from '../../utils/helpers';
 import { getWarehouseLabel } from '../../utils/warehouseUtils';
+import useModalPresence from '../../hooks/useModalPresence';
 
 const ProductModal = ({
   isOpen,
@@ -37,9 +38,14 @@ const ProductModal = ({
   const finalProfit = (Number(formData.price) || 0) - (Number(formData.cost) || 0) - shippingFeeVnd;
   const isEditingLot = Boolean(editingProduct && editingLotId);
   const modalTitle = isEditingLot ? 'Sửa Lần Nhập Hàng' : 'Thêm Mới';
-  if (!isOpen) {
+  // Giữ modal trong DOM khi đóng để animation exit chạy mượt.
+  const { isMounted, animationState } = useModalPresence(isOpen, 280);
+  if (!isMounted) {
     return null;
   }
+
+  const overlayAnimationClass = animationState === 'enter' ? 'modal-overlay-enter' : 'modal-overlay-exit';
+  const panelAnimationClass = animationState === 'enter' ? 'modal-panel-enter' : 'modal-panel-exit';
 
   const handleImageChange = (event) => {
     const file = event.target.files?.[0];
@@ -50,9 +56,9 @@ const ProductModal = ({
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 z-[70] flex items-end sm:items-center justify-center backdrop-blur-sm modal-overlay-animate">
-      {/* Dùng class animation chung để modal mở mượt, tránh lặp logic ở từng modal. */}
-      <div className="bg-white w-full sm:w-96 rounded-t-2xl sm:rounded-2xl p-5 pb-[calc(env(safe-area-inset-bottom)+1.25rem)] modal-panel-animate max-h-[90vh] overflow-y-auto">
+    <div className={`fixed inset-0 bg-black/50 z-[70] flex items-end sm:items-center justify-center backdrop-blur-sm ${overlayAnimationClass}`}>
+      {/* Dùng class animation enter/exit để modal mở và đóng đều mượt. */}
+      <div className={`bg-white w-full sm:w-96 rounded-t-2xl sm:rounded-2xl p-5 pb-[calc(env(safe-area-inset-bottom)+1.25rem)] ${panelAnimationClass} max-h-[90vh] overflow-y-auto`}>
         <div className="flex justify-between items-center mb-5">
           <h3 className="font-bold text-lg text-amber-900">{modalTitle}</h3>
           <button onClick={onClose} className="bg-amber-100 p-1.5 rounded-full"><X size={18} /></button>
