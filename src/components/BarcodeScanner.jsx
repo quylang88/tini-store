@@ -23,14 +23,15 @@ const BarcodeScanner = ({ onScanSuccess, onClose }) => {
 
   return (
     // Nâng z-index để khung quét luôn nổi trên modal thêm sản phẩm.
-    <div className="fixed inset-0 z-[80] bg-black/70 backdrop-blur-sm flex flex-col items-center justify-center p-4">
-      <div className="w-full max-w-sm bg-white rounded-2xl shadow-xl p-4">
+    <div className="fixed inset-0 z-[80] bg-black/70 backdrop-blur-sm flex flex-col items-center justify-center p-4 modal-overlay-animate">
+      {/* Khung quét dùng animation chung để đồng bộ cảm giác mở modal. */}
+      <div className="w-full max-w-sm bg-white rounded-2xl shadow-xl p-4 modal-panel-animate">
         <div className="flex items-center justify-between mb-3">
           <h3 className="font-bold text-amber-900">Quét mã vạch</h3>
           <button
             type="button"
             onClick={onClose}
-            className="text-amber-700 hover:text-amber-900 text-sm font-semibold"
+            className="text-amber-700 active:text-amber-900 text-sm font-semibold"
           >
             Đóng
           </button>

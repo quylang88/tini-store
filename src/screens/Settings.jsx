@@ -71,7 +71,7 @@ const Settings = ({
                   fetchOnlineRate();
                 }}
                 disabled={isFetchingRate}
-                className="bg-rose-50 text-rose-600 px-4 py-2 rounded-lg font-medium text-sm flex flex-col items-center justify-center min-w-[80px] hover:bg-rose-100 transition"
+                className="bg-rose-50 text-rose-600 px-4 py-2 rounded-lg font-medium text-sm flex flex-col items-center justify-center min-w-[80px] active:bg-rose-100 transition"
               >
                 {isFetchingRate ? (
                   <RefreshCw size={20} className="animate-spin" />
@@ -101,7 +101,7 @@ const Settings = ({
             />
             <button
               onClick={handleAddCategory}
-              className="bg-rose-500 text-white w-12 h-10 rounded-lg flex items-center justify-center hover:bg-rose-600 active:scale-95 transition"
+              className="bg-rose-500 text-white w-12 h-10 rounded-lg flex items-center justify-center active:bg-rose-600 active:scale-95 transition"
             >
               <Plus size={24} />
             </button>
@@ -112,10 +112,10 @@ const Settings = ({
               <div key={cat} className="bg-gray-100 text-amber-800 px-3 py-1.5 rounded-full text-sm flex items-center gap-2 border border-gray-200">
                 {cat}
                 {cat !== 'Chung' && (
-                  <button
-                    onClick={() => handleDeleteCategory(cat)}
-                    className="text-amber-500 hover:text-red-500 p-0.5 rounded-full hover:bg-gray-200 transition"
-                  >
+                    <button
+                      onClick={() => handleDeleteCategory(cat)}
+                      className="text-amber-500 active:text-red-500 p-0.5 rounded-full active:bg-gray-200 transition"
+                    >
                     <X size={14} />
                   </button>
                 )}
@@ -132,7 +132,7 @@ const Settings = ({
 
           <button
             onClick={exportData}
-            className="w-full flex items-center justify-center gap-2 bg-rose-50 text-rose-700 py-3 rounded-xl font-bold hover:bg-rose-100 transition border border-rose-100"
+            className="w-full flex items-center justify-center gap-2 bg-rose-50 text-rose-700 py-3 rounded-xl font-bold active:bg-rose-100 transition border border-rose-100"
           >
             <Download size={20} /> Tải Dữ Liệu Về Máy (Backup)
           </button>
@@ -153,7 +153,7 @@ const Settings = ({
               className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
               accept=".json"
             />
-            <button className="w-full flex items-center justify-center gap-2 bg-gray-100 text-amber-800 py-3 rounded-xl font-bold group-hover:bg-gray-200 transition border border-gray-200">
+            <button className="w-full flex items-center justify-center gap-2 bg-gray-100 text-amber-800 py-3 rounded-xl font-bold group-active:bg-gray-200 transition border border-gray-200">
               <Upload size={20} /> Khôi Phục Dữ Liệu (Restore)
             </button>
           </div>
@@ -162,7 +162,7 @@ const Settings = ({
         {/* 4. Nút Đăng Xuất */}
         <button
           onClick={onLogout}
-          className="w-full bg-red-50 text-red-600 py-3.5 rounded-2xl font-bold flex items-center justify-center gap-2 hover:bg-red-100 transition active:scale-95 border border-red-100 mt-4"
+          className="w-full bg-red-50 text-red-600 py-3.5 rounded-2xl font-bold flex items-center justify-center gap-2 active:bg-red-100 transition active:scale-95 border border-red-100 mt-4"
         >
           <LogOut size={20} /> Đăng Xuất
         </button>

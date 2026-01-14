@@ -12,9 +12,10 @@ const OrderDetailModal = ({ order, onClose, getOrderStatusInfo }) => {
   const warehouseLabel = getWarehouseLabel(order.warehouse || 'daLat');
 
   return (
-    <div className="fixed inset-0 z-[90] flex items-end justify-center bg-black/40 p-4" onClick={onClose}>
+    <div className="fixed inset-0 z-[90] flex items-end justify-center bg-black/40 p-4 modal-overlay-animate" onClick={onClose}>
+      {/* Overlay có animation để modal mở mượt, giữ trải nghiệm đồng bộ với các modal khác. */}
       <div
-        className="w-full max-w-md bg-white rounded-2xl shadow-xl border border-amber-100 overflow-hidden"
+        className="w-full max-w-md bg-white rounded-2xl shadow-xl border border-amber-100 overflow-hidden modal-panel-animate"
         onClick={(event) => event.stopPropagation()}
       >
         <div className="p-4 border-b border-amber-100 bg-amber-50">
@@ -79,7 +80,7 @@ const OrderDetailModal = ({ order, onClose, getOrderStatusInfo }) => {
           </div>
           <button
             onClick={onClose}
-            className="w-full py-2.5 rounded-xl bg-rose-500 text-white font-semibold shadow-md shadow-rose-200 hover:bg-rose-600 transition"
+            className="w-full py-2.5 rounded-xl bg-rose-500 text-white font-semibold shadow-md shadow-rose-200 active:bg-rose-600 transition"
           >
             Xác nhận
           </button>

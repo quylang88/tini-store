@@ -13,8 +13,8 @@ const ConfirmModal = ({
   onCancel
 }) => {
   const toneClass = tone === 'danger'
-    ? 'bg-red-500 text-white hover:bg-red-600 shadow-red-200'
-    : 'bg-rose-500 text-white hover:bg-rose-600 shadow-rose-200';
+    ? 'bg-red-500 text-white active:bg-red-600 shadow-red-200'
+    : 'bg-rose-500 text-white active:bg-rose-600 shadow-rose-200';
 
   return (
     <ModalShell open={open} onClose={onCancel}>
@@ -26,7 +26,7 @@ const ConfirmModal = ({
         <div className="flex gap-2">
           <button
             onClick={onCancel}
-            className="flex-1 py-2.5 rounded-xl border border-amber-200 text-amber-700 font-semibold bg-white hover:bg-amber-50 transition"
+            className="flex-1 py-2.5 rounded-xl border border-amber-200 text-amber-700 font-semibold bg-white active:bg-amber-50 transition"
           >
             {cancelLabel}
           </button>

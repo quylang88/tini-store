@@ -4,6 +4,7 @@ import OrderCreateView from '../components/orders/OrderCreateView';
 import OrderListView from '../components/orders/OrderListView';
 import OrderDetailModal from '../components/orders/OrderDetailModal';
 import ConfirmModalHost from '../components/modals/ConfirmModalHost';
+import ScreenTransition from '../components/common/ScreenTransition';
 import useOrdersLogic from '../hooks/useOrdersLogic';
 
 const Orders = ({ products, setProducts, orders, setOrders, settings }) => {
@@ -126,7 +127,10 @@ const Orders = ({ products, setProducts, orders, setOrders, settings }) => {
 
   return (
     <>
-      {renderContent()}
+      {/* Bọc 2 trạng thái tạo đơn/danh sách để chuyển cảnh mượt khi đổi view. */}
+      <ScreenTransition key={isCreateView ? 'orders-create' : 'orders-list'} className="h-full">
+        {renderContent()}
+      </ScreenTransition>
       {/* Modal chung cho các hành động xác nhận/nhập phí gửi */}
       <ConfirmModalHost
         modal={confirmModal}

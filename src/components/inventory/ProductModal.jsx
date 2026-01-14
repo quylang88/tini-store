@@ -50,8 +50,9 @@ const ProductModal = ({
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 z-[70] flex items-end sm:items-center justify-center backdrop-blur-sm">
-      <div className="bg-white w-full sm:w-96 rounded-t-2xl sm:rounded-2xl p-5 pb-[calc(env(safe-area-inset-bottom)+1.25rem)] animate-slide-up max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 bg-black/50 z-[70] flex items-end sm:items-center justify-center backdrop-blur-sm modal-overlay-animate">
+      {/* Dùng class animation chung để modal mở mượt, tránh lặp logic ở từng modal. */}
+      <div className="bg-white w-full sm:w-96 rounded-t-2xl sm:rounded-2xl p-5 pb-[calc(env(safe-area-inset-bottom)+1.25rem)] modal-panel-animate max-h-[90vh] overflow-y-auto">
         <div className="flex justify-between items-center mb-5">
           <h3 className="font-bold text-lg text-amber-900">{modalTitle}</h3>
           <button onClick={onClose} className="bg-amber-100 p-1.5 rounded-full"><X size={18} /></button>
@@ -74,14 +75,14 @@ const ProductModal = ({
               {/* Dùng label để trình duyệt mở đúng luồng chọn file */}
               <label
                 htmlFor="inventory-upload"
-                className="w-full border border-amber-200 rounded-lg py-2 text-xs font-semibold text-amber-700 flex items-center justify-center gap-2 hover:border-rose-400 hover:text-rose-600 cursor-pointer"
+                className="w-full border border-amber-200 rounded-lg py-2 text-xs font-semibold text-amber-700 flex items-center justify-center gap-2 active:border-rose-400 active:text-rose-600 cursor-pointer"
               >
                 <Upload size={16} /> Tải ảnh
               </label>
               {/* Dùng label để ưu tiên mở camera trên thiết bị hỗ trợ */}
               <label
                 htmlFor="inventory-camera"
-                className="w-full border border-amber-200 rounded-lg py-2 text-xs font-semibold text-amber-700 flex items-center justify-center gap-2 hover:border-rose-400 hover:text-rose-600 cursor-pointer"
+                className="w-full border border-amber-200 rounded-lg py-2 text-xs font-semibold text-amber-700 flex items-center justify-center gap-2 active:border-rose-400 active:text-rose-600 cursor-pointer"
               >
                 <Camera size={16} /> Chụp ảnh
               </label>
@@ -148,7 +149,7 @@ const ProductModal = ({
                     key={product.id}
                     type="button"
                     onClick={() => onSelectExistingProduct(product)}
-                    className="w-full text-left px-3 py-2 text-sm text-amber-900 hover:bg-amber-50 flex items-center justify-between"
+                    className="w-full text-left px-3 py-2 text-sm text-amber-900 active:bg-amber-50 flex items-center justify-between"
                   >
                     <span className="font-medium">{product.name}</span>
                     <span className="text-[10px] text-amber-500">{formatNumber(product.price)}đ</span>
@@ -169,7 +170,7 @@ const ProductModal = ({
                   className={`px-2 py-1 text-[10px] font-semibold rounded border transition ${
                     formData.costCurrency === 'JPY'
                       ? 'bg-amber-500 text-white border-amber-500'
-                      : 'bg-transparent text-amber-700 border-amber-200 hover:border-rose-400'
+                      : 'bg-transparent text-amber-700 border-amber-200 active:border-rose-400'
                   }`}
                 >
                   Theo Yên
@@ -180,7 +181,7 @@ const ProductModal = ({
                   className={`px-2 py-1 text-[10px] font-semibold rounded border transition ${
                     formData.costCurrency === 'VND'
                       ? 'bg-amber-500 text-white border-amber-500'
-                      : 'bg-transparent text-amber-700 border-amber-200 hover:border-rose-400'
+                      : 'bg-transparent text-amber-700 border-amber-200 active:border-rose-400'
                   }`}
                 >
                   Theo VNĐ
@@ -243,7 +244,7 @@ const ProductModal = ({
                   className={`px-2 py-1 text-[10px] font-semibold rounded border transition ${
                     formData.shippingMethod === 'jp'
                       ? 'bg-amber-500 text-white border-amber-500'
-                      : 'bg-transparent text-amber-700 border-amber-200 hover:border-rose-400'
+                      : 'bg-transparent text-amber-700 border-amber-200 active:border-rose-400'
                   }`}
                 >
                   Mua tại Nhật
@@ -254,7 +255,7 @@ const ProductModal = ({
                   className={`px-2 py-1 text-[10px] font-semibold rounded border transition ${
                     formData.shippingMethod === 'vn'
                       ? 'bg-amber-500 text-white border-amber-500'
-                      : 'bg-transparent text-amber-700 border-amber-200 hover:border-rose-400'
+                      : 'bg-transparent text-amber-700 border-amber-200 active:border-rose-400'
                   }`}
                 >
                   Mua tại VN
@@ -307,7 +308,7 @@ const ProductModal = ({
                     className={`px-2 py-1 text-[10px] font-semibold rounded border transition ${
                       formData.warehouse === warehouse.key
                         ? 'bg-amber-500 text-white border-amber-500'
-                        : 'bg-transparent text-amber-700 border-amber-200 hover:border-rose-400'
+                        : 'bg-transparent text-amber-700 border-amber-200 active:border-rose-400'
                     }`}
                   >
                     {warehouse.label}
@@ -372,7 +373,7 @@ const ProductModal = ({
             <button
               type="button"
               onClick={onClose}
-              className="w-full border border-amber-200 text-amber-700 py-3 rounded-xl font-bold shadow-sm hover:bg-amber-50 active:scale-95 transition"
+              className="w-full border border-amber-200 text-amber-700 py-3 rounded-xl font-bold shadow-sm active:bg-amber-50 active:scale-95 transition"
             >
               Huỷ
             </button>

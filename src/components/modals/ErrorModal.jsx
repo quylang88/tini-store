@@ -12,7 +12,7 @@ const ErrorModal = ({ open, title, message, onClose }) => {
         {message && <div className="text-sm text-gray-600 leading-relaxed">{message}</div>}
         <button
           onClick={onClose}
-          className="w-full py-2.5 rounded-xl bg-rose-500 text-white font-semibold shadow-md shadow-rose-200 hover:bg-rose-600 transition"
+          className="w-full py-2.5 rounded-xl bg-rose-500 text-white font-semibold shadow-md shadow-rose-200 active:bg-rose-600 transition"
         >
           Đã hiểu
         </button>

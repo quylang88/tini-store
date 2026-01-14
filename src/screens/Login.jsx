@@ -78,7 +78,7 @@ const Login = ({ onLogin }) => {
               className="flex items-center gap-2 cursor-pointer group"
               onClick={() => setRemember(!remember)}
             >
-              <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${remember ? 'bg-rose-500 border-rose-500' : 'bg-white border-rose-200 group-hover:border-rose-400'}`}>
+              <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${remember ? 'bg-rose-500 border-rose-500' : 'bg-white border-rose-200 group-active:border-rose-400'}`}>
                 {remember && <CheckSquare size={14} className="text-white" />}
               </div>
               <span className="text-sm text-amber-700 select-none">Lưu thông tin đăng nhập</span>
@@ -89,7 +89,7 @@ const Login = ({ onLogin }) => {
               className="w-full bg-gradient-to-r from-rose-500 via-orange-400 to-amber-400 text-white py-3.5 rounded-xl font-bold text-lg shadow-lg shadow-rose-200 active:scale-95 transition flex items-center justify-center gap-2 group"
             >
               Đăng Nhập
-              <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
+              <ArrowRight size={20} className="group-active:translate-x-1 transition-transform" />
             </button>
           </form>
         </div>
