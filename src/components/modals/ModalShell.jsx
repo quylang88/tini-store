@@ -16,13 +16,17 @@ const ModalShell = ({
   const alignClass = align === 'start' ? 'items-start' : 'items-center';
 
   return createPortal(
-    <div className="fixed inset-0 z-[90] bg-black/40" onClick={onClose}>
+    <div
+      className="fixed inset-0 z-[90] bg-black/40 modal-overlay-animate"
+      onClick={onClose}
+    >
       {/* Bọc thêm lớp full-height để overlay phủ kín, tránh hở lớp nền ở đỉnh màn hình. */}
       <div className={`flex min-h-full justify-center ${paddingClassName} ${alignClass} ${containerClassName}`}>
         <div
-          className={`w-full max-w-md bg-white rounded-2xl shadow-xl border border-amber-100 overflow-hidden ${panelClassName}`}
+          className={`w-full max-w-md bg-white rounded-2xl shadow-xl border border-amber-100 overflow-hidden modal-panel-animate ${panelClassName}`}
           onClick={(e) => e.stopPropagation()}
         >
+          {/* Panel modal dùng chung, đã gắn animation để tránh lặp logic ở từng modal */}
           {children}
         </div>
       </div>

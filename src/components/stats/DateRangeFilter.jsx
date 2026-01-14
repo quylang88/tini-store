@@ -163,7 +163,7 @@ const DateRangeFilter = ({ customRange, setCustomRange }) => {
                 <button
                   type="button"
                   onClick={() => setCalendarMonth(month => new Date(month.getFullYear(), month.getMonth() - 1, 1))}
-                  className="rounded-full px-2 py-1 text-amber-500 hover:bg-amber-50"
+                  className="rounded-full px-2 py-1 text-amber-500 active:bg-amber-50"
                 >
                   ‹
                 </button>
@@ -173,7 +173,7 @@ const DateRangeFilter = ({ customRange, setCustomRange }) => {
                 <button
                   type="button"
                   onClick={() => setCalendarMonth(month => new Date(month.getFullYear(), month.getMonth() + 1, 1))}
-                  className="rounded-full px-2 py-1 text-amber-500 hover:bg-amber-50"
+                  className="rounded-full px-2 py-1 text-amber-500 active:bg-amber-50"
                 >
                   ›
                 </button>
@@ -204,8 +204,8 @@ const DateRangeFilter = ({ customRange, setCustomRange }) => {
                       onClick={() => handleDateSelect(date)}
                       className={[
                         'rounded-lg px-2 py-1 text-center transition',
-                        inRange ? 'bg-amber-100 text-amber-900' : 'text-amber-700 hover:bg-amber-50',
-                        isStart || isEnd ? 'bg-amber-500 text-white hover:bg-amber-500' : '',
+                        inRange ? 'bg-amber-100 text-amber-900' : 'text-amber-700 active:bg-amber-50',
+                        isStart || isEnd ? 'bg-amber-500 text-white active:bg-amber-500' : '',
                         isToday && !isStart && !isEnd ? 'border border-amber-400 font-semibold' : '',
                       ].filter(Boolean).join(' ')}
                     >
@@ -251,7 +251,7 @@ const DateRangeFilter = ({ customRange, setCustomRange }) => {
       <button
         type="button"
         onClick={handleReset}
-        className="w-full rounded-lg border border-amber-200 bg-white px-3 py-2 text-xs font-semibold text-amber-700 transition hover:bg-amber-50"
+        className="w-full rounded-lg border border-amber-200 bg-white px-3 py-2 text-xs font-semibold text-amber-700 transition active:bg-amber-50"
       >
         Reset
       </button>

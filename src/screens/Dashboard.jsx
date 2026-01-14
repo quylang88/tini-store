@@ -89,7 +89,7 @@ const Dashboard = ({ products, orders, onOpenDetail }) => {
           <button
             type="button"
             onClick={() => openTopModal('profit')}
-            className="rounded-xl border border-rose-100 bg-rose-50/60 p-3 text-left transition hover:bg-rose-50 focus:outline-none"
+            className="rounded-xl border border-rose-100 bg-rose-50/60 p-3 text-left transition active:bg-rose-50 focus:outline-none"
           >
             <div className="flex items-center justify-between mb-3">
               <h4 className="text-xs font-semibold uppercase text-rose-600">Top lợi nhuận</h4>
@@ -110,7 +110,7 @@ const Dashboard = ({ products, orders, onOpenDetail }) => {
           <button
             type="button"
             onClick={() => openTopModal('quantity')}
-            className="rounded-xl border border-emerald-100 bg-emerald-50/60 p-3 text-left transition hover:bg-emerald-50 focus:outline-none"
+            className="rounded-xl border border-emerald-100 bg-emerald-50/60 p-3 text-left transition active:bg-emerald-50 focus:outline-none"
           >
             <div className="flex items-center justify-between mb-3">
               <h4 className="text-xs font-semibold uppercase text-emerald-600">Top số lượng</h4>

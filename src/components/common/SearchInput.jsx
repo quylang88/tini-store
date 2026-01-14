@@ -28,7 +28,7 @@ const SearchInput = ({
         <button
           type="button"
           onClick={onClear}
-          className="absolute right-3 top-2.5 text-gray-400 hover:text-gray-600"
+          className="absolute right-3 top-2.5 text-gray-400 active:text-gray-600"
           aria-label="Xoá nội dung tìm kiếm"
         >
           <X size={14} />
