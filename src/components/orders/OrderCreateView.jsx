@@ -139,7 +139,7 @@ const OrderCreateView = ({
       {/* List Sản Phẩm (Đã Lọc) */}
       <div
         key={`order-filter-${listTransition.animationKey}`}
-        className={`flex-1 overflow-y-auto p-3 space-y-3 pb-40 ${listTransition.animationClass}`}
+        className={`flex-1 overflow-y-auto p-3 space-y-3 pb-40 min-h-0 ${listTransition.animationClass}`}
       >
         {filteredProducts.map(p => {
           const qty = cart[p.id] || 0;

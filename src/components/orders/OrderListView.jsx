@@ -25,7 +25,7 @@ const OrderListView = ({
     </div>
     {/* Nút tạo đơn mới nổi để tái sử dụng layout và tránh lặp code. */}
     <FloatingAddButton onClick={onCreateOrder} ariaLabel="Tạo đơn mới" />
-    <div className="flex-1 overflow-y-auto p-3 space-y-3">
+    <div className="flex-1 overflow-y-auto p-3 space-y-3 min-h-0">
       {orders.map((order) => {
         const statusInfo = getOrderStatusInfo(order);
         const isPaid = order.status === 'paid';

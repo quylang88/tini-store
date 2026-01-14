@@ -71,7 +71,7 @@ const Inventory = ({ products, setProducts, orders, setOrders, settings }) => {
       <FloatingAddButton onClick={() => openModal()} ariaLabel="Thêm hàng mới" />
 
       {/* Tách danh sách sản phẩm thành component riêng */}
-      <div key={`inventory-filter-${inventoryTransition.animationKey}`} className={inventoryTransition.animationClass}>
+      <div key={`inventory-filter-${inventoryTransition.animationKey}`} className={`flex-1 flex flex-col min-h-0 ${inventoryTransition.animationClass}`}>
         <ProductList
           products={filteredProducts}
           onDelete={handleDelete}
