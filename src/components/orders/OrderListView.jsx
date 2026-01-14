@@ -1,8 +1,9 @@
 import React from 'react';
-import { Plus, ShoppingCart } from 'lucide-react';
+import { ShoppingCart } from 'lucide-react';
 import { formatNumber } from '../../utils/helpers';
 import { getWarehouseLabel } from '../../utils/warehouseUtils';
 import { getOrderDisplayName } from '../../utils/orderUtils';
+import FloatingAddButton from '../common/FloatingAddButton';
 
 // Giao diện danh sách đơn tách riêng để dễ quản lý và thêm nút huỷ đơn
 const OrderListView = ({
@@ -21,10 +22,9 @@ const OrderListView = ({
         alt="Tiny Shop"
         className="h-12 w-auto object-contain"
       />
-      <button onClick={onCreateOrder} className="bg-rose-500 text-white px-4 py-2 rounded-xl text-sm font-bold shadow-md shadow-rose-200 active:scale-95 transition flex items-center gap-2">
-        <Plus size={18} /> Đơn hàng mới
-      </button>
     </div>
+    {/* Nút tạo đơn mới nổi để tái sử dụng layout và tránh lặp code. */}
+    <FloatingAddButton onClick={onCreateOrder} ariaLabel="Tạo đơn mới" />
     <div className="flex-1 overflow-y-auto p-3 space-y-3">
       {orders.map((order) => {
         const statusInfo = getOrderStatusInfo(order);
@@ -43,7 +43,7 @@ const OrderListView = ({
         return (
           <div
             key={order.id}
-            className="bg-white p-4 rounded-xl shadow-sm border border-amber-100 hover:border-rose-200 transition cursor-pointer"
+            className="bg-white p-4 rounded-xl shadow-sm border border-amber-100 transition cursor-pointer"
             onClick={() => onSelectOrder?.(order)}
           >
             <div className="flex justify-between mb-2 gap-2">
@@ -91,7 +91,7 @@ const OrderListView = ({
                   event.stopPropagation();
                   handleTogglePaid(order.id);
                 }}
-                className={`text-xs font-semibold px-3 py-1.5 rounded-full border transition ${isPaid ? 'text-red-600 bg-red-50 border-red-100 hover:bg-red-100' : 'text-emerald-600 bg-emerald-50 border-emerald-100 hover:bg-emerald-100'}`}
+                className={`text-xs font-semibold px-3 py-1.5 rounded-full border transition active:scale-95 ${isPaid ? 'text-red-600 bg-red-50 border-red-100' : 'text-emerald-600 bg-emerald-50 border-emerald-100'}`}
               >
                 {isPaid ? 'Huỷ thanh toán' : 'Thanh toán'}
               </button>
@@ -100,7 +100,7 @@ const OrderListView = ({
                   event.stopPropagation();
                   handleEditOrder(order);
                 }}
-                className="text-xs font-semibold text-amber-600 bg-amber-50 border border-amber-100 px-3 py-1.5 rounded-full hover:bg-amber-100 transition"
+                className="text-xs font-semibold text-amber-600 bg-amber-50 border border-amber-100 px-3 py-1.5 rounded-full active:scale-95 transition"
               >
                 Sửa đơn
               </button>
@@ -109,7 +109,7 @@ const OrderListView = ({
                   event.stopPropagation();
                   handleCancelOrder(order.id);
                 }}
-                className="text-xs font-semibold text-red-600 bg-red-50 border border-red-100 px-3 py-1.5 rounded-full hover:bg-red-100 transition"
+                className="text-xs font-semibold text-red-600 bg-red-50 border border-red-100 px-3 py-1.5 rounded-full active:scale-95 transition"
               >
                 Huỷ đơn
               </button>

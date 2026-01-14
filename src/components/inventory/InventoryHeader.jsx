@@ -1,12 +1,11 @@
 import React from 'react';
-import { ScanBarcode, Plus } from 'lucide-react';
+import { ScanBarcode } from 'lucide-react';
 import SearchInput from '../common/SearchInput';
 
 const InventoryHeader = ({
   searchTerm,
   onSearchChange,
   onClearSearch,
-  onOpenModal,
   onShowScanner,
   activeCategories,
   onToggleCategory,
@@ -25,11 +24,11 @@ const InventoryHeader = ({
             className="h-12 w-auto object-contain"
           />
           <div className="flex gap-2">
-            <button onClick={onShowScanner} className="bg-amber-100 text-amber-700 w-9 h-9 rounded-full flex items-center justify-center hover:bg-amber-200">
+            <button
+              onClick={onShowScanner}
+              className="bg-amber-100 text-amber-700 w-9 h-9 rounded-full flex items-center justify-center active:scale-95 transition"
+            >
               <ScanBarcode size={20} />
-            </button>
-            <button onClick={onOpenModal} className="bg-rose-500 text-white w-9 h-9 rounded-full flex items-center justify-center shadow-md shadow-rose-200 active:scale-95">
-              <Plus size={20} />
             </button>
           </div>
         </div>
@@ -57,7 +56,7 @@ const InventoryHeader = ({
               className={`px-2 py-1 text-[10px] font-semibold rounded border transition ${
                 warehouseFilter === warehouse.key
                   ? 'bg-amber-500 text-white border-amber-500'
-                  : 'bg-transparent text-amber-700 border-amber-200 hover:border-rose-400'
+                  : 'bg-transparent text-amber-700 border-amber-200'
               }`}
             >
               {warehouse.label}
@@ -70,7 +69,7 @@ const InventoryHeader = ({
             className={`px-2 py-1 text-[10px] font-semibold rounded border transition ${
               activeCategories.length === 0
                 ? 'bg-amber-500 text-white border-amber-500'
-                : 'bg-transparent text-amber-700 border-amber-200 hover:border-rose-400'
+                : 'bg-transparent text-amber-700 border-amber-200'
             }`}
           >
             Tất cả
@@ -82,7 +81,7 @@ const InventoryHeader = ({
               className={`px-2 py-1 text-[10px] font-semibold rounded border transition ${
                 activeCategories.includes(cat)
                   ? 'bg-amber-500 text-white border-amber-500'
-                  : 'bg-transparent text-amber-700 border-amber-200 hover:border-rose-400'
+                  : 'bg-transparent text-amber-700 border-amber-200'
               }`}
             >
               {cat}
