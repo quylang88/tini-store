@@ -83,34 +83,22 @@ const useDashboardLogic = ({ products, orders, rangeMode = 'dashboard' }) => {
     });
   }, [paidOrders, rangeStart, rangeEnd]);
 
-  const totalRevenue = useMemo(
-    () => filteredPaidOrders.reduce((sum, order) => sum + order.total, 0),
-    [filteredPaidOrders],
-  );
-
-  const totalProfit = useMemo(
-    () => filteredPaidOrders.reduce((sum, order) => {
-      // Ưu tiên dùng giá vốn trong đơn để không bị lệch khi giá vốn thay đổi
-      const orderProfit = order.items.reduce((itemSum, item) => {
-        const cost = Number.isFinite(item.cost) ? item.cost : (costMap.get(item.productId) || 0);
-        return itemSum + (item.price - cost) * item.quantity;
-      }, 0);
-      // Trừ phí gửi vì đây là chi phí phát sinh của đơn
-      const shippingFee = order.shippingFee || 0;
-      return sum + orderProfit - shippingFee;
-    }, 0),
-    [filteredPaidOrders, costMap],
-  );
-
   const productMeta = useMemo(
     () => new Map(products.map(product => [product.id, product])),
     [products],
   );
 
-  const productStats = useMemo(() => {
+  const { totalRevenue, totalProfit, productStats } = useMemo(() => {
     const stats = new Map();
+    let revenue = 0;
+    let profit = 0;
+
     filteredPaidOrders.forEach(order => {
-      order.items.forEach(item => {
+      revenue += order.total;
+      const orderProfit = order.items.reduce((itemSum, item) => {
+        const cost = Number.isFinite(item.cost) ? item.cost : (costMap.get(item.productId) || 0);
+        const itemProfit = (item.price - cost) * item.quantity;
+
         const product = productMeta.get(item.productId);
         const key = item.productId || item.name;
         if (!stats.has(key)) {
@@ -123,12 +111,18 @@ const useDashboardLogic = ({ products, orders, rangeMode = 'dashboard' }) => {
           });
         }
         const entry = stats.get(key);
-        const cost = Number.isFinite(item.cost) ? item.cost : (costMap.get(item.productId) || 0);
         entry.quantity += item.quantity;
-        entry.profit += (item.price - cost) * item.quantity;
-      });
+        entry.profit += itemProfit;
+        return itemSum + itemProfit;
+      }, 0);
+      const shippingFee = order.shippingFee || 0;
+      profit += orderProfit - shippingFee;
     });
-    return Array.from(stats.values());
+    return {
+      totalRevenue: revenue,
+      totalProfit: profit,
+      productStats: Array.from(stats.values()),
+    };
   }, [filteredPaidOrders, productMeta, costMap]);
 
   const topByProfit = useMemo(
