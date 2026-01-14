@@ -2,41 +2,54 @@ import React from 'react';
 import { formatNumber } from '../../utils/helpers';
 import { getLatestCost, getLatestLot } from '../../utils/purchaseUtils';
 import { getWarehouseLabel } from '../../utils/warehouseUtils';
+import SheetModal from '../modals/SheetModal';
+import useModalCache from '../../hooks/useModalCache';
+import Button from '../common/Button';
 
+// ProductDetailModal: Hiển thị lịch sử nhập hàng (View Only)
 const ProductDetailModal = ({ product, onClose, onEditLot }) => {
-  if (!product) return null;
+  // Logic giữ dữ liệu (Cached Data) để phục vụ animation exit.
+  const cachedProduct = useModalCache(product, Boolean(product));
 
-  const latestLot = getLatestLot(product);
-  const latestCost = getLatestCost(product);
-  const lots = product.purchaseLots || [];
+  // Nếu chưa từng có sản phẩm nào được chọn thì không render gì cả.
+  if (!cachedProduct) return null;
 
-  return (
-    <div
-      className="fixed inset-0 bg-black/50 z-[70] flex items-end sm:items-center justify-center backdrop-blur-sm modal-overlay-animate"
+  const latestLot = getLatestLot(cachedProduct);
+  const latestCost = getLatestCost(cachedProduct);
+  const lots = cachedProduct.purchaseLots || [];
+
+  const footer = (
+    <Button
+      variant="sheetClose"
+      size="sm"
       onClick={onClose}
     >
-      {/* Overlay và panel dùng animation chung để hiệu ứng đồng nhất giữa các modal. */}
-      <div
-        className="bg-white w-full sm:w-96 rounded-t-2xl sm:rounded-2xl p-5 pb-[calc(env(safe-area-inset-bottom)+1.25rem)] modal-panel-animate max-h-[90vh] overflow-y-auto"
-        onClick={(event) => event.stopPropagation()}
-      >
-        <div className="flex justify-between items-center mb-4">
-          <div>
-            <h3 className="font-bold text-lg text-amber-900">{product.name}</h3>
-            <div className="text-xs text-amber-600">
-              Giá nhập mới nhất: {formatNumber(latestCost)}đ
-              {latestLot ? ` • Kho: ${getWarehouseLabel(latestLot.warehouse)}` : ''}
-            </div>
+      Đóng
+    </Button>
+  );
+
+  return (
+    <SheetModal
+      open={Boolean(product)} // open phụ thuộc vào prop product hiện tại
+      onClose={onClose}
+      title={`${cachedProduct.name}`}
+      showCloseIcon={false}
+      footer={footer}
+    >
+      <div className="space-y-4">
+        <div className="flex justify-between items-center border-b border-amber-100 pb-4">
+          <div className="text-xs text-amber-600">
+            Giá nhập mới nhất: {formatNumber(latestCost)}đ
+            {latestLot ? ` • Kho: ${getWarehouseLabel(latestLot.warehouse)}` : ''}
           </div>
         </div>
 
-        {/* Danh sách tất cả lần nhập kho */}
         <div className="space-y-3">
           {lots.length === 0 ? (
             <div className="text-xs text-gray-500 text-center">Chưa có lịch sử nhập kho.</div>
           ) : (
             lots.map((lot) => {
-              const salePrice = Number(product.price) || 0;
+              const salePrice = Number(cachedProduct.price) || 0;
               const shippingPerUnit = Number(lot.shipping?.perUnitVnd ?? lot.shipping?.feeVnd) || 0;
               const unitCost = (Number(lot.cost) || 0) + shippingPerUnit;
               const profitAtCurrentPrice = salePrice - unitCost;
@@ -71,15 +84,8 @@ const ProductDetailModal = ({ product, onClose, onEditLot }) => {
             })
           )}
         </div>
-        <button
-          type="button"
-          onClick={onClose}
-          className="mt-4 w-full rounded-xl border border-amber-300 bg-amber-100 py-2.5 text-sm font-bold text-amber-900 transition active:border-amber-400 active:bg-amber-200"
-        >
-          Đóng
-        </button>
       </div>
-    </div>
+    </SheetModal>
   );
 };
 

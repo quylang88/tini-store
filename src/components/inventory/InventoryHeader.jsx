@@ -1,6 +1,9 @@
+/* eslint-disable no-unused-vars */
 import React from 'react';
 import { ScanBarcode } from 'lucide-react';
 import SearchInput from '../common/SearchInput';
+import AnimatedFilterTabs from '../common/AnimatedFilterTabs';
+import { motion } from 'framer-motion';
 
 const InventoryHeader = ({
   searchTerm,
@@ -13,6 +16,14 @@ const InventoryHeader = ({
   onWarehouseChange,
   categories
 }) => {
+  
+  // Chuẩn bị dữ liệu cho AnimatedFilterTabs
+  const warehouseTabs = [
+    { key: 'all', label: 'Tất cả' },
+    { key: 'daLat', label: 'Lâm Đồng' },
+    { key: 'vinhPhuc', label: 'Vĩnh Phúc' },
+  ];
+
   return (
     <div className="bg-amber-50/90 sticky top-0 z-10 shadow-sm backdrop-blur">
       {/* Header & Search */}
@@ -42,50 +53,42 @@ const InventoryHeader = ({
         />
       </div>
 
-      {/* Bộ lọc kho + danh mục (cho phép chọn nhiều) để lọc nhanh danh sách. */}
+      {/* Bộ lọc kho + danh mục */}
       <div className="px-3 py-3 border-b border-amber-100 space-y-3">
+        {/* Filter Kho - Dùng AnimatedFilterTabs cho hiệu ứng slide mượt */}
+        <AnimatedFilterTabs 
+          tabs={warehouseTabs}
+          activeTab={warehouseFilter}
+          onChange={onWarehouseChange}
+          layoutIdPrefix="inventory-warehouse"
+        />
+
+        {/* Filter Danh mục - Vẫn giữ logic chọn nhiều nhưng thêm animation nhẹ */}
         <div className="flex flex-wrap gap-2">
-          {[
-            { key: 'all', label: 'Tất cả' },
-            { key: 'daLat', label: 'Lâm Đồng' },
-            { key: 'vinhPhuc', label: 'Vĩnh Phúc' },
-          ].map((warehouse) => (
-            <button
-              key={warehouse.key}
-              onClick={() => onWarehouseChange(warehouse.key)}
-              className={`px-2 py-1 text-[10px] font-semibold rounded border transition ${
-                warehouseFilter === warehouse.key
-                  ? 'bg-amber-500 text-white border-amber-500'
-                  : 'bg-transparent text-amber-700 border-amber-200'
-              }`}
-            >
-              {warehouse.label}
-            </button>
-          ))}
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <button
+          <motion.button
+            layout
             onClick={() => onToggleCategory('Tất cả')}
-            className={`px-2 py-1 text-[10px] font-semibold rounded border transition ${
+            className={`px-3 py-1.5 text-[11px] font-semibold rounded-full border transition-colors ${
               activeCategories.length === 0
                 ? 'bg-amber-500 text-white border-amber-500'
                 : 'bg-transparent text-amber-700 border-amber-200'
             }`}
           >
             Tất cả
-          </button>
+          </motion.button>
           {categories.map(cat => (
-            <button
+            <motion.button
+              layout
               key={cat}
               onClick={() => onToggleCategory(cat)}
-              className={`px-2 py-1 text-[10px] font-semibold rounded border transition ${
+              className={`px-3 py-1.5 text-[11px] font-semibold rounded-full border transition-colors ${
                 activeCategories.includes(cat)
                   ? 'bg-amber-500 text-white border-amber-500'
                   : 'bg-transparent text-amber-700 border-amber-200'
               }`}
             >
               {cat}
-            </button>
+            </motion.button>
           ))}
         </div>
       </div>

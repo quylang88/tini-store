@@ -8,9 +8,8 @@ import ConfirmModalHost from '../components/modals/ConfirmModalHost';
 import ErrorModal from '../components/modals/ErrorModal';
 import FloatingAddButton from '../components/common/FloatingAddButton';
 import useInventoryLogic from '../hooks/useInventoryLogic';
-import useFilterTransition from '../hooks/useFilterTransition';
 
-const Inventory = ({ products, setProducts, settings }) => {
+const Inventory = ({ products, setProducts, orders, setOrders, settings }) => {
   const [detailProduct, setDetailProduct] = useState(null);
   const {
     isModalOpen,
@@ -37,7 +36,6 @@ const Inventory = ({ products, setProducts, settings }) => {
     handleSave,
     openModal,
     openEditLot,
-    closeModal,
     handleCancelModal,
     handleDelete,
     filteredProducts,
@@ -45,10 +43,9 @@ const Inventory = ({ products, setProducts, settings }) => {
     handleSelectExistingProduct,
     toggleCategory,
     setWarehouseFilter,
-  } = useInventoryLogic({ products, setProducts, settings });
+  } = useInventoryLogic({ products, setProducts, orders, setOrders, settings });
 
-  // Khi search/danh mục/kho thay đổi thì list remount để chạy animation chuyển cảnh.
-  const inventoryTransition = useFilterTransition([searchTerm, activeCategories, warehouseFilter]);
+  // Đã loại bỏ useFilterTransition để tránh remount list gây khựng.
 
   return (
     <div className="flex flex-col h-full bg-transparent">
@@ -71,7 +68,8 @@ const Inventory = ({ products, setProducts, settings }) => {
       <FloatingAddButton onClick={() => openModal()} ariaLabel="Thêm hàng mới" />
 
       {/* Tách danh sách sản phẩm thành component riêng */}
-      <div key={`inventory-filter-${inventoryTransition.animationKey}`} className={inventoryTransition.animationClass}>
+      {/* Loại bỏ key={...} để React tự diff và giữ DOM, tránh nháy hình */}
+      <div className="flex-1 overflow-y-auto min-h-0"> 
         <ProductList
           products={filteredProducts}
           onDelete={handleDelete}

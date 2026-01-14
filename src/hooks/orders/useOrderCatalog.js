@@ -18,15 +18,20 @@ const useOrderCatalog = ({
     [products],
   );
 
+  const orderItemsQuantityMap = useMemo(() => {
+    if (!orderBeingEdited?.items) return new Map();
+    return new Map(orderBeingEdited.items.map(item => [item.productId, item.quantity]));
+  }, [orderBeingEdited]);
+
   const getAvailableStock = useCallback((product, warehouseKey) => {
     const warehouseStock = normalizeWarehouseStock(product);
     const baseStock = warehouseKey === 'vinhPhuc' ? warehouseStock.vinhPhuc : warehouseStock.daLat;
     if (!orderBeingEdited) return baseStock;
     const orderWarehouse = orderBeingEdited.warehouse || DEFAULT_WAREHOUSE;
     if (orderWarehouse !== warehouseKey) return baseStock;
-    const previousQty = orderBeingEdited.items.find(item => item.productId === product.id)?.quantity || 0;
+    const previousQty = orderItemsQuantityMap.get(product.id) || 0;
     return baseStock + previousQty;
-  }, [orderBeingEdited]);
+  }, [orderBeingEdited, orderItemsQuantityMap]);
 
   const filteredProducts = useMemo(
     () => products.filter((product) => {

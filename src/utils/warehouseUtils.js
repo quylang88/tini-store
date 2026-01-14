@@ -9,11 +9,17 @@ export const getWarehouseLabel = (key) => {
 };
 
 export const normalizeWarehouseStock = (product = {}) => {
+  if (product.stockByWarehouse) {
+    return {
+      daLat: Number(product.stockByWarehouse.daLat) || 0,
+      vinhPhuc: Number(product.stockByWarehouse.vinhPhuc) || 0,
+    };
+  }
+  
   const fallbackStock = Number(product.stock) || 0;
-  const stockByWarehouse = product.stockByWarehouse ?? { daLat: fallbackStock, vinhPhuc: 0 };
   return {
-    daLat: Number(stockByWarehouse.daLat) || 0,
-    vinhPhuc: Number(stockByWarehouse.vinhPhuc) || 0,
+    daLat: fallbackStock,
+    vinhPhuc: 0,
   };
 };
 

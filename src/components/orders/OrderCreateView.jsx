@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 import React from 'react';
 import { ScanBarcode, Image as ImageIcon, Plus, Minus, ShoppingCart, Search } from 'lucide-react';
 import BarcodeScanner from '../../components/BarcodeScanner';
@@ -5,8 +6,10 @@ import SearchInput from '../common/SearchInput';
 import { formatInputNumber, formatNumber } from '../../utils/helpers';
 import { getWarehouseLabel, WAREHOUSES } from '../../utils/warehouseUtils';
 import FloatingBackButton from '../common/FloatingBackButton';
-import useFilterTransition from '../../hooks/useFilterTransition';
 import SheetModal from '../modals/SheetModal';
+import Button from '../common/Button';
+import AnimatedFilterTabs from '../common/AnimatedFilterTabs';
+import { motion, AnimatePresence } from 'framer-motion';
 
 // Giao diện tạo/sửa đơn được tách riêng để Orders.jsx gọn hơn
 const OrderCreateView = ({
@@ -46,8 +49,6 @@ const OrderCreateView = ({
   handleConfirmOrder
 }) => {
   const categories = settings?.categories || ['Chung'];
-  // Khi filter tìm kiếm/danh mục/kho thay đổi thì list remount để có animation.
-  const listTransition = useFilterTransition([searchTerm, activeCategory, selectedWarehouse]);
 
   // Khi đang sửa đơn, cộng lại số lượng cũ để hiển thị tồn kho chính xác
   const getAvailableStock = (productId, stock) => {
@@ -57,6 +58,14 @@ const OrderCreateView = ({
     const previousQty = orderBeingEdited.items.find(item => item.productId === productId)?.quantity || 0;
     return stock + previousQty;
   };
+
+  const warehouseTabs = WAREHOUSES.map(w => ({ key: w.key, label: w.label }));
+  
+  // Tab danh mục dạng cuộn ngang
+  const categoryTabs = [
+    { key: 'Tất cả', label: 'Tất cả' },
+    ...categories.map(c => ({ key: c, label: c }))
+  ];
 
   return (
     <div className="flex flex-col h-full bg-transparent pb-safe-area relative">
@@ -84,7 +93,6 @@ const OrderCreateView = ({
 
         {/* Hàng 2: Thanh Tìm kiếm */}
         <div className="px-3 py-2 border-b border-amber-100">
-          {/* Dùng component tìm kiếm chung để tái sử dụng logic xoá nhanh */}
           <SearchInput
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -94,112 +102,118 @@ const OrderCreateView = ({
           />
         </div>
 
-        {/* Hàng 3: Chọn kho xuất (đồng bộ màu với màn nhập kho) */}
+        {/* Hàng 3: Chọn kho xuất */}
         <div className="px-3 py-2 border-b border-amber-100 flex items-center gap-2 text-xs font-semibold text-amber-700">
-          <span>Đơn hàng:</span>
-          <div className="flex gap-2">
-            {WAREHOUSES.map((warehouse) => (
-              <button
-                key={warehouse.key}
-                type="button"
-                onClick={() => setSelectedWarehouse(warehouse.key)}
-                className={`px-2 py-1 rounded-full border transition ${
-                  selectedWarehouse === warehouse.key
-                    ? 'bg-amber-500 text-white border-amber-500'
-                    : 'bg-transparent text-amber-700 border-amber-200'
-                }`}
-              >
-                {warehouse.label}
-              </button>
-            ))}
-          </div>
+          <span className="shrink-0">Kho xuất:</span>
+          <AnimatedFilterTabs 
+             tabs={warehouseTabs}
+             activeTab={selectedWarehouse}
+             onChange={setSelectedWarehouse}
+             layoutIdPrefix="order-warehouse"
+             className="flex-1"
+          />
         </div>
 
-        {/* Hàng 4: Thanh Tab Danh mục */}
-        <div className="px-3 pb-0 overflow-x-auto flex gap-2 no-scrollbar border-b border-amber-100">
-          <button
-            onClick={() => setActiveCategory('Tất cả')}
-            className={`whitespace-nowrap py-3 px-2 border-b-2 text-sm font-medium transition-colors ${activeCategory === 'Tất cả' ? 'border-rose-500 text-rose-600' : 'border-transparent text-amber-500'}`}
-          >
-            Tất cả
-          </button>
-          {categories.map(cat => (
-            <button
-              key={cat}
-              onClick={() => setActiveCategory(cat)}
-              className={`whitespace-nowrap py-3 px-2 border-b-2 text-sm font-medium transition-colors ${activeCategory === cat ? 'border-rose-500 text-rose-600' : 'border-transparent text-amber-500'}`}
-            >
-              {cat}
-            </button>
-          ))}
+        {/* Hàng 4: Thanh Tab Danh mục (Scrollable) */}
+        <div className="px-3 py-2 overflow-x-auto no-scrollbar border-b border-amber-100">
+           <div className="flex gap-2 min-w-max">
+             {categoryTabs.map((tab) => {
+               const isActive = activeCategory === tab.key;
+               return (
+                 <button
+                   key={tab.key}
+                   onClick={() => setActiveCategory(tab.key)}
+                   className={`relative px-3 py-2 text-sm font-medium transition-colors z-0 outline-none select-none ${
+                     isActive ? 'text-rose-600' : 'text-amber-500'
+                   }`}
+                 >
+                   {isActive && (
+                     <motion.div
+                       layoutId="order-category-underline"
+                       className="absolute bottom-0 left-0 right-0 h-0.5 bg-rose-500"
+                       transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                     />
+                   )}
+                   <span className="relative z-10">{tab.label}</span>
+                 </button>
+               );
+             })}
+           </div>
         </div>
       </div>
 
       {/* List Sản Phẩm (Đã Lọc) */}
-      <div
-        key={`order-filter-${listTransition.animationKey}`}
-        className={`flex-1 overflow-y-auto p-3 space-y-3 pb-40 ${listTransition.animationClass}`}
-      >
-        {filteredProducts.map(p => {
-          const qty = cart[p.id] || 0;
-          const warehouseStock = selectedWarehouse === 'vinhPhuc'
-            ? (p.stockByWarehouse?.vinhPhuc ?? 0)
-            : (p.stockByWarehouse?.daLat ?? p.stock ?? 0);
-          const availableStock = getAvailableStock(p.id, warehouseStock);
-          const isOutOfStock = availableStock <= 0;
+      <div className="flex-1 overflow-y-auto p-3 space-y-3 pb-40 min-h-0">
+        <AnimatePresence mode='popLayout'>
+            {filteredProducts.map(p => {
+            const qty = cart[p.id] || 0;
+            const warehouseStock = selectedWarehouse === 'vinhPhuc'
+                ? (p.stockByWarehouse?.vinhPhuc ?? 0)
+                : (p.stockByWarehouse?.daLat ?? p.stock ?? 0);
+            const availableStock = getAvailableStock(p.id, warehouseStock);
+            const isOutOfStock = availableStock <= 0;
 
-          return (
-            <div key={p.id} className={`bg-white p-3 rounded-xl shadow-sm border border-amber-100 flex gap-3 items-center ${isOutOfStock ? 'opacity-50 grayscale' : ''}`}>
-              <div className="w-14 h-14 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0 relative border border-gray-200">
-                {p.image ? (
-                  <img src={p.image} className="w-full h-full object-cover" alt={p.name} />
+            return (
+                <motion.div
+                    layout
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.95 }}
+                    transition={{ duration: 0.2 }}
+                    key={p.id} 
+                    className={`bg-white p-3 rounded-xl shadow-sm border border-amber-100 flex gap-3 items-center ${isOutOfStock ? 'opacity-50 grayscale' : ''}`}
+                >
+                <div className="w-14 h-14 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0 relative border border-gray-200">
+                    {p.image ? (
+                    <img src={p.image} className="w-full h-full object-cover" alt={p.name} />
+                    ) : (
+                    <div className="w-full h-full flex items-center justify-center"><ImageIcon size={16} className="text-gray-300" /></div>
+                    )}
+                </div>
+
+                <div className="flex-1 min-w-0">
+                    <div className="flex justify-between items-start">
+                    <div className="font-bold text-sm text-amber-900 truncate pr-1">{p.name}</div>
+                    {/* Badge danh mục */}
+                    {activeCategory === 'Tất cả' && (
+                        <span className="text-[10px] text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded border border-gray-200 whitespace-nowrap">
+                        {p.category}
+                        </span>
+                    )}
+                    </div>
+                    <div className="text-xs text-gray-500 mt-0.5">
+                    <span className="font-semibold text-amber-700">{formatNumber(p.price)}đ</span>
+                    <span className="mx-1">|</span>
+                    <span>Kho {getWarehouseLabel(selectedWarehouse)}: {availableStock}</span>
+                    </div>
+                </div>
+
+                {/* Bộ điều khiển số lượng */}
+                {qty > 0 ? (
+                    <div className="flex items-center bg-rose-50 rounded-lg h-9 border border-rose-100 overflow-hidden shadow-sm">
+                    <button onClick={() => adjustQuantity(p.id, -1, availableStock)} className="w-9 h-full flex items-center justify-center text-rose-600 active:bg-rose-200 transition">
+                        <Minus size={16} strokeWidth={2.5} />
+                    </button>
+                    <input
+                        type="number"
+                        className="w-12 h-full text-center bg-transparent border-x border-rose-100 outline-none text-rose-900 font-bold text-sm m-0 p-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                        value={qty}
+                        onChange={(e) => handleQuantityChange(p.id, e.target.value, availableStock)}
+                        onFocus={(e) => e.target.select()}
+                    />
+                    <button onClick={() => adjustQuantity(p.id, 1, availableStock)} disabled={qty >= availableStock} className="w-9 h-full flex items-center justify-center text-rose-600 active:bg-rose-200 disabled:opacity-30 transition">
+                        <Plus size={16} strokeWidth={2.5} />
+                    </button>
+                    </div>
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center"><ImageIcon size={16} className="text-gray-300" /></div>
+                    <button onClick={() => adjustQuantity(p.id, 1, availableStock)} disabled={isOutOfStock} className="bg-amber-100 text-amber-800 px-4 py-2 rounded-lg text-xs font-bold active:scale-95 transition">
+                    {isOutOfStock ? 'Hết' : 'Thêm'}
+                    </button>
                 )}
-              </div>
-
-              <div className="flex-1 min-w-0">
-                <div className="flex justify-between items-start">
-                  <div className="font-bold text-sm text-amber-900 truncate pr-1">{p.name}</div>
-                  {/* Badge danh mục */}
-                  {activeCategory === 'Tất cả' && (
-                    <span className="text-[10px] text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded border border-gray-200 whitespace-nowrap">
-                      {p.category}
-                    </span>
-                  )}
-                </div>
-                <div className="text-xs text-gray-500 mt-0.5">
-                  <span className="font-semibold text-amber-700">{formatNumber(p.price)}đ</span>
-                  <span className="mx-1">|</span>
-                  <span>Kho {getWarehouseLabel(selectedWarehouse)}: {availableStock}</span>
-                </div>
-              </div>
-
-              {/* Bộ điều khiển số lượng */}
-              {qty > 0 ? (
-                <div className="flex items-center bg-rose-50 rounded-lg h-9 border border-rose-100 overflow-hidden shadow-sm">
-                  <button onClick={() => adjustQuantity(p.id, -1, availableStock)} className="w-9 h-full flex items-center justify-center text-rose-600 active:bg-rose-200 transition">
-                    <Minus size={16} strokeWidth={2.5} />
-                  </button>
-                  <input
-                    type="number"
-                    className="w-12 h-full text-center bg-transparent border-x border-rose-100 outline-none text-rose-900 font-bold text-sm m-0 p-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                    value={qty}
-                    onChange={(e) => handleQuantityChange(p.id, e.target.value, availableStock)}
-                    onFocus={(e) => e.target.select()}
-                  />
-                  <button onClick={() => adjustQuantity(p.id, 1, availableStock)} disabled={qty >= availableStock} className="w-9 h-full flex items-center justify-center text-rose-600 active:bg-rose-200 disabled:opacity-30 transition">
-                    <Plus size={16} strokeWidth={2.5} />
-                  </button>
-                </div>
-              ) : (
-                <button onClick={() => adjustQuantity(p.id, 1, availableStock)} disabled={isOutOfStock} className="bg-amber-100 text-amber-800 px-4 py-2 rounded-lg text-xs font-bold active:scale-95 transition">
-                  {isOutOfStock ? 'Hết' : 'Thêm'}
-                </button>
-              )}
-            </div>
-          )
-        })}
+                </motion.div>
+            )
+            })}
+        </AnimatePresence>
 
         {filteredProducts.length === 0 && (
           <div className="text-center text-gray-400 mt-10">
@@ -246,6 +260,7 @@ const OrderCreateView = ({
         open={isReviewOpen}
         onClose={handleCloseReview}
         title={orderBeingEdited ? 'Xác nhận cập nhật đơn' : 'Xác nhận tạo đơn hàng'}
+        showCloseIcon={true}
         footer={
           <div className="space-y-3">
             <div className="flex justify-between items-center text-sm">
@@ -253,18 +268,20 @@ const OrderCreateView = ({
               <span className="text-lg font-bold text-rose-600">{formatNumber(totalAmount)}đ</span>
             </div>
             <div className="flex gap-2">
-              <button
+              <Button
+                variant="secondary"
+                size="sm"
                 onClick={handleCloseReview}
-                className="flex-1 py-2.5 rounded-xl border border-amber-200 text-amber-700 font-semibold bg-white active:scale-95 transition"
               >
                 Xem lại
-              </button>
-              <button
+              </Button>
+              <Button
+                variant="primary"
+                size="sm"
                 onClick={handleConfirmOrder}
-                className="flex-1 py-2.5 rounded-xl bg-rose-500 text-white font-semibold shadow-md shadow-rose-200 active:scale-95 transition"
               >
                 {orderBeingEdited ? 'Cập nhật' : 'Xác nhận'}
-              </button>
+              </Button>
             </div>
           </div>
         }

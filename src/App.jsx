@@ -129,6 +129,8 @@ const App = () => {
             <Inventory
               products={products}
               setProducts={setProducts}
+              orders={orders}
+              setOrders={setOrders}
               settings={settings}
             />
           </ScreenTransition>
