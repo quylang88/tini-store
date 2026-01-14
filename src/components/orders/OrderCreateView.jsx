@@ -1,6 +1,7 @@
 import React from 'react';
-import { ChevronRight, ScanBarcode, Image as ImageIcon, Plus, Minus, ShoppingCart, Search, X } from 'lucide-react';
+import { ChevronRight, ScanBarcode, Image as ImageIcon, Plus, Minus, ShoppingCart, Search } from 'lucide-react';
 import BarcodeScanner from '../../components/BarcodeScanner';
+import SearchInput from '../common/SearchInput';
 import { formatInputNumber, formatNumber } from '../../utils/helpers';
 import { getWarehouseLabel, WAREHOUSES } from '../../utils/warehouseUtils';
 
@@ -78,27 +79,14 @@ const OrderCreateView = ({
 
         {/* Hàng 2: Thanh Tìm kiếm */}
         <div className="px-3 py-2 border-b border-amber-100">
-          <div className="relative">
-            <Search className="absolute left-3 top-2.5 text-amber-400" size={16} />
-            <input
-              type="text"
-              placeholder="Tìm tên hoặc mã sản phẩm..."
-              className="w-full bg-amber-100/70 pl-9 pr-9 py-2 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-rose-300 transition-all"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-            {/* Nút xoá nhanh chỉ hiện khi đã nhập từ khoá */}
-            {searchTerm && (
-              <button
-                type="button"
-                onClick={() => setSearchTerm('')}
-                className="absolute right-3 top-2.5 text-gray-400 hover:text-gray-600"
-                aria-label="Xoá nội dung tìm kiếm"
-              >
-                <X size={14} />
-              </button>
-            )}
-          </div>
+          {/* Dùng component tìm kiếm chung để tái sử dụng logic xoá nhanh */}
+          <SearchInput
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            onClear={() => setSearchTerm('')}
+            placeholder="Tìm tên hoặc mã sản phẩm..."
+            inputClassName="w-full bg-amber-100/70 pl-9 pr-9 py-2 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-rose-300 transition-all"
+          />
         </div>
 
         {/* Hàng 3: Chọn kho xuất */}
