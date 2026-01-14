@@ -16,6 +16,8 @@ const useOrdersLogic = ({ products, setProducts, orders, setOrders }) => {
   const [isReviewOpen, setIsReviewOpen] = useState(false);
   const [orderComment, setOrderComment] = useState('');
   const [confirmModal, setConfirmModal] = useState(null);
+  // Modal cảnh báo khi thiếu thông tin hoặc thao tác chưa hợp lệ.
+  const [errorModal, setErrorModal] = useState(null);
   const [orderType, setOrderType] = useState(DEFAULT_ORDER_TYPE);
   const [customerName, setCustomerName] = useState('');
   const [customerAddress, setCustomerAddress] = useState('');
@@ -87,12 +89,20 @@ const useOrdersLogic = ({ products, setProducts, orders, setOrders }) => {
     setShowScanner(false);
     const product = products.find((item) => item.barcode === decodedText);
     if (!product) {
-      alert('Không tìm thấy sản phẩm với mã vạch này.');
+      // Cảnh báo khi không tìm thấy sản phẩm theo mã vạch.
+      setErrorModal({
+        title: 'Không tìm thấy sản phẩm',
+        message: 'Không tìm thấy sản phẩm với mã vạch này.',
+      });
       return;
     }
     const availableStock = getAvailableStock(product, selectedWarehouse);
     if (availableStock <= 0) {
-      alert('Sản phẩm này đã hết hàng.');
+      // Cảnh báo khi sản phẩm đã hết hàng trong kho đang chọn.
+      setErrorModal({
+        title: 'Hết hàng',
+        message: 'Sản phẩm này đã hết hàng.',
+      });
       return;
     }
     // Quét mã vạch thì tự cộng 1 sản phẩm nếu còn hàng.
@@ -188,17 +198,18 @@ const useOrdersLogic = ({ products, setProducts, orders, setOrders }) => {
   // Kiểm tra điều kiện tối thiểu trước khi tạo/cập nhật đơn.
   const ensureOrderReady = (actionLabel) => {
     if (reviewItems.length === 0) {
-      alert('Vui lòng chọn ít nhất 1 sản phẩm.');
+      // Cảnh báo khi chưa chọn sản phẩm nào.
+      setErrorModal({
+        title: 'Thiếu sản phẩm',
+        message: 'Vui lòng chọn ít nhất 1 sản phẩm trước khi thao tác.',
+      });
       return false;
     }
     if (orderType === 'delivery' && (!customerName.trim() || !customerAddress.trim())) {
       // Mở modal cảnh báo khi thiếu thông tin gửi khách.
-      setConfirmModal({
+      setErrorModal({
         title: 'Thiếu thông tin khách hàng',
         message: `Vui lòng nhập tên và địa chỉ khách hàng trước khi ${actionLabel}.`,
-        confirmLabel: 'Đã hiểu',
-        tone: 'danger',
-        onConfirm: () => setConfirmModal(null),
       });
       return false;
     }
@@ -394,6 +405,8 @@ const useOrdersLogic = ({ products, setProducts, orders, setOrders }) => {
     setOrderComment,
     confirmModal,
     setConfirmModal,
+    errorModal,
+    setErrorModal,
     orderType,
     setOrderType: handleOrderTypeChange,
     customerName,

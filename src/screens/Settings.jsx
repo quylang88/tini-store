@@ -2,6 +2,8 @@ import React from 'react';
 import { Download, Upload, Plus, RefreshCw, X, LogOut } from 'lucide-react';
 import { formatInputNumber, sanitizeNumberInput } from '../utils/helpers';
 import ConfirmModalHost from '../components/modals/ConfirmModalHost';
+import ErrorModal from '../components/modals/ErrorModal';
+import InfoModal from '../components/modals/InfoModal';
 import SettingsSection from '../components/settings/SettingsSection';
 import useSettingsLogic from '../hooks/useSettingsLogic';
 
@@ -20,6 +22,10 @@ const Settings = ({
     isFetchingRate,
     confirmModal,
     setConfirmModal,
+    noticeModal,
+    setNoticeModal,
+    infoModal,
+    setInfoModal,
     saveSettings,
     handleAddCategory,
     handleDeleteCategory,
@@ -180,6 +186,22 @@ const Settings = ({
         onClose={() => {
           setConfirmModal(null);
         }}
+      />
+
+      {/* Modal cảnh báo nhẹ cho các lỗi nhập liệu trong màn hình cài đặt */}
+      <ErrorModal
+        open={Boolean(noticeModal)}
+        title={noticeModal?.title}
+        message={noticeModal?.message}
+        onClose={() => setNoticeModal(null)}
+      />
+
+      {/* Modal cập nhật tỷ giá online chỉ cần chạm ra ngoài để đóng */}
+      <InfoModal
+        open={Boolean(infoModal)}
+        title={infoModal?.title}
+        message={infoModal?.message}
+        onClose={() => setInfoModal(null)}
       />
     </>
   )

@@ -4,6 +4,7 @@ import OrderCreateView from '../components/orders/OrderCreateView';
 import OrderListView from '../components/orders/OrderListView';
 import OrderDetailModal from '../components/orders/OrderDetailModal';
 import ConfirmModalHost from '../components/modals/ConfirmModalHost';
+import ErrorModal from '../components/modals/ErrorModal';
 import ScreenTransition from '../components/common/ScreenTransition';
 import useOrdersLogic from '../hooks/useOrdersLogic';
 
@@ -20,6 +21,8 @@ const Orders = ({ products, setProducts, orders, setOrders, settings }) => {
     setOrderComment,
     confirmModal,
     setConfirmModal,
+    errorModal,
+    setErrorModal,
     orderType,
     setOrderType,
     customerName,
@@ -135,6 +138,14 @@ const Orders = ({ products, setProducts, orders, setOrders, settings }) => {
       <ConfirmModalHost
         modal={confirmModal}
         onClose={() => setConfirmModal(null)}
+      />
+
+      {/* Modal cảnh báo khi thiếu thông tin đầu vào */}
+      <ErrorModal
+        open={Boolean(errorModal)}
+        title={errorModal?.title}
+        message={errorModal?.message}
+        onClose={() => setErrorModal(null)}
       />
     </>
   );
