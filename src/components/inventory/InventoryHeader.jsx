@@ -1,6 +1,7 @@
 import React from 'react';
 import { ScanBarcode, Plus } from 'lucide-react';
 import SearchInput from '../common/SearchInput';
+import FloatingActionButton from '../common/FloatingActionButton';
 
 const InventoryHeader = ({
   searchTerm,
@@ -25,11 +26,11 @@ const InventoryHeader = ({
             className="h-12 w-auto object-contain"
           />
           <div className="flex gap-2">
-            <button onClick={onShowScanner} className="bg-amber-100 text-amber-700 w-9 h-9 rounded-full flex items-center justify-center hover:bg-amber-200">
+            <button
+              onClick={onShowScanner}
+              className="bg-amber-100 text-amber-700 w-9 h-9 rounded-full flex items-center justify-center active:scale-95 transition-transform duration-200"
+            >
               <ScanBarcode size={20} />
-            </button>
-            <button onClick={onOpenModal} className="bg-rose-500 text-white w-9 h-9 rounded-full flex items-center justify-center shadow-md shadow-rose-200 active:scale-95">
-              <Plus size={20} />
             </button>
           </div>
         </div>
@@ -54,10 +55,10 @@ const InventoryHeader = ({
             <button
               key={warehouse.key}
               onClick={() => onWarehouseChange(warehouse.key)}
-              className={`px-2 py-1 text-[10px] font-semibold rounded border transition ${
+              className={`px-2 py-1 text-[10px] font-semibold rounded border transition-colors duration-200 ${
                 warehouseFilter === warehouse.key
                   ? 'bg-amber-500 text-white border-amber-500'
-                  : 'bg-transparent text-amber-700 border-amber-200 hover:border-rose-400'
+                  : 'bg-transparent text-amber-700 border-amber-200'
               }`}
             >
               {warehouse.label}
@@ -67,10 +68,10 @@ const InventoryHeader = ({
         <div className="flex flex-wrap gap-2">
           <button
             onClick={() => onToggleCategory('Tất cả')}
-            className={`px-2 py-1 text-[10px] font-semibold rounded border transition ${
+            className={`px-2 py-1 text-[10px] font-semibold rounded border transition-colors duration-200 ${
               activeCategories.length === 0
                 ? 'bg-amber-500 text-white border-amber-500'
-                : 'bg-transparent text-amber-700 border-amber-200 hover:border-rose-400'
+                : 'bg-transparent text-amber-700 border-amber-200'
             }`}
           >
             Tất cả
@@ -79,10 +80,10 @@ const InventoryHeader = ({
             <button
               key={cat}
               onClick={() => onToggleCategory(cat)}
-              className={`px-2 py-1 text-[10px] font-semibold rounded border transition ${
+              className={`px-2 py-1 text-[10px] font-semibold rounded border transition-colors duration-200 ${
                 activeCategories.includes(cat)
                   ? 'bg-amber-500 text-white border-amber-500'
-                  : 'bg-transparent text-amber-700 border-amber-200 hover:border-rose-400'
+                  : 'bg-transparent text-amber-700 border-amber-200'
               }`}
             >
               {cat}
@@ -90,6 +91,10 @@ const InventoryHeader = ({
           ))}
         </div>
       </div>
+      {/* Nút thêm hàng nổi để đồng bộ vị trí với màn tạo đơn và tránh lặp code. */}
+      <FloatingActionButton onClick={onOpenModal} ariaLabel="Thêm hàng mới">
+        <Plus size={22} />
+      </FloatingActionButton>
     </div>
   );
 };
