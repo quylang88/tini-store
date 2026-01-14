@@ -35,25 +35,25 @@ export const syncProductsStock = (
   nextWarehouseKey,
   previousWarehouseKey = nextWarehouseKey,
 ) => {
-  const previousMap = new Map(previousItems.map(item => [item.productId, item.quantity]));
   const nextMap = new Map(orderItems.map(item => [item.productId, item.quantity]));
   const previousItemMap = new Map(previousItems.map(item => [item.productId, item]));
 
   return products.map((product) => {
-    const previousQty = previousMap.get(product.id) || 0;
+    const previousItem = previousItemMap.get(product.id);
+    const previousQty = previousItem?.quantity || 0;
     const nextQty = nextMap.get(product.id) || 0;
     if (!previousQty && !nextQty) return product;
 
     if (previousWarehouseKey === nextWarehouseKey) {
       const delta = previousQty - nextQty;
       if (!delta) return product;
-      const previousCost = previousItemMap.get(product.id)?.cost;
+      const previousCost = previousItem?.cost;
       return updateWarehouseStock(product, nextWarehouseKey, delta, previousCost);
     }
 
     let nextProduct = product;
     if (previousQty) {
-      const previousCost = previousItemMap.get(product.id)?.cost;
+      const previousCost = previousItem?.cost;
       nextProduct = updateWarehouseStock(nextProduct, previousWarehouseKey, previousQty, previousCost);
     }
     if (nextQty) {
