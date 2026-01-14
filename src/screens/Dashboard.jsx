@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 import React, { useState } from 'react';
 import { ArrowUpRight, DollarSign, TrendingUp, Trophy } from 'lucide-react';
 import { formatNumber } from '../utils/helpers';
@@ -6,7 +7,7 @@ import MetricCard from '../components/stats/MetricCard';
 import OptionPills from '../components/stats/OptionPills';
 import RankBadge from '../components/stats/RankBadge';
 import TopListModal from '../components/stats/TopListModal';
-import useFilterTransition from '../hooks/useFilterTransition';
+import { AnimatePresence, motion } from 'framer-motion';
 
 const Dashboard = ({ products, orders, onOpenDetail }) => {
   const {
@@ -29,11 +30,6 @@ const Dashboard = ({ products, orders, onOpenDetail }) => {
 
   const modalTitle = activeModal === 'quantity' ? 'Top số lượng' : 'Top lợi nhuận';
   const modalItems = activeModal === 'quantity' ? topByQuantity : topByProfit;
-
-  // Khi đổi filter thời gian, remount phần số liệu để chạy animation mượt.
-  const rangeTransition = useFilterTransition([activeRange]);
-  // Khi đổi top 3/5/10, remount bảng top để tạo cảm giác chuyển cảnh.
-  const topTransition = useFilterTransition([topLimit]);
 
   return (
     <div className="p-4 space-y-4 pb-24 animate-fade-in">
@@ -59,7 +55,8 @@ const Dashboard = ({ products, orders, onOpenDetail }) => {
           />
         </div>
       </div>
-      <div key={`dashboard-range-${rangeTransition.animationKey}`} className={`grid grid-cols-2 gap-3 ${rangeTransition.animationClass}`}>
+
+      <div className="grid grid-cols-2 gap-3">
         <MetricCard
           icon={DollarSign}
           label="Doanh thu"
@@ -75,10 +72,7 @@ const Dashboard = ({ products, orders, onOpenDetail }) => {
         />
       </div>
 
-      <div
-        key={`dashboard-top-${topTransition.animationKey}`}
-        className={`bg-white rounded-2xl shadow-sm border border-gray-100 p-4 space-y-4 ${topTransition.animationClass}`}
-      >
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 space-y-4">
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2 text-amber-700">
             <Trophy size={18} />
@@ -104,14 +98,22 @@ const Dashboard = ({ products, orders, onOpenDetail }) => {
               <h4 className="text-xs font-semibold uppercase text-rose-600">Top lợi nhuận</h4>
             </div>
             <div className="space-y-2 text-sm text-rose-800">
-              {topByProfit.map((p, idx) => (
-                <div key={p.id || p.name} className="flex items-center gap-2">
-                  <RankBadge rank={idx + 1} />
-                  <div className="min-w-0 flex-1">
-                    <div className="truncate">{p.name}</div>
-                  </div>
-                </div>
-              ))}
+              <AnimatePresence mode='wait'>
+                {topByProfit.map((p, idx) => (
+                    <motion.div
+                        key={p.id || p.name}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="flex items-center gap-2"
+                    >
+                    <RankBadge rank={idx + 1} />
+                    <div className="min-w-0 flex-1">
+                        <div className="truncate">{p.name}</div>
+                    </div>
+                    </motion.div>
+                ))}
+              </AnimatePresence>
               {topByProfit.length === 0 && <div className="text-center text-rose-500 text-sm">Chưa có dữ liệu</div>}
             </div>
           </button>
@@ -125,14 +127,22 @@ const Dashboard = ({ products, orders, onOpenDetail }) => {
               <h4 className="text-xs font-semibold uppercase text-emerald-600">Top số lượng</h4>
             </div>
             <div className="space-y-2 text-sm text-emerald-800">
-              {topByQuantity.map((p, idx) => (
-                <div key={p.id || p.name} className="flex items-center gap-2">
-                  <RankBadge rank={idx + 1} />
-                  <div className="min-w-0 flex-1">
-                    <div className="truncate">{p.name}</div>
-                  </div>
-                </div>
-              ))}
+               <AnimatePresence mode='wait'>
+                {topByQuantity.map((p, idx) => (
+                    <motion.div
+                        key={p.id || p.name}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="flex items-center gap-2"
+                    >
+                    <RankBadge rank={idx + 1} />
+                    <div className="min-w-0 flex-1">
+                        <div className="truncate">{p.name}</div>
+                    </div>
+                    </motion.div>
+                ))}
+               </AnimatePresence>
               {topByQuantity.length === 0 && <div className="text-center text-emerald-500 text-sm">Chưa có dữ liệu</div>}
             </div>
           </button>
