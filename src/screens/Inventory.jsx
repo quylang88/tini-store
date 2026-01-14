@@ -8,6 +8,7 @@ import ConfirmModalHost from '../components/modals/ConfirmModalHost';
 import ErrorModal from '../components/modals/ErrorModal';
 import FloatingAddButton from '../components/common/FloatingAddButton';
 import useInventoryLogic from '../hooks/useInventoryLogic';
+import useFilterTransition from '../hooks/useFilterTransition';
 
 const Inventory = ({ products, setProducts, settings }) => {
   const [detailProduct, setDetailProduct] = useState(null);
@@ -46,6 +47,9 @@ const Inventory = ({ products, setProducts, settings }) => {
     setWarehouseFilter,
   } = useInventoryLogic({ products, setProducts, settings });
 
+  // Khi search/danh mục/kho thay đổi thì list remount để chạy animation chuyển cảnh.
+  const inventoryTransition = useFilterTransition([searchTerm, activeCategories, warehouseFilter]);
+
   return (
     <div className="flex flex-col h-full bg-transparent">
       {showScanner && <BarcodeScanner onScanSuccess={handleScanSuccess} onClose={() => setShowScanner(false)} />}
@@ -67,11 +71,13 @@ const Inventory = ({ products, setProducts, settings }) => {
       <FloatingAddButton onClick={() => openModal()} ariaLabel="Thêm hàng mới" />
 
       {/* Tách danh sách sản phẩm thành component riêng */}
-      <ProductList
-        products={filteredProducts}
-        onDelete={handleDelete}
-        onOpenDetail={setDetailProduct}
-      />
+      <div key={`inventory-filter-${inventoryTransition.animationKey}`} className={inventoryTransition.animationClass}>
+        <ProductList
+          products={filteredProducts}
+          onDelete={handleDelete}
+          onOpenDetail={setDetailProduct}
+        />
+      </div>
 
       {/* Tách form modal và bổ sung nút chụp ảnh từ camera */}
       <ProductModal

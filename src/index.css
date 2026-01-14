@@ -1,3 +1,64 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Hiệu ứng chuyển cảnh dùng chung cho các màn hình khi mount. */
+@keyframes screen-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.screen-transition {
+  animation: screen-in 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Hiệu ứng mở modal dùng chung để overlay + panel xuất hiện mượt. */
+@keyframes modal-overlay-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes modal-panel-in {
+  from {
+    opacity: 0;
+    transform: translateY(18px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.modal-overlay-animate {
+  animation: modal-overlay-in 0.25s ease-out;
+}
+
+.modal-panel-animate {
+  animation: modal-panel-in 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Hiệu ứng chuyển cảnh riêng cho danh sách khi đổi filter. */
+@keyframes filter-change {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.filter-transition {
+  animation: filter-change 0.2s ease-out;
+}

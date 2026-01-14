@@ -13,6 +13,7 @@ import { normalizePurchaseLots } from './utils/purchaseUtils';
 // --- IMPORT COMPONENT CHUNG ---
 import TabBar from './components/TabBar';
 import ConfirmModal from './components/modals/ConfirmModal';
+import ScreenTransition from './components/common/ScreenTransition';
 
 const App = () => {
   // --- 1. QUẢN LÝ TRẠNG THÁI ĐĂNG NHẬP ---
@@ -88,49 +89,62 @@ const App = () => {
       <div className="flex-1 overflow-hidden relative">
 
         {activeTab === 'dashboard' && (
-          <Dashboard
-            products={products}
-            orders={orders}
-            onOpenDetail={() => setActiveTab('stats-detail')}
-          />
+          // Dùng wrapper chuyển cảnh để tab Dashboard vào/ra mượt hơn.
+          <ScreenTransition className="h-full">
+            <Dashboard
+              products={products}
+              orders={orders}
+              onOpenDetail={() => setActiveTab('stats-detail')}
+            />
+          </ScreenTransition>
         )}
 
         {activeTab === 'stats-detail' && (
-          <StatsDetail
-            products={products}
-            orders={orders}
-            onBack={() => setActiveTab('dashboard')}
-          />
+          // Màn chi tiết thống kê có liên kết với Dashboard nên dùng cùng hiệu ứng.
+          <ScreenTransition className="h-full">
+            <StatsDetail
+              products={products}
+              orders={orders}
+              onBack={() => setActiveTab('dashboard')}
+            />
+          </ScreenTransition>
         )}
 
         {activeTab === 'products' && (
-          <Inventory
-            products={products}
-            setProducts={setProducts}
-            settings={settings}
-          />
+          // Mỗi tab đều bọc transition để tránh lặp class cho từng màn hình.
+          <ScreenTransition className="h-full">
+            <Inventory
+              products={products}
+              setProducts={setProducts}
+              settings={settings}
+            />
+          </ScreenTransition>
         )}
 
         {activeTab === 'orders' && (
-          <Orders
-            products={products}
-            setProducts={setProducts}
-            orders={orders}
-            setOrders={setOrders}
-            settings={settings}
-          />
+          <ScreenTransition className="h-full">
+            <Orders
+              products={products}
+              setProducts={setProducts}
+              orders={orders}
+              setOrders={setOrders}
+              settings={settings}
+            />
+          </ScreenTransition>
         )}
 
         {activeTab === 'settings' && (
-          <Settings
-            products={products}
-            orders={orders}
-            setProducts={setProducts}
-            setOrders={setOrders}
-            settings={settings}
-            setSettings={setSettings}
-            onLogout={handleLogout}
-          />
+          <ScreenTransition className="h-full">
+            <Settings
+              products={products}
+              orders={orders}
+              setProducts={setProducts}
+              setOrders={setOrders}
+              settings={settings}
+              setSettings={setSettings}
+              onLogout={handleLogout}
+            />
+          </ScreenTransition>
         )}
       </div>
 

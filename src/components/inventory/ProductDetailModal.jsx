@@ -12,11 +12,12 @@ const ProductDetailModal = ({ product, onClose, onEditLot }) => {
 
   return (
     <div
-      className="fixed inset-0 bg-black/50 z-[70] flex items-end sm:items-center justify-center backdrop-blur-sm"
+      className="fixed inset-0 bg-black/50 z-[70] flex items-end sm:items-center justify-center backdrop-blur-sm modal-overlay-animate"
       onClick={onClose}
     >
+      {/* Overlay và panel dùng animation chung để hiệu ứng đồng nhất giữa các modal. */}
       <div
-        className="bg-white w-full sm:w-96 rounded-t-2xl sm:rounded-2xl p-5 pb-[calc(env(safe-area-inset-bottom)+1.25rem)] animate-slide-up max-h-[90vh] overflow-y-auto"
+        className="bg-white w-full sm:w-96 rounded-t-2xl sm:rounded-2xl p-5 pb-[calc(env(safe-area-inset-bottom)+1.25rem)] modal-panel-animate max-h-[90vh] overflow-y-auto"
         onClick={(event) => event.stopPropagation()}
       >
         <div className="flex justify-between items-center mb-4">
@@ -44,7 +45,7 @@ const ProductDetailModal = ({ product, onClose, onEditLot }) => {
                   key={lot.id}
                   type="button"
                   onClick={() => onEditLot?.(lot)}
-                  className="w-full text-left border border-amber-100 rounded-xl p-3 space-y-1 hover:border-amber-200 hover:bg-amber-50 transition"
+                  className="w-full text-left border border-amber-100 rounded-xl p-3 space-y-1 active:border-amber-200 active:bg-amber-50 transition"
                 >
                   <div className="flex items-center justify-between text-sm text-amber-800">
                     <span className="font-semibold">{formatNumber(lot.cost)}đ</span>
@@ -73,7 +74,7 @@ const ProductDetailModal = ({ product, onClose, onEditLot }) => {
         <button
           type="button"
           onClick={onClose}
-          className="mt-4 w-full rounded-xl border border-amber-200 bg-amber-50 py-2 text-sm font-semibold text-amber-800 transition hover:border-amber-300 hover:bg-amber-100"
+          className="mt-4 w-full rounded-xl border border-amber-200 bg-amber-50 py-2 text-sm font-semibold text-amber-800 transition active:border-amber-300 active:bg-amber-100"
         >
           Đóng
         </button>

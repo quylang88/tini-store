@@ -6,6 +6,7 @@ import MetricCard from '../components/stats/MetricCard';
 import OptionPills from '../components/stats/OptionPills';
 import RankBadge from '../components/stats/RankBadge';
 import TopListModal from '../components/stats/TopListModal';
+import useFilterTransition from '../hooks/useFilterTransition';
 
 const Dashboard = ({ products, orders, onOpenDetail }) => {
   const {
@@ -28,6 +29,11 @@ const Dashboard = ({ products, orders, onOpenDetail }) => {
 
   const modalTitle = activeModal === 'quantity' ? 'Top số lượng' : 'Top lợi nhuận';
   const modalItems = activeModal === 'quantity' ? topByQuantity : topByProfit;
+
+  // Khi đổi filter thời gian, remount phần số liệu để chạy animation mượt.
+  const rangeTransition = useFilterTransition([activeRange]);
+  // Khi đổi top 3/5/10, remount bảng top để tạo cảm giác chuyển cảnh.
+  const topTransition = useFilterTransition([topLimit]);
 
   return (
     <div className="p-4 space-y-4 pb-24 animate-fade-in">
@@ -53,7 +59,7 @@ const Dashboard = ({ products, orders, onOpenDetail }) => {
           />
         </div>
       </div>
-      <div className="grid grid-cols-2 gap-3">
+      <div key={`dashboard-range-${rangeTransition.animationKey}`} className={`grid grid-cols-2 gap-3 ${rangeTransition.animationClass}`}>
         <MetricCard
           icon={DollarSign}
           label="Doanh thu"
@@ -69,7 +75,10 @@ const Dashboard = ({ products, orders, onOpenDetail }) => {
         />
       </div>
 
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 space-y-4">
+      <div
+        key={`dashboard-top-${topTransition.animationKey}`}
+        className={`bg-white rounded-2xl shadow-sm border border-gray-100 p-4 space-y-4 ${topTransition.animationClass}`}
+      >
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2 text-amber-700">
             <Trophy size={18} />
@@ -89,7 +98,7 @@ const Dashboard = ({ products, orders, onOpenDetail }) => {
           <button
             type="button"
             onClick={() => openTopModal('profit')}
-            className="rounded-xl border border-rose-100 bg-rose-50/60 p-3 text-left transition hover:bg-rose-50 focus:outline-none"
+            className="rounded-xl border border-rose-100 bg-rose-50/60 p-3 text-left transition active:bg-rose-50 focus:outline-none"
           >
             <div className="flex items-center justify-between mb-3">
               <h4 className="text-xs font-semibold uppercase text-rose-600">Top lợi nhuận</h4>
@@ -110,7 +119,7 @@ const Dashboard = ({ products, orders, onOpenDetail }) => {
           <button
             type="button"
             onClick={() => openTopModal('quantity')}
-            className="rounded-xl border border-emerald-100 bg-emerald-50/60 p-3 text-left transition hover:bg-emerald-50 focus:outline-none"
+            className="rounded-xl border border-emerald-100 bg-emerald-50/60 p-3 text-left transition active:bg-emerald-50 focus:outline-none"
           >
             <div className="flex items-center justify-between mb-3">
               <h4 className="text-xs font-semibold uppercase text-emerald-600">Top số lượng</h4>
