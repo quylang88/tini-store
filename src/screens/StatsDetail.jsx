@@ -9,6 +9,7 @@ import RankBadge from '../components/stats/RankBadge';
 import TopListModal from '../components/stats/TopListModal';
 import DateRangeFilter from '../components/stats/DateRangeFilter';
 import FloatingBackButton from '../components/common/FloatingBackButton';
+import useFilterTransition from '../hooks/useFilterTransition';
 
 const StatsDetail = ({ products, orders, onBack }) => {
   const {
@@ -90,6 +91,11 @@ const StatsDetail = ({ products, orders, onBack }) => {
   const modalTitle = activeModal === 'quantity' ? 'Top số lượng' : 'Top lợi nhuận';
   const modalItems = activeModal === 'quantity' ? topByQuantity : topByProfit;
 
+  // Khi đổi khoảng thời gian, remount khối số liệu để có animation thân thiện.
+  const rangeTransition = useFilterTransition([rangeStart, rangeEnd, rangeDays]);
+  // Khi đổi top 3/5/10, remount bảng top để tạo cảm giác chuyển cảnh.
+  const topTransition = useFilterTransition([topLimit]);
+
   return (
     <div className="h-full overflow-y-auto p-4 space-y-4 pb-24 animate-fade-in">
       <div>
@@ -102,7 +108,7 @@ const StatsDetail = ({ products, orders, onBack }) => {
         <DateRangeFilter customRange={customRange} setCustomRange={setCustomRange} />
       </div>
 
-      <div className="grid grid-cols-2 gap-3">
+      <div key={`stats-range-${rangeTransition.animationKey}`} className={`grid grid-cols-2 gap-3 ${rangeTransition.animationClass}`}>
         <MetricCard
           icon={DollarSign}
           label="Doanh thu"
@@ -133,7 +139,10 @@ const StatsDetail = ({ products, orders, onBack }) => {
         </div>
       </div>
 
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 space-y-3">
+      <div
+        key={`stats-top-${topTransition.animationKey}`}
+        className={`bg-white rounded-2xl shadow-sm border border-gray-100 p-4 space-y-3 ${topTransition.animationClass}`}
+      >
         <div className="flex items-center justify-between gap-2 text-amber-700">
           <div className="flex items-center gap-2">
             <Trophy size={18} />

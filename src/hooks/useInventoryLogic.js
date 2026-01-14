@@ -41,7 +41,11 @@ const useInventoryLogic = ({ products, setProducts, settings }) => {
     const existingProduct = products.find(p => p.barcode === decodedText);
 
     if (existingProduct) {
-      alert(`Sản phẩm này đã có: ${existingProduct.name}`);
+      // Cảnh báo khi mã vạch đã tồn tại để user biết dùng sản phẩm cũ.
+      setErrorModal({
+        title: 'Sản phẩm đã tồn tại',
+        message: `Sản phẩm này đã có: ${existingProduct.name}.`,
+      });
       openModal(existingProduct);
     } else {
       if (isModalOpen) {

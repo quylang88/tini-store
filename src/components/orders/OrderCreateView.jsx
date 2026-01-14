@@ -5,6 +5,7 @@ import SearchInput from '../common/SearchInput';
 import { formatInputNumber, formatNumber } from '../../utils/helpers';
 import { getWarehouseLabel, WAREHOUSES } from '../../utils/warehouseUtils';
 import FloatingBackButton from '../common/FloatingBackButton';
+import useFilterTransition from '../../hooks/useFilterTransition';
 
 // Giao diện tạo/sửa đơn được tách riêng để Orders.jsx gọn hơn
 const OrderCreateView = ({
@@ -44,6 +45,8 @@ const OrderCreateView = ({
   handleConfirmOrder
 }) => {
   const categories = settings?.categories || ['Chung'];
+  // Khi filter tìm kiếm/danh mục/kho thay đổi thì list remount để có animation.
+  const listTransition = useFilterTransition([searchTerm, activeCategory, selectedWarehouse]);
 
   // Khi đang sửa đơn, cộng lại số lượng cũ để hiển thị tồn kho chính xác
   const getAvailableStock = (productId, stock) => {
@@ -132,7 +135,10 @@ const OrderCreateView = ({
       </div>
 
       {/* List Sản Phẩm (Đã Lọc) */}
-      <div className="flex-1 overflow-y-auto p-3 space-y-3 pb-40">
+      <div
+        key={`order-filter-${listTransition.animationKey}`}
+        className={`flex-1 overflow-y-auto p-3 space-y-3 pb-40 ${listTransition.animationClass}`}
+      >
         {filteredProducts.map(p => {
           const qty = cart[p.id] || 0;
           const warehouseStock = selectedWarehouse === 'vinhPhuc'
