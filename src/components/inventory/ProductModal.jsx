@@ -4,6 +4,7 @@ import { formatInputNumber, formatNumber } from '../../utils/helpers';
 import { getWarehouseLabel } from '../../utils/warehouseUtils';
 import SheetModal from '../modals/SheetModal'; 
 import Button from '../common/Button';
+import useModalCache from '../../hooks/useModalCache';
 
 const ProductModal = ({
   isOpen,
@@ -37,8 +38,10 @@ const ProductModal = ({
   const purchaseLots = editingProduct?.purchaseLots || [];
   const hasProfitData = Number(formData.price) > 0 && (Number(formData.cost) + shippingFeeVnd) > 0;
   const finalProfit = (Number(formData.price) || 0) - (Number(formData.cost) || 0) - shippingFeeVnd;
+  
   const isEditingLot = Boolean(editingProduct && editingLotId);
-  const modalTitle = isEditingLot ? 'Sửa Lần Nhập Hàng' : 'Thêm Mới';
+  // Cache tiêu đề để không bị đổi khi đang chạy animation đóng modal
+  const modalTitle = useModalCache(isEditingLot ? 'Sửa Lần Nhập Hàng' : 'Thêm Mới', isOpen);
 
   const handleImageChange = (event) => {
     const file = event.target.files?.[0];
@@ -196,8 +199,16 @@ const ProductModal = ({
               </button>
             </div>
           </div>
-          {formData.costCurrency === 'JPY' ? (
-            <>
+          
+          <div className="relative">
+            {/* Form JPY - Dùng absolute và opacity để toggle mà vẫn giữ DOM */}
+            <div 
+              className={`transition-all duration-300 ease-in-out ${
+                formData.costCurrency === 'JPY' 
+                  ? 'opacity-100 translate-x-0 relative z-10' 
+                  : 'opacity-0 -translate-x-4 absolute inset-0 -z-10 pointer-events-none'
+              }`}
+            >
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="text-[10px] font-bold text-amber-800 uppercase">Giá nhập (Yên)</label>
@@ -209,6 +220,7 @@ const ProductModal = ({
                       value={formatInputNumber(formData.costJPY)}
                       onChange={onMoneyChange('costJPY')}
                       placeholder="0"
+                      tabIndex={formData.costCurrency === 'JPY' ? 0 : -1}
                     />
                   </div>
                 </div>
@@ -220,25 +232,36 @@ const ProductModal = ({
                     value={formatInputNumber(formData.exchangeRate)}
                     onChange={onMoneyChange('exchangeRate')}
                     placeholder="0"
+                    tabIndex={formData.costCurrency === 'JPY' ? 0 : -1}
                   />
                 </div>
               </div>
               <div className="text-right text-xs text-amber-600 font-medium">
                 = {formatNumber(formData.cost)} VNĐ (Vốn)
               </div>
-            </>
-          ) : (
-            <div className="relative">
-              <span className="absolute left-0 top-2 text-amber-500">đ</span>
-              <input
-                inputMode="numeric"
-                className="w-full bg-transparent border-b border-amber-100 py-2 pl-4 focus:border-amber-400 outline-none text-amber-900 font-bold"
-                value={formatInputNumber(formData.cost)}
-                onChange={onMoneyChange('cost')}
-                placeholder="0"
-              />
             </div>
-          )}
+
+            {/* Form VND - Dùng absolute và opacity để toggle mà vẫn giữ DOM */}
+            <div 
+              className={`transition-all duration-300 ease-in-out ${
+                formData.costCurrency === 'VND' 
+                  ? 'opacity-100 translate-x-0 relative z-10' 
+                  : 'opacity-0 translate-x-4 absolute inset-0 -z-10 pointer-events-none'
+              }`}
+            >
+              <div className="relative">
+                <span className="absolute left-0 top-2 text-amber-500">đ</span>
+                <input
+                  inputMode="numeric"
+                  className="w-full bg-transparent border-b border-amber-100 py-2 pl-4 focus:border-amber-400 outline-none text-amber-900 font-bold"
+                  value={formatInputNumber(formData.costVNDInput)}
+                  onChange={onMoneyChange('costVNDInput')}
+                  placeholder="0"
+                  tabIndex={formData.costCurrency === 'VND' ? 0 : -1}
+                />
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Phí gửi nằm ngay sau phần giá nhập */}
@@ -270,34 +293,55 @@ const ProductModal = ({
               </button>
             </div>
           </div>
-          {formData.shippingMethod === 'jp' ? (
-            <div className="space-y-1">
-              <label className="text-[10px] font-bold text-amber-800 uppercase">Nhập cân (kg)</label>
-              <input
-                inputMode="decimal"
-                lang="en"
-                className="w-full bg-transparent border-b border-amber-100 py-2 focus:border-amber-400 outline-none text-amber-900 font-bold"
-                value={formData.shippingWeightKg}
-                onChange={onDecimalChange('shippingWeightKg')}
-                placeholder="0"
-              />
-              <div className="flex items-center justify-between text-xs font-semibold text-amber-700">
-                <span>Phí gửi: {formatNumber(shippingFeeJpy)}¥ (~{formatNumber(shippingFeeVnd)}đ)</span>
-                <span className="text-[10px] text-amber-500">900 yên / 1kg</span>
+          
+          <div className="relative">
+            {/* Form Phí Gửi JP */}
+            <div 
+              className={`transition-all duration-300 ease-in-out ${
+                formData.shippingMethod === 'jp'
+                  ? 'opacity-100 translate-x-0 relative z-10' 
+                  : 'opacity-0 -translate-x-4 absolute inset-0 -z-10 pointer-events-none'
+              }`}
+            >
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold text-amber-800 uppercase">Nhập cân (kg)</label>
+                <input
+                  inputMode="decimal"
+                  lang="en"
+                  className="w-full bg-transparent border-b border-amber-100 py-2 focus:border-amber-400 outline-none text-amber-900 font-bold"
+                  value={formData.shippingWeightKg}
+                  onChange={onDecimalChange('shippingWeightKg')}
+                  placeholder="0"
+                  tabIndex={formData.shippingMethod === 'jp' ? 0 : -1}
+                />
+                <div className="flex items-center justify-between text-xs font-semibold text-amber-700">
+                  <span>Phí gửi: {formatNumber(shippingFeeJpy)}¥ (~{formatNumber(shippingFeeVnd)}đ)</span>
+                  <span className="text-[10px] text-amber-500">900 yên / 1kg</span>
+                </div>
               </div>
             </div>
-          ) : (
-            <div>
-              <label className="text-[10px] font-bold text-amber-800 uppercase">Phí gửi (VNĐ)</label>
-              <input
-                inputMode="numeric"
-                className="w-full bg-transparent border-b border-amber-100 py-2 focus:border-amber-400 outline-none text-amber-900 font-bold"
-                value={formatInputNumber(formData.shippingFeeVnd)}
-                onChange={onMoneyChange('shippingFeeVnd')}
-                placeholder="0"
-              />
+
+            {/* Form Phí Gửi VN */}
+            <div 
+              className={`transition-all duration-300 ease-in-out ${
+                formData.shippingMethod === 'vn'
+                  ? 'opacity-100 translate-x-0 relative z-10' 
+                  : 'opacity-0 translate-x-4 absolute inset-0 -z-10 pointer-events-none'
+              }`}
+            >
+               <div>
+                <label className="text-[10px] font-bold text-amber-800 uppercase">Phí gửi (VNĐ)</label>
+                <input
+                  inputMode="numeric"
+                  className="w-full bg-transparent border-b border-amber-100 py-2 focus:border-amber-400 outline-none text-amber-900 font-bold"
+                  value={formatInputNumber(formData.shippingFeeVndInput)}
+                  onChange={onMoneyChange('shippingFeeVndInput')}
+                  placeholder="0"
+                  tabIndex={formData.shippingMethod === 'vn' ? 0 : -1}
+                />
+              </div>
             </div>
-          )}
+          </div>
         </div>
 
         {/* Tồn kho nhập vào */}

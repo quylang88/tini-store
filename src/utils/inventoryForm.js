@@ -8,12 +8,16 @@ const buildBaseFormData = (settings) => ({
   costJPY: '',
   exchangeRate: String(settings.exchangeRate),
   cost: '',
+  // Bổ sung các trường input riêng để giữ giá trị khi chuyển tab
+  costVNDInput: '',
   price: '',
   quantity: '',
   warehouse: 'vinhPhuc',
   shippingMethod: 'jp',
   shippingWeightKg: '',
   shippingFeeVnd: '',
+  // Bổ sung input cho phí gửi VNĐ
+  shippingFeeVndInput: '',
   image: '',
 });
 
@@ -30,8 +34,11 @@ export const createFormDataForProduct = ({ product, settings }) => ({
   costCurrency: 'VND',
   costJPY: '',
   cost: getLatestCost(product) || '',
+  costVNDInput: getLatestCost(product) || '',
   price: product.price,
   shippingMethod: 'vn',
+  shippingFeeVnd: '',
+  shippingFeeVndInput: '',
   image: product.image || '',
 });
 
@@ -63,12 +70,14 @@ export const createFormDataForLot = ({ product, lot, settings }) => {
     costJPY: costJPYValue === '' ? '' : String(costJPYValue),
     exchangeRate: String(exchangeRateValue || settings.exchangeRate),
     cost: lot.cost || '',
+    costVNDInput: inferredShippingMethod === 'vn' ? (lot.cost || '') : '', // Populate VND input if VN
     price: lot.priceAtPurchase ?? product.price,
     quantity: lot.quantity || '',
     warehouse: lot.warehouse || 'vinhPhuc',
     shippingMethod: inferredShippingMethod,
     shippingWeightKg: lot.shipping?.weightKg || '',
     shippingFeeVnd: lot.shipping?.feeVnd || '',
+    shippingFeeVndInput: inferredShippingMethod === 'vn' ? (lot.shipping?.feeVnd || '') : '', // Populate shipping fee input
     image: product.image || '',
   };
 };

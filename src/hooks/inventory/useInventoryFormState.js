@@ -9,10 +9,18 @@ import { createFormDataForNewProduct } from '../../utils/inventoryForm';
 
 // Tách riêng state + handler của form để hook chính gọn hơn, dễ review.
 const useInventoryFormState = ({ settings, activeCategories }) => {
-  const [formData, setFormData] = useState(() => createFormDataForNewProduct({
-    settings,
-    activeCategories,
-  }));
+  const [formData, setFormData] = useState(() => {
+    const initial = createFormDataForNewProduct({
+      settings,
+      activeCategories,
+    });
+    // Bổ sung các trường input riêng biệt để giữ giá trị khi chuyển tab
+    return {
+      ...initial,
+      costVNDInput: '',
+      shippingFeeVndInput: ''
+    };
+  });
 
   // Tự động tính giá nhập VNĐ khi chọn nhập theo Yên.
   useEffect(() => {
@@ -27,6 +35,20 @@ const useInventoryFormState = ({ settings, activeCategories }) => {
     // Khi chưa có dữ liệu hợp lệ, để trống để tránh hiển thị "0" khi đổi qua lại giữa VNĐ/Yên.
     setFormData(prev => ({ ...prev, cost: calculatedCost }));
   }, [formData.costCurrency, formData.costJPY, formData.exchangeRate]);
+  
+  // Tự động cập nhật giá nhập chính thức khi nhập trực tiếp VNĐ
+  useEffect(() => {
+    if (formData.costCurrency === 'VND') {
+       setFormData(prev => ({ ...prev, cost: prev.costVNDInput }));
+    }
+  }, [formData.costCurrency, formData.costVNDInput]);
+
+  // Tự động cập nhật phí vận chuyển khi nhập trực tiếp VNĐ
+  useEffect(() => {
+    if (formData.shippingMethod === 'vn') {
+       setFormData(prev => ({ ...prev, shippingFeeVnd: prev.shippingFeeVndInput }));
+    }
+  }, [formData.shippingMethod, formData.shippingFeeVndInput]);
 
   const handleMoneyChange = (field) => (event) => {
     const input = event.target;
@@ -70,12 +92,11 @@ const useInventoryFormState = ({ settings, activeCategories }) => {
     setFormData(prev => ({
       ...prev,
       costCurrency: nextCurrency,
-      costJPY: nextCurrency === 'VND' ? '' : prev.costJPY,
+      // KHÔNG xoá giá trị cũ (costJPY, costVNDInput) khi chuyển tab để giữ lại dữ liệu user nhập dở
       exchangeRate: String(settings.exchangeRate),
       // Đồng bộ phí gửi theo loại tiền nhập.
       shippingMethod: nextCurrency === 'JPY' ? 'jp' : 'vn',
-      shippingWeightKg: nextCurrency === 'JPY' ? prev.shippingWeightKg : '',
-      shippingFeeVnd: nextCurrency === 'VND' ? prev.shippingFeeVnd : '',
+      // KHÔNG xoá shippingWeightKg / shippingFeeVndInput
     }));
   };
 
@@ -85,8 +106,6 @@ const useInventoryFormState = ({ settings, activeCategories }) => {
       // Đồng bộ loại tiền nhập theo phương thức gửi.
       shippingMethod: nextMethod,
       costCurrency: nextMethod === 'jp' ? 'JPY' : 'VND',
-      shippingWeightKg: nextMethod === 'jp' ? prev.shippingWeightKg : '',
-      shippingFeeVnd: nextMethod === 'vn' ? prev.shippingFeeVnd : '',
     }));
   };
 

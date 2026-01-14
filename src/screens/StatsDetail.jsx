@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 import React, { useMemo, useState } from 'react';
 import { BarChart3, DollarSign, TrendingUp, Trophy } from 'lucide-react';
 import { formatNumber } from '../utils/helpers';
@@ -9,7 +10,7 @@ import RankBadge from '../components/stats/RankBadge';
 import TopListModal from '../components/stats/TopListModal';
 import DateRangeFilter from '../components/stats/DateRangeFilter';
 import FloatingBackButton from '../components/common/FloatingBackButton';
-import useFilterTransition from '../hooks/useFilterTransition';
+import { AnimatePresence, motion } from 'framer-motion';
 
 const StatsDetail = ({ products, orders, onBack }) => {
   const {
@@ -91,11 +92,6 @@ const StatsDetail = ({ products, orders, onBack }) => {
   const modalTitle = activeModal === 'quantity' ? 'Top số lượng' : 'Top lợi nhuận';
   const modalItems = activeModal === 'quantity' ? topByQuantity : topByProfit;
 
-  // Khi đổi khoảng thời gian, remount khối số liệu để có animation thân thiện.
-  const rangeTransition = useFilterTransition([rangeStart, rangeEnd, rangeDays]);
-  // Khi đổi top 3/5/10, remount bảng top để tạo cảm giác chuyển cảnh.
-  const topTransition = useFilterTransition([topLimit]);
-
   return (
     <div className="h-full overflow-y-auto p-4 space-y-4 pb-24 animate-fade-in">
       <div>
@@ -108,7 +104,7 @@ const StatsDetail = ({ products, orders, onBack }) => {
         <DateRangeFilter customRange={customRange} setCustomRange={setCustomRange} />
       </div>
 
-      <div key={`stats-range-${rangeTransition.animationKey}`} className={`grid grid-cols-2 gap-3 ${rangeTransition.animationClass}`}>
+      <div className="grid grid-cols-2 gap-3">
         <MetricCard
           icon={DollarSign}
           label="Doanh thu"
@@ -139,10 +135,7 @@ const StatsDetail = ({ products, orders, onBack }) => {
         </div>
       </div>
 
-      <div
-        key={`stats-top-${topTransition.animationKey}`}
-        className={`bg-white rounded-2xl shadow-sm border border-gray-100 p-4 space-y-3 ${topTransition.animationClass}`}
-      >
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 space-y-3">
         <div className="flex items-center justify-between gap-2 text-amber-700">
           <div className="flex items-center gap-2">
             <Trophy size={18} />
@@ -166,12 +159,20 @@ const StatsDetail = ({ products, orders, onBack }) => {
           >
             <div className="text-xs font-semibold uppercase text-rose-600 mb-2">Top lợi nhuận</div>
             <div className="space-y-2 text-sm text-rose-800">
-              {topByProfit.map((item, index) => (
-                <div key={item.id || item.name} className="flex items-center gap-2">
-                  <RankBadge rank={index + 1} />
-                  <span className="min-w-0 flex-1 truncate">{item.name}</span>
-                </div>
-              ))}
+               <AnimatePresence mode='wait'>
+                {topByProfit.map((item, index) => (
+                    <motion.div 
+                        key={item.id || item.name} 
+                        initial={{ opacity: 0 }} 
+                        animate={{ opacity: 1 }} 
+                        exit={{ opacity: 0 }}
+                        className="flex items-center gap-2"
+                    >
+                    <RankBadge rank={index + 1} />
+                    <span className="min-w-0 flex-1 truncate">{item.name}</span>
+                    </motion.div>
+                ))}
+               </AnimatePresence>
               {topByProfit.length === 0 && <div className="text-xs text-rose-400">Chưa có dữ liệu</div>}
             </div>
           </button>
@@ -182,12 +183,20 @@ const StatsDetail = ({ products, orders, onBack }) => {
           >
             <div className="text-xs font-semibold uppercase text-emerald-600 mb-2">Top số lượng</div>
             <div className="space-y-2 text-sm text-emerald-800">
-              {topByQuantity.map((item, index) => (
-                <div key={item.id || item.name} className="flex items-center gap-2">
-                  <RankBadge rank={index + 1} />
-                  <span className="min-w-0 flex-1 truncate">{item.name}</span>
-                </div>
-              ))}
+               <AnimatePresence mode='wait'>
+                {topByQuantity.map((item, index) => (
+                    <motion.div 
+                        key={item.id || item.name} 
+                        initial={{ opacity: 0 }} 
+                        animate={{ opacity: 1 }} 
+                        exit={{ opacity: 0 }}
+                        className="flex items-center gap-2"
+                    >
+                    <RankBadge rank={index + 1} />
+                    <span className="min-w-0 flex-1 truncate">{item.name}</span>
+                    </motion.div>
+                ))}
+               </AnimatePresence>
               {topByQuantity.length === 0 && <div className="text-xs text-emerald-400">Chưa có dữ liệu</div>}
             </div>
           </button>
