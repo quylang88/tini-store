@@ -238,7 +238,7 @@ const StatsDetail = ({ products, orders, onBack }) => {
       {/* Dùng nút back nổi chung để đồng bộ vị trí và hiệu ứng chạm. */}
       <FloatingBackButton
         onClick={onBack}
-        className="bottom-[calc(env(safe-area-inset-bottom)+88px)]"
+        className="bottom-[calc(env(safe-area-inset-bottom)+20px)]"
       />
 
       {/* Dùng modal chung để xem chi tiết top khi chạm vào từng bảng. */}

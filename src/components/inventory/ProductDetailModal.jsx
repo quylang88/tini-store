@@ -45,7 +45,7 @@ const ProductDetailModal = ({ product, onClose, onEditLot }) => {
                   key={lot.id}
                   type="button"
                   onClick={() => onEditLot?.(lot)}
-                  className="w-full text-left border border-amber-100 rounded-xl p-3 space-y-1 active:border-amber-200 active:bg-amber-50 transition"
+                  className="w-full text-left border border-amber-100 rounded-xl p-3 space-y-1 active:border-amber-200 bg-amber-50 transition"
                 >
                   <div className="flex items-center justify-between text-sm text-amber-800">
                     <span className="font-semibold">{formatNumber(lot.cost)}đ</span>
@@ -74,7 +74,7 @@ const ProductDetailModal = ({ product, onClose, onEditLot }) => {
         <button
           type="button"
           onClick={onClose}
-          className="mt-4 w-full rounded-xl border border-amber-200 bg-amber-50 py-2 text-sm font-semibold text-amber-800 transition active:border-amber-300 active:bg-amber-100"
+          className="mt-4 w-full rounded-xl border border-amber-300 bg-amber-100 py-2.5 text-sm font-bold text-amber-900 transition active:border-amber-400 active:bg-amber-200"
         >
           Đóng
         </button>

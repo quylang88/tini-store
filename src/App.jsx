@@ -76,7 +76,20 @@ const App = () => {
     setLogoutModalOpen(true);
   };
 
-  // --- 5. RENDERING ---
+  // --- 5. LOGIC HIỂN THỊ TABBAR ---
+  // Mặc định hiển thị, trừ khi vào các màn chi tiết (như Thống kê chi tiết)
+  const [isTabBarVisible, setIsTabBarVisible] = useState(true);
+
+  // Khi chuyển tab, tự động cập nhật trạng thái hiển thị của TabBar
+  useEffect(() => {
+    if (activeTab === 'stats-detail') {
+      setIsTabBarVisible(false);
+    } else {
+      setIsTabBarVisible(true);
+    }
+  }, [activeTab]);
+
+  // --- 6. RENDERING ---
 
   // Nếu chưa đăng nhập -> Hiện màn hình Login
   if (!isAuthenticated) {
@@ -129,6 +142,8 @@ const App = () => {
               orders={orders}
               setOrders={setOrders}
               settings={settings}
+              // Truyền hàm để màn Orders có thể ẩn TabBar khi vào chế độ Tạo đơn
+              setTabBarVisible={setIsTabBarVisible}
             />
           </ScreenTransition>
         )}
@@ -148,7 +163,11 @@ const App = () => {
         )}
       </div>
 
-      <TabBar activeTab={activeTab} setActiveTab={setActiveTab} />
+      <TabBar
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        isVisible={isTabBarVisible}
+      />
 
       {/* Modal xác nhận đăng xuất thay thế confirm */}
       <ConfirmModal
@@ -175,6 +194,8 @@ const App = () => {
         .animate-slide-up { animation: slide-up 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
         @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
         .animate-fade-in { animation: fade-in 0.3s ease-out; }
+        @keyframes slide-down-out { from { transform: translateY(0); } to { transform: translateY(100%); } }
+        .animate-slide-down-out { animation: slide-down-out 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
       `}</style>
     </div>
   );
