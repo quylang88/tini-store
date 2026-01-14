@@ -51,12 +51,14 @@ const Dashboard = ({ products, orders, onOpenDetail }) => {
             activeClassName="bg-amber-500 text-white border-amber-400 shadow-sm"
             inactiveClassName="bg-amber-50 text-amber-700 border-amber-100"
           />
+          {/* Nút thống kê chi tiết dạng nổi, giữ đúng vị trí cạnh bộ lọc. */}
           <button
+            type="button"
             onClick={onOpenDetail}
-            className="flex items-center gap-1 text-xs font-semibold text-rose-600 bg-rose-50 border border-rose-100 px-3 py-1.5 rounded-full whitespace-nowrap"
+            aria-label="Mở thống kê chi tiết"
+            className="flex h-9 w-9 items-center justify-center rounded-full bg-rose-500 text-white shadow-lg shadow-rose-200 active:scale-95 transition"
           >
-            Thống kê chi tiết
-            <ArrowUpRight size={14} />
+            <ArrowUpRight size={16} />
           </button>
         </div>
       </div>
