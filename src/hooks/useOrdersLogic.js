@@ -28,6 +28,22 @@ const useOrdersLogic = ({ products, setProducts, orders, setOrders }) => {
   const isCreateView = view === 'create';
   const shouldShowDetailModal = view === 'list' && Boolean(selectedOrder);
 
+  // Hàm kẹp số lượng trong khoảng hợp lệ để không vượt tồn kho.
+  const clampQuantity = (value, availableStock) => Math.max(0, Math.min(availableStock, value));
+
+  // Cập nhật giỏ hàng theo công thức tính số lượng tiếp theo để tránh lặp code.
+  const updateCartItem = (productId, computeNextQuantity) => {
+    setCart((prev) => {
+      const current = prev[productId] || 0;
+      const nextValue = computeNextQuantity(current);
+      if (!nextValue) {
+        const { [productId]: _, ...rest } = prev;
+        return rest;
+      }
+      return { ...prev, [productId]: nextValue };
+    });
+  };
+
   const {
     getAvailableStock,
     filteredProducts,
@@ -58,26 +74,13 @@ const useOrdersLogic = ({ products, setProducts, orders, setOrders }) => {
   };
 
   const handleQuantityChange = (productId, value, availableStock) => {
-    const nextValue = Math.max(0, Math.min(availableStock, Number(value) || 0));
-    setCart((prev) => {
-      if (!nextValue) {
-        const { [productId]: _, ...rest } = prev;
-        return rest;
-      }
-      return { ...prev, [productId]: nextValue };
-    });
+    // Khi nhập trực tiếp, chỉ nhận số hợp lệ và không vượt tồn kho.
+    updateCartItem(productId, () => clampQuantity(Number(value) || 0, availableStock));
   };
 
   const adjustQuantity = (productId, delta, availableStock) => {
-    setCart((prev) => {
-      const current = prev[productId] || 0;
-      const nextValue = Math.max(0, Math.min(availableStock, current + delta));
-      if (!nextValue) {
-        const { [productId]: _, ...rest } = prev;
-        return rest;
-      }
-      return { ...prev, [productId]: nextValue };
-    });
+    // Khi bấm +/- thì cộng dồn rồi kẹp lại theo tồn kho.
+    updateCartItem(productId, (current) => clampQuantity(current + delta, availableStock));
   };
 
   const handleScanForSale = (decodedText) => {
@@ -92,11 +95,8 @@ const useOrdersLogic = ({ products, setProducts, orders, setOrders }) => {
       alert('Sản phẩm này đã hết hàng.');
       return;
     }
-    setCart((prev) => {
-      const current = prev[product.id] || 0;
-      const nextValue = Math.min(availableStock, current + 1);
-      return { ...prev, [product.id]: nextValue };
-    });
+    // Quét mã vạch thì tự cộng 1 sản phẩm nếu còn hàng.
+    updateCartItem(product.id, (current) => clampQuantity(current + 1, availableStock));
   };
 
   const handleStartCreate = () => {
@@ -185,8 +185,28 @@ const useOrdersLogic = ({ products, setProducts, orders, setOrders }) => {
     return orderType === 'delivery' ? Number(shippingFee || 0) : 0;
   };
 
+  // Kiểm tra điều kiện tối thiểu trước khi tạo/cập nhật đơn.
+  const ensureOrderReady = (actionLabel) => {
+    if (reviewItems.length === 0) {
+      alert('Vui lòng chọn ít nhất 1 sản phẩm.');
+      return false;
+    }
+    if (orderType === 'delivery' && (!customerName.trim() || !customerAddress.trim())) {
+      // Mở modal cảnh báo khi thiếu thông tin gửi khách.
+      setConfirmModal({
+        title: 'Thiếu thông tin khách hàng',
+        message: `Vui lòng nhập tên và địa chỉ khách hàng trước khi ${actionLabel}.`,
+        confirmLabel: 'Đã hiểu',
+        tone: 'danger',
+        onConfirm: () => setConfirmModal(null),
+      });
+      return false;
+    }
+    return true;
+  };
 
   const buildOrderPayload = () => {
+    // Chuẩn hoá dữ liệu đơn để dùng chung cho tạo mới và cập nhật.
     const orderItems = reviewItems.map((item) => ({
       productId: item.productId,
       name: item.name,
@@ -207,21 +227,9 @@ const useOrdersLogic = ({ products, setProducts, orders, setOrders }) => {
   };
 
   const handleCreateOrder = () => {
-    if (reviewItems.length === 0) {
-      alert('Vui lòng chọn ít nhất 1 sản phẩm.');
-      return;
-    }
-    if (orderType === 'delivery' && (!customerName.trim() || !customerAddress.trim())) {
-      // Mở modal cảnh báo khi thiếu thông tin gửi khách.
-      setConfirmModal({
-        title: 'Thiếu thông tin khách hàng',
-        message: 'Vui lòng nhập tên và địa chỉ khách hàng trước khi tạo đơn.',
-        confirmLabel: 'Đã hiểu',
-        tone: 'danger',
-        onConfirm: () => setConfirmModal(null),
-      });
-      return;
-    }
+    // Chặn tạo đơn khi dữ liệu chưa đủ.
+    if (!ensureOrderReady('tạo đơn')) return;
+
     const { items, total, warehouse, orderType: nextOrderType, customerName: nextCustomerName, customerAddress: nextCustomerAddress, shippingFee: nextShippingFee } = buildOrderPayload();
     const orderId = Date.now().toString();
     const newOrder = {
@@ -251,23 +259,8 @@ const useOrdersLogic = ({ products, setProducts, orders, setOrders }) => {
   };
 
   const handleUpdateOrder = () => {
-    if (!orderBeingEdited) return;
-    if (reviewItems.length === 0) {
-      alert('Vui lòng chọn ít nhất 1 sản phẩm.');
-      return;
-    }
-
-    if (orderType === 'delivery' && (!customerName.trim() || !customerAddress.trim())) {
-      // Khi sửa đơn gửi khách cũng cần đủ thông tin tên/địa chỉ.
-      setConfirmModal({
-        title: 'Thiếu thông tin khách hàng',
-        message: 'Vui lòng nhập tên và địa chỉ khách hàng trước khi cập nhật đơn.',
-        confirmLabel: 'Đã hiểu',
-        tone: 'danger',
-        onConfirm: () => setConfirmModal(null),
-      });
-      return;
-    }
+    // Chặn cập nhật nếu đơn chưa đủ điều kiện tối thiểu.
+    if (!ensureOrderReady('cập nhật đơn')) return;
 
     const { items, total, warehouse, orderType: nextOrderType, customerName: nextCustomerName, customerAddress: nextCustomerAddress, shippingFee: nextShippingFee } = buildOrderPayload();
     const updatedOrder = {
