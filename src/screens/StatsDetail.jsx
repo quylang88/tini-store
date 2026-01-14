@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { BarChart3, ChevronRight, DollarSign, TrendingUp, Trophy } from 'lucide-react';
+import { BarChart3, DollarSign, TrendingUp, Trophy } from 'lucide-react';
 import { formatNumber } from '../utils/helpers';
 import useDashboardLogic from '../hooks/useDashboardLogic';
 import { getLatestUnitCost } from '../utils/purchaseUtils';
@@ -8,6 +8,7 @@ import OptionPills from '../components/stats/OptionPills';
 import RankBadge from '../components/stats/RankBadge';
 import TopListModal from '../components/stats/TopListModal';
 import DateRangeFilter from '../components/stats/DateRangeFilter';
+import FloatingBackButton from '../components/common/FloatingBackButton';
 
 const StatsDetail = ({ products, orders, onBack }) => {
   const {
@@ -225,13 +226,11 @@ const StatsDetail = ({ products, orders, onBack }) => {
         </ul>
       </div>
 
-      <button
+      {/* Dùng nút back nổi chung để đồng bộ vị trí và hiệu ứng chạm. */}
+      <FloatingBackButton
         onClick={onBack}
-        className="fixed right-4 bottom-[calc(env(safe-area-inset-bottom)+88px)] z-[70] flex h-12 w-12 items-center justify-center rounded-full bg-white text-amber-700 shadow-lg border border-amber-200 hover:bg-amber-50 active:scale-95 transition"
-        aria-label="Quay lại"
-      >
-        <ChevronRight className="rotate-180" />
-      </button>
+        className="bottom-[calc(env(safe-area-inset-bottom)+88px)]"
+      />
 
       {/* Dùng modal chung để xem chi tiết top khi chạm vào từng bảng. */}
       <TopListModal

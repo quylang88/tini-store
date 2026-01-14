@@ -1,9 +1,10 @@
 import React from 'react';
-import { ChevronRight, ScanBarcode, Image as ImageIcon, Plus, Minus, ShoppingCart, Search } from 'lucide-react';
+import { ScanBarcode, Image as ImageIcon, Plus, Minus, ShoppingCart, Search } from 'lucide-react';
 import BarcodeScanner from '../../components/BarcodeScanner';
 import SearchInput from '../common/SearchInput';
 import { formatInputNumber, formatNumber } from '../../utils/helpers';
 import { getWarehouseLabel, WAREHOUSES } from '../../utils/warehouseUtils';
+import FloatingBackButton from '../common/FloatingBackButton';
 
 // Giao diện tạo/sửa đơn được tách riêng để Orders.jsx gọn hơn
 const OrderCreateView = ({
@@ -201,15 +202,12 @@ const OrderCreateView = ({
         )}
       </div>
 
-      {/* Nút back nổi góc phải, né tabbar/setting và ẩn khi modal xác nhận/review hoặc tổng đơn đang mở. */}
+      {/* Nút back nổi dùng chung, né tabbar/setting và ẩn khi modal xác nhận/review hoặc tổng đơn đang mở. */}
       {!isReviewOpen && !hideBackButton && totalAmount <= 0 && (
-        <button
+        <FloatingBackButton
           onClick={handleExitCreate}
-          className={`fixed right-4 ${totalAmount > 0 ? 'bottom-[calc(env(safe-area-inset-bottom)+140px)]' : 'bottom-[calc(env(safe-area-inset-bottom)+88px)]'} z-[70] flex h-12 w-12 items-center justify-center rounded-full bg-white text-amber-700 shadow-lg border border-amber-200 active:scale-95 transition`}
-          aria-label="Quay lại"
-        >
-          <ChevronRight className="rotate-180" />
-        </button>
+          className={totalAmount > 0 ? 'bottom-[calc(env(safe-area-inset-bottom)+140px)]' : 'bottom-[calc(env(safe-area-inset-bottom)+88px)]'}
+        />
       )}
 
       {/* Tạo đơn hàng */}
