@@ -25,6 +25,7 @@ const useOrdersLogic = ({ products, setProducts, orders, setOrders }) => {
   const [selectedWarehouse, setSelectedWarehouse] = useState(DEFAULT_WAREHOUSE);
   const [activeCategory, setActiveCategory] = useState('Tất cả');
   const [searchTerm, setSearchTerm] = useState('');
+  const [priceOverrides, setPriceOverrides] = useState({});
   const [orderBeingEdited, setOrderBeingEdited] = useState(null);
   // Trạng thái hiển thị màn hình tạo đơn và modal chi tiết đơn
   const isCreateView = view === 'create';
@@ -58,6 +59,7 @@ const useOrdersLogic = ({ products, setProducts, orders, setOrders }) => {
     activeCategory,
     selectedWarehouse,
     orderBeingEdited,
+    priceOverrides,
   });
 
   const clearDraft = () => {
@@ -65,6 +67,7 @@ const useOrdersLogic = ({ products, setProducts, orders, setOrders }) => {
     setOrderComment('');
     setOrderBeingEdited(null);
     setSearchTerm('');
+    setPriceOverrides({});
     setActiveCategory('Tất cả');
     setIsReviewOpen(false);
     setSelectedWarehouse(DEFAULT_WAREHOUSE);
@@ -83,6 +86,11 @@ const useOrdersLogic = ({ products, setProducts, orders, setOrders }) => {
   const adjustQuantity = (productId, delta, availableStock) => {
     // Khi bấm +/- thì cộng dồn rồi kẹp lại theo tồn kho.
     updateCartItem(productId, (current) => clampQuantity(current + delta, availableStock));
+  };
+
+  const handlePriceChange = (productId, value) => {
+    const sanitized = sanitizeNumberInput(value);
+    setPriceOverrides((prev) => ({ ...prev, [productId]: sanitized }));
   };
 
   const handleScanForSale = (decodedText) => {
@@ -258,12 +266,23 @@ const useOrdersLogic = ({ products, setProducts, orders, setOrders }) => {
       comment: orderComment.trim(),
     };
 
-    setProducts((prevProducts) => syncProductsStock(
-      prevProducts,
-      items,
-      [],
-      warehouse,
-    ));
+    setProducts((prevProducts) => {
+      // Cập nhật giá sản phẩm toàn cục nếu có thay đổi trong đơn hàng
+      const productsWithUpdatedPrices = prevProducts.map((p) => {
+        const item = items.find((i) => i.productId === p.id);
+        if (item && item.price !== p.price) {
+          return { ...p, price: item.price };
+        }
+        return p;
+      });
+
+      return syncProductsStock(
+        productsWithUpdatedPrices,
+        items,
+        [],
+        warehouse,
+      );
+    });
     setOrders([...orders, newOrder]);
     clearDraft();
     setView('list');
@@ -287,13 +306,24 @@ const useOrdersLogic = ({ products, setProducts, orders, setOrders }) => {
       comment: orderComment.trim(),
     };
 
-    setProducts((prevProducts) => syncProductsStock(
-      prevProducts,
-      items,
-      orderBeingEdited.items,
-      warehouse,
-      orderBeingEdited.warehouse || DEFAULT_WAREHOUSE,
-    ));
+    setProducts((prevProducts) => {
+      // Cập nhật giá sản phẩm toàn cục nếu có thay đổi trong đơn hàng
+      const productsWithUpdatedPrices = prevProducts.map((p) => {
+        const item = items.find((i) => i.productId === p.id);
+        if (item && item.price !== p.price) {
+          return { ...p, price: item.price };
+        }
+        return p;
+      });
+
+      return syncProductsStock(
+        productsWithUpdatedPrices,
+        items,
+        orderBeingEdited.items,
+        warehouse,
+        orderBeingEdited.warehouse || DEFAULT_WAREHOUSE,
+      );
+    });
     setOrders(orders.map(order => (order.id === orderBeingEdited.id ? updatedOrder : order)));
     clearDraft();
     setView('list');
@@ -425,6 +455,8 @@ const useOrdersLogic = ({ products, setProducts, orders, setOrders }) => {
     totalAmount,
     reviewItems,
     filteredProducts,
+      priceOverrides,
+      handlePriceChange,
     handleQuantityChange,
     adjustQuantity,
     handleScanForSale,
