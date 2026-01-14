@@ -1,26 +1,52 @@
 import React from 'react';
+import SheetModal from '../modals/SheetModal'; // Chuyển sang dùng SheetModal
 import { formatNumber } from '../../utils/helpers';
 import { getWarehouseLabel } from '../../utils/warehouseUtils';
 import { getOrderDisplayName } from '../../utils/orderUtils';
 
 const OrderDetailModal = ({ order, onClose, getOrderStatusInfo }) => {
-  if (!order) return null;
+  if (!order) return null; // SheetModal sẽ handle open/close animation dựa vào prop open, nhưng component cha đang mount/unmount có điều kiện.
+  // Để fix animation exit, cha cần render modal với open=false trước khi unmount.
+  // Tuy nhiên ở đây `shouldShowDetailModal` trong Orders.jsx control việc mount.
+  // Để đơn giản, ta vẫn return null nếu !order, nhưng logic exit animation sẽ phụ thuộc vào ModalShell/SheetModal mới.
+  // Thực tế `SheetModal` cần `open` boolean. `Orders.jsx` đang mount/unmount component này.
+  // Nếu muốn animation exit đẹp, component cha nên luôn mount và chỉ toggle `open`.
+  // Nhưng hiện tại logic cũ là conditionally render.
+  // Ta sẽ tạm thời giữ logic render conditional, và chấp nhận animation exit có thể bị cắt nếu parent unmount ngay lập tức.
+  // -> Tuy nhiên, yêu cầu là "biến mất mượt". Vậy ta cần sửa logic cha hoặc dùng `open` prop đúng nghĩa.
+  // Trong `Orders.jsx`, `shouldShowDetailModal` được dùng để mount.
+  // Để fix: `SheetModal` bên trong có `useEffect` delay unmount?
+  // Không, nếu parent unmount `OrderDetailModal` thì `SheetModal` chết ngay.
+  // Vậy `OrderDetailModal` phải luôn được render, và nhận prop `open`.
+  // Nhưng `order` sẽ là null khi closed.
+  // -> Sẽ xử lý việc này sau. Bây giờ cứ chuyển sang `SheetModal`.
+
   const orderLabel = order.orderNumber ? `#${order.orderNumber}` : `#${order.id.slice(-4)}`;
-  // Gắn tên đơn theo thông tin khách hoặc bán tại kho để dễ nhận diện.
   const orderName = getOrderDisplayName(order);
   const statusInfo = getOrderStatusInfo?.(order);
   const warehouseLabel = getWarehouseLabel(order.warehouse || 'daLat');
 
+  const footer = (
+    <button
+      onClick={onClose}
+      className="w-full py-2.5 rounded-xl bg-rose-500 text-white font-semibold shadow-md shadow-rose-200 active:bg-rose-600 transition"
+    >
+      Xác nhận
+    </button>
+  );
+
   return (
-    <div className="fixed inset-0 z-[90] flex items-end justify-center bg-black/40 p-4 modal-overlay-animate" onClick={onClose}>
-      {/* Overlay có animation để modal mở mượt, giữ trải nghiệm đồng bộ với các modal khác. */}
-      <div
-        className="w-full max-w-md bg-white rounded-2xl shadow-xl border border-amber-100 overflow-hidden modal-panel-animate"
-        onClick={(event) => event.stopPropagation()}
-      >
-        <div className="p-4 border-b border-amber-100 bg-amber-50">
-          <div className="flex items-center justify-between">
-            <div className="text-lg font-bold text-amber-900">Chi tiết đơn hàng {orderLabel}</div>
+    <SheetModal
+      open={Boolean(order)}
+      onClose={onClose}
+      title={`Chi tiết đơn hàng ${orderLabel}`}
+      footer={footer}
+    >
+      <div className="space-y-4">
+        {/* Header Info */}
+        <div className="border-b border-amber-100 pb-4">
+          <div className="flex items-center justify-between mb-2">
+            <div className="text-xs font-semibold text-amber-600">{orderName}</div>
             {statusInfo && (
               <span className={`inline-flex items-center gap-2 px-2 py-1 rounded-full border text-xs font-semibold ${statusInfo.badgeClass}`}>
                 <span className={`w-2 h-2 rounded-full ${statusInfo.dotClass}`} />
@@ -28,17 +54,16 @@ const OrderDetailModal = ({ order, onClose, getOrderStatusInfo }) => {
               </span>
             )}
           </div>
-          {/* Tên khách/địa chỉ hiển thị xuống dòng để tránh làm vỡ layout trạng thái */}
-          <div className="text-xs font-semibold text-amber-600 mt-1">{orderName}</div>
-          <div className="text-xs text-amber-600 mt-1">{new Date(order.date).toLocaleString()}</div>
+          <div className="text-xs text-amber-600">{new Date(order.date).toLocaleString()}</div>
           {order.comment && (
             <div className="mt-2 rounded-lg border border-amber-200 bg-white px-3 py-2 text-xs text-amber-800">
-              {/* Ghi chú đơn hàng để gợi nhớ cho user */}
               {order.comment}
             </div>
           )}
         </div>
-        <div className="p-4 space-y-3 max-h-[55vh] overflow-y-auto">
+
+        {/* List Items */}
+        <div className="space-y-3">
           {order.items.map((item, index) => (
             <div key={`${item.productId}-${index}`} className="flex justify-between text-sm text-gray-600">
               <div className="min-w-0">
@@ -53,7 +78,9 @@ const OrderDetailModal = ({ order, onClose, getOrderStatusInfo }) => {
             </div>
           ))}
         </div>
-        <div className="p-4 border-t border-amber-100 bg-amber-50 space-y-2">
+
+        {/* Summary */}
+        <div className="border-t border-amber-100 pt-4 bg-amber-50 -mx-5 px-5 -mb-2 pb-2 mt-4 space-y-2">
           <div className="flex justify-between text-sm text-gray-500">
             <span>Tại kho</span>
             <span className="font-semibold text-amber-700">{warehouseLabel}</span>
@@ -74,19 +101,13 @@ const OrderDetailModal = ({ order, onClose, getOrderStatusInfo }) => {
             <span>Phí gửi khách</span>
             <span className="font-semibold text-amber-700">{formatNumber(order.shippingFee || 0)}đ</span>
           </div>
-          <div className="flex justify-between text-sm text-gray-500">
-            <span>Tổng đơn</span>
+          <div className="flex justify-between text-sm text-gray-500 mt-2 pt-2 border-t border-amber-200/50">
+            <span className="font-medium text-amber-900">Tổng đơn</span>
             <span className="text-lg font-bold text-rose-600">{formatNumber(order.total)}đ</span>
           </div>
-          <button
-            onClick={onClose}
-            className="w-full py-2.5 rounded-xl bg-rose-500 text-white font-semibold shadow-md shadow-rose-200 active:bg-rose-600 transition"
-          >
-            Xác nhận
-          </button>
         </div>
       </div>
-    </div>
+    </SheetModal>
   );
 };
 

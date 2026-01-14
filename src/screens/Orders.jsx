@@ -8,7 +8,7 @@ import ErrorModal from '../components/modals/ErrorModal';
 import ScreenTransition from '../components/common/ScreenTransition';
 import useOrdersLogic from '../hooks/useOrdersLogic';
 
-const Orders = ({ products, setProducts, orders, setOrders, settings }) => {
+const Orders = ({ products, setProducts, orders, setOrders, settings, setTabBarVisible }) => {
   const {
     cart,
     showScanner,
@@ -57,6 +57,13 @@ const Orders = ({ products, setProducts, orders, setOrders, settings }) => {
     shouldShowDetailModal,
   } = useOrdersLogic({ products, setProducts, orders, setOrders });
 
+  // Khi vào màn hình Tạo đơn (isCreateView = true), ẩn TabBar để mở rộng không gian
+  React.useEffect(() => {
+    if (setTabBarVisible) {
+      setTabBarVisible(!isCreateView);
+    }
+  }, [isCreateView, setTabBarVisible]);
+
   const renderContent = () => {
     if (isCreateView) {
       return (
@@ -95,12 +102,17 @@ const Orders = ({ products, setProducts, orders, setOrders, settings }) => {
           handleOpenReview={() => setIsReviewOpen(true)}
           handleCloseReview={() => setIsReviewOpen(false)}
           handleConfirmOrder={() => {
+            let success = false;
             if (orderBeingEdited) {
-              handleUpdateOrder();
+              success = handleUpdateOrder();
             } else {
-              handleCreateOrder();
+              success = handleCreateOrder();
             }
-            setIsReviewOpen(false);
+            // Chỉ đóng modal review nếu thao tác thành công (trả về true)
+            // Nếu validation thất bại (trả về false), giữ modal để user sửa.
+            if (success) {
+              setIsReviewOpen(false);
+            }
           }}
         />
       );

@@ -239,7 +239,7 @@ const useOrdersLogic = ({ products, setProducts, orders, setOrders }) => {
 
   const handleCreateOrder = () => {
     // Chặn tạo đơn khi dữ liệu chưa đủ.
-    if (!ensureOrderReady('tạo đơn')) return;
+    if (!ensureOrderReady('tạo đơn')) return false;
 
     const { items, total, warehouse, orderType: nextOrderType, customerName: nextCustomerName, customerAddress: nextCustomerAddress, shippingFee: nextShippingFee } = buildOrderPayload();
     const orderId = Date.now().toString();
@@ -267,11 +267,12 @@ const useOrdersLogic = ({ products, setProducts, orders, setOrders }) => {
     setOrders([...orders, newOrder]);
     clearDraft();
     setView('list');
+    return true;
   };
 
   const handleUpdateOrder = () => {
     // Chặn cập nhật nếu đơn chưa đủ điều kiện tối thiểu.
-    if (!ensureOrderReady('cập nhật đơn')) return;
+    if (!ensureOrderReady('cập nhật đơn')) return false;
 
     const { items, total, warehouse, orderType: nextOrderType, customerName: nextCustomerName, customerAddress: nextCustomerAddress, shippingFee: nextShippingFee } = buildOrderPayload();
     const updatedOrder = {
@@ -296,6 +297,7 @@ const useOrdersLogic = ({ products, setProducts, orders, setOrders }) => {
     setOrders(orders.map(order => (order.id === orderBeingEdited.id ? updatedOrder : order)));
     clearDraft();
     setView('list');
+    return true;
   };
 
   const handleEditOrder = (order) => {
