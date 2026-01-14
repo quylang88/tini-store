@@ -9,6 +9,13 @@ import { motion, AnimatePresence } from 'framer-motion';
 const ProductList = ({ products, onDelete, onOpenDetail }) => {
   return (
     <div className="flex-1 overflow-y-auto p-3 space-y-3 pb-24">
+      {/*
+        Fixes:
+        1. mode="popLayout": Ensures exiting items are removed from the layout flow immediately (position: absolute),
+           preventing the "No products" text from jumping up after the exit animation finishes.
+        2. No 'layout' prop on items: Prevents expensive layout calculations that caused stutter ("khựng")
+           and messy reordering animations ("rối") in this specific list view.
+      */}
       <AnimatePresence mode="popLayout">
         {products.map(product => {
           // Hiển thị nhanh giá nhập, lợi nhuận và tồn kho từng kho.
@@ -20,7 +27,6 @@ const ProductList = ({ products, onDelete, onOpenDetail }) => {
 
           return (
             <motion.div
-              layout
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
@@ -74,8 +80,18 @@ const ProductList = ({ products, onDelete, onOpenDetail }) => {
           );
         })}
       </AnimatePresence>
+
+      {/* Animated Empty State to prevent jumping */}
       {products.length === 0 && (
-        <div className="text-center text-gray-400 mt-10 text-sm">Không có sản phẩm nào</div>
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.2 }}
+          className="text-center text-gray-400 mt-10 text-sm"
+        >
+          Không có sản phẩm nào
+        </motion.div>
       )}
     </div>
   );
