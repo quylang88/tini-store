@@ -10,7 +10,7 @@ import FloatingAddButton from '../components/common/FloatingAddButton';
 import useInventoryLogic from '../hooks/useInventoryLogic';
 import useFilterTransition from '../hooks/useFilterTransition';
 
-const Inventory = ({ products, setProducts, settings }) => {
+const Inventory = ({ products, setProducts, orders, setOrders, settings }) => {
   const [detailProduct, setDetailProduct] = useState(null);
   const {
     isModalOpen,
@@ -45,7 +45,7 @@ const Inventory = ({ products, setProducts, settings }) => {
     handleSelectExistingProduct,
     toggleCategory,
     setWarehouseFilter,
-  } = useInventoryLogic({ products, setProducts, settings });
+  } = useInventoryLogic({ products, setProducts, orders, setOrders, settings });
 
   // Khi search/danh mục/kho thay đổi thì list remount để chạy animation chuyển cảnh.
   const inventoryTransition = useFilterTransition([searchTerm, activeCategories, warehouseFilter]);

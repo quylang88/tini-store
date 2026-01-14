@@ -8,7 +8,7 @@ import useInventoryFormState from './inventory/useInventoryFormState';
 import useInventoryFilters from './inventory/useInventoryFilters';
 import { buildNextProductFromForm, getInventoryValidationError } from './inventory/inventorySaveUtils';
 
-const useInventoryLogic = ({ products, setProducts, settings }) => {
+const useInventoryLogic = ({ products, setProducts, orders, setOrders, settings }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [showScanner, setShowScanner] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
@@ -78,6 +78,19 @@ const useInventoryLogic = ({ products, setProducts, settings }) => {
 
     if (editingProduct) {
       setProducts(products.map(p => p.id === editingProduct.id ? nextProduct : p));
+
+      // Cập nhật tên sản phẩm trong các đơn hàng cũ (nếu có thay đổi tên)
+      if (orders && setOrders && editingProduct.name !== nextProduct.name) {
+        setOrders(orders.map(order => ({
+          ...order,
+          items: order.items.map(item => {
+            if (item.productId === editingProduct.id) {
+              return { ...item, name: nextProduct.name };
+            }
+            return item;
+          }),
+        })));
+      }
     } else {
       setProducts([...products, nextProduct]);
     }
