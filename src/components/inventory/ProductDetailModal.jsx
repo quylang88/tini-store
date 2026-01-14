@@ -32,17 +32,15 @@ const ProductDetailModal = ({ product, onClose, onEditLot }) => {
     <SheetModal
       open={Boolean(product)} // open phụ thuộc vào prop product hiện tại
       onClose={onClose}
+      title={`${cachedProduct.name}`}
       showCloseIcon={false}
       footer={footer}
     >
       <div className="space-y-4">
         <div className="flex justify-between items-center border-b border-amber-100 pb-4">
-          <div>
-            <h3 className="font-bold text-lg text-amber-900">{cachedProduct.name}</h3>
-            <div className="text-xs text-amber-600">
-              Giá nhập mới nhất: {formatNumber(latestCost)}đ
-              {latestLot ? ` • Kho: ${getWarehouseLabel(latestLot.warehouse)}` : ''}
-            </div>
+          <div className="text-xs text-amber-600">
+            Giá nhập mới nhất: {formatNumber(latestCost)}đ
+            {latestLot ? ` • Kho: ${getWarehouseLabel(latestLot.warehouse)}` : ''}
           </div>
         </div>
 

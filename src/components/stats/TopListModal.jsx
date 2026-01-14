@@ -52,7 +52,7 @@ const TopListModal = ({ open, onClose, title, items, mode }) => {
       footer={footer}
       showCloseIcon={false} // Tắt nút X
     >
-      <div className="flex flex-col space-y-4">
+      <div className="flex flex-col space-y-4 pt-3">
         <div className="border-b border-amber-100 pb-4">
           <div className="flex items-center justify-between gap-2">
             <h3 className={`text-sm font-bold uppercase ${tone.title}`}>{cachedData.title}</h3>

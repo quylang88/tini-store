@@ -59,7 +59,7 @@ const SheetModal = ({
         onClick={(e) => e.stopPropagation()}
       >
         {(title || showCloseIcon) && (
-          <div className="flex justify-between items-center p-5 pb-2">
+          <div className="flex justify-between items-center p-5 pb-0">
             {title ? <h3 className="font-bold text-lg text-amber-900">{title}</h3> : <div />}
             {showCloseIcon && (
               <button
