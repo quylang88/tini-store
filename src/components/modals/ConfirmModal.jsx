@@ -1,7 +1,9 @@
 import React from 'react';
-import SheetModal from '../modals/SheetModal'; // Chuyển sang dùng SheetModal dạng bottom
+import ModalShell from './ModalShell';
+import Button from '../common/Button';
 
-// Modal xác nhận dùng chung cho các thao tác xoá/huỷ/thanh toán
+// ConfirmModal: Modal xác nhận trung tâm (Center Modal).
+// Không có nút X, chỉ có title, message và 2 nút ở dưới.
 const ConfirmModal = ({
   open,
   title,
@@ -12,39 +14,22 @@ const ConfirmModal = ({
   onConfirm,
   onCancel
 }) => {
-  const toneClass = tone === 'danger'
-    ? 'bg-red-500 text-white active:bg-red-600 shadow-red-200'
-    : 'bg-rose-500 text-white active:bg-rose-600 shadow-rose-200';
-
-  // Footer chứa 2 nút hành động
-  const footer = (
-    <div className="flex gap-2 w-full">
-      <button
-        onClick={onCancel}
-        className="flex-1 py-2.5 rounded-xl border border-amber-200 text-amber-700 font-semibold bg-white active:bg-amber-50 transition"
-      >
-        {cancelLabel}
-      </button>
-      <button
-        onClick={onConfirm}
-        className={`flex-1 py-2.5 rounded-xl font-semibold shadow-md transition ${toneClass}`}
-      >
-        {confirmLabel}
-      </button>
-    </div>
-  );
-
   return (
-    <SheetModal
-      open={open}
-      onClose={onCancel}
-      title={title}
-      footer={footer}
-    >
-      <div className="space-y-4">
-        {message && <div className="text-sm text-gray-600 leading-relaxed">{message}</div>}
+    <ModalShell open={open} onClose={onCancel}>
+      <div className="p-5 text-center">
+        <h3 className="text-lg font-bold text-amber-900 mb-2">{title}</h3>
+        {message && <p className="text-sm text-gray-600 mb-6">{message}</p>}
+        
+        <div className="flex gap-3">
+          <Button variant="secondary" size="sm" onClick={onCancel}>
+            {cancelLabel}
+          </Button>
+          <Button variant={tone === 'danger' ? 'danger' : 'primary'} size="sm" onClick={onConfirm}>
+            {confirmLabel}
+          </Button>
+        </div>
       </div>
-    </SheetModal>
+    </ModalShell>
   );
 };
 

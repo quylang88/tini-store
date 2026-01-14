@@ -1,46 +1,40 @@
 import React from 'react';
-import SheetModal from '../modals/SheetModal'; // Chuyển sang dùng SheetModal
+import SheetModal from '../modals/SheetModal';
 import { formatNumber } from '../../utils/helpers';
 import { getWarehouseLabel } from '../../utils/warehouseUtils';
 import { getOrderDisplayName } from '../../utils/orderUtils';
+import useModalCache from '../../hooks/useModalCache';
+import Button from '../common/Button';
 
+// OrderDetailModal: Xem chi tiết đơn hàng (View Only) -> showCloseIcon={false}
 const OrderDetailModal = ({ order, onClose, getOrderStatusInfo }) => {
-  if (!order) return null; // SheetModal sẽ handle open/close animation dựa vào prop open, nhưng component cha đang mount/unmount có điều kiện.
-  // Để fix animation exit, cha cần render modal với open=false trước khi unmount.
-  // Tuy nhiên ở đây `shouldShowDetailModal` trong Orders.jsx control việc mount.
-  // Để đơn giản, ta vẫn return null nếu !order, nhưng logic exit animation sẽ phụ thuộc vào ModalShell/SheetModal mới.
-  // Thực tế `SheetModal` cần `open` boolean. `Orders.jsx` đang mount/unmount component này.
-  // Nếu muốn animation exit đẹp, component cha nên luôn mount và chỉ toggle `open`.
-  // Nhưng hiện tại logic cũ là conditionally render.
-  // Ta sẽ tạm thời giữ logic render conditional, và chấp nhận animation exit có thể bị cắt nếu parent unmount ngay lập tức.
-  // -> Tuy nhiên, yêu cầu là "biến mất mượt". Vậy ta cần sửa logic cha hoặc dùng `open` prop đúng nghĩa.
-  // Trong `Orders.jsx`, `shouldShowDetailModal` được dùng để mount.
-  // Để fix: `SheetModal` bên trong có `useEffect` delay unmount?
-  // Không, nếu parent unmount `OrderDetailModal` thì `SheetModal` chết ngay.
-  // Vậy `OrderDetailModal` phải luôn được render, và nhận prop `open`.
-  // Nhưng `order` sẽ là null khi closed.
-  // -> Sẽ xử lý việc này sau. Bây giờ cứ chuyển sang `SheetModal`.
+  // Giữ lại dữ liệu cũ để animation đóng vẫn hiển thị nội dung
+  const cachedOrder = useModalCache(order, Boolean(order));
 
-  const orderLabel = order.orderNumber ? `#${order.orderNumber}` : `#${order.id.slice(-4)}`;
-  const orderName = getOrderDisplayName(order);
-  const statusInfo = getOrderStatusInfo?.(order);
-  const warehouseLabel = getWarehouseLabel(order.warehouse || 'daLat');
+  if (!cachedOrder) return null;
+
+  const orderLabel = cachedOrder.orderNumber ? `#${cachedOrder.orderNumber}` : `#${cachedOrder.id.slice(-4)}`;
+  const orderName = getOrderDisplayName(cachedOrder);
+  const statusInfo = getOrderStatusInfo?.(cachedOrder);
+  const warehouseLabel = getWarehouseLabel(cachedOrder.warehouse || 'daLat');
 
   const footer = (
-    <button
+    <Button
+      variant="sheetClose"
+      size="sm"
       onClick={onClose}
-      className="w-full py-2.5 rounded-xl bg-rose-500 text-white font-semibold shadow-md shadow-rose-200 active:bg-rose-600 transition"
     >
-      Xác nhận
-    </button>
+      Đóng
+    </Button>
   );
 
   return (
     <SheetModal
-      open={Boolean(order)}
+      open={Boolean(order)} // Điều khiển đóng mở bằng prop order
       onClose={onClose}
       title={`Chi tiết đơn hàng ${orderLabel}`}
       footer={footer}
+      showCloseIcon={false} // View Only
     >
       <div className="space-y-4">
         {/* Header Info */}
@@ -54,17 +48,17 @@ const OrderDetailModal = ({ order, onClose, getOrderStatusInfo }) => {
               </span>
             )}
           </div>
-          <div className="text-xs text-amber-600">{new Date(order.date).toLocaleString()}</div>
-          {order.comment && (
+          <div className="text-xs text-amber-600">{new Date(cachedOrder.date).toLocaleString()}</div>
+          {cachedOrder.comment && (
             <div className="mt-2 rounded-lg border border-amber-200 bg-white px-3 py-2 text-xs text-amber-800">
-              {order.comment}
+              {cachedOrder.comment}
             </div>
           )}
         </div>
 
         {/* List Items */}
         <div className="space-y-3">
-          {order.items.map((item, index) => (
+          {cachedOrder.items.map((item, index) => (
             <div key={`${item.productId}-${index}`} className="flex justify-between text-sm text-gray-600">
               <div className="min-w-0">
                 <div className="flex items-center gap-2 text-amber-900">
@@ -85,25 +79,25 @@ const OrderDetailModal = ({ order, onClose, getOrderStatusInfo }) => {
             <span>Tại kho</span>
             <span className="font-semibold text-amber-700">{warehouseLabel}</span>
           </div>
-          {order.orderType === 'delivery' && (
+          {cachedOrder.orderType === 'delivery' && (
             <>
               <div className="flex justify-between text-sm text-gray-500">
                 <span>Khách hàng</span>
-                <span className="font-semibold text-amber-700">{order.customerName || '-'}</span>
+                <span className="font-semibold text-amber-700">{cachedOrder.customerName || '-'}</span>
               </div>
               <div className="flex justify-between text-sm text-gray-500">
                 <span>Địa chỉ</span>
-                <span className="font-semibold text-amber-700 text-right">{order.customerAddress || '-'}</span>
+                <span className="font-semibold text-amber-700 text-right">{cachedOrder.customerAddress || '-'}</span>
               </div>
             </>
           )}
           <div className="flex justify-between text-sm text-gray-500">
             <span>Phí gửi khách</span>
-            <span className="font-semibold text-amber-700">{formatNumber(order.shippingFee || 0)}đ</span>
+            <span className="font-semibold text-amber-700">{formatNumber(cachedOrder.shippingFee || 0)}đ</span>
           </div>
           <div className="flex justify-between text-sm text-gray-500 mt-2 pt-2 border-t border-amber-200/50">
             <span className="font-medium text-amber-900">Tổng đơn</span>
-            <span className="text-lg font-bold text-rose-600">{formatNumber(order.total)}đ</span>
+            <span className="text-lg font-bold text-rose-600">{formatNumber(cachedOrder.total)}đ</span>
           </div>
         </div>
       </div>

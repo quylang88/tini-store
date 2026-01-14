@@ -1,8 +1,10 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Image as ImageIcon } from 'lucide-react';
-import SheetModal from '../modals/SheetModal'; // Đổi sang dùng SheetModal mới
+import SheetModal from '../modals/SheetModal'; 
 import { formatNumber } from '../../utils/helpers';
 import RankBadge from './RankBadge';
+import useModalCache from '../../hooks/useModalCache';
+import Button from '../common/Button';
 
 const toneMap = {
   profit: {
@@ -18,33 +20,49 @@ const toneMap = {
 };
 
 // Modal hiển thị đầy đủ danh sách top kèm ảnh và số liệu chi tiết.
+// View Only -> Không có X, có nút Đóng cuối.
 const TopListModal = ({ open, onClose, title, items, mode }) => {
-  const tone = toneMap[mode] || toneMap.profit;
-  const valueLabel = mode === 'quantity' ? 'Số lượng' : 'Lợi nhuận';
+  // Gom nhóm dữ liệu cần cache
+  const dataToCache = useMemo(() => ({ title, items, mode }), [title, items, mode]);
+
+  // Cache data để giữ nội dung cũ khi modal đang đóng (open=false nhưng chưa unmount xong)
+  const cachedData = useModalCache(dataToCache, open);
+
+  // Nếu chưa có dữ liệu thì return null
+  if (!cachedData) return null;
+
+  const tone = toneMap[cachedData.mode] || toneMap.profit;
+  const valueLabel = cachedData.mode === 'quantity' ? 'Số lượng' : 'Lợi nhuận';
 
   // Nút đóng ở dưới cùng
   const footer = (
-    <button
+    <Button
+      variant="sheetClose"
+      size="sm"
       onClick={onClose}
-      className="w-full border border-amber-200 text-amber-700 py-3 rounded-xl font-bold shadow-sm active:bg-amber-50 active:scale-95 transition"
     >
       Đóng
-    </button>
+    </Button>
   );
 
   return (
-    <SheetModal open={open} onClose={onClose} footer={footer}>
-      <div className="flex flex-col">
-        <div className="pb-4">
+    <SheetModal 
+      open={open} 
+      onClose={onClose} 
+      footer={footer}
+      showCloseIcon={false} // Tắt nút X
+    >
+      <div className="flex flex-col space-y-4">
+        <div className="border-b border-amber-100 pb-4">
           <div className="flex items-center justify-between gap-2">
-            <h3 className={`text-sm font-bold uppercase ${tone.title}`}>{title}</h3>
+            <h3 className={`text-sm font-bold uppercase ${tone.title}`}>{cachedData.title}</h3>
             <span className={`text-[11px] font-semibold border rounded-full px-2 py-0.5 ${tone.badge}`}>
-              {items.length} sản phẩm
+              {cachedData.items.length} sản phẩm
             </span>
           </div>
         </div>
         <div className="space-y-3">
-          {items.map((item, index) => (
+          {cachedData.items.map((item, index) => (
             <div key={item.id || item.name} className="flex items-center gap-3">
               <RankBadge rank={index + 1} />
               <div className="w-10 h-10 rounded-lg bg-white overflow-hidden flex-shrink-0 border border-gray-100">
@@ -59,12 +77,12 @@ const TopListModal = ({ open, onClose, title, items, mode }) => {
               <div className="flex-1">
                 <div className="text-sm font-semibold text-gray-800">{item.name}</div>
                 <div className={`text-xs ${tone.value}`}>
-                  {valueLabel}: {mode === 'quantity' ? item.quantity : `${formatNumber(item.profit)}đ`}
+                  {valueLabel}: {cachedData.mode === 'quantity' ? item.quantity : `${formatNumber(item.profit)}đ`}
                 </div>
               </div>
             </div>
           ))}
-          {items.length === 0 && (
+          {cachedData.items.length === 0 && (
             <div className="text-center text-sm text-gray-400">Chưa có dữ liệu</div>
           )}
         </div>

@@ -129,13 +129,11 @@ const Orders = ({ products, setProducts, orders, setOrders, settings, setTabBarV
           handleCancelOrder={handleCancelOrder}
           onSelectOrder={setSelectedOrder}
         />
-        {shouldShowDetailModal && (
-          <OrderDetailModal
-            order={selectedOrder}
-            onClose={() => setSelectedOrder(null)}
-            getOrderStatusInfo={getOrderStatusInfo}
-          />
-        )}
+      <OrderDetailModal
+        order={selectedOrder}
+        onClose={() => setSelectedOrder(null)}
+        getOrderStatusInfo={getOrderStatusInfo}
+      />
       </>
     );
   };

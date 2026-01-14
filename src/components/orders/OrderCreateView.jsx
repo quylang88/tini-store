@@ -7,6 +7,7 @@ import { getWarehouseLabel, WAREHOUSES } from '../../utils/warehouseUtils';
 import FloatingBackButton from '../common/FloatingBackButton';
 import useFilterTransition from '../../hooks/useFilterTransition';
 import SheetModal from '../modals/SheetModal';
+import Button from '../common/Button';
 
 // Giao diện tạo/sửa đơn được tách riêng để Orders.jsx gọn hơn
 const OrderCreateView = ({
@@ -246,6 +247,7 @@ const OrderCreateView = ({
         open={isReviewOpen}
         onClose={handleCloseReview}
         title={orderBeingEdited ? 'Xác nhận cập nhật đơn' : 'Xác nhận tạo đơn hàng'}
+        showCloseIcon={true}
         footer={
           <div className="space-y-3">
             <div className="flex justify-between items-center text-sm">
@@ -253,18 +255,20 @@ const OrderCreateView = ({
               <span className="text-lg font-bold text-rose-600">{formatNumber(totalAmount)}đ</span>
             </div>
             <div className="flex gap-2">
-              <button
+              <Button
+                variant="secondary"
+                size="sm"
                 onClick={handleCloseReview}
-                className="flex-1 py-2.5 rounded-xl border border-amber-200 text-amber-700 font-semibold bg-white active:scale-95 transition"
               >
                 Xem lại
-              </button>
-              <button
+              </Button>
+              <Button
+                variant="primary"
+                size="sm"
                 onClick={handleConfirmOrder}
-                className="flex-1 py-2.5 rounded-xl bg-rose-500 text-white font-semibold shadow-md shadow-rose-200 active:scale-95 transition"
               >
                 {orderBeingEdited ? 'Cập nhật' : 'Xác nhận'}
-              </button>
+              </Button>
             </div>
           </div>
         }
