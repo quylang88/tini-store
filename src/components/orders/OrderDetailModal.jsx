@@ -1,25 +1,12 @@
 import React from 'react';
-import SheetModal from '../modals/SheetModal'; // Chuyển sang dùng SheetModal
+import SheetModal from '../modals/SheetModal';
 import { formatNumber } from '../../utils/helpers';
 import { getWarehouseLabel } from '../../utils/warehouseUtils';
 import { getOrderDisplayName } from '../../utils/orderUtils';
 
+// OrderDetailModal: Xem chi tiết đơn hàng (View Only) -> showCloseIcon={false}
 const OrderDetailModal = ({ order, onClose, getOrderStatusInfo }) => {
-  if (!order) return null; // SheetModal sẽ handle open/close animation dựa vào prop open, nhưng component cha đang mount/unmount có điều kiện.
-  // Để fix animation exit, cha cần render modal với open=false trước khi unmount.
-  // Tuy nhiên ở đây `shouldShowDetailModal` trong Orders.jsx control việc mount.
-  // Để đơn giản, ta vẫn return null nếu !order, nhưng logic exit animation sẽ phụ thuộc vào ModalShell/SheetModal mới.
-  // Thực tế `SheetModal` cần `open` boolean. `Orders.jsx` đang mount/unmount component này.
-  // Nếu muốn animation exit đẹp, component cha nên luôn mount và chỉ toggle `open`.
-  // Nhưng hiện tại logic cũ là conditionally render.
-  // Ta sẽ tạm thời giữ logic render conditional, và chấp nhận animation exit có thể bị cắt nếu parent unmount ngay lập tức.
-  // -> Tuy nhiên, yêu cầu là "biến mất mượt". Vậy ta cần sửa logic cha hoặc dùng `open` prop đúng nghĩa.
-  // Trong `Orders.jsx`, `shouldShowDetailModal` được dùng để mount.
-  // Để fix: `SheetModal` bên trong có `useEffect` delay unmount?
-  // Không, nếu parent unmount `OrderDetailModal` thì `SheetModal` chết ngay.
-  // Vậy `OrderDetailModal` phải luôn được render, và nhận prop `open`.
-  // Nhưng `order` sẽ là null khi closed.
-  // -> Sẽ xử lý việc này sau. Bây giờ cứ chuyển sang `SheetModal`.
+  if (!order) return null;
 
   const orderLabel = order.orderNumber ? `#${order.orderNumber}` : `#${order.id.slice(-4)}`;
   const orderName = getOrderDisplayName(order);
@@ -31,7 +18,7 @@ const OrderDetailModal = ({ order, onClose, getOrderStatusInfo }) => {
       onClick={onClose}
       className="w-full py-2.5 rounded-xl bg-rose-500 text-white font-semibold shadow-md shadow-rose-200 active:bg-rose-600 transition"
     >
-      Xác nhận
+      Đóng
     </button>
   );
 
@@ -41,6 +28,7 @@ const OrderDetailModal = ({ order, onClose, getOrderStatusInfo }) => {
       onClose={onClose}
       title={`Chi tiết đơn hàng ${orderLabel}`}
       footer={footer}
+      showCloseIcon={false} // View Only
     >
       <div className="space-y-4">
         {/* Header Info */}

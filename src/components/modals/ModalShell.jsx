@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 
-// Modal khung chung để đồng bộ style cho các popup xác nhận/nhập liệu
+// ModalShell: Modal dạng popup hiển thị chính giữa màn hình.
+// Dùng cho các thông báo lỗi (Error), thông tin (Info) và xác nhận (Confirm).
+// Đặc điểm: Có lớp nền mờ (backdrop blur), hiệu ứng hiện/ẩn đồng bộ, không nút X (theo yêu cầu).
 const ModalShell = ({
   open,
   onClose,
@@ -27,16 +29,17 @@ const ModalShell = ({
 
   if (!shouldRender) return null;
 
-  const alignClass = align === 'start' ? 'items-start' : 'items-center';
+  // Luôn canh giữa (items-center) để đảm bảo modal nằm giữa màn hình.
+  const alignClass = 'items-center';
 
   return createPortal(
     <div
-      className={`fixed inset-0 z-[90] bg-black/40 transition-opacity duration-300 ${
+      className={`fixed inset-0 z-[90] bg-black/40 backdrop-blur-sm transition-opacity duration-300 ${
         open ? 'opacity-100' : 'opacity-0'
       }`}
       onClick={onClose}
     >
-      {/* Bọc thêm lớp full-height để overlay phủ kín, tránh hở lớp nền ở đỉnh màn hình. */}
+      {/* Container flex để căn giữa modal theo chiều dọc và ngang */}
       <div className={`flex min-h-full justify-center ${paddingClassName} ${alignClass} ${containerClassName}`}>
         <div
           className={`w-full max-w-md bg-white rounded-2xl shadow-xl border border-amber-100 overflow-hidden transform transition-all duration-300 ${
@@ -44,7 +47,6 @@ const ModalShell = ({
           } ${panelClassName}`}
           onClick={(e) => e.stopPropagation()}
         >
-          {/* Panel modal dùng chung, đã gắn animation để tránh lặp logic ở từng modal */}
           {children}
         </div>
       </div>

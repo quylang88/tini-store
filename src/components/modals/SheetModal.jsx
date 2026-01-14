@@ -2,14 +2,17 @@ import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 
-// SheetModal: Modal dạng trượt từ dưới lên, full width, bo góc trên.
-// Dùng cho các chi tiết đơn hàng, danh sách top, review đơn hàng.
+// SheetModal: Modal dạng trượt từ dưới lên (Bottom Sheet).
+// Dùng cho:
+// 1. Xem thông tin (View Only): Top bán chạy, Lịch sử nhập hàng, Chi tiết đơn hàng -> Không có nút X, nút Đóng ở footer.
+// 2. Nhập liệu/Hành động (Action): Thêm/Sửa hàng, Xác nhận đơn -> Có nút X, 2 nút (Hủy/Lưu) ở footer.
 const SheetModal = ({
   open,
   onClose,
   children,
   title,
   footer,
+  showCloseIcon = false, // Mặc định tắt nút X để phù hợp với dạng View Only, dạng Action sẽ bật lên.
   className = '',
 }) => {
   const [shouldRender, setShouldRender] = useState(open);
@@ -30,7 +33,7 @@ const SheetModal = ({
 
   return createPortal(
     <div
-      className={`fixed inset-0 z-[90] bg-black/40 flex items-end sm:items-center justify-center backdrop-blur-sm transition-opacity duration-300 ${
+      className={`fixed inset-0 z-[90] bg-black/40 backdrop-blur-sm flex items-end sm:items-center justify-center transition-opacity duration-300 ${
         open ? 'opacity-100' : 'opacity-0'
       }`}
       onClick={onClose}
@@ -41,24 +44,29 @@ const SheetModal = ({
         } ${className}`}
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Header */}
-        <div className="flex justify-between items-center p-5 pb-2">
-          {title && <h3 className="font-bold text-lg text-amber-900">{title}</h3>}
-          {/* Nút đóng */}
-          <button
-            onClick={onClose}
-            className="bg-amber-100 text-amber-900 p-1.5 rounded-full hover:bg-amber-200 active:scale-95 transition-all"
-          >
-            <X size={18} />
-          </button>
-        </div>
+        {/* Header: Chỉ hiện nếu có title hoặc nút close */}
+        {(title || showCloseIcon) && (
+          <div className="flex justify-between items-center p-5 pb-2">
+            {title ? <h3 className="font-bold text-lg text-amber-900">{title}</h3> : <div />}
+
+            {/* Nút đóng (X) chỉ hiện khi showCloseIcon = true */}
+            {showCloseIcon && (
+              <button
+                onClick={onClose}
+                className="bg-amber-100 text-amber-900 p-1.5 rounded-full hover:bg-amber-200 active:scale-95 transition-all"
+              >
+                <X size={18} />
+              </button>
+            )}
+          </div>
+        )}
 
         {/* Content - Scrollable */}
         <div className="flex-1 overflow-y-auto px-5 py-2">
           {children}
         </div>
 
-        {/* Footer */}
+        {/* Footer: Chứa các nút hành động, tự động padding bottom cho iPhone (safe area) */}
         {footer && (
           <div className="p-5 pt-2 pb-[calc(env(safe-area-inset-bottom)+1.25rem)]">
             {footer}

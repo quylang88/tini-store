@@ -246,6 +246,7 @@ const OrderCreateView = ({
         open={isReviewOpen}
         onClose={handleCloseReview}
         title={orderBeingEdited ? 'Xác nhận cập nhật đơn' : 'Xác nhận tạo đơn hàng'}
+        showCloseIcon={true}
         footer={
           <div className="space-y-3">
             <div className="flex justify-between items-center text-sm">

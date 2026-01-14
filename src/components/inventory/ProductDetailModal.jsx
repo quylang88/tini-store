@@ -2,25 +2,39 @@ import React from 'react';
 import { formatNumber } from '../../utils/helpers';
 import { getLatestCost, getLatestLot } from '../../utils/purchaseUtils';
 import { getWarehouseLabel } from '../../utils/warehouseUtils';
+import SheetModal from '../modals/SheetModal';
 
+// ProductDetailModal: Hiển thị lịch sử nhập hàng (View Only)
+// Không có nút X, có nút Đóng ở cuối.
 const ProductDetailModal = ({ product, onClose, onEditLot }) => {
+  // Vì SheetModal handle animation exit, nên tốt nhất là luôn render SheetModal nhưng pass open=false/true.
+  // Nhưng kiến trúc hiện tại của Inventory dùng điều kiện render.
+  // Tạm thời chấp nhận render có điều kiện như cũ.
   if (!product) return null;
 
   const latestLot = getLatestLot(product);
   const latestCost = getLatestCost(product);
   const lots = product.purchaseLots || [];
 
-  return (
-    <div
-      className="fixed inset-0 bg-black/50 z-[70] flex items-end sm:items-center justify-center backdrop-blur-sm modal-overlay-animate"
+  const footer = (
+    <button
+      type="button"
       onClick={onClose}
+      className="w-full rounded-xl border border-amber-300 bg-amber-100 py-2.5 text-sm font-bold text-amber-900 transition active:border-amber-400 active:bg-amber-200"
     >
-      {/* Overlay và panel dùng animation chung để hiệu ứng đồng nhất giữa các modal. */}
-      <div
-        className="bg-white w-full sm:w-96 rounded-t-2xl sm:rounded-2xl p-5 pb-[calc(env(safe-area-inset-bottom)+1.25rem)] modal-panel-animate max-h-[90vh] overflow-y-auto"
-        onClick={(event) => event.stopPropagation()}
-      >
-        <div className="flex justify-between items-center mb-4">
+      Đóng
+    </button>
+  );
+
+  return (
+    <SheetModal
+      open={Boolean(product)}
+      onClose={onClose}
+      showCloseIcon={false} // View only -> Tắt X
+      footer={footer}
+    >
+      <div className="space-y-4">
+        <div className="flex justify-between items-center mb-1">
           <div>
             <h3 className="font-bold text-lg text-amber-900">{product.name}</h3>
             <div className="text-xs text-amber-600">
@@ -71,15 +85,8 @@ const ProductDetailModal = ({ product, onClose, onEditLot }) => {
             })
           )}
         </div>
-        <button
-          type="button"
-          onClick={onClose}
-          className="mt-4 w-full rounded-xl border border-amber-300 bg-amber-100 py-2.5 text-sm font-bold text-amber-900 transition active:border-amber-400 active:bg-amber-200"
-        >
-          Đóng
-        </button>
       </div>
-    </div>
+    </SheetModal>
   );
 };
 

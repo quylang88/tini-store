@@ -1,6 +1,6 @@
 import React from 'react';
 import { Image as ImageIcon } from 'lucide-react';
-import SheetModal from '../modals/SheetModal'; // Đổi sang dùng SheetModal mới
+import SheetModal from '../modals/SheetModal';
 import { formatNumber } from '../../utils/helpers';
 import RankBadge from './RankBadge';
 
@@ -18,6 +18,7 @@ const toneMap = {
 };
 
 // Modal hiển thị đầy đủ danh sách top kèm ảnh và số liệu chi tiết.
+// View Only -> Không có X, có nút Đóng cuối.
 const TopListModal = ({ open, onClose, title, items, mode }) => {
   const tone = toneMap[mode] || toneMap.profit;
   const valueLabel = mode === 'quantity' ? 'Số lượng' : 'Lợi nhuận';
@@ -33,7 +34,12 @@ const TopListModal = ({ open, onClose, title, items, mode }) => {
   );
 
   return (
-    <SheetModal open={open} onClose={onClose} footer={footer}>
+    <SheetModal
+      open={open}
+      onClose={onClose}
+      footer={footer}
+      showCloseIcon={false} // Tắt nút X
+    >
       <div className="flex flex-col">
         <div className="pb-4">
           <div className="flex items-center justify-between gap-2">
