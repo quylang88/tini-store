@@ -6,6 +6,7 @@ import ProductDetailModal from '../components/inventory/ProductDetailModal';
 import ProductModal from '../components/inventory/ProductModal';
 import ConfirmModalHost from '../components/modals/ConfirmModalHost';
 import ErrorModal from '../components/modals/ErrorModal';
+import FloatingAddButton from '../components/common/FloatingAddButton';
 import useInventoryLogic from '../hooks/useInventoryLogic';
 
 const Inventory = ({ products, setProducts, settings }) => {
@@ -54,7 +55,6 @@ const Inventory = ({ products, setProducts, settings }) => {
         searchTerm={searchTerm}
         onSearchChange={e => setSearchTerm(e.target.value)}
         onClearSearch={() => setSearchTerm('')}
-        onOpenModal={() => openModal()}
         onShowScanner={() => setShowScanner(true)}
         activeCategories={activeCategories}
         onToggleCategory={toggleCategory}
@@ -62,6 +62,9 @@ const Inventory = ({ products, setProducts, settings }) => {
         onWarehouseChange={setWarehouseFilter}
         categories={settings.categories}
       />
+
+      {/* Nút thêm hàng mới nổi theo cùng vị trí với màn tạo đơn để đồng bộ UX. */}
+      <FloatingAddButton onClick={() => openModal()} ariaLabel="Thêm hàng mới" />
 
       {/* Tách danh sách sản phẩm thành component riêng */}
       <ProductList

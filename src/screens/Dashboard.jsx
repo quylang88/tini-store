@@ -40,7 +40,7 @@ const Dashboard = ({ products, orders, onOpenDetail }) => {
       </div>
 
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-3">
-        {/* Căn nút thống kê chi tiết cùng hàng với filter thời gian để tránh xuống dòng. */}
+        {/* Căn bộ lọc thời gian gọn trong thẻ riêng để dành chỗ cho nút nổi phía dưới. */}
         <div className="flex flex-wrap items-center gap-2 justify-between">
           <OptionPills
             options={rangeOptions}
@@ -51,13 +51,6 @@ const Dashboard = ({ products, orders, onOpenDetail }) => {
             activeClassName="bg-amber-500 text-white border-amber-400 shadow-sm"
             inactiveClassName="bg-amber-50 text-amber-700 border-amber-100"
           />
-          <button
-            onClick={onOpenDetail}
-            className="flex items-center gap-1 text-xs font-semibold text-rose-600 bg-rose-50 border border-rose-100 px-3 py-1.5 rounded-full whitespace-nowrap"
-          >
-            Thống kê chi tiết
-            <ArrowUpRight size={14} />
-          </button>
         </div>
       </div>
       <div className="grid grid-cols-2 gap-3">
@@ -145,6 +138,16 @@ const Dashboard = ({ products, orders, onOpenDetail }) => {
         items={modalItems}
         mode={activeModal === 'quantity' ? 'quantity' : 'profit'}
       />
+
+      {/* Nút thống kê chi tiết dạng floating, đặt cạnh tabbar giống nút back nổi. */}
+      <button
+        type="button"
+        onClick={onOpenDetail}
+        aria-label="Mở thống kê chi tiết"
+        className="fixed right-4 bottom-[calc(env(safe-area-inset-bottom)+88px)] z-[70] flex h-12 w-12 items-center justify-center rounded-full bg-rose-500 text-white shadow-lg shadow-rose-200 active:scale-95 transition"
+      >
+        <ArrowUpRight size={18} />
+      </button>
     </div>
   );
 };
