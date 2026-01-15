@@ -9,7 +9,6 @@ import OptionPills from "../components/stats/OptionPills";
 import RankBadge from "../components/stats/RankBadge";
 import TopListModal from "../components/stats/TopListModal";
 import DateRangeFilter from "../components/stats/DateRangeFilter";
-import FloatingBackButton from "../components/common/FloatingBackButton";
 import { AnimatePresence, motion } from "framer-motion";
 
 const StatsDetail = ({ products, orders, onBack }) => {
@@ -315,12 +314,6 @@ const StatsDetail = ({ products, orders, onBack }) => {
           <li>Danh sách đơn hoàn/hủy để theo dõi lý do thất thoát.</li>
         </ul>
       </div>
-
-      {/* Dùng nút back nổi chung để đồng bộ vị trí và hiệu ứng chạm. */}
-      <FloatingBackButton
-        onClick={onBack}
-        className="bottom-[calc(env(safe-area-inset-bottom)+20px)]"
-      />
 
       {/* Dùng modal chung để xem chi tiết top khi chạm vào từng bảng. */}
       <TopListModal
