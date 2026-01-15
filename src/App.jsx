@@ -14,6 +14,7 @@ import { normalizePurchaseLots } from "./utils/purchaseUtils";
 import TabBar from "./components/TabBar";
 import ConfirmModal from "./components/modals/ConfirmModal";
 import ScreenTransition from "./components/common/ScreenTransition";
+import SplashScreen from "./components/common/SplashScreen";
 
 // Định nghĩa thứ tự tab để xác định hướng chuyển cảnh
 const TAB_ORDER = {
@@ -108,9 +109,27 @@ const App = () => {
   // --- 5. LOGIC HIỂN THỊ TABBAR ---
   const [isTabBarVisible, setIsTabBarVisible] = useState(true);
 
+  // --- 5b. PRELOAD DASHBOARD ASSETS ---
+  const [appReady, setAppReady] = useState(false);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      const img = new Image();
+      img.src = "/tiny-shop-transparent.png";
+      const onLoad = () => setAppReady(true);
+      img.onload = onLoad;
+      img.onerror = onLoad; // Proceed even if image fails
+      if (img.complete) onLoad();
+    }
+  }, [isAuthenticated]);
+
   // --- 6. RENDERING ---
   if (!isAuthenticated) {
     return <Login onLogin={handleLoginSuccess} />;
+  }
+
+  if (!appReady) {
+    return <SplashScreen />;
   }
 
   return (

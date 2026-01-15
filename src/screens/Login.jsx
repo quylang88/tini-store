@@ -1,6 +1,8 @@
 import React from "react";
 import { Lock, User, ArrowRight, CheckSquare } from "lucide-react";
 import useLoginLogic from "../hooks/useLoginLogic";
+import SplashScreen from "../components/common/SplashScreen";
+import { useState, useEffect } from "react";
 
 const AuthField = ({
   label,
@@ -40,6 +42,21 @@ const Login = ({ onLogin }) => {
     error,
     handleSubmit,
   } = useLoginLogic({ onLogin });
+
+  const [imgLoaded, setImgLoaded] = useState(false);
+
+  useEffect(() => {
+    const img = new Image();
+    img.src = "/tiny-shop.png";
+    img.onload = () => setImgLoaded(true);
+    img.onerror = () => setImgLoaded(true); // Proceed even if image fails
+    // Fallback if image fails or cached instantly
+    if (img.complete) setImgLoaded(true);
+  }, []);
+
+  if (!imgLoaded) {
+    return <SplashScreen />;
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-amber-50 via-rose-50 to-orange-100 flex items-center justify-center p-4">
