@@ -33,8 +33,11 @@ const ProductDetailModal = ({ product, onClose, onEditLot }) => {
       footer={footer}
     >
       <div className="space-y-4">
-        <div className="flex justify-between items-center border-b border-amber-100 pb-4">
-          <div className="text-xs text-amber-600">
+        <div className="flex flex-col border-b border-amber-100 pb-4">
+          <div className="text-sm font-semibold text-gray-800">
+            Giá bán: {formatNumber(cachedProduct.price)}đ
+          </div>
+          <div className="text-xs text-amber-600 mt-1">
             Giá nhập mới nhất: {formatNumber(latestCost)}đ
             {latestLot
               ? ` • Kho: ${getWarehouseLabel(latestLot.warehouse)}`

@@ -112,7 +112,6 @@ const Inventory = ({ products, setProducts, orders, setOrders, settings }) => {
         onClose={() => setDetailProduct(null)}
         onEditLot={(lot) => {
           openEditLot(detailProduct, lot);
-          setDetailProduct(null);
         }}
       />
 
