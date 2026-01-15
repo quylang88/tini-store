@@ -21,7 +21,7 @@ const SheetModal = ({
 
   useEffect(() => {
     if (open) {
-      setShouldRender(true);
+      if (!shouldRender) setShouldRender(true);
       // Sử dụng requestAnimationFrame để đảm bảo DOM đã render trạng thái ẩn (translate-y-full)
       // trước khi kích hoạt trạng thái hiện (translate-y-0).
       requestAnimationFrame(() => {

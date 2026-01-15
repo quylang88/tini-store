@@ -187,7 +187,7 @@ const Settings = ({
         {/* 4. Nút Đăng Xuất */}
         <button
           onClick={onLogout}
-          className="w-full bg-red-50 text-red-600 py-3.5 rounded-2xl font-bold flex items-center justify-center gap-2 active:bg-red-100 transition active:scale-95 border border-red-100 mt-4"
+          className="w-full bg-rose-50 text-rose-600 py-3.5 rounded-2xl font-bold flex items-center justify-center gap-2 active:bg-rose-100 transition active:scale-95 border border-rose-100 mt-4"
         >
           <LogOut size={20} /> Đăng Xuất
         </button>

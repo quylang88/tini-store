@@ -24,7 +24,7 @@ export default [
     },
     settings: { react: { version: "detect" } },
     rules: {
-       "react/jsx-uses-vars": "error"
+      "react/jsx-uses-vars": "error",
       ...js.configs.recommended.rules,
       ...reactHooks.configs.recommended.rules,
       "react-refresh/only-export-components": [
