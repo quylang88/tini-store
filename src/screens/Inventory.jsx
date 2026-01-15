@@ -37,11 +37,9 @@ const Inventory = ({
         if (setTabBarVisible) setTabBarVisible(false);
       } else {
         setIsAddButtonVisible(true);
-        // Only show full header and tab bar when near top
-        if (currentScrollTop < 50) {
-          setIsHeaderExpanded(true);
-          if (setTabBarVisible) setTabBarVisible(true);
-        }
+        // Show Header and TabBar immediately on scroll up, not just at top.
+        setIsHeaderExpanded(true);
+        if (setTabBarVisible) setTabBarVisible(true);
       }
       lastScrollTop.current = currentScrollTop;
     }
@@ -59,7 +57,8 @@ const Inventory = ({
     setConfirmModal,
     errorModal,
     setErrorModal,
-    activeCategories,
+    activeCategory,
+    setActiveCategory,
     warehouseFilter,
     formData,
     setFormData,
@@ -77,7 +76,6 @@ const Inventory = ({
     filteredProducts,
     nameSuggestions,
     handleSelectExistingProduct,
-    toggleCategory,
     setWarehouseFilter,
   } = useInventoryLogic({ products, setProducts, orders, setOrders, settings });
 
@@ -98,8 +96,8 @@ const Inventory = ({
         onSearchChange={(e) => setSearchTerm(e.target.value)}
         onClearSearch={() => setSearchTerm("")}
         onShowScanner={() => setShowScanner(true)}
-        activeCategories={activeCategories}
-        onToggleCategory={toggleCategory}
+        activeCategory={activeCategory}
+        setActiveCategory={setActiveCategory}
         warehouseFilter={warehouseFilter}
         onWarehouseChange={setWarehouseFilter}
         categories={settings.categories}
@@ -131,6 +129,7 @@ const Inventory = ({
           products={filteredProducts}
           onDelete={handleDelete}
           onOpenDetail={setDetailProduct}
+          activeCategory={activeCategory}
         />
       </div>
 

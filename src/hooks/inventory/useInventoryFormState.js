@@ -8,11 +8,11 @@ import {
 import { createFormDataForNewProduct } from "../../utils/inventoryForm";
 
 // Tách riêng state + handler của form để hook chính gọn hơn, dễ review.
-const useInventoryFormState = ({ settings, activeCategories }) => {
+const useInventoryFormState = ({ settings, activeCategory }) => {
   const [formData, setFormData] = useState(() => {
     const initial = createFormDataForNewProduct({
       settings,
-      activeCategories,
+      activeCategory,
     });
     // Bổ sung các trường input riêng biệt để giữ giá trị khi chuyển tab
     return {

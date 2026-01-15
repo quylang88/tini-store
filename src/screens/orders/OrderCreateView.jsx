@@ -63,10 +63,7 @@ const OrderCreateView = ({
         setIsFooterVisible(false);
       } else {
         setIsFooterVisible(true);
-        // Chỉ hiển thị lại header khi scroll lên gần đầu trang
-        if (currentScrollTop < 50) {
-          setIsHeaderExpanded(true);
-        }
+        setIsHeaderExpanded(true);
       }
       lastScrollTop.current = currentScrollTop;
     }

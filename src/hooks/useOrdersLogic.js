@@ -324,7 +324,7 @@ const useOrdersLogic = ({ products, setProducts, orders, setOrders }) => {
     }
 
     clearDraft();
-    setView("list");
+    // setView("list"); // Removed: Let the UI handle the transition timing
     return true;
   };
 

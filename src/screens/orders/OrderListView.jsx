@@ -31,10 +31,7 @@ const OrderListView = ({
         if (setTabBarVisible) setTabBarVisible(false);
       } else {
         setIsAddButtonVisible(true);
-        // Chỉ hiện TabBar khi về đầu trang
-        if (currentScrollTop < 50) {
-          if (setTabBarVisible) setTabBarVisible(true);
-        }
+        if (setTabBarVisible) setTabBarVisible(true);
       }
       lastScrollTop.current = currentScrollTop;
     }

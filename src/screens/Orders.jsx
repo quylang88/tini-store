@@ -120,6 +120,10 @@ const Orders = ({
             // Nếu validation thất bại (trả về false), giữ modal để user sửa.
             if (success) {
               setIsReviewOpen(false);
+              // Wait for modal exit animation before switching view
+              setTimeout(() => {
+                handleExitCreate();
+              }, 300);
             }
           }}
         />
