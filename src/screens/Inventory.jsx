@@ -97,7 +97,11 @@ const Inventory = ({ products, setProducts, orders, setOrders, settings }) => {
         onSelectExistingProduct={handleSelectExistingProduct}
         categories={settings.categories}
         onClose={handleCancelModal}
-        onSave={handleSave}
+        onSave={() => {
+          if (handleSave()) {
+            setDetailProduct(null);
+          }
+        }}
         onShowScanner={() => setShowScanner(true)}
         onImageSelect={handleImageSelect}
         onMoneyChange={handleMoneyChange}
@@ -112,7 +116,6 @@ const Inventory = ({ products, setProducts, orders, setOrders, settings }) => {
         onClose={() => setDetailProduct(null)}
         onEditLot={(lot) => {
           openEditLot(detailProduct, lot);
-          setDetailProduct(null);
         }}
       />
 
