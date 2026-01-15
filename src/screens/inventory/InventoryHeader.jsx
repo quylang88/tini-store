@@ -2,6 +2,7 @@ import React from "react";
 import { ScanBarcode } from "lucide-react";
 import SearchInput from "../../components/common/SearchInput";
 import AnimatedFilterTabs from "../../components/common/AnimatedFilterTabs";
+import ScrollableTabs from "../../components/common/ScrollableTabs";
 import { motion, AnimatePresence } from "framer-motion";
 
 const InventoryHeader = ({
@@ -9,8 +10,8 @@ const InventoryHeader = ({
   onSearchChange,
   onClearSearch,
   onShowScanner,
-  activeCategories,
-  onToggleCategory,
+  activeCategory,
+  setActiveCategory,
   warehouseFilter,
   onWarehouseChange,
   categories,
@@ -21,6 +22,12 @@ const InventoryHeader = ({
     { key: "all", label: "Tất cả" },
     { key: "daLat", label: "Lâm Đồng" },
     { key: "vinhPhuc", label: "Vĩnh Phúc" },
+  ];
+
+  // Chuẩn bị dữ liệu cho ScrollableTabs (danh mục)
+  const categoryTabs = [
+    { key: "Tất cả", label: "Tất cả" },
+    ...categories.map((cat) => ({ key: cat, label: cat })),
   ];
 
   return (
@@ -71,34 +78,14 @@ const InventoryHeader = ({
                 layoutIdPrefix="inventory-warehouse"
               />
 
-              {/* Filter Danh mục - Vẫn giữ logic chọn nhiều nhưng thêm animation nhẹ */}
-              <div className="flex flex-wrap gap-2">
-                <motion.button
-                  layout
-                  onClick={() => onToggleCategory("Tất cả")}
-                  className={`px-3 py-1.5 text-[11px] font-semibold rounded-full border transition-colors ${
-                    activeCategories.length === 0
-                      ? "bg-amber-500 text-white border-amber-500"
-                      : "bg-transparent text-amber-700 border-amber-200"
-                  }`}
-                >
-                  Tất cả
-                </motion.button>
-                {categories.map((cat) => (
-                  <motion.button
-                    layout
-                    key={cat}
-                    onClick={() => onToggleCategory(cat)}
-                    className={`px-3 py-1.5 text-[11px] font-semibold rounded-full border transition-colors ${
-                      activeCategories.includes(cat)
-                        ? "bg-amber-500 text-white border-amber-500"
-                        : "bg-transparent text-amber-700 border-amber-200"
-                    }`}
-                  >
-                    {cat}
-                  </motion.button>
-                ))}
-              </div>
+              {/* Filter Danh mục - Dùng ScrollableTabs*/}
+              <ScrollableTabs
+                tabs={categoryTabs}
+                activeTab={activeCategory}
+                onTabChange={setActiveCategory}
+                layoutIdPrefix="inventory-category"
+                className="-mx-3" // Negative margin to align with padding of parent
+              />
             </div>
           </motion.div>
         )}

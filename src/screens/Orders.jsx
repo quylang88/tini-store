@@ -57,12 +57,12 @@ const Orders = ({
     handleStartCreate,
     handleEditOrder,
     handleExitCreate,
+    finishCreateOrder,
     handleCancelDraft,
     handleTogglePaid,
     handleCancelOrder,
     getOrderStatusInfo,
     isCreateView,
-    shouldShowDetailModal,
   } = useOrdersLogic({ products, setProducts, orders, setOrders });
 
   // Khi vào màn hình Tạo đơn (isCreateView = true), ẩn TabBar để mở rộng không gian
@@ -120,6 +120,10 @@ const Orders = ({
             // Nếu validation thất bại (trả về false), giữ modal để user sửa.
             if (success) {
               setIsReviewOpen(false);
+              // Wait for modal exit animation before switching view
+              setTimeout(() => {
+                finishCreateOrder();
+              }, 300);
             }
           }}
         />

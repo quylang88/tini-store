@@ -21,12 +21,10 @@ const buildBaseFormData = (settings) => ({
   image: "",
 });
 
-export const createFormDataForNewProduct = ({
-  settings,
-  activeCategories,
-}) => ({
+export const createFormDataForNewProduct = ({ settings, activeCategory }) => ({
   ...buildBaseFormData(settings),
-  category: activeCategories.length === 1 ? activeCategories[0] : "Chung",
+  category:
+    activeCategory && activeCategory !== "Tất cả" ? activeCategory : "Chung",
 });
 
 export const createFormDataForProduct = ({ product, settings }) => ({
