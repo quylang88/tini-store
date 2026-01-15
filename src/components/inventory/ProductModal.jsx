@@ -153,6 +153,11 @@ const ProductModal = ({
             onChange={e => setFormData({ ...formData, name: e.target.value })}
             placeholder="Nhập tên..."
           />
+          {isEditingLot && (
+            <div className="mt-1 text-xs text-rose-600 font-bold">
+               Giá bán: {formatNumber(formData.price)}đ
+            </div>
+          )}
           {!editingProduct && nameSuggestions?.length > 0 && (
             <div className="mt-2 bg-white border border-amber-100 rounded-lg shadow-sm overflow-hidden">
               {nameSuggestions.map((product) => (
