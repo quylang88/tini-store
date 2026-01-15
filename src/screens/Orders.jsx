@@ -136,6 +136,7 @@ const Orders = ({
           handleEditOrder={handleEditOrder}
           handleCancelOrder={handleCancelOrder}
           onSelectOrder={setSelectedOrder}
+          setTabBarVisible={setTabBarVisible}
         />
         <OrderDetailModal
           order={selectedOrder}

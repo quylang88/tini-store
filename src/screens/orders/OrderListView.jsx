@@ -1,5 +1,6 @@
-import React from "react";
+import React, { useState, useRef } from "react";
 import { ShoppingCart } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
 import { formatNumber } from "../../utils/helpers";
 import { getWarehouseLabel } from "../../utils/warehouseUtils";
 import { getOrderDisplayName } from "../../utils/orderUtils";
@@ -14,19 +15,63 @@ const OrderListView = ({
   handleEditOrder,
   handleCancelOrder,
   onSelectOrder,
-}) => (
-  <div className="flex flex-col h-full bg-transparent pb-20">
-    <div className="bg-amber-50/90 p-4 border-b border-amber-100 sticky top-0 z-10 flex justify-between items-center shadow-sm backdrop-blur">
-      <img
-        src="/tiny-shop-transparent.png"
-        alt="Tiny Shop"
-        className="h-12 w-auto object-contain"
-      />
-    </div>
-    {/* Nút tạo đơn mới nổi để tái sử dụng layout và tránh lặp code. */}
-    <FloatingAddButton onClick={onCreateOrder} ariaLabel="Tạo đơn mới" />
-    <div className="flex-1 overflow-y-auto p-3 space-y-3 min-h-0">
-      {orders.map((order) => {
+  setTabBarVisible,
+}) => {
+  // Logic scroll ẩn/hiện UI giống màn Inventory
+  const [isAddButtonVisible, setIsAddButtonVisible] = useState(true);
+  const lastScrollTop = useRef(0);
+
+  const handleScroll = (e) => {
+    const currentScrollTop = e.target.scrollTop;
+    const direction = currentScrollTop > lastScrollTop.current ? "down" : "up";
+
+    if (Math.abs(currentScrollTop - lastScrollTop.current) > 10) {
+      if (direction === "down") {
+        setIsAddButtonVisible(false);
+        if (setTabBarVisible) setTabBarVisible(false);
+      } else {
+        setIsAddButtonVisible(true);
+        // Chỉ hiện TabBar khi về đầu trang
+        if (currentScrollTop < 50) {
+          if (setTabBarVisible) setTabBarVisible(true);
+        }
+      }
+      lastScrollTop.current = currentScrollTop;
+    }
+  };
+
+  return (
+    <div className="flex flex-col h-full bg-transparent pb-20">
+      <div className="bg-amber-50/90 p-4 border-b border-amber-100 sticky top-0 z-10 flex justify-between items-center shadow-sm backdrop-blur">
+        <img
+          src="/tiny-shop-transparent.png"
+          alt="Tiny Shop"
+          className="h-12 w-auto object-contain"
+        />
+      </div>
+      {/* Nút tạo đơn mới nổi để tái sử dụng layout và tránh lặp code. */}
+      <AnimatePresence>
+        {isAddButtonVisible && (
+          <motion.div
+            initial={{ scale: 0, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0, opacity: 0 }}
+            className="fixed right-5 bottom-24 z-30"
+          >
+            <FloatingAddButton
+              onClick={onCreateOrder}
+              ariaLabel="Tạo đơn mới"
+              className="!static"
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <div
+        className="flex-1 overflow-y-auto p-3 space-y-3 min-h-0"
+        onScroll={handleScroll}
+      >
+        {orders.map((order) => {
         const statusInfo = getOrderStatusInfo(order);
         const isPaid = order.status === "paid";
         const orderLabel = order.orderNumber
@@ -143,7 +188,8 @@ const OrderListView = ({
         </div>
       )}
     </div>
-  </div>
-);
+    </div>
+  );
+};
 
 export default OrderListView;
