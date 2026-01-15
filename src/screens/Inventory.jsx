@@ -26,8 +26,14 @@ const Inventory = ({
   const lastScrollTop = useRef(0);
 
   const handleScroll = (e) => {
-    const currentScrollTop = e.target.scrollTop;
+    const target = e.target;
+    const currentScrollTop = target.scrollTop;
+    const scrollHeight = target.scrollHeight;
+    const clientHeight = target.clientHeight;
     const direction = currentScrollTop > lastScrollTop.current ? "down" : "up";
+
+    // Ignore bounce at the bottom (iOS rubber band effect)
+    const isNearBottom = currentScrollTop + clientHeight > scrollHeight - 50;
 
     // Threshold to avoid jitter
     if (Math.abs(currentScrollTop - lastScrollTop.current) > 10) {
@@ -35,9 +41,9 @@ const Inventory = ({
         setIsHeaderExpanded(false);
         setIsAddButtonVisible(false);
         if (setTabBarVisible) setTabBarVisible(false);
-      } else {
+      } else if (!isNearBottom) {
+        // Only show if scrolling up AND not near bottom
         setIsAddButtonVisible(true);
-        // Show Header and TabBar immediately on scroll up, not just at top.
         setIsHeaderExpanded(true);
         if (setTabBarVisible) setTabBarVisible(true);
       }

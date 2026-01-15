@@ -66,11 +66,13 @@ const ProductList = ({ products, onDelete, onOpenDetail, activeCategory }) => {
                     )}
                   </div>
                   <div className="text-right space-y-1">
-                    {activeCategory === "Tất cả" && (
-                      <div className="text-[10px] bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded inline-block">
-                        {product.category}
-                      </div>
-                    )}
+                    <div
+                      className={`text-[10px] bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded inline-block ${
+                        activeCategory !== "Tất cả" ? "invisible" : ""
+                      }`}
+                    >
+                      {product.category}
+                    </div>
                     <div className="text-amber-600">
                       Vĩnh Phúc: {stockByWarehouse.vinhPhuc} sp
                     </div>
