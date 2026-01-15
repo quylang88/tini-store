@@ -12,7 +12,6 @@ import BarcodeScanner from "../../components/BarcodeScanner";
 import SearchInput from "../../components/common/SearchInput";
 import { formatInputNumber, formatNumber } from "../../utils/helpers";
 import { getWarehouseLabel, WAREHOUSES } from "../../utils/warehouseUtils";
-import FloatingBackButton from "../../components/common/FloatingBackButton";
 import SheetModal from "../../components/modals/SheetModal";
 import Button from "../../components/common/Button";
 import AnimatedFilterTabs from "../../components/common/AnimatedFilterTabs";
@@ -303,18 +302,6 @@ const OrderCreateView = ({
           </div>
         )}
       </div>
-
-      {/* Nút back nổi dùng chung, né tabbar/setting và ẩn khi modal xác nhận/review hoặc tổng đơn đang mở. */}
-      {!isReviewOpen && !hideBackButton && totalAmount <= 0 && (
-        <FloatingBackButton
-          onClick={handleExitCreate}
-          className={
-            totalAmount > 0
-              ? "bottom-[calc(env(safe-area-inset-bottom)+140px)]"
-              : "bottom-[calc(env(safe-area-inset-bottom)+20px)]"
-          }
-        />
-      )}
 
       {/* Tạo đơn hàng */}
       {totalAmount > 0 && (
