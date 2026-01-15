@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { createPortal } from "react-dom";
 import { X } from "lucide-react";
+import useMountTransition from "../../hooks/useMountTransition";
 
 // SheetModal: Modal dạng trượt từ dưới lên (Bottom Sheet).
 // Animation: Slide Up (translate-y-full -> translate-y-0).
@@ -14,30 +15,7 @@ const SheetModal = ({
   showCloseIcon = false,
   className = "",
 }) => {
-  // Trạng thái render: kiểm soát việc component có tồn tại trong DOM hay không.
-  const [shouldRender, setShouldRender] = useState(open);
-  // Trạng thái active: kiểm soát animation CSS (translate).
-  const [active, setActive] = useState(false);
-
-  useEffect(() => {
-    if (open) {
-      setShouldRender(true);
-      // Sử dụng requestAnimationFrame để đảm bảo DOM đã render trạng thái ẩn (translate-y-full)
-      // trước khi kích hoạt trạng thái hiện (translate-y-0).
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          setActive(true);
-        });
-      });
-    } else {
-      setActive(false);
-      // Đợi animation exit (slide down) hoàn tất 300ms
-      const timer = setTimeout(() => {
-        setShouldRender(false);
-      }, 300);
-      return () => clearTimeout(timer);
-    }
-  }, [open]);
+  const { shouldRender, active } = useMountTransition(open, 300);
 
   if (!shouldRender) return null;
 

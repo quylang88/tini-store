@@ -1,4 +1,3 @@
-/* eslint-disable no-unused-vars */
 import React, { useState } from "react";
 import { ArrowUpRight, DollarSign, TrendingUp, Trophy } from "lucide-react";
 import { formatNumber } from "../utils/helpers";
@@ -87,8 +86,8 @@ const Dashboard = ({ products, orders, onOpenDetail }) => {
             onChange={setTopLimit}
             containerClassName="flex items-center gap-1 flex-nowrap overflow-x-auto no-scrollbar"
             buttonClassName="px-2 py-1 rounded-full text-[11px] font-semibold border transition"
-            activeClassName="bg-rose-500 text-white border-rose-400 shadow-sm"
-            inactiveClassName="bg-rose-50 text-rose-600 border-rose-100"
+            activeClassName="bg-amber-500 text-white border-amber-400 shadow-sm"
+            inactiveClassName="bg-amber-50 text-amber-600 border-amber-100"
           />
         </div>
         <div className="grid grid-cols-2 gap-4">

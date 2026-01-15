@@ -321,7 +321,7 @@ const OrderCreateView = ({
             </button>
             <button
               onClick={handleOpenReview}
-              className="flex-1 bg-rose-500 text-white py-3.5 rounded-xl font-bold shadow-lg shadow-rose-200 active:scale-95 transition flex items-center justify-center gap-2 text-lg"
+              className="flex-1 bg-amber-500 text-white py-3.5 rounded-xl font-bold shadow-lg shadow-rose-200 active:scale-95 transition flex items-center justify-center gap-2 text-lg"
             >
               <ShoppingCart size={20} />{" "}
               {orderBeingEdited ? "Cập nhật đơn" : "Lên đơn"}
