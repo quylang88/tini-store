@@ -117,7 +117,7 @@ const useDashboardLogic = ({ products, orders, rangeMode = "dashboard" }) => {
     [products]
   );
 
-  const productStats = useMemo(() => {
+  const { totalRevenue, totalProfit, productStats } = useMemo(() => {
     const stats = new Map();
     filteredPaidOrders.forEach((order) => {
       order.items.forEach((item) => {
@@ -137,10 +137,17 @@ const useDashboardLogic = ({ products, orders, rangeMode = "dashboard" }) => {
           ? item.cost
           : costMap.get(item.productId) || 0;
         entry.quantity += item.quantity;
-        entry.profit += (item.price - cost) * item.quantity;
-      });
+        entry.profit += itemProfit;
+        return itemSum + itemProfit;
+      }, 0);
+      const shippingFee = order.shippingFee || 0;
+      profit += orderProfit - shippingFee;
     });
-    return Array.from(stats.values());
+    return {
+      totalRevenue: revenue,
+      totalProfit: profit,
+      productStats: Array.from(stats.values()),
+    };
   }, [filteredPaidOrders, productMeta, costMap]);
 
   const topByProfit = useMemo(
