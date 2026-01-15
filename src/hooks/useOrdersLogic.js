@@ -245,29 +245,15 @@ const useOrdersLogic = ({ products, setProducts, orders, setOrders }) => {
     };
   };
 
-  const handleCreateOrder = () => {
-    // Chặn tạo đơn khi dữ liệu chưa đủ.
-    if (!ensureOrderReady('tạo đơn')) return false;
+  // Hàm dùng chung để lưu đơn (tạo mới hoặc cập nhật)
+  const saveOrder = ({ isUpdate }) => {
+    if (!ensureOrderReady(isUpdate ? 'cập nhật đơn' : 'tạo đơn')) return false;
 
-    const { items, total, warehouse, orderType: nextOrderType, customerName: nextCustomerName, customerAddress: nextCustomerAddress, shippingFee: nextShippingFee } = buildOrderPayload();
-    const orderId = Date.now().toString();
-    const newOrder = {
-      id: orderId,
-      orderNumber: getNextOrderNumber(),
-      items,
-      total,
-      warehouse,
-      orderType: nextOrderType,
-      customerName: nextCustomerName,
-      customerAddress: nextCustomerAddress,
-      status: DEFAULT_STATUS,
-      date: new Date().toISOString(),
-      shippingFee: nextShippingFee,
-      comment: orderComment.trim(),
-    };
+    const payload = buildOrderPayload();
+    const { items, warehouse } = payload;
 
+    // Cập nhật giá sản phẩm toàn cục nếu có thay đổi trong đơn hàng
     setProducts((prevProducts) => {
-      // Cập nhật giá sản phẩm toàn cục nếu có thay đổi trong đơn hàng
       const productsWithUpdatedPrices = prevProducts.map((p) => {
         const item = items.find((i) => i.productId === p.id);
         if (item && item.price !== p.price) {
@@ -276,59 +262,45 @@ const useOrdersLogic = ({ products, setProducts, orders, setOrders }) => {
         return p;
       });
 
+      // Lấy danh sách sản phẩm cũ nếu đang sửa đơn để sync stock
+      const previousItems = isUpdate ? orderBeingEdited.items : [];
+      const previousWarehouse = isUpdate ? (orderBeingEdited.warehouse || DEFAULT_WAREHOUSE) : null;
+
       return syncProductsStock(
         productsWithUpdatedPrices,
         items,
-        [],
+        previousItems,
         warehouse,
+        previousWarehouse
       );
     });
-    setOrders([...orders, newOrder]);
+
+    if (isUpdate) {
+       const updatedOrder = {
+        ...orderBeingEdited,
+        ...payload,
+        comment: orderComment.trim(),
+      };
+      setOrders(orders.map(order => (order.id === orderBeingEdited.id ? updatedOrder : order)));
+    } else {
+      const newOrder = {
+        id: Date.now().toString(),
+        orderNumber: getNextOrderNumber(),
+        status: DEFAULT_STATUS,
+        date: new Date().toISOString(),
+        ...payload,
+        comment: orderComment.trim(),
+      };
+      setOrders([...orders, newOrder]);
+    }
+
     clearDraft();
     setView('list');
     return true;
   };
 
-  const handleUpdateOrder = () => {
-    // Chặn cập nhật nếu đơn chưa đủ điều kiện tối thiểu.
-    if (!ensureOrderReady('cập nhật đơn')) return false;
-
-    const { items, total, warehouse, orderType: nextOrderType, customerName: nextCustomerName, customerAddress: nextCustomerAddress, shippingFee: nextShippingFee } = buildOrderPayload();
-    const updatedOrder = {
-      ...orderBeingEdited,
-      items,
-      total,
-      warehouse,
-      orderType: nextOrderType,
-      customerName: nextCustomerName,
-      customerAddress: nextCustomerAddress,
-      shippingFee: nextShippingFee,
-      comment: orderComment.trim(),
-    };
-
-    setProducts((prevProducts) => {
-      // Cập nhật giá sản phẩm toàn cục nếu có thay đổi trong đơn hàng
-      const productsWithUpdatedPrices = prevProducts.map((p) => {
-        const item = items.find((i) => i.productId === p.id);
-        if (item && item.price !== p.price) {
-          return { ...p, price: item.price };
-        }
-        return p;
-      });
-
-      return syncProductsStock(
-        productsWithUpdatedPrices,
-        items,
-        orderBeingEdited.items,
-        warehouse,
-        orderBeingEdited.warehouse || DEFAULT_WAREHOUSE,
-      );
-    });
-    setOrders(orders.map(order => (order.id === orderBeingEdited.id ? updatedOrder : order)));
-    clearDraft();
-    setView('list');
-    return true;
-  };
+  const handleCreateOrder = () => saveOrder({ isUpdate: false });
+  const handleUpdateOrder = () => saveOrder({ isUpdate: true });
 
   const handleEditOrder = (order) => {
     setCart(buildCartFromItems(order.items));
