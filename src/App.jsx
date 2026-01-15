@@ -15,6 +15,7 @@ import TabBar from "./components/TabBar";
 import ConfirmModal from "./components/modals/ConfirmModal";
 import ScreenTransition from "./components/common/ScreenTransition";
 import SplashScreen from "./components/common/SplashScreen";
+import useImagePreloader from "./hooks/useImagePreloader";
 
 // Định nghĩa thứ tự tab để xác định hướng chuyển cảnh
 const TAB_ORDER = {
@@ -110,35 +111,11 @@ const App = () => {
   const [isTabBarVisible, setIsTabBarVisible] = useState(true);
 
   // --- 5b. PRELOAD TÀI NGUYÊN DASHBOARD ---
-  const [appReady, setAppReady] = useState(false);
-  const [showWarning, setShowWarning] = useState(false);
-
-  useEffect(() => {
-    if (isAuthenticated) {
-      const img = new Image();
-      img.src = "/tiny-shop-transparent.png";
-
-      const onLoad = () => {
-        setAppReady(true);
-      };
-
-      img.onload = onLoad;
-      img.onerror = onLoad; // Tiếp tục ngay cả khi ảnh lỗi
-
-      if (img.complete) onLoad();
-
-      // Timeout hiển thị cảnh báo nếu mạng chậm (5 giây)
-      const timeoutId = setTimeout(() => {
-        setShowWarning(true);
-      }, 5000);
-
-      return () => clearTimeout(timeoutId);
-    }
-  }, [isAuthenticated]);
-
-  const handleForceContinue = () => {
-    setAppReady(true);
-  };
+  const {
+    isLoaded: appReady,
+    showWarning,
+    handleForceContinue,
+  } = useImagePreloader("/tiny-shop-transparent.png", isAuthenticated);
 
   // --- 6. RENDERING ---
   if (!isAuthenticated) {

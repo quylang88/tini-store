@@ -2,7 +2,7 @@ import React from "react";
 import { Lock, User, ArrowRight, CheckSquare } from "lucide-react";
 import useLoginLogic from "../hooks/useLoginLogic";
 import SplashScreen from "../components/common/SplashScreen";
-import { useState, useEffect } from "react";
+import useImagePreloader from "../hooks/useImagePreloader";
 
 const AuthField = ({
   label,
@@ -43,34 +43,11 @@ const Login = ({ onLogin }) => {
     handleSubmit,
   } = useLoginLogic({ onLogin });
 
-  const [imgLoaded, setImgLoaded] = useState(false);
-  const [showWarning, setShowWarning] = useState(false);
-
-  useEffect(() => {
-    const img = new Image();
-    img.src = "/tiny-shop.png";
-
-    const onLoad = () => {
-      setImgLoaded(true);
-    };
-
-    img.onload = onLoad;
-    img.onerror = onLoad; // Tiếp tục ngay cả khi ảnh lỗi
-
-    // Fallback nếu ảnh lỗi hoặc đã có trong cache
-    if (img.complete) onLoad();
-
-    // Timeout hiển thị cảnh báo nếu mạng chậm (5 giây)
-    const timeoutId = setTimeout(() => {
-      setShowWarning(true);
-    }, 5000);
-
-    return () => clearTimeout(timeoutId);
-  }, []);
-
-  const handleForceContinue = () => {
-    setImgLoaded(true);
-  };
+  const {
+    isLoaded: imgLoaded,
+    showWarning,
+    handleForceContinue,
+  } = useImagePreloader("/tiny-shop.png");
 
   if (!imgLoaded) {
     return (
