@@ -2,7 +2,40 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  /* Safe area variables with fallbacks */
+  --sat: env(safe-area-inset-top);
+  --sar: env(safe-area-inset-right);
+  --sab: env(safe-area-inset-bottom);
+  --sal: env(safe-area-inset-left);
+}
+
+body {
+  /* Prevent pull-to-refresh on mobile */
+  overscroll-behavior-y: none;
+  /* Disable text selection */
+  user-select: none;
+  -webkit-user-select: none;
+  /* Remove tap highlight */
+  -webkit-tap-highlight-color: transparent;
+  /* Optimized scrolling */
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Allow text selection in inputs */
+input, textarea, [contenteditable] {
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+/* Utilities */
+.pb-safe-area { padding-bottom: env(safe-area-inset-bottom); }
+
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
 /* Hiệu ứng chuyển cảnh dùng chung cho các màn hình khi mount. */
+/* Note: Now handled by Framer Motion in ScreenTransition, keeping for legacy/fallback if needed */
 @keyframes screen-in {
   from {
     opacity: 0;
@@ -14,7 +47,7 @@
   }
 }
 
-.screen-transition {
+.screen-transition-legacy {
   animation: screen-in 0.35s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
