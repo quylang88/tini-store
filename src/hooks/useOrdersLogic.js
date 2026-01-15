@@ -181,6 +181,11 @@ const useOrdersLogic = ({ products, setProducts, orders, setOrders }) => {
     setView("list");
   };
 
+  const finishCreateOrder = () => {
+    clearDraft();
+    setView("list");
+  };
+
   const handleCancelDraft = () => {
     if (!hasDraftChanges()) {
       handleExitCreate();
@@ -475,6 +480,7 @@ const useOrdersLogic = ({ products, setProducts, orders, setOrders }) => {
     handleStartCreate,
     handleEditOrder,
     handleExitCreate,
+    finishCreateOrder,
     handleCancelDraft,
     handleTogglePaid,
     handleCancelOrder,

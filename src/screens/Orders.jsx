@@ -57,6 +57,7 @@ const Orders = ({
     handleStartCreate,
     handleEditOrder,
     handleExitCreate,
+    finishCreateOrder,
     handleCancelDraft,
     handleTogglePaid,
     handleCancelOrder,
@@ -122,7 +123,7 @@ const Orders = ({
               setIsReviewOpen(false);
               // Wait for modal exit animation before switching view
               setTimeout(() => {
-                handleExitCreate();
+                finishCreateOrder();
               }, 300);
             }
           }}
