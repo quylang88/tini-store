@@ -14,14 +14,30 @@ const SheetModal = ({
   showCloseIcon = false,
   className = "",
 }) => {
-  // Trạng thái render: kiểm soát việc component có tồn tại trong DOM hay không.
-  const [shouldRender, setShouldRender] = useState(open);
   // Trạng thái active: kiểm soát animation CSS (translate).
   const [active, setActive] = useState(false);
+  // Trạng thái closing: giữ modal trong DOM khi đang đóng (để chạy animation)
+  const [isClosing, setIsClosing] = useState(false);
+
+  // State để theo dõi props open trước đó nhằm phát hiện thay đổi
+  const [prevOpen, setPrevOpen] = useState(open);
+
+  // Logic Derived State: (Replacement for getDerivedStateFromProps)
+  if (open !== prevOpen) {
+    setPrevOpen(open);
+    // Nếu đang mở -> đóng: set isClosing = true ngay trong render để tránh unmount
+    if (prevOpen === true && open === false) {
+      setIsClosing(true);
+    }
+    // Nếu đang đóng -> mở lại ngay lập tức: reset isClosing
+    if (open === true && isClosing === true) {
+      setIsClosing(false);
+    }
+  }
 
   useEffect(() => {
     if (open) {
-      if (!shouldRender) setShouldRender(true);
+      // Entry Animation:
       // Sử dụng requestAnimationFrame để đảm bảo DOM đã render trạng thái ẩn (translate-y-full)
       // trước khi kích hoạt trạng thái hiện (translate-y-0).
       requestAnimationFrame(() => {
@@ -30,14 +46,18 @@ const SheetModal = ({
         });
       });
     } else {
-      setActive(false);
-      // Đợi animation exit (slide down) hoàn tất 300ms
+      // Exit Animation:
+      requestAnimationFrame(() => setActive(false));
+      // Đợi animation exit (slide down) hoàn tất 300ms rồi mới tắt render hoàn toàn
       const timer = setTimeout(() => {
-        setShouldRender(false);
+        setIsClosing(false);
       }, 300);
       return () => clearTimeout(timer);
     }
   }, [open]);
+
+  // Render khi open = true HOẶC đang trong quá trình đóng (animation)
+  const shouldRender = open || isClosing;
 
   if (!shouldRender) return null;
 

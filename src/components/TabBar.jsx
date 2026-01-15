@@ -9,15 +9,29 @@ const TabBar = ({ activeTab, setActiveTab, isVisible = true }) => {
     { id: "settings", icon: Settings, label: "Cài đặt" },
   ];
 
-  // shouldRender: Kiểm soát việc có render component vào DOM hay không
-  const [shouldRender, setShouldRender] = useState(isVisible);
   // activeState: Kiểm soát class animation (translate)
   const [activeState, setActiveState] = useState(isVisible);
+  // isClosing: Kiểm soát việc giữ component trong DOM khi đang đóng
+  const [isClosing, setIsClosing] = useState(false);
+
+  // State theo dõi props prev
+  const [prevVisible, setPrevVisible] = useState(isVisible);
+
+  // Logic Derived State:
+  if (isVisible !== prevVisible) {
+    setPrevVisible(isVisible);
+    // Nếu đang hiện -> ẩn: set isClosing = true ngay trong render
+    if (prevVisible === true && isVisible === false) {
+      setIsClosing(true);
+    }
+    // Nếu đang ẩn -> hiện lại: reset isClosing
+    if (isVisible === true && isClosing === true) {
+      setIsClosing(false);
+    }
+  }
 
   useEffect(() => {
     if (isVisible) {
-      // 1. Mount component trước (vẫn ở trạng thái ẩn vì activeState chưa bật)
-      setShouldRender(true);
       // 2. Kích hoạt animation trượt lên sau 1 frame
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
@@ -26,12 +40,16 @@ const TabBar = ({ activeTab, setActiveTab, isVisible = true }) => {
       });
     } else {
       // 1. Kích hoạt animation trượt xuống
-      setActiveState(false);
+      requestAnimationFrame(() => setActiveState(false));
       // 2. Đợi animation xong mới unmount
-      const timer = setTimeout(() => setShouldRender(false), 300);
+      const timer = setTimeout(() => {
+        setIsClosing(false);
+      }, 300);
       return () => clearTimeout(timer);
     }
   }, [isVisible]);
+
+  const shouldRender = isVisible || isClosing;
 
   if (!shouldRender) return null;
 
