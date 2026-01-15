@@ -85,8 +85,10 @@ const InventoryHeader = ({
                   <AnimatePresence>
                     {activeCategories.length === 0 && (
                       <motion.div
-                        layoutId="inventory-cat-active"
                         className="absolute inset-0 bg-amber-500 rounded-full -z-10"
+                        initial={{ scale: 0.8, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        exit={{ scale: 0.8, opacity: 0 }}
                         transition={{ type: "spring", stiffness: 300, damping: 30 }}
                       />
                     )}
@@ -109,7 +111,6 @@ const InventoryHeader = ({
                       <AnimatePresence>
                         {isActive && (
                           <motion.div
-                            layoutId={`inventory-cat-${cat}`}
                             className="absolute inset-0 bg-amber-500 rounded-full -z-10"
                             initial={{ scale: 0.8, opacity: 0 }}
                             animate={{ scale: 1, opacity: 1 }}

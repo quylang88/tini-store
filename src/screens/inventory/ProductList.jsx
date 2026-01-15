@@ -79,20 +79,20 @@ const ProductList = ({ products, onDelete, onOpenDetail }) => {
           );
         })}
 
-        {/* Animated Empty State to prevent jumping */}
-        {products.length === 0 && (
-          <motion.div
-            key="empty-state"
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.9 }}
-            transition={{ duration: 0.2 }}
-            className="text-center text-gray-400 mt-10 text-sm"
-          >
-            Không có sản phẩm nào
-          </motion.div>
-        )}
       </AnimatePresence>
+
+      {/* Animated Empty State to prevent jumping */}
+      {products.length === 0 && (
+        <motion.div
+          key="empty-state"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.2 }}
+          className="text-center text-gray-400 mt-10 text-sm"
+        >
+          Không có sản phẩm nào
+        </motion.div>
+      )}
     </div>
   );
 };
