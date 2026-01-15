@@ -78,7 +78,7 @@ const useInventoryLogic = ({
     });
     if (validationError) {
       setErrorModal(validationError);
-      return;
+      return false;
     }
 
     const nextProduct = buildNextProductFromForm({
@@ -111,6 +111,7 @@ const useInventoryLogic = ({
       setProducts([...products, nextProduct]);
     }
     closeModal();
+    return true;
   };
 
   const buildComparableFormData = (data) => {
