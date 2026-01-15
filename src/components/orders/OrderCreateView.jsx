@@ -39,6 +39,8 @@ const OrderCreateView = ({
   hideBackButton,
   orderComment,
   setOrderComment,
+  priceOverrides,
+  handlePriceChange,
   handleExitCreate,
   handleCancelDraft,
   handleScanForSale,
@@ -181,8 +183,21 @@ const OrderCreateView = ({
                         </span>
                     )}
                     </div>
-                    <div className="text-xs text-gray-500 mt-0.5">
-                    <span className="font-semibold text-amber-700">{formatNumber(p.price)}đ</span>
+                    <div className="text-xs text-gray-500 mt-0.5 flex items-center">
+                      <div className="relative inline-block border-b border-amber-200 border-dashed">
+                        <input
+                          type="text"
+                          inputMode="numeric"
+                          value={
+                            priceOverrides?.[p.id] !== undefined
+                              ? formatInputNumber(priceOverrides[p.id])
+                              : formatInputNumber(p.price)
+                          }
+                          onChange={(e) => handlePriceChange(p.id, e.target.value)}
+                          className="font-semibold text-amber-700 bg-transparent w-20 outline-none p-0 text-xs"
+                        />
+                        <span className="absolute right-0 top-0 pointer-events-none bg-transparent">đ</span>
+                      </div>
                     <span className="mx-1">|</span>
                     <span>Kho {getWarehouseLabel(selectedWarehouse)}: {availableStock}</span>
                     </div>

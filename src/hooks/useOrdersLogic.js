@@ -25,6 +25,7 @@ const useOrdersLogic = ({ products, setProducts, orders, setOrders }) => {
   const [selectedWarehouse, setSelectedWarehouse] = useState(DEFAULT_WAREHOUSE);
   const [activeCategory, setActiveCategory] = useState('Tất cả');
   const [searchTerm, setSearchTerm] = useState('');
+  const [priceOverrides, setPriceOverrides] = useState({});
   const [orderBeingEdited, setOrderBeingEdited] = useState(null);
   // Trạng thái hiển thị màn hình tạo đơn và modal chi tiết đơn
   const isCreateView = view === 'create';
@@ -58,6 +59,7 @@ const useOrdersLogic = ({ products, setProducts, orders, setOrders }) => {
     activeCategory,
     selectedWarehouse,
     orderBeingEdited,
+    priceOverrides,
   });
 
   const clearDraft = () => {
@@ -65,6 +67,7 @@ const useOrdersLogic = ({ products, setProducts, orders, setOrders }) => {
     setOrderComment('');
     setOrderBeingEdited(null);
     setSearchTerm('');
+    setPriceOverrides({});
     setActiveCategory('Tất cả');
     setIsReviewOpen(false);
     setSelectedWarehouse(DEFAULT_WAREHOUSE);
@@ -83,6 +86,11 @@ const useOrdersLogic = ({ products, setProducts, orders, setOrders }) => {
   const adjustQuantity = (productId, delta, availableStock) => {
     // Khi bấm +/- thì cộng dồn rồi kẹp lại theo tồn kho.
     updateCartItem(productId, (current) => clampQuantity(current + delta, availableStock));
+  };
+
+  const handlePriceChange = (productId, value) => {
+    const sanitized = sanitizeNumberInput(value);
+    setPriceOverrides((prev) => ({ ...prev, [productId]: sanitized }));
   };
 
   const handleScanForSale = (decodedText) => {
@@ -237,68 +245,62 @@ const useOrdersLogic = ({ products, setProducts, orders, setOrders }) => {
     };
   };
 
-  const handleCreateOrder = () => {
-    // Chặn tạo đơn khi dữ liệu chưa đủ.
-    if (!ensureOrderReady('tạo đơn')) return false;
+  // Hàm dùng chung để lưu đơn (tạo mới hoặc cập nhật)
+  const saveOrder = ({ isUpdate }) => {
+    if (!ensureOrderReady(isUpdate ? 'cập nhật đơn' : 'tạo đơn')) return false;
 
-    const { items, total, warehouse, orderType: nextOrderType, customerName: nextCustomerName, customerAddress: nextCustomerAddress, shippingFee: nextShippingFee } = buildOrderPayload();
-    const orderId = Date.now().toString();
-    const newOrder = {
-      id: orderId,
-      orderNumber: getNextOrderNumber(),
-      items,
-      total,
-      warehouse,
-      orderType: nextOrderType,
-      customerName: nextCustomerName,
-      customerAddress: nextCustomerAddress,
-      status: DEFAULT_STATUS,
-      date: new Date().toISOString(),
-      shippingFee: nextShippingFee,
-      comment: orderComment.trim(),
-    };
+    const payload = buildOrderPayload();
+    const { items, warehouse } = payload;
+    
+    // Cập nhật giá sản phẩm toàn cục nếu có thay đổi trong đơn hàng
+    setProducts((prevProducts) => {
+      const productsWithUpdatedPrices = prevProducts.map((p) => {
+        const item = items.find((i) => i.productId === p.id);
+        if (item && item.price !== p.price) {
+          return { ...p, price: item.price };
+        }
+        return p;
+      });
 
-    setProducts((prevProducts) => syncProductsStock(
-      prevProducts,
-      items,
-      [],
-      warehouse,
-    ));
-    setOrders([...orders, newOrder]);
+      // Lấy danh sách sản phẩm cũ nếu đang sửa đơn để sync stock
+      const previousItems = isUpdate ? orderBeingEdited.items : [];
+      const previousWarehouse = isUpdate ? (orderBeingEdited.warehouse || DEFAULT_WAREHOUSE) : null;
+
+      return syncProductsStock(
+        productsWithUpdatedPrices,
+        items,
+        previousItems,
+        warehouse,
+        previousWarehouse
+      );
+    });
+
+    if (isUpdate) {
+       const updatedOrder = {
+        ...orderBeingEdited,
+        ...payload,
+        comment: orderComment.trim(),
+      };
+      setOrders(orders.map(order => (order.id === orderBeingEdited.id ? updatedOrder : order)));
+    } else {
+      const newOrder = {
+        id: Date.now().toString(),
+        orderNumber: getNextOrderNumber(),
+        status: DEFAULT_STATUS,
+        date: new Date().toISOString(),
+        ...payload,
+        comment: orderComment.trim(),
+      };
+      setOrders([...orders, newOrder]);
+    }
+    
     clearDraft();
     setView('list');
     return true;
   };
 
-  const handleUpdateOrder = () => {
-    // Chặn cập nhật nếu đơn chưa đủ điều kiện tối thiểu.
-    if (!ensureOrderReady('cập nhật đơn')) return false;
-
-    const { items, total, warehouse, orderType: nextOrderType, customerName: nextCustomerName, customerAddress: nextCustomerAddress, shippingFee: nextShippingFee } = buildOrderPayload();
-    const updatedOrder = {
-      ...orderBeingEdited,
-      items,
-      total,
-      warehouse,
-      orderType: nextOrderType,
-      customerName: nextCustomerName,
-      customerAddress: nextCustomerAddress,
-      shippingFee: nextShippingFee,
-      comment: orderComment.trim(),
-    };
-
-    setProducts((prevProducts) => syncProductsStock(
-      prevProducts,
-      items,
-      orderBeingEdited.items,
-      warehouse,
-      orderBeingEdited.warehouse || DEFAULT_WAREHOUSE,
-    ));
-    setOrders(orders.map(order => (order.id === orderBeingEdited.id ? updatedOrder : order)));
-    clearDraft();
-    setView('list');
-    return true;
-  };
+  const handleCreateOrder = () => saveOrder({ isUpdate: false });
+  const handleUpdateOrder = () => saveOrder({ isUpdate: true });
 
   const handleEditOrder = (order) => {
     setCart(buildCartFromItems(order.items));
@@ -425,6 +427,8 @@ const useOrdersLogic = ({ products, setProducts, orders, setOrders }) => {
     totalAmount,
     reviewItems,
     filteredProducts,
+    priceOverrides,
+    handlePriceChange,
     handleQuantityChange,
     adjustQuantity,
     handleScanForSale,
