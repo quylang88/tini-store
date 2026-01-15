@@ -1,10 +1,10 @@
-import React from 'react';
-import { ChevronRight } from 'lucide-react';
+import React from "react";
+import { ChevronRight } from "lucide-react";
 
 const FloatingBackButton = ({
   onClick,
-  ariaLabel = 'Quay lại',
-  className = '',
+  ariaLabel = "Quay lại",
+  className = "",
 }) => {
   // Nút back nổi dùng chung để tái sử dụng giữa các màn hình.
   // Ưu tiên hiệu ứng chạm (active) thay cho hover để thân thiện với màn hình cảm ứng.

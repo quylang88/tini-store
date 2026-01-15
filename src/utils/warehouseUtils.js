@@ -1,6 +1,6 @@
 export const WAREHOUSES = [
-  { key: 'daLat', label: 'Lâm Đồng' },
-  { key: 'vinhPhuc', label: 'Vĩnh Phúc' },
+  { key: "daLat", label: "Lâm Đồng" },
+  { key: "vinhPhuc", label: "Vĩnh Phúc" },
 ];
 
 export const getWarehouseLabel = (key) => {
@@ -15,7 +15,7 @@ export const normalizeWarehouseStock = (product = {}) => {
       vinhPhuc: Number(product.stockByWarehouse.vinhPhuc) || 0,
     };
   }
-  
+
   const fallbackStock = Number(product.stock) || 0;
   return {
     daLat: fallbackStock,

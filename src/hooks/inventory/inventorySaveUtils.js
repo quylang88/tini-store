@@ -1,9 +1,9 @@
-import { normalizeWarehouseStock } from '../../utils/warehouseUtils';
+import { normalizeWarehouseStock } from "../../utils/warehouseUtils";
 import {
   addPurchaseLot,
   getLatestCost,
   normalizePurchaseLots,
-} from '../../utils/purchaseUtils';
+} from "../../utils/purchaseUtils";
 
 // Gom validation vào 1 chỗ để dễ test và dễ review.
 export const getInventoryValidationError = ({
@@ -14,19 +14,20 @@ export const getInventoryValidationError = ({
 }) => {
   if (!formData.name || !formData.price) {
     return {
-      title: 'Thiếu thông tin',
-      message: 'Vui lòng nhập Tên sản phẩm và Giá bán trước khi lưu.',
+      title: "Thiếu thông tin",
+      message: "Vui lòng nhập Tên sản phẩm và Giá bán trước khi lưu.",
     };
   }
 
   if (!editingProduct) {
     const duplicateName = products.find(
-      (product) => product.name.trim().toLowerCase() === formData.name.trim().toLowerCase(),
+      (product) =>
+        product.name.trim().toLowerCase() === formData.name.trim().toLowerCase()
     );
     if (duplicateName) {
       return {
-        title: 'Sản phẩm đã tồn tại',
-        message: 'Vui lòng chọn sản phẩm trong gợi ý để nhập thêm hàng.',
+        title: "Sản phẩm đã tồn tại",
+        message: "Vui lòng chọn sản phẩm trong gợi ý để nhập thêm hàng.",
       };
     }
   }
@@ -35,19 +36,21 @@ export const getInventoryValidationError = ({
   const priceValue = Number(formData.price) || 0;
   if (costValue > 0 && priceValue <= costValue) {
     return {
-      title: 'Giá bán chưa hợp lệ',
-      message: 'Giá bán phải cao hơn giá vốn để đảm bảo có lợi nhuận.',
+      title: "Giá bán chưa hợp lệ",
+      message: "Giá bán phải cao hơn giá vốn để đảm bảo có lợi nhuận.",
     };
   }
 
   // Check trùng Barcode
   if (formData.barcode) {
-    const duplicateBarcode = products.find(p =>
-      p.barcode === formData.barcode && p.id !== (editingProduct ? editingProduct.id : null),
+    const duplicateBarcode = products.find(
+      (p) =>
+        p.barcode === formData.barcode &&
+        p.id !== (editingProduct ? editingProduct.id : null)
     );
     if (duplicateBarcode) {
       return {
-        title: 'Mã vạch bị trùng',
+        title: "Mã vạch bị trùng",
         message: `Mã vạch này đã được dùng cho "${duplicateBarcode.name}". Vui lòng kiểm tra lại.`,
       };
     }
@@ -56,30 +59,34 @@ export const getInventoryValidationError = ({
   const quantityValue = Number(formData.quantity) || 0;
   if (!editingProduct && quantityValue <= 0) {
     return {
-      title: 'Thiếu số lượng nhập',
-      message: 'Sản phẩm mới cần có số lượng nhập kho ban đầu.',
+      title: "Thiếu số lượng nhập",
+      message: "Sản phẩm mới cần có số lượng nhập kho ban đầu.",
     };
   }
 
   if (editingLotId && quantityValue <= 0) {
     return {
-      title: 'Thiếu số lượng',
-      message: 'Vui lòng nhập số lượng cho lần nhập hàng này.',
+      title: "Thiếu số lượng",
+      message: "Vui lòng nhập số lượng cho lần nhập hàng này.",
     };
   }
 
   if (quantityValue > 0 && costValue <= 0) {
     return {
-      title: 'Thiếu giá nhập',
-      message: 'Vui lòng nhập giá nhập khi có số lượng nhập kho.',
+      title: "Thiếu giá nhập",
+      message: "Vui lòng nhập giá nhập khi có số lượng nhập kho.",
     };
   }
 
   const shippingWeight = Number(formData.shippingWeightKg) || 0;
-  if (quantityValue > 0 && formData.shippingMethod === 'jp' && shippingWeight <= 0) {
+  if (
+    quantityValue > 0 &&
+    formData.shippingMethod === "jp" &&
+    shippingWeight <= 0
+  ) {
     return {
-      title: 'Thiếu cân nặng',
-      message: 'Vui lòng nhập cân nặng nếu mua tại Nhật.',
+      title: "Thiếu cân nặng",
+      message: "Vui lòng nhập cân nặng nếu mua tại Nhật.",
     };
   }
 
@@ -95,25 +102,26 @@ export const buildNextProductFromForm = ({
 }) => {
   const costValue = Number(formData.cost) || 0;
   const quantityValue = Number(formData.quantity) || 0;
-  const warehouseKey = formData.warehouse || 'daLat';
+  const warehouseKey = formData.warehouse || "daLat";
 
   const shippingWeight = Number(formData.shippingWeightKg) || 0;
-  const exchangeRateValue = Number(formData.exchangeRate || settings.exchangeRate) || 0;
-  const feeJpy = formData.shippingMethod === 'jp'
-    ? Math.round(shippingWeight * 900)
-    : 0;
-  const feeVnd = formData.shippingMethod === 'jp'
-    ? Math.round(feeJpy * exchangeRateValue)
-    : Number(formData.shippingFeeVnd) || 0;
+  const exchangeRateValue =
+    Number(formData.exchangeRate || settings.exchangeRate) || 0;
+  const feeJpy =
+    formData.shippingMethod === "jp" ? Math.round(shippingWeight * 900) : 0;
+  const feeVnd =
+    formData.shippingMethod === "jp"
+      ? Math.round(feeJpy * exchangeRateValue)
+      : Number(formData.shippingFeeVnd) || 0;
 
   const baseProduct = editingProduct
     ? normalizePurchaseLots(editingProduct)
     : {
-      id: Date.now().toString(),
-      purchaseLots: [],
-      stockByWarehouse: { daLat: 0, vinhPhuc: 0 },
-      stock: 0,
-    };
+        id: Date.now().toString(),
+        purchaseLots: [],
+        stockByWarehouse: { daLat: 0, vinhPhuc: 0 },
+        stock: 0,
+      };
 
   const existingStock = normalizeWarehouseStock(baseProduct);
   const nextStockByWarehouse = {
@@ -124,7 +132,7 @@ export const buildNextProductFromForm = ({
   let nextProduct = {
     ...baseProduct,
     name: formData.name.trim(),
-    barcode: formData.barcode ? formData.barcode.trim() : '',
+    barcode: formData.barcode ? formData.barcode.trim() : "",
     category: formData.category,
     price: Number(formData.price),
     cost: costValue || getLatestCost(baseProduct),
@@ -137,7 +145,7 @@ export const buildNextProductFromForm = ({
   if (quantityValue > 0) {
     const shippingInfo = {
       method: formData.shippingMethod,
-      weightKg: formData.shippingMethod === 'jp' ? shippingWeight : 0,
+      weightKg: formData.shippingMethod === "jp" ? shippingWeight : 0,
       feeJpy,
       feeVnd,
       exchangeRate: exchangeRateValue,
@@ -147,37 +155,37 @@ export const buildNextProductFromForm = ({
       const nextLots = nextProduct.purchaseLots.map((lot) => {
         const isCurrentLot = lot.id === editingLotId;
         const updatedPrice = Number(formData.price) || 0;
-        
+
         if (isCurrentLot) {
-            return {
+          return {
             ...lot,
             cost: costValue,
             quantity: quantityValue,
             warehouse: warehouseKey,
             shipping: {
-                ...shippingInfo,
-                perUnitVnd: feeVnd,
+              ...shippingInfo,
+              perUnitVnd: feeVnd,
             },
             priceAtPurchase: updatedPrice,
-            };
+          };
         }
-        
+
         // Cập nhật giá bán mới cho tất cả các lô khác luôn
         return {
-            ...lot,
-            priceAtPurchase: updatedPrice
+          ...lot,
+          priceAtPurchase: updatedPrice,
         };
       });
       const adjustedStock = nextLots.reduce(
         (acc, lot) => {
-          const nextWarehouse = lot.warehouse || 'daLat';
+          const nextWarehouse = lot.warehouse || "daLat";
           const lotQty = Number(lot.quantity) || 0;
           return {
             ...acc,
             [nextWarehouse]: (acc[nextWarehouse] || 0) + lotQty,
           };
         },
-        { daLat: 0, vinhPhuc: 0 },
+        { daLat: 0, vinhPhuc: 0 }
       );
       nextProduct = {
         ...nextProduct,

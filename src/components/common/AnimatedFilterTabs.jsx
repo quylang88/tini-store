@@ -1,14 +1,14 @@
 /* eslint-disable no-unused-vars */
-import React from 'react';
-import { motion } from 'framer-motion';
+import React from "react";
+import { motion } from "framer-motion";
 
-const AnimatedFilterTabs = ({ 
-  tabs, 
-  activeTab, 
-  onChange, 
-  layoutIdPrefix = 'tabs',
-  className = '',
-  tabClassName = ''
+const AnimatedFilterTabs = ({
+  tabs,
+  activeTab,
+  onChange,
+  layoutIdPrefix = "tabs",
+  className = "",
+  tabClassName = "",
 }) => {
   return (
     <div className={`flex flex-wrap gap-2 ${className}`}>
@@ -19,9 +19,9 @@ const AnimatedFilterTabs = ({
             key={tab.key}
             onClick={() => onChange(tab.key)}
             className={`relative px-3 py-1.5 text-xs font-semibold rounded-full transition-colors z-0 ${tabClassName} ${
-              isActive ? 'text-white' : 'text-amber-700 hover:bg-amber-100/50'
+              isActive ? "text-white" : "text-amber-700 hover:bg-amber-100/50"
             }`}
-            style={{ WebkitTapHighlightColor: 'transparent' }}
+            style={{ WebkitTapHighlightColor: "transparent" }}
           >
             {isActive && (
               <motion.div

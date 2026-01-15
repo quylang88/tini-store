@@ -1,9 +1,9 @@
 /* eslint-disable no-unused-vars */
-import React from 'react';
-import { ScanBarcode } from 'lucide-react';
-import SearchInput from '../common/SearchInput';
-import AnimatedFilterTabs from '../common/AnimatedFilterTabs';
-import { motion } from 'framer-motion';
+import React from "react";
+import { ScanBarcode } from "lucide-react";
+import SearchInput from "../../components/common/SearchInput";
+import AnimatedFilterTabs from "../../components/common/AnimatedFilterTabs";
+import { motion } from "framer-motion";
 
 const InventoryHeader = ({
   searchTerm,
@@ -14,14 +14,13 @@ const InventoryHeader = ({
   onToggleCategory,
   warehouseFilter,
   onWarehouseChange,
-  categories
+  categories,
 }) => {
-  
   // Chuẩn bị dữ liệu cho AnimatedFilterTabs
   const warehouseTabs = [
-    { key: 'all', label: 'Tất cả' },
-    { key: 'daLat', label: 'Lâm Đồng' },
-    { key: 'vinhPhuc', label: 'Vĩnh Phúc' },
+    { key: "all", label: "Tất cả" },
+    { key: "daLat", label: "Lâm Đồng" },
+    { key: "vinhPhuc", label: "Vĩnh Phúc" },
   ];
 
   return (
@@ -56,7 +55,7 @@ const InventoryHeader = ({
       {/* Bộ lọc kho + danh mục */}
       <div className="px-3 py-3 border-b border-amber-100 space-y-3">
         {/* Filter Kho - Dùng AnimatedFilterTabs cho hiệu ứng slide mượt */}
-        <AnimatedFilterTabs 
+        <AnimatedFilterTabs
           tabs={warehouseTabs}
           activeTab={warehouseFilter}
           onChange={onWarehouseChange}
@@ -67,24 +66,24 @@ const InventoryHeader = ({
         <div className="flex flex-wrap gap-2">
           <motion.button
             layout
-            onClick={() => onToggleCategory('Tất cả')}
+            onClick={() => onToggleCategory("Tất cả")}
             className={`px-3 py-1.5 text-[11px] font-semibold rounded-full border transition-colors ${
               activeCategories.length === 0
-                ? 'bg-amber-500 text-white border-amber-500'
-                : 'bg-transparent text-amber-700 border-amber-200'
+                ? "bg-amber-500 text-white border-amber-500"
+                : "bg-transparent text-amber-700 border-amber-200"
             }`}
           >
             Tất cả
           </motion.button>
-          {categories.map(cat => (
+          {categories.map((cat) => (
             <motion.button
               layout
               key={cat}
               onClick={() => onToggleCategory(cat)}
               className={`px-3 py-1.5 text-[11px] font-semibold rounded-full border transition-colors ${
                 activeCategories.includes(cat)
-                  ? 'bg-amber-500 text-white border-amber-500'
-                  : 'bg-transparent text-amber-700 border-amber-200'
+                  ? "bg-amber-500 text-white border-amber-500"
+                  : "bg-transparent text-amber-700 border-amber-200"
               }`}
             >
               {cat}

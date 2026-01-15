@@ -1,14 +1,14 @@
-import { normalizeWarehouseStock } from './warehouseUtils';
+import { normalizeWarehouseStock } from "./warehouseUtils";
 import {
   consumePurchaseLots,
   normalizePurchaseLots,
   restockPurchaseLots,
-} from './purchaseUtils';
+} from "./purchaseUtils";
 
 const updateWarehouseStock = (product, warehouseKey, delta, restockCost) => {
   const current = normalizeWarehouseStock(product);
   const nextStock = { ...current };
-  if (warehouseKey === 'vinhPhuc') {
+  if (warehouseKey === "vinhPhuc") {
     nextStock.vinhPhuc = Math.max(0, current.vinhPhuc + delta);
   } else {
     nextStock.daLat = Math.max(0, current.daLat + delta);
@@ -20,10 +20,19 @@ const updateWarehouseStock = (product, warehouseKey, delta, restockCost) => {
   };
 
   if (delta < 0) {
-    return consumePurchaseLots(normalizePurchaseLots(nextProduct), warehouseKey, Math.abs(delta));
+    return consumePurchaseLots(
+      normalizePurchaseLots(nextProduct),
+      warehouseKey,
+      Math.abs(delta)
+    );
   }
   if (delta > 0) {
-    return restockPurchaseLots(normalizePurchaseLots(nextProduct), warehouseKey, delta, restockCost);
+    return restockPurchaseLots(
+      normalizePurchaseLots(nextProduct),
+      warehouseKey,
+      delta,
+      restockCost
+    );
   }
   return nextProduct;
 };
@@ -33,10 +42,14 @@ export const syncProductsStock = (
   orderItems,
   previousItems = [],
   nextWarehouseKey,
-  previousWarehouseKey = nextWarehouseKey,
+  previousWarehouseKey = nextWarehouseKey
 ) => {
-  const nextMap = new Map(orderItems.map(item => [item.productId, item.quantity]));
-  const previousItemMap = new Map(previousItems.map(item => [item.productId, item]));
+  const nextMap = new Map(
+    orderItems.map((item) => [item.productId, item.quantity])
+  );
+  const previousItemMap = new Map(
+    previousItems.map((item) => [item.productId, item])
+  );
 
   return products.map((product) => {
     const previousItem = previousItemMap.get(product.id);
@@ -48,16 +61,30 @@ export const syncProductsStock = (
       const delta = previousQty - nextQty;
       if (!delta) return product;
       const previousCost = previousItem?.cost;
-      return updateWarehouseStock(product, nextWarehouseKey, delta, previousCost);
+      return updateWarehouseStock(
+        product,
+        nextWarehouseKey,
+        delta,
+        previousCost
+      );
     }
 
     let nextProduct = product;
     if (previousQty) {
       const previousCost = previousItem?.cost;
-      nextProduct = updateWarehouseStock(nextProduct, previousWarehouseKey, previousQty, previousCost);
+      nextProduct = updateWarehouseStock(
+        nextProduct,
+        previousWarehouseKey,
+        previousQty,
+        previousCost
+      );
     }
     if (nextQty) {
-      nextProduct = updateWarehouseStock(nextProduct, nextWarehouseKey, -nextQty);
+      nextProduct = updateWarehouseStock(
+        nextProduct,
+        nextWarehouseKey,
+        -nextQty
+      );
     }
     return nextProduct;
   });

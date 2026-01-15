@@ -1,10 +1,10 @@
-import React from 'react';
-import { formatNumber } from '../../utils/helpers';
-import { getLatestCost, getLatestLot } from '../../utils/purchaseUtils';
-import { getWarehouseLabel } from '../../utils/warehouseUtils';
-import SheetModal from '../modals/SheetModal';
-import useModalCache from '../../hooks/useModalCache';
-import Button from '../common/Button';
+import React from "react";
+import { formatNumber } from "../../utils/helpers";
+import { getLatestCost, getLatestLot } from "../../utils/purchaseUtils";
+import { getWarehouseLabel } from "../../utils/warehouseUtils";
+import SheetModal from "../../components/modals/SheetModal";
+import useModalCache from "../../hooks/useModalCache";
+import Button from "../../components/common/Button";
 
 // ProductDetailModal: Hiển thị lịch sử nhập hàng (View Only)
 const ProductDetailModal = ({ product, onClose, onEditLot }) => {
@@ -19,11 +19,7 @@ const ProductDetailModal = ({ product, onClose, onEditLot }) => {
   const lots = cachedProduct.purchaseLots || [];
 
   const footer = (
-    <Button
-      variant="sheetClose"
-      size="sm"
-      onClick={onClose}
-    >
+    <Button variant="sheetClose" size="sm" onClick={onClose}>
       Đóng
     </Button>
   );
@@ -40,17 +36,22 @@ const ProductDetailModal = ({ product, onClose, onEditLot }) => {
         <div className="flex justify-between items-center border-b border-amber-100 pb-4">
           <div className="text-xs text-amber-600">
             Giá nhập mới nhất: {formatNumber(latestCost)}đ
-            {latestLot ? ` • Kho: ${getWarehouseLabel(latestLot.warehouse)}` : ''}
+            {latestLot
+              ? ` • Kho: ${getWarehouseLabel(latestLot.warehouse)}`
+              : ""}
           </div>
         </div>
 
         <div className="space-y-3">
           {lots.length === 0 ? (
-            <div className="text-xs text-gray-500 text-center">Chưa có lịch sử nhập kho.</div>
+            <div className="text-xs text-gray-500 text-center">
+              Chưa có lịch sử nhập kho.
+            </div>
           ) : (
             lots.map((lot) => {
               const salePrice = Number(cachedProduct.price) || 0;
-              const shippingPerUnit = Number(lot.shipping?.perUnitVnd ?? lot.shipping?.feeVnd) || 0;
+              const shippingPerUnit =
+                Number(lot.shipping?.perUnitVnd ?? lot.shipping?.feeVnd) || 0;
               const unitCost = (Number(lot.cost) || 0) + shippingPerUnit;
               const profitAtCurrentPrice = salePrice - unitCost;
               return (
@@ -61,23 +62,35 @@ const ProductDetailModal = ({ product, onClose, onEditLot }) => {
                   className="w-full text-left border border-amber-100 rounded-xl p-3 space-y-1 active:border-amber-200 bg-amber-50 transition"
                 >
                   <div className="flex items-center justify-between text-sm text-amber-800">
-                    <span className="font-semibold">{formatNumber(lot.cost)}đ</span>
-                    <span className="text-xs text-amber-600">{getWarehouseLabel(lot.warehouse)}</span>
+                    <span className="font-semibold">
+                      {formatNumber(lot.cost)}đ
+                    </span>
+                    <span className="text-xs text-amber-600">
+                      {getWarehouseLabel(lot.warehouse)}
+                    </span>
                   </div>
                   <div className="text-xs text-gray-600">
-                    Số lượng: <span className="font-semibold">{lot.quantity}</span>
+                    Số lượng:{" "}
+                    <span className="font-semibold">{lot.quantity}</span>
                   </div>
                   <div className="text-xs text-emerald-700">
-                    Lợi nhuận theo giá hiện tại: <span className="font-semibold">{formatNumber(profitAtCurrentPrice)}đ</span>
+                    Lợi nhuận theo giá hiện tại:{" "}
+                    <span className="font-semibold">
+                      {formatNumber(profitAtCurrentPrice)}đ
+                    </span>
                   </div>
                   {lot.shipping && (
                     <div className="text-xs text-gray-600">
                       Phí gửi: {formatNumber(lot.shipping.feeVnd || 0)}đ
-                      {lot.shipping.method === 'jp' ? ` (${formatNumber(lot.shipping.feeJpy || 0)}¥)` : ''}
+                      {lot.shipping.method === "jp"
+                        ? ` (${formatNumber(lot.shipping.feeJpy || 0)}¥)`
+                        : ""}
                     </div>
                   )}
                   <div className="text-[10px] text-gray-400">
-                    {lot.createdAt ? new Date(lot.createdAt).toLocaleString() : ''}
+                    {lot.createdAt
+                      ? new Date(lot.createdAt).toLocaleString()
+                      : ""}
                   </div>
                 </button>
               );

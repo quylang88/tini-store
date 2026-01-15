@@ -1,11 +1,11 @@
-import React from 'react';
-import { Download, Upload, Plus, RefreshCw, X, LogOut } from 'lucide-react';
-import { formatInputNumber, sanitizeNumberInput } from '../utils/helpers';
-import ConfirmModalHost from '../components/modals/ConfirmModalHost';
-import ErrorModal from '../components/modals/ErrorModal';
-import InfoModal from '../components/modals/InfoModal';
-import SettingsSection from '../components/settings/SettingsSection';
-import useSettingsLogic from '../hooks/useSettingsLogic';
+import React from "react";
+import { Download, Upload, Plus, RefreshCw, X, LogOut } from "lucide-react";
+import { formatInputNumber, sanitizeNumberInput } from "../utils/helpers";
+import ConfirmModalHost from "../components/modals/ConfirmModalHost";
+import ErrorModal from "../components/modals/ErrorModal";
+import InfoModal from "../components/modals/InfoModal";
+import SettingsSection from "./settings/SettingsSection";
+import useSettingsLogic from "../hooks/useSettingsLogic";
 
 const Settings = ({
   products,
@@ -51,7 +51,11 @@ const Settings = ({
         />
 
         {/* 1. Cấu hình Tiền tệ */}
-        <SettingsSection title="Cấu hình Tiền tệ" icon={RefreshCw} iconClassName="text-blue-500">
+        <SettingsSection
+          title="Cấu hình Tiền tệ"
+          icon={RefreshCw}
+          iconClassName="text-blue-500"
+        >
           <div>
             <label className="block text-xs font-bold text-amber-700 uppercase mb-2">
               Tỷ giá nhập kho (JPY ➔ VND)
@@ -64,12 +68,14 @@ const Settings = ({
                   value={formatInputNumber(settings.exchangeRate)}
                   onChange={(e) => {
                     const rawValue = sanitizeNumberInput(e.target.value);
-                    const nextValue = rawValue === '' ? 0 : Number(rawValue);
+                    const nextValue = rawValue === "" ? 0 : Number(rawValue);
                     saveSettings({ ...settings, exchangeRate: nextValue });
                   }}
                   placeholder="Ví dụ: 175"
                 />
-                <span className="absolute right-3 top-3.5 text-amber-500 text-sm font-bold">VND</span>
+                <span className="absolute right-3 top-3.5 text-amber-500 text-sm font-bold">
+                  VND
+                </span>
               </div>
               <button
                 onClick={() => {
@@ -90,20 +96,25 @@ const Settings = ({
               </button>
             </div>
             <p className="text-xs text-amber-600 mt-2">
-              * Tỷ giá này sẽ được tự động điền khi bạn nhập kho mới. Bạn nên nhập tỷ giá thực tế mua vào.
+              * Tỷ giá này sẽ được tự động điền khi bạn nhập kho mới. Bạn nên
+              nhập tỷ giá thực tế mua vào.
             </p>
           </div>
         </SettingsSection>
 
         {/* 2. Quản lý Danh mục */}
-        <SettingsSection title="Danh mục sản phẩm" icon={Plus} iconClassName="text-green-500">
+        <SettingsSection
+          title="Danh mục sản phẩm"
+          icon={Plus}
+          iconClassName="text-green-500"
+        >
           <div className="flex gap-2">
             <input
               className="flex-1 border border-gray-200 rounded-lg px-3 py-2 outline-none focus:border-rose-400 text-sm text-amber-900"
               placeholder="Nhập tên danh mục mới..."
               value={newCategory}
               onChange={(e) => setNewCategory(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleAddCategory()}
+              onKeyDown={(e) => e.key === "Enter" && handleAddCategory()}
             />
             <button
               onClick={handleAddCategory}
@@ -114,14 +125,17 @@ const Settings = ({
           </div>
 
           <div className="flex flex-wrap gap-2 pt-2">
-            {settings.categories.map(cat => (
-              <div key={cat} className="bg-gray-100 text-amber-800 px-3 py-1.5 rounded-full text-sm flex items-center gap-2 border border-gray-200">
+            {settings.categories.map((cat) => (
+              <div
+                key={cat}
+                className="bg-gray-100 text-amber-800 px-3 py-1.5 rounded-full text-sm flex items-center gap-2 border border-gray-200"
+              >
                 {cat}
-                {cat !== 'Chung' && (
-                    <button
-                      onClick={() => handleDeleteCategory(cat)}
-                      className="text-amber-500 active:text-red-500 p-0.5 rounded-full active:bg-gray-200 transition"
-                    >
+                {cat !== "Chung" && (
+                  <button
+                    onClick={() => handleDeleteCategory(cat)}
+                    className="text-amber-500 active:text-red-500 p-0.5 rounded-full active:bg-gray-200 transition"
+                  >
                     <X size={14} />
                   </button>
                 )}
@@ -131,9 +145,14 @@ const Settings = ({
         </SettingsSection>
 
         {/* 3. Sao lưu & Khôi phục */}
-        <SettingsSection title="Sao lưu & Khôi phục" icon={Download} iconClassName="text-orange-500">
+        <SettingsSection
+          title="Sao lưu & Khôi phục"
+          icon={Download}
+          iconClassName="text-orange-500"
+        >
           <p className="text-sm text-amber-700">
-            Dữ liệu hiện tại chỉ lưu trên trình duyệt này. Hãy tải về máy thường xuyên để tránh mất dữ liệu.
+            Dữ liệu hiện tại chỉ lưu trên trình duyệt này. Hãy tải về máy thường
+            xuyên để tránh mất dữ liệu.
           </p>
 
           <button
@@ -175,7 +194,8 @@ const Settings = ({
 
         {/* Footer info */}
         <div className="text-center text-xs text-amber-500 pb-4">
-          Phiên bản 3.0 - Tiny Shop<br />
+          Phiên bản 3.0 - Tiny Shop
+          <br />
           Dữ liệu được lưu trữ cục bộ (Local Storage)
         </div>
       </div>
@@ -204,7 +224,7 @@ const Settings = ({
         onClose={() => setInfoModal(null)}
       />
     </>
-  )
-}
+  );
+};
 
 export default Settings;

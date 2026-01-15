@@ -1,19 +1,28 @@
-import { useRef, useState } from 'react';
+import { useRef, useState } from "react";
 import {
   createFormDataForLot,
   createFormDataForNewProduct,
   createFormDataForProduct,
-} from '../utils/inventoryForm';
-import useInventoryFormState from './inventory/useInventoryFormState';
-import useInventoryFilters from './inventory/useInventoryFilters';
-import { buildNextProductFromForm, getInventoryValidationError } from './inventory/inventorySaveUtils';
+} from "../utils/inventoryForm";
+import useInventoryFormState from "./inventory/useInventoryFormState";
+import useInventoryFilters from "./inventory/useInventoryFilters";
+import {
+  buildNextProductFromForm,
+  getInventoryValidationError,
+} from "./inventory/inventorySaveUtils";
 
-const useInventoryLogic = ({ products, setProducts, orders, setOrders, settings }) => {
+const useInventoryLogic = ({
+  products,
+  setProducts,
+  orders,
+  setOrders,
+  settings,
+}) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [showScanner, setShowScanner] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
   const [editingLotId, setEditingLotId] = useState(null);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState("");
   // Modal xác nhận xoá sản phẩm để giao diện đồng bộ
   const [confirmModal, setConfirmModal] = useState(null);
   // Modal báo lỗi riêng cho form tạo/sửa sản phẩm
@@ -23,7 +32,7 @@ const useInventoryLogic = ({ products, setProducts, orders, setOrders, settings 
 
   // State quản lý danh mục đang xem (cho phép chọn nhiều danh mục).
   const [activeCategories, setActiveCategories] = useState([]);
-  const [warehouseFilter, setWarehouseFilter] = useState('all');
+  const [warehouseFilter, setWarehouseFilter] = useState("all");
 
   // Form data phục vụ nhập kho: nhập giá, tồn kho, phí gửi theo từng kho.
   const {
@@ -38,21 +47,24 @@ const useInventoryLogic = ({ products, setProducts, orders, setOrders, settings 
 
   const handleScanSuccess = (decodedText) => {
     setShowScanner(false);
-    const existingProduct = products.find(p => p.barcode === decodedText);
+    const existingProduct = products.find((p) => p.barcode === decodedText);
 
     if (existingProduct) {
       // Cảnh báo khi mã vạch đã tồn tại để user biết dùng sản phẩm cũ.
       setErrorModal({
-        title: 'Sản phẩm đã tồn tại',
+        title: "Sản phẩm đã tồn tại",
         message: `Sản phẩm này đã có: ${existingProduct.name}.`,
       });
       openModal(existingProduct);
     } else {
       if (isModalOpen) {
-        setFormData(prev => ({ ...prev, barcode: decodedText }));
+        setFormData((prev) => ({ ...prev, barcode: decodedText }));
       } else {
         openModal();
-        setTimeout(() => setFormData(prev => ({ ...prev, barcode: decodedText })), 100);
+        setTimeout(
+          () => setFormData((prev) => ({ ...prev, barcode: decodedText })),
+          100
+        );
       }
     }
   };
@@ -77,19 +89,23 @@ const useInventoryLogic = ({ products, setProducts, orders, setOrders, settings 
     });
 
     if (editingProduct) {
-      setProducts(products.map(p => p.id === editingProduct.id ? nextProduct : p));
+      setProducts(
+        products.map((p) => (p.id === editingProduct.id ? nextProduct : p))
+      );
 
       // Cập nhật tên sản phẩm trong các đơn hàng cũ (nếu có thay đổi tên)
       if (orders && setOrders && editingProduct.name !== nextProduct.name) {
-        setOrders(orders.map(order => ({
-          ...order,
-          items: order.items.map(item => {
-            if (item.productId === editingProduct.id) {
-              return { ...item, name: nextProduct.name };
-            }
-            return item;
-          }),
-        })));
+        setOrders(
+          orders.map((order) => ({
+            ...order,
+            items: order.items.map((item) => {
+              if (item.productId === editingProduct.id) {
+                return { ...item, name: nextProduct.name };
+              }
+              return item;
+            }),
+          }))
+        );
       }
     } else {
       setProducts([...products, nextProduct]);
@@ -100,12 +116,15 @@ const useInventoryLogic = ({ products, setProducts, orders, setOrders, settings 
   const buildComparableFormData = (data) => {
     if (!data) return data;
     // Khi nhập theo Yên, cost được tự tính nên cần chuẩn hoá trước khi so sánh.
-    if (data.costCurrency === 'JPY') {
+    if (data.costCurrency === "JPY") {
       const jpyValue = Number(data.costJPY || 0);
       const exchangeValue = Number(data.exchangeRate || 0);
       return {
         ...data,
-        cost: jpyValue > 0 && exchangeValue > 0 ? Math.round(jpyValue * exchangeValue) : '',
+        cost:
+          jpyValue > 0 && exchangeValue > 0
+            ? Math.round(jpyValue * exchangeValue)
+            : "",
       };
     }
     return data;
@@ -113,7 +132,9 @@ const useInventoryLogic = ({ products, setProducts, orders, setOrders, settings 
 
   const hasFormChanges = () => {
     if (!initialFormDataRef.current) return false;
-    const initialSnapshot = JSON.stringify(buildComparableFormData(initialFormDataRef.current));
+    const initialSnapshot = JSON.stringify(
+      buildComparableFormData(initialFormDataRef.current)
+    );
     const currentSnapshot = JSON.stringify(buildComparableFormData(formData));
     return initialSnapshot !== currentSnapshot;
   };
@@ -128,7 +149,10 @@ const useInventoryLogic = ({ products, setProducts, orders, setOrders, settings 
     } else {
       setEditingProduct(null);
       setEditingLotId(null);
-      const nextFormData = createFormDataForNewProduct({ settings, activeCategories });
+      const nextFormData = createFormDataForNewProduct({
+        settings,
+        activeCategories,
+      });
       setFormData(nextFormData);
       initialFormDataRef.current = nextFormData;
     }
@@ -160,23 +184,25 @@ const useInventoryLogic = ({ products, setProducts, orders, setOrders, settings 
     }
     // Có chỉnh sửa thì hiện cảnh báo để tránh mất dữ liệu.
     setConfirmModal({
-      title: 'Huỷ chỉnh sửa?',
-      message: 'Bạn đang có thay đổi chưa lưu. Bạn có chắc muốn huỷ không?',
-      confirmLabel: 'Huỷ thay đổi',
-      cancelLabel: 'Tiếp tục sửa',
-      tone: 'danger',
+      title: "Huỷ chỉnh sửa?",
+      message: "Bạn đang có thay đổi chưa lưu. Bạn có chắc muốn huỷ không?",
+      confirmLabel: "Huỷ thay đổi",
+      cancelLabel: "Tiếp tục sửa",
+      tone: "danger",
       onConfirm: () => closeModal(),
     });
   };
 
   const handleDelete = (id) => {
-    const product = products.find(p => p.id === id);
+    const product = products.find((p) => p.id === id);
     setConfirmModal({
-      title: 'Xoá sản phẩm?',
-      message: product ? `Bạn có chắc muốn xoá "${product.name}" khỏi kho?` : 'Bạn có chắc muốn xoá sản phẩm này?',
-      confirmLabel: 'Xoá sản phẩm',
-      tone: 'danger',
-      onConfirm: () => setProducts(products.filter(p => p.id !== id))
+      title: "Xoá sản phẩm?",
+      message: product
+        ? `Bạn có chắc muốn xoá "${product.name}" khỏi kho?`
+        : "Bạn có chắc muốn xoá sản phẩm này?",
+      confirmLabel: "Xoá sản phẩm",
+      tone: "danger",
+      onConfirm: () => setProducts(products.filter((p) => p.id !== id)),
     });
   };
 
@@ -191,11 +217,11 @@ const useInventoryLogic = ({ products, setProducts, orders, setOrders, settings 
 
   const toggleCategory = (category) => {
     setActiveCategories((prev) => {
-      if (category === 'Tất cả') {
+      if (category === "Tất cả") {
         return [];
       }
       if (prev.includes(category)) {
-        return prev.filter(item => item !== category);
+        return prev.filter((item) => item !== category);
       }
       return [...prev, category];
     });

@@ -1,13 +1,13 @@
-import React, { useState } from 'react';
-import BarcodeScanner from '../components/BarcodeScanner';
-import InventoryHeader from '../components/inventory/InventoryHeader';
-import ProductList from '../components/inventory/ProductList';
-import ProductDetailModal from '../components/inventory/ProductDetailModal';
-import ProductModal from '../components/inventory/ProductModal';
-import ConfirmModalHost from '../components/modals/ConfirmModalHost';
-import ErrorModal from '../components/modals/ErrorModal';
-import FloatingAddButton from '../components/common/FloatingAddButton';
-import useInventoryLogic from '../hooks/useInventoryLogic';
+import React, { useState } from "react";
+import BarcodeScanner from "../components/BarcodeScanner";
+import InventoryHeader from "./inventory/InventoryHeader";
+import ProductList from "./inventory/ProductList";
+import ProductDetailModal from "./inventory/ProductDetailModal";
+import ProductModal from "./inventory/ProductModal";
+import ConfirmModalHost from "../components/modals/ConfirmModalHost";
+import ErrorModal from "../components/modals/ErrorModal";
+import FloatingAddButton from "../components/common/FloatingAddButton";
+import useInventoryLogic from "../hooks/useInventoryLogic";
 
 const Inventory = ({ products, setProducts, orders, setOrders, settings }) => {
   const [detailProduct, setDetailProduct] = useState(null);
@@ -49,13 +49,18 @@ const Inventory = ({ products, setProducts, orders, setOrders, settings }) => {
 
   return (
     <div className="flex flex-col h-full bg-transparent">
-      {showScanner && <BarcodeScanner onScanSuccess={handleScanSuccess} onClose={() => setShowScanner(false)} />}
+      {showScanner && (
+        <BarcodeScanner
+          onScanSuccess={handleScanSuccess}
+          onClose={() => setShowScanner(false)}
+        />
+      )}
 
       {/* Tách phần header & tab danh mục để Inventory gọn hơn */}
       <InventoryHeader
         searchTerm={searchTerm}
-        onSearchChange={e => setSearchTerm(e.target.value)}
-        onClearSearch={() => setSearchTerm('')}
+        onSearchChange={(e) => setSearchTerm(e.target.value)}
+        onClearSearch={() => setSearchTerm("")}
         onShowScanner={() => setShowScanner(true)}
         activeCategories={activeCategories}
         onToggleCategory={toggleCategory}
@@ -65,11 +70,14 @@ const Inventory = ({ products, setProducts, orders, setOrders, settings }) => {
       />
 
       {/* Nút thêm hàng mới nổi theo cùng vị trí với màn tạo đơn để đồng bộ UX. */}
-      <FloatingAddButton onClick={() => openModal()} ariaLabel="Thêm hàng mới" />
+      <FloatingAddButton
+        onClick={() => openModal()}
+        ariaLabel="Thêm hàng mới"
+      />
 
       {/* Tách danh sách sản phẩm thành component riêng */}
       {/* Loại bỏ key={...} để React tự diff và giữ DOM, tránh nháy hình */}
-      <div className="flex-1 overflow-y-auto min-h-0"> 
+      <div className="flex-1 overflow-y-auto min-h-0">
         <ProductList
           products={filteredProducts}
           onDelete={handleDelete}

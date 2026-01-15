@@ -1,8 +1,8 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from "react";
 
 const DateRangeFilter = ({ customRange, setCustomRange }) => {
-  const [quickMonth, setQuickMonth] = useState('');
-  const [quickYear, setQuickYear] = useState('');
+  const [quickMonth, setQuickMonth] = useState("");
+  const [quickYear, setQuickYear] = useState("");
   const [calendarOpen, setCalendarOpen] = useState(false);
   const [calendarMonth, setCalendarMonth] = useState(() => {
     const now = new Date();
@@ -14,45 +14,62 @@ const DateRangeFilter = ({ customRange, setCustomRange }) => {
   // Chuẩn hoá ngày để lưu vào state dưới dạng yyyy-mm-dd.
   const formatDateInput = (date) => {
     const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
     return `${year}-${month}-${day}`;
   };
 
   // Parse chuỗi yyyy-mm-dd về Date để xử lý so sánh.
-  const parseDateValue = (value) => (value ? new Date(`${value}T00:00:00`) : null);
+  const parseDateValue = (value) =>
+    value ? new Date(`${value}T00:00:00`) : null;
 
-  const startDate = useMemo(() => parseDateValue(customRange.start), [customRange.start]);
-  const endDate = useMemo(() => parseDateValue(customRange.end), [customRange.end]);
+  const startDate = useMemo(
+    () => parseDateValue(customRange.start),
+    [customRange.start]
+  );
+  const endDate = useMemo(
+    () => parseDateValue(customRange.end),
+    [customRange.end]
+  );
 
   // Hiển thị theo định dạng dd/mm/yyyy cho người dùng Việt.
   const formatDateDisplay = (date) => {
-    if (!date) return '';
-    const day = String(date.getDate()).padStart(2, '0');
-    const month = String(date.getMonth() + 1).padStart(2, '0');
+    if (!date) return "";
+    const day = String(date.getDate()).padStart(2, "0");
+    const month = String(date.getMonth() + 1).padStart(2, "0");
     const year = date.getFullYear();
     return `${day}/${month}/${year}`;
   };
 
   // Khi người dùng chọn kiểu khác (tháng/năm), xoá phần còn lại để tránh xung đột.
   const updateCustomRange = (nextRange) => {
-    setQuickMonth('');
-    setQuickYear('');
-    setCustomRange(prev => ({ ...prev, ...nextRange }));
+    setQuickMonth("");
+    setQuickYear("");
+    setCustomRange((prev) => ({ ...prev, ...nextRange }));
   };
 
   // Chọn ngày: nhấn lần 1 đặt start, nhấn lần 2 đặt end (tự đảo nếu cần).
   const handleDateSelect = (date) => {
-    const selected = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    const selected = new Date(
+      date.getFullYear(),
+      date.getMonth(),
+      date.getDate()
+    );
     if (!startDate || (startDate && endDate)) {
-      updateCustomRange({ start: formatDateInput(selected), end: '' });
+      updateCustomRange({ start: formatDateInput(selected), end: "" });
       return;
     }
     if (selected < startDate) {
-      updateCustomRange({ start: formatDateInput(selected), end: formatDateInput(startDate) });
+      updateCustomRange({
+        start: formatDateInput(selected),
+        end: formatDateInput(startDate),
+      });
       return;
     }
-    updateCustomRange({ start: formatDateInput(startDate), end: formatDateInput(selected) });
+    updateCustomRange({
+      start: formatDateInput(startDate),
+      end: formatDateInput(selected),
+    });
   };
 
   // Tạo danh sách ngày hiển thị theo tháng hiện tại (bắt đầu từ thứ 2).
@@ -77,7 +94,7 @@ const DateRangeFilter = ({ customRange, setCustomRange }) => {
     const value = event.target.value;
     setQuickMonth(value);
     if (!value) return;
-    setQuickYear('');
+    setQuickYear("");
     setCustomRange({ start: null, end: null });
     const year = new Date().getFullYear();
     const month = Number(value);
@@ -95,7 +112,7 @@ const DateRangeFilter = ({ customRange, setCustomRange }) => {
     setQuickYear(value);
     if (!value) return;
     const year = Number(value);
-    setQuickMonth('');
+    setQuickMonth("");
     setCustomRange({ start: null, end: null });
     const start = new Date(year, 0, 1);
     const end = new Date(year, 11, 31);
@@ -108,11 +125,11 @@ const DateRangeFilter = ({ customRange, setCustomRange }) => {
   // Reset về tháng hiện tại và đưa lịch về đúng tháng hôm nay.
   const handleReset = () => {
     const now = new Date();
-    const monthValue = String(now.getMonth() + 1).padStart(2, '0');
+    const monthValue = String(now.getMonth() + 1).padStart(2, "0");
     const start = new Date(now.getFullYear(), now.getMonth(), 1);
     const end = new Date(now.getFullYear(), now.getMonth() + 1, 0);
     setQuickMonth(monthValue);
-    setQuickYear('');
+    setQuickYear("");
     setCalendarMonth(new Date(now.getFullYear(), now.getMonth(), 1));
     setCustomRange({
       start: formatDateInput(start),
@@ -131,30 +148,35 @@ const DateRangeFilter = ({ customRange, setCustomRange }) => {
     // Đóng lịch khi bấm ra ngoài để tránh che giao diện.
     const handleClickOutside = (event) => {
       if (!calendarOpen) return;
-      if (containerRef.current && !containerRef.current.contains(event.target)) {
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(event.target)
+      ) {
         setCalendarOpen(false);
       }
     };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [calendarOpen]);
 
   return (
     <div className="grid gap-2 text-xs text-amber-700" ref={containerRef}>
       <div className="flex flex-col gap-1">
-        <span className="text-[11px] font-semibold uppercase text-amber-500">Khoảng thời gian</span>
+        <span className="text-[11px] font-semibold uppercase text-amber-500">
+          Khoảng thời gian
+        </span>
         <div className="relative">
           <button
             type="button"
-            onClick={() => setCalendarOpen(open => !open)}
+            onClick={() => setCalendarOpen((open) => !open)}
             className="flex w-full items-center justify-between gap-2 rounded-lg border border-amber-100 bg-amber-50/70 px-3 py-2 text-xs text-amber-900"
           >
             <span className="font-semibold text-amber-900">
-              {startDate ? formatDateDisplay(startDate) : 'Chọn ngày bắt đầu'}
+              {startDate ? formatDateDisplay(startDate) : "Chọn ngày bắt đầu"}
             </span>
             <span className="text-amber-400">→</span>
             <span className="font-semibold text-amber-900">
-              {endDate ? formatDateDisplay(endDate) : 'Chọn ngày kết thúc'}
+              {endDate ? formatDateDisplay(endDate) : "Chọn ngày kết thúc"}
             </span>
           </button>
           {calendarOpen && (
@@ -162,25 +184,38 @@ const DateRangeFilter = ({ customRange, setCustomRange }) => {
               <div className="mb-2 flex items-center justify-between text-xs font-semibold text-amber-700">
                 <button
                   type="button"
-                  onClick={() => setCalendarMonth(month => new Date(month.getFullYear(), month.getMonth() - 1, 1))}
+                  onClick={() =>
+                    setCalendarMonth(
+                      (month) =>
+                        new Date(month.getFullYear(), month.getMonth() - 1, 1)
+                    )
+                  }
                   className="rounded-full px-2 py-1 text-amber-500 active:bg-amber-50"
                 >
                   ‹
                 </button>
                 <div>
-                  Tháng {String(calendarMonth.getMonth() + 1).padStart(2, '0')} {calendarMonth.getFullYear()}
+                  Tháng {String(calendarMonth.getMonth() + 1).padStart(2, "0")}{" "}
+                  {calendarMonth.getFullYear()}
                 </div>
                 <button
                   type="button"
-                  onClick={() => setCalendarMonth(month => new Date(month.getFullYear(), month.getMonth() + 1, 1))}
+                  onClick={() =>
+                    setCalendarMonth(
+                      (month) =>
+                        new Date(month.getFullYear(), month.getMonth() + 1, 1)
+                    )
+                  }
                   className="rounded-full px-2 py-1 text-amber-500 active:bg-amber-50"
                 >
                   ›
                 </button>
               </div>
               <div className="grid grid-cols-7 gap-1 text-[11px] font-semibold text-amber-400">
-                {['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'].map(day => (
-                  <div key={day} className="text-center">{day}</div>
+                {["T2", "T3", "T4", "T5", "T6", "T7", "CN"].map((day) => (
+                  <div key={day} className="text-center">
+                    {day}
+                  </div>
                 ))}
               </div>
               <div className="mt-1 grid grid-cols-7 gap-1 text-xs">
@@ -188,26 +223,45 @@ const DateRangeFilter = ({ customRange, setCustomRange }) => {
                   if (!date) {
                     return <div key={`empty-${index}`} />;
                   }
-                  const dateOnly = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+                  const dateOnly = new Date(
+                    date.getFullYear(),
+                    date.getMonth(),
+                    date.getDate()
+                  );
                   const today = new Date();
-                  const todayOnly = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-                  const isStart = startDate && dateOnly.getTime() === startDate.getTime();
-                  const isEnd = endDate && dateOnly.getTime() === endDate.getTime();
+                  const todayOnly = new Date(
+                    today.getFullYear(),
+                    today.getMonth(),
+                    today.getDate()
+                  );
+                  const isStart =
+                    startDate && dateOnly.getTime() === startDate.getTime();
+                  const isEnd =
+                    endDate && dateOnly.getTime() === endDate.getTime();
                   const isToday = dateOnly.getTime() === todayOnly.getTime();
-                  const inRange = startDate && endDate
-                    ? dateOnly >= startDate && dateOnly <= endDate
-                    : false;
+                  const inRange =
+                    startDate && endDate
+                      ? dateOnly >= startDate && dateOnly <= endDate
+                      : false;
                   return (
                     <button
                       key={date.toISOString()}
                       type="button"
                       onClick={() => handleDateSelect(date)}
                       className={[
-                        'rounded-lg px-2 py-1 text-center transition',
-                        inRange ? 'bg-amber-100 text-amber-900' : 'text-amber-700 active:bg-amber-50',
-                        isStart || isEnd ? 'bg-amber-500 text-white active:bg-amber-500' : '',
-                        isToday && !isStart && !isEnd ? 'border border-amber-400 font-semibold' : '',
-                      ].filter(Boolean).join(' ')}
+                        "rounded-lg px-2 py-1 text-center transition",
+                        inRange
+                          ? "bg-amber-100 text-amber-900"
+                          : "text-amber-700 active:bg-amber-50",
+                        isStart || isEnd
+                          ? "bg-amber-500 text-white active:bg-amber-500"
+                          : "",
+                        isToday && !isStart && !isEnd
+                          ? "border border-amber-400 font-semibold"
+                          : "",
+                      ]
+                        .filter(Boolean)
+                        .join(" ")}
                     >
                       {date.getDate()}
                     </button>
@@ -220,7 +274,9 @@ const DateRangeFilter = ({ customRange, setCustomRange }) => {
       </div>
       <div className="grid grid-cols-2 gap-2">
         <label className="flex flex-col gap-1">
-          <span className="text-[11px] font-semibold uppercase text-amber-500">Theo tháng</span>
+          <span className="text-[11px] font-semibold uppercase text-amber-500">
+            Theo tháng
+          </span>
           <select
             value={quickMonth}
             onChange={handleQuickMonthChange}
@@ -228,7 +284,7 @@ const DateRangeFilter = ({ customRange, setCustomRange }) => {
           >
             <option value="">Chọn tháng</option>
             {Array.from({ length: 12 }, (_, index) => {
-              const monthValue = String(index + 1).padStart(2, '0');
+              const monthValue = String(index + 1).padStart(2, "0");
               return (
                 <option key={monthValue} value={monthValue}>
                   Tháng {monthValue}
@@ -238,7 +294,9 @@ const DateRangeFilter = ({ customRange, setCustomRange }) => {
           </select>
         </label>
         <label className="flex flex-col gap-1">
-          <span className="text-[11px] font-semibold uppercase text-amber-500">Theo năm</span>
+          <span className="text-[11px] font-semibold uppercase text-amber-500">
+            Theo năm
+          </span>
           <input
             type="number"
             value={quickYear}
