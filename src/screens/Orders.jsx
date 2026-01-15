@@ -1,14 +1,22 @@
-import React from 'react';
+import React from "react";
+import { AnimatePresence } from "framer-motion";
 // Tách giao diện tạo đơn/danh sách đơn để file Orders.jsx gọn hơn
-import OrderCreateView from '../components/orders/OrderCreateView';
-import OrderListView from '../components/orders/OrderListView';
-import OrderDetailModal from '../components/orders/OrderDetailModal';
-import ConfirmModalHost from '../components/modals/ConfirmModalHost';
-import ErrorModal from '../components/modals/ErrorModal';
-import ScreenTransition from '../components/common/ScreenTransition';
-import useOrdersLogic from '../hooks/useOrdersLogic';
+import OrderCreateView from "../components/orders/OrderCreateView";
+import OrderListView from "../components/orders/OrderListView";
+import OrderDetailModal from "../components/orders/OrderDetailModal";
+import ConfirmModalHost from "../components/modals/ConfirmModalHost";
+import ErrorModal from "../components/modals/ErrorModal";
+import ScreenTransition from "../components/common/ScreenTransition";
+import useOrdersLogic from "../hooks/useOrdersLogic";
 
-const Orders = ({ products, setProducts, orders, setOrders, settings, setTabBarVisible }) => {
+const Orders = ({
+  products,
+  setProducts,
+  orders,
+  setOrders,
+  settings,
+  setTabBarVisible,
+}) => {
   const {
     cart,
     showScanner,
@@ -129,21 +137,30 @@ const Orders = ({ products, setProducts, orders, setOrders, settings, setTabBarV
           handleCancelOrder={handleCancelOrder}
           onSelectOrder={setSelectedOrder}
         />
-      <OrderDetailModal
-        order={selectedOrder}
-        onClose={() => setSelectedOrder(null)}
-        getOrderStatusInfo={getOrderStatusInfo}
-      />
+        <OrderDetailModal
+          order={selectedOrder}
+          onClose={() => setSelectedOrder(null)}
+          getOrderStatusInfo={getOrderStatusInfo}
+        />
       </>
     );
   };
 
+  const direction = isCreateView ? 1 : -1;
+
   return (
     <>
-      {/* Bọc 2 trạng thái tạo đơn/danh sách để chuyển cảnh mượt khi đổi view. */}
-      <ScreenTransition key={isCreateView ? 'orders-create' : 'orders-list'} className="h-full">
-        {renderContent()}
-      </ScreenTransition>
+      <AnimatePresence mode="popLayout" initial={false} custom={direction}>
+        <ScreenTransition
+          key={isCreateView ? "orders-create" : "orders-list"}
+          className="h-full"
+          custom={direction}
+          onSwipeBack={isCreateView ? handleExitCreate : undefined}
+        >
+          {renderContent()}
+        </ScreenTransition>
+      </AnimatePresence>
+
       {/* Modal chung cho các hành động xác nhận/nhập phí gửi */}
       <ConfirmModalHost
         modal={confirmModal}

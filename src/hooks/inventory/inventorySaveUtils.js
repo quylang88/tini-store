@@ -126,7 +126,7 @@ export const buildNextProductFromForm = ({
     name: formData.name.trim(),
     barcode: formData.barcode ? formData.barcode.trim() : '',
     category: formData.category,
-    price: editingLotId ? baseProduct.price : Number(formData.price),
+    price: Number(formData.price),
     cost: costValue || getLatestCost(baseProduct),
     image: formData.image,
     stockByWarehouse: nextStockByWarehouse,
@@ -145,17 +145,27 @@ export const buildNextProductFromForm = ({
     if (editingLotId) {
       // Sửa lại thông tin của lô đã nhập.
       const nextLots = nextProduct.purchaseLots.map((lot) => {
-        if (lot.id !== editingLotId) return lot;
+        const isCurrentLot = lot.id === editingLotId;
+        const updatedPrice = Number(formData.price) || 0;
+        
+        if (isCurrentLot) {
+            return {
+            ...lot,
+            cost: costValue,
+            quantity: quantityValue,
+            warehouse: warehouseKey,
+            shipping: {
+                ...shippingInfo,
+                perUnitVnd: feeVnd,
+            },
+            priceAtPurchase: updatedPrice,
+            };
+        }
+        
+        // Cập nhật giá bán mới cho tất cả các lô khác luôn
         return {
-          ...lot,
-          cost: costValue,
-          quantity: quantityValue,
-          warehouse: warehouseKey,
-          shipping: {
-            ...shippingInfo,
-            perUnitVnd: feeVnd,
-          },
-          priceAtPurchase: Number(formData.price) || 0,
+            ...lot,
+            priceAtPurchase: updatedPrice
         };
       });
       const adjustedStock = nextLots.reduce(

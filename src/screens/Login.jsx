@@ -1,10 +1,19 @@
-import React from 'react';
-import { Lock, User, ArrowRight, CheckSquare } from 'lucide-react';
-import useLoginLogic from '../hooks/useLoginLogic';
+import React from "react";
+import { Lock, User, ArrowRight, CheckSquare } from "lucide-react";
+import useLoginLogic from "../hooks/useLoginLogic";
 
-const AuthField = ({ label, icon: Icon, type, value, onChange, placeholder }) => (
+const AuthField = ({
+  label,
+  icon: Icon,
+  type,
+  value,
+  onChange,
+  placeholder,
+}) => (
   <div>
-    <label className="block text-xs font-bold text-amber-700 uppercase mb-2 ml-1">{label}</label>
+    <label className="block text-xs font-bold text-amber-700 uppercase mb-2 ml-1">
+      {label}
+    </label>
     <div className="relative">
       <span className="absolute left-3 top-3 text-amber-500">
         <Icon size={20} />
@@ -78,10 +87,18 @@ const Login = ({ onLogin }) => {
               className="flex items-center gap-2 cursor-pointer group"
               onClick={() => setRemember(!remember)}
             >
-              <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${remember ? 'bg-rose-500 border-rose-500' : 'bg-white border-rose-200 group-active:border-rose-400'}`}>
+              <div
+                className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${
+                  remember
+                    ? "bg-rose-500 border-rose-500"
+                    : "bg-white border-rose-200 group-active:border-rose-400"
+                }`}
+              >
                 {remember && <CheckSquare size={14} className="text-white" />}
               </div>
-              <span className="text-sm text-amber-700 select-none">Lưu thông tin đăng nhập</span>
+              <span className="text-sm text-amber-700 select-none">
+                Lưu thông tin đăng nhập
+              </span>
             </div>
 
             <button
@@ -89,13 +106,17 @@ const Login = ({ onLogin }) => {
               className="w-full bg-gradient-to-r from-rose-500 via-orange-400 to-amber-400 text-white py-3.5 rounded-xl font-bold text-lg shadow-lg shadow-rose-200 active:scale-95 transition flex items-center justify-center gap-2 group"
             >
               Đăng Nhập
-              <ArrowRight size={20} className="group-active:translate-x-1 transition-transform" />
+              <ArrowRight
+                size={20}
+                className="group-active:translate-x-1 transition-transform"
+              />
             </button>
           </form>
         </div>
 
         <div className="bg-gray-50 p-4 text-center text-xs text-amber-500 border-t border-gray-100">
-          © 2026 Tiny Shop. All rights reserved.<br />
+          © 2026 Tiny Shop. All rights reserved.
+          <br />
           Phát triển bởi Quý Lăng
         </div>
       </div>
