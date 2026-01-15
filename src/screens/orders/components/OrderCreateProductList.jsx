@@ -142,16 +142,24 @@ const OrderCreateProductList = ({
             </motion.div>
           );
         })}
-      </AnimatePresence>
 
-      {filteredProducts.length === 0 && (
-        <div className="text-center text-gray-400 mt-10">
-          <div className="flex justify-center mb-2">
-            <Search size={32} className="opacity-20" />
-          </div>
-          <p>Không tìm thấy sản phẩm</p>
-        </div>
-      )}
+        {filteredProducts.length === 0 && (
+          <motion.div
+            layout
+            key="empty-state"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.2 }}
+            className="text-center text-gray-400 mt-10"
+          >
+            <div className="flex justify-center mb-2">
+              <Search size={32} className="opacity-20" />
+            </div>
+            <p>Không tìm thấy sản phẩm</p>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
