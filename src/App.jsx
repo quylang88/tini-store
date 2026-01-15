@@ -176,6 +176,7 @@ const App = () => {
                 orders={orders}
                 setOrders={setOrders}
                 settings={settings}
+                setTabBarVisible={setIsTabBarVisible}
               />
             </ScreenTransition>
           )}

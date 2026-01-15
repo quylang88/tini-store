@@ -1,9 +1,8 @@
-/* eslint-disable no-unused-vars */
 import React from "react";
 import { ScanBarcode } from "lucide-react";
 import SearchInput from "../../components/common/SearchInput";
 import AnimatedFilterTabs from "../../components/common/AnimatedFilterTabs";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 
 const InventoryHeader = ({
   searchTerm,
@@ -15,6 +14,7 @@ const InventoryHeader = ({
   warehouseFilter,
   onWarehouseChange,
   categories,
+  isExpanded = true,
 }) => {
   // Chuẩn bị dữ liệu cho AnimatedFilterTabs
   const warehouseTabs = [
@@ -53,44 +53,56 @@ const InventoryHeader = ({
       </div>
 
       {/* Bộ lọc kho + danh mục */}
-      <div className="px-3 py-3 border-b border-amber-100 space-y-3">
-        {/* Filter Kho - Dùng AnimatedFilterTabs cho hiệu ứng slide mượt */}
-        <AnimatedFilterTabs
-          tabs={warehouseTabs}
-          activeTab={warehouseFilter}
-          onChange={onWarehouseChange}
-          layoutIdPrefix="inventory-warehouse"
-        />
-
-        {/* Filter Danh mục - Vẫn giữ logic chọn nhiều nhưng thêm animation nhẹ */}
-        <div className="flex flex-wrap gap-2">
-          <motion.button
-            layout
-            onClick={() => onToggleCategory("Tất cả")}
-            className={`px-3 py-1.5 text-[11px] font-semibold rounded-full border transition-colors ${
-              activeCategories.length === 0
-                ? "bg-amber-500 text-white border-amber-500"
-                : "bg-transparent text-amber-700 border-amber-200"
-            }`}
+      <AnimatePresence initial={false}>
+        {isExpanded && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.3, ease: "easeInOut" }}
+            className="overflow-hidden border-b border-amber-100"
           >
-            Tất cả
-          </motion.button>
-          {categories.map((cat) => (
-            <motion.button
-              layout
-              key={cat}
-              onClick={() => onToggleCategory(cat)}
-              className={`px-3 py-1.5 text-[11px] font-semibold rounded-full border transition-colors ${
-                activeCategories.includes(cat)
-                  ? "bg-amber-500 text-white border-amber-500"
-                  : "bg-transparent text-amber-700 border-amber-200"
-              }`}
-            >
-              {cat}
-            </motion.button>
-          ))}
-        </div>
-      </div>
+            <div className="px-3 py-3 space-y-3">
+              {/* Filter Kho - Dùng AnimatedFilterTabs cho hiệu ứng slide mượt */}
+              <AnimatedFilterTabs
+                tabs={warehouseTabs}
+                activeTab={warehouseFilter}
+                onChange={onWarehouseChange}
+                layoutIdPrefix="inventory-warehouse"
+              />
+
+              {/* Filter Danh mục - Vẫn giữ logic chọn nhiều nhưng thêm animation nhẹ */}
+              <div className="flex flex-wrap gap-2">
+                <motion.button
+                  layout
+                  onClick={() => onToggleCategory("Tất cả")}
+                  className={`px-3 py-1.5 text-[11px] font-semibold rounded-full border transition-colors ${
+                    activeCategories.length === 0
+                      ? "bg-amber-500 text-white border-amber-500"
+                      : "bg-transparent text-amber-700 border-amber-200"
+                  }`}
+                >
+                  Tất cả
+                </motion.button>
+                {categories.map((cat) => (
+                  <motion.button
+                    layout
+                    key={cat}
+                    onClick={() => onToggleCategory(cat)}
+                    className={`px-3 py-1.5 text-[11px] font-semibold rounded-full border transition-colors ${
+                      activeCategories.includes(cat)
+                        ? "bg-amber-500 text-white border-amber-500"
+                        : "bg-transparent text-amber-700 border-amber-200"
+                    }`}
+                  >
+                    {cat}
+                  </motion.button>
+                ))}
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

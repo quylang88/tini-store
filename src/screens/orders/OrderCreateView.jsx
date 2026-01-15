@@ -1,5 +1,5 @@
 /* eslint-disable no-unused-vars */
-import React from "react";
+import React, { useState, useRef } from "react";
 import {
   ScanBarcode,
   Image as ImageIcon,
@@ -56,6 +56,31 @@ const OrderCreateView = ({
   handleCloseReview,
   handleConfirmOrder,
 }) => {
+  // State scroll animation
+  const [isHeaderExpanded, setIsHeaderExpanded] = useState(true);
+  const [isFooterVisible, setIsFooterVisible] = useState(true);
+  const lastScrollTop = useRef(0);
+
+  const handleScroll = (e) => {
+    const currentScrollTop = e.target.scrollTop;
+    const direction = currentScrollTop > lastScrollTop.current ? "down" : "up";
+
+    // Threshold
+    if (Math.abs(currentScrollTop - lastScrollTop.current) > 10) {
+      if (direction === "down") {
+        setIsHeaderExpanded(false);
+        setIsFooterVisible(false);
+      } else {
+        setIsFooterVisible(true);
+        // Chỉ hiển thị lại header khi scroll lên gần đầu trang
+        if (currentScrollTop < 50) {
+          setIsHeaderExpanded(true);
+        }
+      }
+      lastScrollTop.current = currentScrollTop;
+    }
+  };
+
   const categories = settings?.categories || ["Chung"];
 
   // Khi đang sửa đơn, cộng lại số lượng cũ để hiển thị tồn kho chính xác
@@ -128,52 +153,67 @@ const OrderCreateView = ({
           />
         </div>
 
-        {/* Hàng 3: Chọn kho xuất */}
-        <div className="px-3 py-2 border-b border-amber-100 flex items-center gap-2 text-xs font-semibold text-amber-700">
-          <span className="shrink-0">Kho xuất:</span>
-          <AnimatedFilterTabs
-            tabs={warehouseTabs}
-            activeTab={selectedWarehouse}
-            onChange={setSelectedWarehouse}
-            layoutIdPrefix="order-warehouse"
-            className="flex-1"
-          />
-        </div>
+        <AnimatePresence initial={false}>
+          {isHeaderExpanded && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: "auto", opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.3, ease: "easeInOut" }}
+              className="overflow-hidden"
+            >
+              {/* Hàng 3: Chọn kho xuất */}
+              <div className="px-3 py-2 border-b border-amber-100 flex items-center gap-2 text-xs font-semibold text-amber-700">
+                <span className="shrink-0">Kho xuất:</span>
+                <AnimatedFilterTabs
+                  tabs={warehouseTabs}
+                  activeTab={selectedWarehouse}
+                  onChange={setSelectedWarehouse}
+                  layoutIdPrefix="order-warehouse"
+                  className="flex-1"
+                />
+              </div>
 
-        {/* Hàng 4: Thanh Tab Danh mục (Scrollable) */}
-        <div className="px-3 py-2 overflow-x-auto no-scrollbar border-b border-amber-100">
-          <div className="flex gap-2 min-w-max">
-            {categoryTabs.map((tab) => {
-              const isActive = activeCategory === tab.key;
-              return (
-                <button
-                  key={tab.key}
-                  onClick={() => setActiveCategory(tab.key)}
-                  className={`relative px-3 py-2 text-sm font-medium transition-colors z-0 outline-none select-none ${
-                    isActive ? "text-rose-600" : "text-amber-500"
-                  }`}
-                >
-                  {isActive && (
-                    <motion.div
-                      layoutId="order-category-underline"
-                      className="absolute bottom-0 left-0 right-0 h-0.5 bg-rose-500"
-                      transition={{
-                        type: "spring",
-                        stiffness: 300,
-                        damping: 30,
-                      }}
-                    />
-                  )}
-                  <span className="relative z-10">{tab.label}</span>
-                </button>
-              );
-            })}
-          </div>
-        </div>
+              {/* Hàng 4: Thanh Tab Danh mục (Scrollable) */}
+              <div className="px-3 py-2 overflow-x-auto no-scrollbar border-b border-amber-100">
+                <div className="flex gap-2 min-w-max">
+                  {categoryTabs.map((tab) => {
+                    const isActive = activeCategory === tab.key;
+                    return (
+                      <button
+                        key={tab.key}
+                        onClick={() => setActiveCategory(tab.key)}
+                        className={`relative px-3 py-2 text-sm font-medium transition-colors z-0 outline-none select-none ${
+                          isActive ? "text-rose-600" : "text-amber-500"
+                        }`}
+                      >
+                        {isActive && (
+                          <motion.div
+                            layoutId="order-category-underline"
+                            className="absolute bottom-0 left-0 right-0 h-0.5 bg-rose-500"
+                            transition={{
+                              type: "spring",
+                              stiffness: 300,
+                              damping: 30,
+                            }}
+                          />
+                        )}
+                        <span className="relative z-10">{tab.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
       {/* List Sản Phẩm (Đã Lọc) */}
-      <div className="flex-1 overflow-y-auto p-3 space-y-3 pb-40 min-h-0">
+      <div
+        className="flex-1 overflow-y-auto p-3 space-y-3 pb-40 min-h-0"
+        onScroll={handleScroll}
+      >
         <AnimatePresence mode="popLayout">
           {filteredProducts.map((p) => {
             const qty = cart[p.id] || 0;
@@ -304,31 +344,41 @@ const OrderCreateView = ({
       </div>
 
       {/* Tạo đơn hàng */}
-      {totalAmount > 0 && (
-        <div className="fixed bottom-0 left-0 right-0 bg-amber-50/90 border-t border-amber-200 p-4 pb-[calc(env(safe-area-inset-bottom)+28px)] z-[60] shadow-[0_-4px_15px_rgba(0,0,0,0.1)] animate-slide-up backdrop-blur">
-          <div className="flex justify-between items-center mb-3">
-            <span className="text-gray-500 font-medium text-sm">Tổng đơn:</span>
-            <span className="text-2xl font-bold text-rose-600">
-              {formatNumber(totalAmount)}đ
-            </span>
-          </div>
-          <div className="flex gap-3">
-            <button
-              onClick={handleCancelDraft}
-              className="flex-1 bg-white text-amber-700 py-3.5 rounded-xl font-bold border border-amber-200 shadow-sm active:scale-95 transition"
-            >
-              {orderBeingEdited ? "Huỷ sửa" : "Huỷ đơn"}
-            </button>
-            <button
-              onClick={handleOpenReview}
-              className="flex-1 bg-amber-500 text-white py-3.5 rounded-xl font-bold shadow-lg shadow-rose-200 active:scale-95 transition flex items-center justify-center gap-2 text-lg"
-            >
-              <ShoppingCart size={20} />{" "}
-              {orderBeingEdited ? "Cập nhật đơn" : "Lên đơn"}
-            </button>
-          </div>
-        </div>
-      )}
+      <AnimatePresence>
+        {totalAmount > 0 && isFooterVisible && (
+          <motion.div
+            initial={{ y: "100%" }}
+            animate={{ y: 0 }}
+            exit={{ y: "100%" }}
+            transition={{ type: "spring", stiffness: 300, damping: 30 }}
+            className="fixed bottom-0 left-0 right-0 bg-amber-50/90 border-t border-amber-200 p-4 pb-[calc(env(safe-area-inset-bottom)+28px)] z-[60] shadow-[0_-4px_15px_rgba(0,0,0,0.1)] backdrop-blur"
+          >
+            <div className="flex justify-between items-center mb-3">
+              <span className="text-gray-500 font-medium text-sm">
+                Tổng đơn:
+              </span>
+              <span className="text-2xl font-bold text-rose-600">
+                {formatNumber(totalAmount)}đ
+              </span>
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={handleCancelDraft}
+                className="flex-1 bg-white text-amber-700 py-3.5 rounded-xl font-bold border border-amber-200 shadow-sm active:scale-95 transition"
+              >
+                {orderBeingEdited ? "Huỷ sửa" : "Huỷ đơn"}
+              </button>
+              <button
+                onClick={handleOpenReview}
+                className="flex-1 bg-rose-500 text-white py-3.5 rounded-xl font-bold shadow-lg shadow-rose-200 active:scale-95 transition flex items-center justify-center gap-2 text-lg"
+              >
+                <ShoppingCart size={20} />{" "}
+                {orderBeingEdited ? "Cập nhật đơn" : "Lên đơn"}
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Modal Review sử dụng SheetModal mới */}
       <SheetModal
