@@ -109,19 +109,36 @@ const App = () => {
   // --- 5. LOGIC HIỂN THỊ TABBAR ---
   const [isTabBarVisible, setIsTabBarVisible] = useState(true);
 
-  // --- 5b. PRELOAD DASHBOARD ASSETS ---
+  // --- 5b. PRELOAD TÀI NGUYÊN DASHBOARD ---
   const [appReady, setAppReady] = useState(false);
+  const [showWarning, setShowWarning] = useState(false);
 
   useEffect(() => {
     if (isAuthenticated) {
       const img = new Image();
       img.src = "/tiny-shop-transparent.png";
-      const onLoad = () => setAppReady(true);
+
+      const onLoad = () => {
+        setAppReady(true);
+      };
+
       img.onload = onLoad;
-      img.onerror = onLoad; // Proceed even if image fails
+      img.onerror = onLoad; // Tiếp tục ngay cả khi ảnh lỗi
+
       if (img.complete) onLoad();
+
+      // Timeout hiển thị cảnh báo nếu mạng chậm (5 giây)
+      const timeoutId = setTimeout(() => {
+        setShowWarning(true);
+      }, 5000);
+
+      return () => clearTimeout(timeoutId);
     }
   }, [isAuthenticated]);
+
+  const handleForceContinue = () => {
+    setAppReady(true);
+  };
 
   // --- 6. RENDERING ---
   if (!isAuthenticated) {
@@ -129,7 +146,12 @@ const App = () => {
   }
 
   if (!appReady) {
-    return <SplashScreen />;
+    return (
+      <SplashScreen
+        showWarning={showWarning}
+        onConfirm={handleForceContinue}
+      />
+    );
   }
 
   return (

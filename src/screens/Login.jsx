@@ -44,18 +44,41 @@ const Login = ({ onLogin }) => {
   } = useLoginLogic({ onLogin });
 
   const [imgLoaded, setImgLoaded] = useState(false);
+  const [showWarning, setShowWarning] = useState(false);
 
   useEffect(() => {
     const img = new Image();
     img.src = "/tiny-shop.png";
-    img.onload = () => setImgLoaded(true);
-    img.onerror = () => setImgLoaded(true); // Proceed even if image fails
-    // Fallback if image fails or cached instantly
-    if (img.complete) setImgLoaded(true);
+
+    const onLoad = () => {
+      setImgLoaded(true);
+    };
+
+    img.onload = onLoad;
+    img.onerror = onLoad; // Tiếp tục ngay cả khi ảnh lỗi
+
+    // Fallback nếu ảnh lỗi hoặc đã có trong cache
+    if (img.complete) onLoad();
+
+    // Timeout hiển thị cảnh báo nếu mạng chậm (5 giây)
+    const timeoutId = setTimeout(() => {
+      setShowWarning(true);
+    }, 5000);
+
+    return () => clearTimeout(timeoutId);
   }, []);
 
+  const handleForceContinue = () => {
+    setImgLoaded(true);
+  };
+
   if (!imgLoaded) {
-    return <SplashScreen />;
+    return (
+      <SplashScreen
+        showWarning={showWarning}
+        onConfirm={handleForceContinue}
+      />
+    );
   }
 
   return (
