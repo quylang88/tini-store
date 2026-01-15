@@ -5,14 +5,22 @@ import { getLatestCost, getLatestUnitCost } from "../../utils/purchaseUtils";
 import { normalizeWarehouseStock } from "../../utils/warehouseUtils";
 import { motion, AnimatePresence } from "framer-motion";
 
-const ProductList = ({ products, onDelete, onOpenDetail }) => {
+const ProductList = ({
+  products,
+  onDelete,
+  onOpenDetail,
+  handleScroll = () => {},
+}) => {
   return (
-    <div className="flex-1 overflow-y-auto p-3 space-y-3 pb-24">
+    <div
+      className="flex-1 overflow-y-auto p-3 space-y-3 pb-24 min-h-0"
+      onScroll={handleScroll}
+    >
       {/* 
         Fixes:
-        1. mode="popLayout": Ensures exiting items are removed from the layout flow immediately (position: absolute),
-           preventing the "No products" text from jumping up after the exit animation finishes.
+        1. mode="popLayout": Ensures exiting items are removed from the layout flow immediately (position: absolute).
         2. 'layout' prop added: Synchronizes smoothness with Order screen animations.
+        3. Empty State inside AnimatePresence: Allows smooth cross-fade between list and empty state, preventing jumping.
       */}
       <AnimatePresence mode="popLayout">
         {products.map((product) => {
@@ -94,21 +102,22 @@ const ProductList = ({ products, onDelete, onOpenDetail }) => {
             </motion.div>
           );
         })}
-      </AnimatePresence>
 
-      {/* Animated Empty State to prevent jumping */}
-      {products.length === 0 && (
-        <motion.div
-          layout
-          key="empty-state"
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.2 }}
-          className="text-center text-gray-400 mt-10 text-sm"
-        >
-          Không có sản phẩm nào
-        </motion.div>
-      )}
+        {/* Animated Empty State inside AnimatePresence to prevent jumping */}
+        {products.length === 0 && (
+          <motion.div
+            layout
+            key="empty-state"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.2 }}
+            className="text-center text-gray-400 mt-10 text-sm"
+          >
+            Không có sản phẩm nào
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

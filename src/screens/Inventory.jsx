@@ -126,11 +126,12 @@ const Inventory = ({
 
       {/* Tách danh sách sản phẩm thành component riêng */}
       {/* Loại bỏ key={...} để React tự diff và giữ DOM, tránh nháy hình */}
-      <div className="flex-1 overflow-y-auto min-h-0" onScroll={handleScroll}>
+      <div className="flex-1 min-h-0 flex flex-col">
         <ProductList
           products={filteredProducts}
           onDelete={handleDelete}
           onOpenDetail={setDetailProduct}
+          handleScroll={handleScroll}
         />
       </div>
 
