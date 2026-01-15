@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useCallback } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import BarcodeScanner from "../components/BarcodeScanner";
 import InventoryHeader from "./inventory/InventoryHeader";
@@ -25,27 +25,31 @@ const Inventory = ({
   const [isAddButtonVisible, setIsAddButtonVisible] = useState(true);
   const lastScrollTop = useRef(0);
 
-  const handleScroll = (e) => {
-    const currentScrollTop = e.target.scrollTop;
-    const direction = currentScrollTop > lastScrollTop.current ? "down" : "up";
+  const handleScroll = useCallback(
+    (e) => {
+      const currentScrollTop = e.target.scrollTop;
+      const direction =
+        currentScrollTop > lastScrollTop.current ? "down" : "up";
 
-    // Threshold to avoid jitter
-    if (Math.abs(currentScrollTop - lastScrollTop.current) > 10) {
-      if (direction === "down") {
-        setIsHeaderExpanded(false);
-        setIsAddButtonVisible(false);
-        if (setTabBarVisible) setTabBarVisible(false);
-      } else {
-        setIsAddButtonVisible(true);
-        // Only show full header and tab bar when near top
-        if (currentScrollTop < 50) {
-          setIsHeaderExpanded(true);
-          if (setTabBarVisible) setTabBarVisible(true);
+      // Threshold to avoid jitter
+      if (Math.abs(currentScrollTop - lastScrollTop.current) > 10) {
+        if (direction === "down") {
+          setIsHeaderExpanded(false);
+          setIsAddButtonVisible(false);
+          if (setTabBarVisible) setTabBarVisible(false);
+        } else {
+          setIsAddButtonVisible(true);
+          // Only show full header and tab bar when near top
+          if (currentScrollTop < 50) {
+            setIsHeaderExpanded(true);
+            if (setTabBarVisible) setTabBarVisible(true);
+          }
         }
+        lastScrollTop.current = currentScrollTop;
       }
-      lastScrollTop.current = currentScrollTop;
-    }
-  };
+    },
+    [setTabBarVisible]
+  );
 
   const {
     isModalOpen,
