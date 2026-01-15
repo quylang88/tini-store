@@ -8,6 +8,8 @@ const variants = {
   sheetClose:
     "border border-amber-300 bg-amber-100 text-amber-900 active:border-amber-400 active:bg-amber-200",
   danger: "bg-rose-500 text-white shadow-md shadow-rose-200 active:scale-95",
+  softDanger:
+    "bg-rose-50 text-rose-600 border border-rose-100 active:bg-rose-100 active:scale-95",
 };
 
 const sizes = {

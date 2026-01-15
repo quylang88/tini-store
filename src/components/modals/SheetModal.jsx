@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { createPortal } from "react-dom";
 import { X } from "lucide-react";
+import useMountTransition from "../../hooks/useMountTransition";
 
 // SheetModal: Modal dạng trượt từ dưới lên (Bottom Sheet).
 // Animation: Slide Up (translate-y-full -> translate-y-0).
@@ -14,50 +15,7 @@ const SheetModal = ({
   showCloseIcon = false,
   className = "",
 }) => {
-  // Trạng thái active: kiểm soát animation CSS (translate).
-  const [active, setActive] = useState(false);
-  // Trạng thái closing: giữ modal trong DOM khi đang đóng (để chạy animation)
-  const [isClosing, setIsClosing] = useState(false);
-
-  // State để theo dõi props open trước đó nhằm phát hiện thay đổi
-  const [prevOpen, setPrevOpen] = useState(open);
-
-  // Logic Derived State: (Replacement for getDerivedStateFromProps)
-  if (open !== prevOpen) {
-    setPrevOpen(open);
-    // Nếu đang mở -> đóng: set isClosing = true ngay trong render để tránh unmount
-    if (prevOpen === true && open === false) {
-      setIsClosing(true);
-    }
-    // Nếu đang đóng -> mở lại ngay lập tức: reset isClosing
-    if (open === true && isClosing === true) {
-      setIsClosing(false);
-    }
-  }
-
-  useEffect(() => {
-    if (open) {
-      // Entry Animation:
-      // Sử dụng requestAnimationFrame để đảm bảo DOM đã render trạng thái ẩn (translate-y-full)
-      // trước khi kích hoạt trạng thái hiện (translate-y-0).
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          setActive(true);
-        });
-      });
-    } else {
-      // Exit Animation:
-      requestAnimationFrame(() => setActive(false));
-      // Đợi animation exit (slide down) hoàn tất 300ms rồi mới tắt render hoàn toàn
-      const timer = setTimeout(() => {
-        setIsClosing(false);
-      }, 300);
-      return () => clearTimeout(timer);
-    }
-  }, [open]);
-
-  // Render khi open = true HOẶC đang trong quá trình đóng (animation)
-  const shouldRender = open || isClosing;
+  const { shouldRender, active } = useMountTransition(open, 300);
 
   if (!shouldRender) return null;
 

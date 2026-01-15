@@ -6,6 +6,7 @@ import ErrorModal from "../components/modals/ErrorModal";
 import InfoModal from "../components/modals/InfoModal";
 import SettingsSection from "./settings/SettingsSection";
 import useSettingsLogic from "../hooks/useSettingsLogic";
+import Button from "../components/common/Button";
 
 const Settings = ({
   products,
@@ -185,12 +186,13 @@ const Settings = ({
         </SettingsSection>
 
         {/* 4. Nút Đăng Xuất */}
-        <button
+        <Button
+          variant="softDanger"
           onClick={onLogout}
-          className="w-full bg-rose-50 text-rose-600 py-3.5 rounded-2xl font-bold flex items-center justify-center gap-2 active:bg-rose-100 transition active:scale-95 border border-rose-100 mt-4"
+          className="flex items-center justify-center gap-2 mt-4"
         >
           <LogOut size={20} /> Đăng Xuất
-        </button>
+        </Button>
 
         {/* Footer info */}
         <div className="text-center text-xs text-amber-500 pb-4">
