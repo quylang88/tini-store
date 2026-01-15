@@ -1,45 +1,48 @@
-import { getLatestCost } from './purchaseUtils';
+import { getLatestCost } from "./purchaseUtils";
 
 const buildBaseFormData = (settings) => ({
-  name: '',
-  barcode: '',
-  category: 'Chung',
-  costCurrency: 'JPY',
-  costJPY: '',
+  name: "",
+  barcode: "",
+  category: "Chung",
+  costCurrency: "JPY",
+  costJPY: "",
   exchangeRate: String(settings.exchangeRate),
-  cost: '',
+  cost: "",
   // Bổ sung các trường input riêng để giữ giá trị khi chuyển tab
-  costVNDInput: '',
-  price: '',
-  quantity: '',
-  warehouse: 'vinhPhuc',
-  shippingMethod: 'jp',
-  shippingWeightKg: '',
-  shippingFeeVnd: '',
+  costVNDInput: "",
+  price: "",
+  quantity: "",
+  warehouse: "vinhPhuc",
+  shippingMethod: "jp",
+  shippingWeightKg: "",
+  shippingFeeVnd: "",
   // Bổ sung input cho phí gửi VNĐ
-  shippingFeeVndInput: '',
-  image: '',
+  shippingFeeVndInput: "",
+  image: "",
 });
 
-export const createFormDataForNewProduct = ({ settings, activeCategories }) => ({
+export const createFormDataForNewProduct = ({
+  settings,
+  activeCategories,
+}) => ({
   ...buildBaseFormData(settings),
-  category: activeCategories.length === 1 ? activeCategories[0] : 'Chung',
+  category: activeCategories.length === 1 ? activeCategories[0] : "Chung",
 });
 
 export const createFormDataForProduct = ({ product, settings }) => ({
   ...buildBaseFormData(settings),
   name: product.name,
-  barcode: product.barcode || '',
-  category: product.category || 'Chung',
-  costCurrency: 'VND',
-  costJPY: '',
-  cost: getLatestCost(product) || '',
-  costVNDInput: getLatestCost(product) || '',
+  barcode: product.barcode || "",
+  category: product.category || "Chung",
+  costCurrency: "VND",
+  costJPY: "",
+  cost: getLatestCost(product) || "",
+  costVNDInput: getLatestCost(product) || "",
   price: product.price,
-  shippingMethod: 'vn',
-  shippingFeeVnd: '',
-  shippingFeeVndInput: '',
-  image: product.image || '',
+  shippingMethod: "vn",
+  shippingFeeVnd: "",
+  shippingFeeVndInput: "",
+  image: product.image || "",
 });
 
 export const createFormDataForLot = ({ product, lot, settings }) => {
@@ -50,34 +53,37 @@ export const createFormDataForLot = ({ product, lot, settings }) => {
     const weightKg = Number(lot.shipping?.weightKg || 0);
     const feeJpy = Number(lot.shipping?.feeJpy || 0);
     if (weightKg > 0 || feeJpy > 0) {
-      return 'jp';
+      return "jp";
     }
-    return 'vn';
+    return "vn";
   })();
-  const exchangeRateValue = Number(lot.shipping?.exchangeRate || settings.exchangeRate) || 0;
+  const exchangeRateValue =
+    Number(lot.shipping?.exchangeRate || settings.exchangeRate) || 0;
   const lotCostValue = Number(lot.cost) || 0;
   // Nếu lô nhập bằng Yên thì nội suy lại giá Yên từ giá VNĐ để hiển thị cho user chỉnh sửa.
-  const costJPYValue = inferredShippingMethod === 'jp' && exchangeRateValue > 0
-    ? Math.round(lotCostValue / exchangeRateValue)
-    : '';
+  const costJPYValue =
+    inferredShippingMethod === "jp" && exchangeRateValue > 0
+      ? Math.round(lotCostValue / exchangeRateValue)
+      : "";
 
   return {
     ...buildBaseFormData(settings),
     name: product.name,
-    barcode: product.barcode || '',
-    category: product.category || 'Chung',
-    costCurrency: inferredShippingMethod === 'jp' ? 'JPY' : 'VND',
-    costJPY: costJPYValue === '' ? '' : String(costJPYValue),
+    barcode: product.barcode || "",
+    category: product.category || "Chung",
+    costCurrency: inferredShippingMethod === "jp" ? "JPY" : "VND",
+    costJPY: costJPYValue === "" ? "" : String(costJPYValue),
     exchangeRate: String(exchangeRateValue || settings.exchangeRate),
-    cost: lot.cost || '',
-    costVNDInput: inferredShippingMethod === 'vn' ? (lot.cost || '') : '', // Populate VND input if VN
+    cost: lot.cost || "",
+    costVNDInput: inferredShippingMethod === "vn" ? lot.cost || "" : "", // Populate VND input if VN
     price: lot.priceAtPurchase ?? product.price,
-    quantity: lot.quantity || '',
-    warehouse: lot.warehouse || 'vinhPhuc',
+    quantity: lot.quantity || "",
+    warehouse: lot.warehouse || "vinhPhuc",
     shippingMethod: inferredShippingMethod,
-    shippingWeightKg: lot.shipping?.weightKg || '',
-    shippingFeeVnd: lot.shipping?.feeVnd || '',
-    shippingFeeVndInput: inferredShippingMethod === 'vn' ? (lot.shipping?.feeVnd || '') : '', // Populate shipping fee input
-    image: product.image || '',
+    shippingWeightKg: lot.shipping?.weightKg || "",
+    shippingFeeVnd: lot.shipping?.feeVnd || "",
+    shippingFeeVndInput:
+      inferredShippingMethod === "vn" ? lot.shipping?.feeVnd || "" : "", // Populate shipping fee input
+    image: product.image || "",
   };
 };

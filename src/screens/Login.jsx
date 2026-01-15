@@ -1,6 +1,8 @@
 import React from "react";
 import { Lock, User, ArrowRight, CheckSquare } from "lucide-react";
 import useLoginLogic from "../hooks/useLoginLogic";
+import SplashScreen from "../components/common/SplashScreen";
+import useImagePreloader from "../hooks/useImagePreloader";
 
 const AuthField = ({
   label,
@@ -40,6 +42,21 @@ const Login = ({ onLogin }) => {
     error,
     handleSubmit,
   } = useLoginLogic({ onLogin });
+
+  const {
+    isLoaded: imgLoaded,
+    showWarning,
+    handleForceContinue,
+  } = useImagePreloader("/tiny-shop.png");
+
+  if (!imgLoaded) {
+    return (
+      <SplashScreen
+        showWarning={showWarning}
+        onConfirm={handleForceContinue}
+      />
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-amber-50 via-rose-50 to-orange-100 flex items-center justify-center p-4">

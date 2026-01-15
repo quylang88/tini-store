@@ -1,16 +1,52 @@
-import React, { useState } from 'react';
-import BarcodeScanner from '../components/BarcodeScanner';
-import InventoryHeader from '../components/inventory/InventoryHeader';
-import ProductList from '../components/inventory/ProductList';
-import ProductDetailModal from '../components/inventory/ProductDetailModal';
-import ProductModal from '../components/inventory/ProductModal';
-import ConfirmModalHost from '../components/modals/ConfirmModalHost';
-import ErrorModal from '../components/modals/ErrorModal';
-import FloatingAddButton from '../components/common/FloatingAddButton';
-import useInventoryLogic from '../hooks/useInventoryLogic';
+import React, { useState, useRef } from "react";
+import { AnimatePresence, motion } from "framer-motion";
+import BarcodeScanner from "../components/BarcodeScanner";
+import InventoryHeader from "./inventory/InventoryHeader";
+import ProductList from "./inventory/ProductList";
+import ProductDetailModal from "./inventory/ProductDetailModal";
+import ProductModal from "./inventory/ProductModal";
+import ConfirmModalHost from "../components/modals/ConfirmModalHost";
+import ErrorModal from "../components/modals/ErrorModal";
+import FloatingAddButton from "../components/common/FloatingAddButton";
+import useInventoryLogic from "../hooks/useInventoryLogic";
 
-const Inventory = ({ products, setProducts, orders, setOrders, settings }) => {
+const Inventory = ({
+  products,
+  setProducts,
+  orders,
+  setOrders,
+  settings,
+  setTabBarVisible,
+}) => {
   const [detailProduct, setDetailProduct] = useState(null);
+
+  // States for scroll animation
+  const [isHeaderExpanded, setIsHeaderExpanded] = useState(true);
+  const [isAddButtonVisible, setIsAddButtonVisible] = useState(true);
+  const lastScrollTop = useRef(0);
+
+  const handleScroll = (e) => {
+    const currentScrollTop = e.target.scrollTop;
+    const direction = currentScrollTop > lastScrollTop.current ? "down" : "up";
+
+    // Threshold to avoid jitter
+    if (Math.abs(currentScrollTop - lastScrollTop.current) > 10) {
+      if (direction === "down") {
+        setIsHeaderExpanded(false);
+        setIsAddButtonVisible(false);
+        if (setTabBarVisible) setTabBarVisible(false);
+      } else {
+        setIsAddButtonVisible(true);
+        // Only show full header and tab bar when near top
+        if (currentScrollTop < 50) {
+          setIsHeaderExpanded(true);
+          if (setTabBarVisible) setTabBarVisible(true);
+        }
+      }
+      lastScrollTop.current = currentScrollTop;
+    }
+  };
+
   const {
     isModalOpen,
     showScanner,
@@ -49,27 +85,48 @@ const Inventory = ({ products, setProducts, orders, setOrders, settings }) => {
 
   return (
     <div className="flex flex-col h-full bg-transparent">
-      {showScanner && <BarcodeScanner onScanSuccess={handleScanSuccess} onClose={() => setShowScanner(false)} />}
+      {showScanner && (
+        <BarcodeScanner
+          onScanSuccess={handleScanSuccess}
+          onClose={() => setShowScanner(false)}
+        />
+      )}
 
       {/* Tách phần header & tab danh mục để Inventory gọn hơn */}
       <InventoryHeader
         searchTerm={searchTerm}
-        onSearchChange={e => setSearchTerm(e.target.value)}
-        onClearSearch={() => setSearchTerm('')}
+        onSearchChange={(e) => setSearchTerm(e.target.value)}
+        onClearSearch={() => setSearchTerm("")}
         onShowScanner={() => setShowScanner(true)}
         activeCategories={activeCategories}
         onToggleCategory={toggleCategory}
         warehouseFilter={warehouseFilter}
         onWarehouseChange={setWarehouseFilter}
         categories={settings.categories}
+        isExpanded={isHeaderExpanded}
       />
 
       {/* Nút thêm hàng mới nổi theo cùng vị trí với màn tạo đơn để đồng bộ UX. */}
-      <FloatingAddButton onClick={() => openModal()} ariaLabel="Thêm hàng mới" />
+      <AnimatePresence>
+        {isAddButtonVisible && (
+          <motion.div
+            initial={{ scale: 0, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0, opacity: 0 }}
+            className="fixed right-5 bottom-24 z-30"
+          >
+            <FloatingAddButton
+              onClick={() => openModal()}
+              ariaLabel="Thêm hàng mới"
+              className="!static" // Override absolute positioning if needed by wrapper
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Tách danh sách sản phẩm thành component riêng */}
       {/* Loại bỏ key={...} để React tự diff và giữ DOM, tránh nháy hình */}
-      <div className="flex-1 overflow-y-auto min-h-0"> 
+      <div className="flex-1 overflow-y-auto min-h-0" onScroll={handleScroll}>
         <ProductList
           products={filteredProducts}
           onDelete={handleDelete}
@@ -89,7 +146,11 @@ const Inventory = ({ products, setProducts, orders, setOrders, settings }) => {
         onSelectExistingProduct={handleSelectExistingProduct}
         categories={settings.categories}
         onClose={handleCancelModal}
-        onSave={handleSave}
+        onSave={() => {
+          if (handleSave()) {
+            setDetailProduct(null);
+          }
+        }}
         onShowScanner={() => setShowScanner(true)}
         onImageSelect={handleImageSelect}
         onMoneyChange={handleMoneyChange}
@@ -104,7 +165,6 @@ const Inventory = ({ products, setProducts, orders, setOrders, settings }) => {
         onClose={() => setDetailProduct(null)}
         onEditLot={(lot) => {
           openEditLot(detailProduct, lot);
-          setDetailProduct(null);
         }}
       />
 

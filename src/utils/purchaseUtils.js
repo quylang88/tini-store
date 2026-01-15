@@ -1,6 +1,7 @@
-import { normalizeWarehouseStock } from './warehouseUtils';
+import { normalizeWarehouseStock } from "./warehouseUtils";
 
-const generateLotId = () => `${Date.now()}-${Math.random().toString(16).slice(2, 8)}`;
+const generateLotId = () =>
+  `${Date.now()}-${Math.random().toString(16).slice(2, 8)}`;
 
 export const normalizePurchaseLots = (product = {}) => {
   if (Array.isArray(product.purchaseLots)) {
@@ -29,7 +30,7 @@ export const normalizePurchaseLots = (product = {}) => {
       id: generateLotId(),
       cost: baseCost,
       quantity: daLat,
-      warehouse: 'daLat',
+      warehouse: "daLat",
       createdAt,
       shipping: null,
     });
@@ -40,7 +41,7 @@ export const normalizePurchaseLots = (product = {}) => {
       id: generateLotId(),
       cost: baseCost,
       quantity: vinhPhuc,
-      warehouse: 'vinhPhuc',
+      warehouse: "vinhPhuc",
       createdAt,
       shipping: null,
     });
@@ -85,14 +86,14 @@ export const addPurchaseLot = (product, lot) => {
     id: lot.id || generateLotId(),
     cost: Number(lot.cost) || 0,
     quantity,
-    warehouse: lot.warehouse || 'daLat',
+    warehouse: lot.warehouse || "daLat",
     createdAt: lot.createdAt || new Date().toISOString(),
     priceAtPurchase: Number(lot.priceAtPurchase) || 0,
     shipping: lot.shipping
       ? {
-        ...lot.shipping,
-        perUnitVnd: shippingFeeVnd,
-      }
+          ...lot.shipping,
+          perUnitVnd: shippingFeeVnd,
+        }
       : null,
   };
   const nextLots = [...(product.purchaseLots || []), nextLot];
@@ -120,7 +121,9 @@ export const consumePurchaseLots = (product, warehouseKey, quantity) => {
     remaining -= used;
   }
 
-  const filteredLots = nextLots.filter(lot => (Number(lot.quantity) || 0) > 0);
+  const filteredLots = nextLots.filter(
+    (lot) => (Number(lot.quantity) || 0) > 0
+  );
 
   return {
     ...product,

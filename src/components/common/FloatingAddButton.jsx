@@ -1,7 +1,11 @@
-import React from 'react';
-import { Plus } from 'lucide-react';
+import React from "react";
+import { Plus } from "lucide-react";
 
-const FloatingAddButton = ({ onClick, ariaLabel = 'Thêm mới', className = '' }) => {
+const FloatingAddButton = ({
+  onClick,
+  ariaLabel = "Thêm mới",
+  className = "",
+}) => {
   // Nút nổi dùng chung để tránh lặp UI giữa các màn hình.
   // Vị trí mặc định bám theo nút back ở màn tạo đơn.
   return (

@@ -1,5 +1,5 @@
-import React from 'react';
-import { Search, X } from 'lucide-react';
+import React from "react";
+import { Search, X } from "lucide-react";
 
 // Component dùng chung cho ô tìm kiếm để tránh lặp logic hiển thị icon + nút xoá.
 const SearchInput = ({
@@ -7,8 +7,8 @@ const SearchInput = ({
   onChange,
   onClear,
   placeholder,
-  className = '',
-  inputClassName = '',
+  className = "",
+  inputClassName = "",
 }) => {
   const hasValue = Boolean(value);
 

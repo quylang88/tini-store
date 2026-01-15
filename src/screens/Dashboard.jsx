@@ -1,13 +1,12 @@
-/* eslint-disable no-unused-vars */
-import React, { useState } from 'react';
-import { ArrowUpRight, DollarSign, TrendingUp, Trophy } from 'lucide-react';
-import { formatNumber } from '../utils/helpers';
-import useDashboardLogic from '../hooks/useDashboardLogic';
-import MetricCard from '../components/stats/MetricCard';
-import OptionPills from '../components/stats/OptionPills';
-import RankBadge from '../components/stats/RankBadge';
-import TopListModal from '../components/stats/TopListModal';
-import { AnimatePresence, motion } from 'framer-motion';
+import React, { useState } from "react";
+import { ArrowUpRight, DollarSign, TrendingUp, Trophy } from "lucide-react";
+import { formatNumber } from "../utils/helpers";
+import useDashboardLogic from "../hooks/useDashboardLogic";
+import MetricCard from "../components/stats/MetricCard";
+import OptionPills from "../components/stats/OptionPills";
+import RankBadge from "../components/stats/RankBadge";
+import TopListModal from "../components/stats/TopListModal";
+import { AnimatePresence, motion } from "framer-motion";
 
 const Dashboard = ({ products, orders, onOpenDetail }) => {
   const {
@@ -21,15 +20,16 @@ const Dashboard = ({ products, orders, onOpenDetail }) => {
     totalProfit,
     topByProfit,
     topByQuantity,
-  } = useDashboardLogic({ products, orders, rangeMode: 'dashboard' });
+  } = useDashboardLogic({ products, orders, rangeMode: "dashboard" });
 
   const [activeModal, setActiveModal] = useState(null);
 
   const openTopModal = (type) => setActiveModal(type);
   const closeTopModal = () => setActiveModal(null);
 
-  const modalTitle = activeModal === 'quantity' ? 'Top số lượng' : 'Top lợi nhuận';
-  const modalItems = activeModal === 'quantity' ? topByQuantity : topByProfit;
+  const modalTitle =
+    activeModal === "quantity" ? "Top số lượng" : "Top lợi nhuận";
+  const modalItems = activeModal === "quantity" ? topByQuantity : topByProfit;
 
   return (
     <div className="p-4 space-y-4 pb-24 animate-fade-in">
@@ -55,7 +55,7 @@ const Dashboard = ({ products, orders, onOpenDetail }) => {
           />
         </div>
       </div>
-      
+
       <div className="grid grid-cols-2 gap-3">
         <MetricCard
           icon={DollarSign}
@@ -76,7 +76,9 @@ const Dashboard = ({ products, orders, onOpenDetail }) => {
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2 text-amber-700">
             <Trophy size={18} />
-            <h3 className="font-bold text-amber-800 text-sm uppercase">Top bán chạy</h3>
+            <h3 className="font-bold text-amber-800 text-sm uppercase">
+              Top bán chạy
+            </h3>
           </div>
           <OptionPills
             options={topOptions}
@@ -84,66 +86,78 @@ const Dashboard = ({ products, orders, onOpenDetail }) => {
             onChange={setTopLimit}
             containerClassName="flex items-center gap-1 flex-nowrap overflow-x-auto no-scrollbar"
             buttonClassName="px-2 py-1 rounded-full text-[11px] font-semibold border transition"
-            activeClassName="bg-rose-500 text-white border-rose-400 shadow-sm"
-            inactiveClassName="bg-rose-50 text-rose-600 border-rose-100"
+            activeClassName="bg-amber-500 text-white border-amber-400 shadow-sm"
+            inactiveClassName="bg-amber-50 text-amber-600 border-amber-100"
           />
         </div>
         <div className="grid grid-cols-2 gap-4">
           <button
             type="button"
-            onClick={() => openTopModal('profit')}
+            onClick={() => openTopModal("profit")}
             className="rounded-xl border border-rose-100 bg-rose-50/60 p-3 text-left transition active:bg-rose-50 focus:outline-none"
           >
             <div className="flex items-center justify-between mb-3">
-              <h4 className="text-xs font-semibold uppercase text-rose-600">Top lợi nhuận</h4>
+              <h4 className="text-xs font-semibold uppercase text-rose-600">
+                Top lợi nhuận
+              </h4>
             </div>
             <div className="space-y-2 text-sm text-rose-800">
-              <AnimatePresence mode='wait'>
+              <AnimatePresence mode="wait">
                 {topByProfit.map((p, idx) => (
-                    <motion.div 
-                        key={p.id || p.name} 
-                        initial={{ opacity: 0 }} 
-                        animate={{ opacity: 1 }} 
-                        exit={{ opacity: 0 }}
-                        className="flex items-center gap-2"
-                    >
+                  <motion.div
+                    key={p.id || p.name}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="flex items-center gap-2"
+                  >
                     <RankBadge rank={idx + 1} />
                     <div className="min-w-0 flex-1">
-                        <div className="truncate">{p.name}</div>
+                      <div className="truncate">{p.name}</div>
                     </div>
-                    </motion.div>
+                  </motion.div>
                 ))}
               </AnimatePresence>
-              {topByProfit.length === 0 && <div className="text-center text-rose-500 text-sm">Chưa có dữ liệu</div>}
+              {topByProfit.length === 0 && (
+                <div className="text-center text-rose-500 text-sm">
+                  Chưa có dữ liệu
+                </div>
+              )}
             </div>
           </button>
 
           <button
             type="button"
-            onClick={() => openTopModal('quantity')}
+            onClick={() => openTopModal("quantity")}
             className="rounded-xl border border-emerald-100 bg-emerald-50/60 p-3 text-left transition active:bg-emerald-50 focus:outline-none"
           >
             <div className="flex items-center justify-between mb-3">
-              <h4 className="text-xs font-semibold uppercase text-emerald-600">Top số lượng</h4>
+              <h4 className="text-xs font-semibold uppercase text-emerald-600">
+                Top số lượng
+              </h4>
             </div>
             <div className="space-y-2 text-sm text-emerald-800">
-               <AnimatePresence mode='wait'>
+              <AnimatePresence mode="wait">
                 {topByQuantity.map((p, idx) => (
-                    <motion.div 
-                        key={p.id || p.name} 
-                        initial={{ opacity: 0 }} 
-                        animate={{ opacity: 1 }} 
-                        exit={{ opacity: 0 }}
-                        className="flex items-center gap-2"
-                    >
+                  <motion.div
+                    key={p.id || p.name}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="flex items-center gap-2"
+                  >
                     <RankBadge rank={idx + 1} />
                     <div className="min-w-0 flex-1">
-                        <div className="truncate">{p.name}</div>
+                      <div className="truncate">{p.name}</div>
                     </div>
-                    </motion.div>
+                  </motion.div>
                 ))}
-               </AnimatePresence>
-              {topByQuantity.length === 0 && <div className="text-center text-emerald-500 text-sm">Chưa có dữ liệu</div>}
+              </AnimatePresence>
+              {topByQuantity.length === 0 && (
+                <div className="text-center text-emerald-500 text-sm">
+                  Chưa có dữ liệu
+                </div>
+              )}
             </div>
           </button>
         </div>
@@ -155,7 +169,7 @@ const Dashboard = ({ products, orders, onOpenDetail }) => {
         onClose={closeTopModal}
         title={modalTitle}
         items={modalItems}
-        mode={activeModal === 'quantity' ? 'quantity' : 'profit'}
+        mode={activeModal === "quantity" ? "quantity" : "profit"}
       />
 
       {/* Nút thống kê chi tiết dạng floating, đặt cạnh tabbar giống nút back nổi. */}

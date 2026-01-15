@@ -1,5 +1,5 @@
-import React, { useEffect } from 'react';
-import { Html5QrcodeScanner } from 'html5-qrcode';
+import React, { useEffect } from "react";
+import { Html5QrcodeScanner } from "html5-qrcode";
 
 const BarcodeScanner = ({ onScanSuccess, onClose }) => {
   useEffect(() => {
@@ -9,15 +9,22 @@ const BarcodeScanner = ({ onScanSuccess, onClose }) => {
       false
     );
 
-    scanner.render((decodedText) => {
-      onScanSuccess(decodedText);
-      scanner.clear().catch(error => console.error("Failed to clear scanner", error));
-    }, () => {
-      // Bỏ qua lỗi
-    });
+    scanner.render(
+      (decodedText) => {
+        onScanSuccess(decodedText);
+        scanner
+          .clear()
+          .catch((error) => console.error("Failed to clear scanner", error));
+      },
+      () => {
+        // Bỏ qua lỗi
+      }
+    );
 
     return () => {
-      scanner.clear().catch(error => console.error("Failed to clear scanner", error));
+      scanner
+        .clear()
+        .catch((error) => console.error("Failed to clear scanner", error));
     };
   }, [onScanSuccess]);
 
@@ -36,7 +43,10 @@ const BarcodeScanner = ({ onScanSuccess, onClose }) => {
             Đóng
           </button>
         </div>
-        <div id="reader" className="w-full rounded-lg overflow-hidden bg-black/5" />
+        <div
+          id="reader"
+          className="w-full rounded-lg overflow-hidden bg-black/5"
+        />
         <p className="text-xs text-amber-700 mt-3 text-center">
           Đưa mã vạch vào khung để tự động nhận diện.
         </p>

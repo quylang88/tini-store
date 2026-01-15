@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 import { LayoutDashboard, ShoppingCart, Package, Settings } from "lucide-react";
+import useMountTransition from "../hooks/useMountTransition";
 
 const TabBar = ({ activeTab, setActiveTab, isVisible = true }) => {
   const tabs = [
@@ -9,36 +10,14 @@ const TabBar = ({ activeTab, setActiveTab, isVisible = true }) => {
     { id: "settings", icon: Settings, label: "Cài đặt" },
   ];
 
-  // shouldRender: Kiểm soát việc có render component vào DOM hay không
-  const [shouldRender, setShouldRender] = useState(isVisible);
-  // activeState: Kiểm soát class animation (translate)
-  const [activeState, setActiveState] = useState(isVisible);
-
-  useEffect(() => {
-    if (isVisible) {
-      // 1. Mount component trước (vẫn ở trạng thái ẩn vì activeState chưa bật)
-      setShouldRender(true);
-      // 2. Kích hoạt animation trượt lên sau 1 frame
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          setActiveState(true);
-        });
-      });
-    } else {
-      // 1. Kích hoạt animation trượt xuống
-      setActiveState(false);
-      // 2. Đợi animation xong mới unmount
-      const timer = setTimeout(() => setShouldRender(false), 300);
-      return () => clearTimeout(timer);
-    }
-  }, [isVisible]);
+  const { shouldRender, active } = useMountTransition(isVisible, 300);
 
   if (!shouldRender) return null;
 
   return (
     <div
       className={`fixed bottom-0 left-0 right-0 bg-amber-50/90 border-t border-amber-200 pb-safe-area z-50 backdrop-blur transition-transform duration-300 ease-in-out ${
-        activeState ? "translate-y-0" : "translate-y-full"
+        active ? "translate-y-0" : "translate-y-full"
       }`}
     >
       <div className="flex justify-around items-center h-20">

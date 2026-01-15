@@ -1,10 +1,10 @@
-import React from 'react';
-import SheetModal from '../modals/SheetModal';
-import { formatNumber } from '../../utils/helpers';
-import { getWarehouseLabel } from '../../utils/warehouseUtils';
-import { getOrderDisplayName } from '../../utils/orderUtils';
-import useModalCache from '../../hooks/useModalCache';
-import Button from '../common/Button';
+import React from "react";
+import SheetModal from "../../components/modals/SheetModal";
+import { formatNumber } from "../../utils/helpers";
+import { getWarehouseLabel } from "../../utils/warehouseUtils";
+import { getOrderDisplayName } from "../../utils/orderUtils";
+import useModalCache from "../../hooks/useModalCache";
+import Button from "../../components/common/Button";
 
 // OrderDetailModal: Xem chi tiết đơn hàng (View Only) -> showCloseIcon={false}
 const OrderDetailModal = ({ order, onClose, getOrderStatusInfo }) => {
@@ -13,17 +13,15 @@ const OrderDetailModal = ({ order, onClose, getOrderStatusInfo }) => {
 
   if (!cachedOrder) return null;
 
-  const orderLabel = cachedOrder.orderNumber ? `#${cachedOrder.orderNumber}` : `#${cachedOrder.id.slice(-4)}`;
+  const orderLabel = cachedOrder.orderNumber
+    ? `#${cachedOrder.orderNumber}`
+    : `#${cachedOrder.id.slice(-4)}`;
   const orderName = getOrderDisplayName(cachedOrder);
   const statusInfo = getOrderStatusInfo?.(cachedOrder);
-  const warehouseLabel = getWarehouseLabel(cachedOrder.warehouse || 'daLat');
+  const warehouseLabel = getWarehouseLabel(cachedOrder.warehouse || "daLat");
 
   const footer = (
-    <Button
-      variant="sheetClose"
-      size="sm"
-      onClick={onClose}
-    >
+    <Button variant="sheetClose" size="sm" onClick={onClose}>
       Đóng
     </Button>
   );
@@ -40,15 +38,23 @@ const OrderDetailModal = ({ order, onClose, getOrderStatusInfo }) => {
         {/* Header Info */}
         <div className="border-b border-amber-100 pb-4">
           <div className="flex items-center justify-between mb-2">
-            <div className="text-xs font-semibold text-amber-600">{orderName}</div>
+            <div className="text-xs font-semibold text-amber-600">
+              {orderName}
+            </div>
             {statusInfo && (
-              <span className={`inline-flex items-center gap-2 px-2 py-1 rounded-full border text-xs font-semibold ${statusInfo.badgeClass}`}>
-                <span className={`w-2 h-2 rounded-full ${statusInfo.dotClass}`} />
+              <span
+                className={`inline-flex items-center gap-2 px-2 py-1 rounded-full border text-xs font-semibold ${statusInfo.badgeClass}`}
+              >
+                <span
+                  className={`w-2 h-2 rounded-full ${statusInfo.dotClass}`}
+                />
                 {statusInfo.label}
               </span>
             )}
           </div>
-          <div className="text-xs text-amber-600">{new Date(cachedOrder.date).toLocaleString()}</div>
+          <div className="text-xs text-amber-600">
+            {new Date(cachedOrder.date).toLocaleString()}
+          </div>
           {cachedOrder.comment && (
             <div className="mt-2 rounded-lg border border-amber-200 bg-white px-3 py-2 text-xs text-amber-800">
               {cachedOrder.comment}
@@ -59,11 +65,16 @@ const OrderDetailModal = ({ order, onClose, getOrderStatusInfo }) => {
         {/* List Items */}
         <div className="space-y-3">
           {cachedOrder.items.map((item, index) => (
-            <div key={`${item.productId}-${index}`} className="flex justify-between text-sm text-gray-600">
+            <div
+              key={`${item.productId}-${index}`}
+              className="flex justify-between text-sm text-gray-600"
+            >
               <div className="min-w-0">
                 <div className="flex items-center gap-2 text-amber-900">
                   <span className="font-semibold truncate">{item.name}</span>
-                  <span className="text-xs text-gray-400">x{item.quantity}</span>
+                  <span className="text-xs text-gray-400">
+                    x{item.quantity}
+                  </span>
                 </div>
               </div>
               <div className="font-semibold text-amber-700">
@@ -77,27 +88,37 @@ const OrderDetailModal = ({ order, onClose, getOrderStatusInfo }) => {
         <div className="border-t border-amber-100 pt-4 bg-amber-50 -mx-5 px-5 -mb-2 pb-2 mt-4 space-y-2">
           <div className="flex justify-between text-sm text-gray-500">
             <span>Tại kho</span>
-            <span className="font-semibold text-amber-700">{warehouseLabel}</span>
+            <span className="font-semibold text-amber-700">
+              {warehouseLabel}
+            </span>
           </div>
-          {cachedOrder.orderType === 'delivery' && (
+          {cachedOrder.orderType === "delivery" && (
             <>
               <div className="flex justify-between text-sm text-gray-500">
                 <span>Khách hàng</span>
-                <span className="font-semibold text-amber-700">{cachedOrder.customerName || '-'}</span>
+                <span className="font-semibold text-amber-700">
+                  {cachedOrder.customerName || "-"}
+                </span>
               </div>
               <div className="flex justify-between text-sm text-gray-500">
                 <span>Địa chỉ</span>
-                <span className="font-semibold text-amber-700 text-right">{cachedOrder.customerAddress || '-'}</span>
+                <span className="font-semibold text-amber-700 text-right">
+                  {cachedOrder.customerAddress || "-"}
+                </span>
               </div>
             </>
           )}
           <div className="flex justify-between text-sm text-gray-500">
             <span>Phí gửi khách</span>
-            <span className="font-semibold text-amber-700">{formatNumber(cachedOrder.shippingFee || 0)}đ</span>
+            <span className="font-semibold text-amber-700">
+              {formatNumber(cachedOrder.shippingFee || 0)}đ
+            </span>
           </div>
           <div className="flex justify-between text-sm text-gray-500 mt-2 pt-2 border-t border-amber-200/50">
             <span className="font-medium text-amber-900">Tổng đơn</span>
-            <span className="text-lg font-bold text-rose-600">{formatNumber(cachedOrder.total)}đ</span>
+            <span className="text-lg font-bold text-rose-600">
+              {formatNumber(cachedOrder.total)}đ
+            </span>
           </div>
         </div>
       </div>
