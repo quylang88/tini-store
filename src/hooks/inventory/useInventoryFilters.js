@@ -5,7 +5,7 @@ import { normalizeWarehouseStock } from "../../utils/warehouseUtils";
 const useInventoryFilters = ({
   products,
   searchTerm,
-  activeCategories,
+  activeCategory,
   warehouseFilter,
   editingProduct,
   formDataName,
@@ -18,8 +18,7 @@ const useInventoryFilters = ({
           p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
           (p.barcode && p.barcode.includes(searchTerm));
         const matchCategory =
-          activeCategories.length === 0 ||
-          activeCategories.includes(p.category);
+          activeCategory === "Tất cả" || p.category === activeCategory;
         const stockByWarehouse = normalizeWarehouseStock(p);
         const matchWarehouse =
           warehouseFilter === "all" ||
@@ -28,7 +27,7 @@ const useInventoryFilters = ({
 
         return matchSearch && matchCategory && matchWarehouse;
       }),
-    [products, searchTerm, activeCategories, warehouseFilter]
+    [products, searchTerm, activeCategory, warehouseFilter]
   );
 
   const nameSuggestions = useMemo(() => {

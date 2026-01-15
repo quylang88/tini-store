@@ -5,7 +5,7 @@ import { getLatestCost, getLatestUnitCost } from "../../utils/purchaseUtils";
 import { normalizeWarehouseStock } from "../../utils/warehouseUtils";
 import { motion, AnimatePresence } from "framer-motion";
 
-const ProductList = ({ products, onDelete, onOpenDetail }) => {
+const ProductList = ({ products, onDelete, onOpenDetail, activeCategory }) => {
   return (
     <div className="flex-1 overflow-y-auto p-3 space-y-3 pb-24">
       {/* 
@@ -66,7 +66,11 @@ const ProductList = ({ products, onDelete, onOpenDetail }) => {
                     )}
                   </div>
                   <div className="text-right space-y-1">
-                    <div className="text-[10px] bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded inline-block">
+                    <div
+                      className={`text-[10px] bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded inline-block ${
+                        activeCategory !== "Tất cả" ? "invisible" : ""
+                      }`}
+                    >
                       {product.category}
                     </div>
                     <div className="text-amber-600">

@@ -2,6 +2,7 @@ import React from "react";
 import SheetModal from "../../../components/modals/SheetModal";
 import Button from "../../../components/common/Button";
 import { formatNumber, formatInputNumber } from "../../../utils/helpers";
+import { motion, AnimatePresence } from "framer-motion";
 
 const OrderCreateReviewModal = ({
   isReviewOpen,
@@ -109,45 +110,59 @@ const OrderCreateReviewModal = ({
           </div>
         </div>
 
-        {orderType === "delivery" ? (
-          <div className="space-y-2">
-            <label className="text-xs font-semibold text-amber-700">
-              Thông tin khách hàng
-            </label>
-            <input
-              type="text"
-              value={customerName}
-              onChange={(e) => setCustomerName(e.target.value)}
-              placeholder="Tên khách hàng"
-              className="w-full border border-amber-200 rounded-xl px-3 py-2 text-sm text-amber-900 focus:outline-none focus:ring-2 focus:ring-rose-200"
-            />
-            <textarea
-              value={customerAddress}
-              onChange={(e) => setCustomerAddress(e.target.value)}
-              placeholder="Địa chỉ giao hàng"
-              rows={2}
-              className="w-full border border-amber-200 rounded-xl px-3 py-2 text-sm text-amber-900 focus:outline-none focus:ring-2 focus:ring-rose-200"
-            />
-            <div>
+        <AnimatePresence mode="wait">
+          {orderType === "delivery" ? (
+            <motion.div
+              key="delivery"
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.2 }}
+              className="space-y-2 overflow-hidden"
+            >
               <label className="text-xs font-semibold text-amber-700">
-                Phí gửi khách
+                Thông tin khách hàng
               </label>
               <input
                 type="text"
-                inputMode="numeric"
-                value={formatInputNumber(shippingFee)}
-                onChange={(e) => setShippingFee(e.target.value)}
-                placeholder="Ví dụ: 25,000"
-                className="mt-1 w-full border border-amber-200 rounded-xl px-3 py-2 text-sm text-amber-900 focus:outline-none focus:ring-2 focus:ring-rose-200"
+                value={customerName}
+                onChange={(e) => setCustomerName(e.target.value)}
+                placeholder="Tên khách hàng"
+                className="w-full border border-amber-200 rounded-xl px-3 py-2 text-sm text-amber-900 focus:outline-none focus:ring-2 focus:ring-rose-200"
               />
-            </div>
-          </div>
-        ) : (
-          <div className="rounded-xl border border-amber-100 bg-amber-50 px-3 py-2 text-xs text-amber-700">
-            {/* Bán tại kho không cần thông tin khách hàng và phí gửi */}
-            Đơn bán tại kho - không cần nhập thông tin khách và phí gửi.
-          </div>
-        )}
+              <textarea
+                value={customerAddress}
+                onChange={(e) => setCustomerAddress(e.target.value)}
+                placeholder="Địa chỉ giao hàng"
+                rows={2}
+                className="w-full border border-amber-200 rounded-xl px-3 py-2 text-sm text-amber-900 focus:outline-none focus:ring-2 focus:ring-rose-200"
+              />
+              <div>
+                <label className="text-xs font-semibold text-amber-700">
+                  Phí gửi khách
+                </label>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  value={formatInputNumber(shippingFee)}
+                  onChange={(e) => setShippingFee(e.target.value)}
+                  placeholder="Ví dụ: 25,000"
+                  className="mt-1 w-full border border-amber-200 rounded-xl px-3 py-2 text-sm text-amber-900 focus:outline-none focus:ring-2 focus:ring-rose-200"
+                />
+              </div>
+            </motion.div>
+          ) : (
+            <motion.div
+              key="warehouse"
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.2 }}
+              className="overflow-hidden"
+            >
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         <div className="space-y-2">
           <label className="text-xs font-semibold text-amber-700">

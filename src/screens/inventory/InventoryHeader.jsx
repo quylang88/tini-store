@@ -2,6 +2,7 @@ import React from "react";
 import { ScanBarcode } from "lucide-react";
 import SearchInput from "../../components/common/SearchInput";
 import AnimatedFilterTabs from "../../components/common/AnimatedFilterTabs";
+import ScrollableTabs from "../../components/common/ScrollableTabs";
 import { motion, AnimatePresence } from "framer-motion";
 
 const InventoryHeader = ({
@@ -9,8 +10,8 @@ const InventoryHeader = ({
   onSearchChange,
   onClearSearch,
   onShowScanner,
-  activeCategories,
-  onToggleCategory,
+  activeCategory,
+  setActiveCategory,
   warehouseFilter,
   onWarehouseChange,
   categories,
@@ -21,6 +22,12 @@ const InventoryHeader = ({
     { key: "all", label: "Tất cả" },
     { key: "daLat", label: "Lâm Đồng" },
     { key: "vinhPhuc", label: "Vĩnh Phúc" },
+  ];
+
+  // Chuẩn bị dữ liệu cho ScrollableTabs (danh mục)
+  const categoryTabs = [
+    { key: "Tất cả", label: "Tất cả" },
+    ...categories.map((cat) => ({ key: cat, label: cat })),
   ];
 
   return (
@@ -71,67 +78,14 @@ const InventoryHeader = ({
                 layoutIdPrefix="inventory-warehouse"
               />
 
-              {/* Filter Danh mục - Vẫn giữ logic chọn nhiều nhưng thêm animation nhẹ */}
-              <div className="flex flex-wrap gap-2">
-                <button
-                  onClick={() => onToggleCategory("Tất cả")}
-                  className={`relative px-3 py-1.5 text-[11px] font-semibold rounded-full border transition-colors z-0 ${
-                    activeCategories.length === 0
-                      ? "text-white border-transparent"
-                      : "text-amber-700 border-amber-200 bg-transparent"
-                  }`}
-                  style={{ WebkitTapHighlightColor: "transparent" }}
-                >
-                  <AnimatePresence>
-                    {activeCategories.length === 0 && (
-                      <motion.div
-                        className="absolute inset-0 bg-amber-500 rounded-full -z-10"
-                        initial={{ scale: 0.8, opacity: 0 }}
-                        animate={{ scale: 1, opacity: 1 }}
-                        exit={{ scale: 0.8, opacity: 0 }}
-                        transition={{
-                          type: "spring",
-                          stiffness: 300,
-                          damping: 30,
-                        }}
-                      />
-                    )}
-                  </AnimatePresence>
-                  <span className="relative z-10">Tất cả</span>
-                </button>
-                {categories.map((cat) => {
-                  const isActive = activeCategories.includes(cat);
-                  return (
-                    <button
-                      key={cat}
-                      onClick={() => onToggleCategory(cat)}
-                      className={`relative px-3 py-1.5 text-[11px] font-semibold rounded-full border transition-colors z-0 ${
-                        isActive
-                          ? "text-white border-transparent"
-                          : "text-amber-700 border-amber-200 bg-transparent"
-                      }`}
-                      style={{ WebkitTapHighlightColor: "transparent" }}
-                    >
-                      <AnimatePresence>
-                        {isActive && (
-                          <motion.div
-                            className="absolute inset-0 bg-amber-500 rounded-full -z-10"
-                            initial={{ scale: 0.8, opacity: 0 }}
-                            animate={{ scale: 1, opacity: 1 }}
-                            exit={{ scale: 0.8, opacity: 0 }}
-                            transition={{
-                              type: "spring",
-                              stiffness: 300,
-                              damping: 30,
-                            }}
-                          />
-                        )}
-                      </AnimatePresence>
-                      <span className="relative z-10">{cat}</span>
-                    </button>
-                  );
-                })}
-              </div>
+              {/* Filter Danh mục - Dùng ScrollableTabs*/}
+              <ScrollableTabs
+                tabs={categoryTabs}
+                activeTab={activeCategory}
+                onTabChange={setActiveCategory}
+                layoutIdPrefix="inventory-category"
+                className="-mx-3" // Negative margin to align with padding of parent
+              />
             </div>
           </motion.div>
         )}

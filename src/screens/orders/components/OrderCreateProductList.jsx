@@ -74,11 +74,13 @@ const OrderCreateProductList = ({
                     {p.name}
                   </div>
                   {/* Badge danh mục */}
-                  {activeCategory === "Tất cả" && (
-                    <span className="text-[10px] text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded border border-gray-200 whitespace-nowrap">
-                      {p.category}
-                    </span>
-                  )}
+                  <span
+                    className={`text-[10px] text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded border border-gray-200 whitespace-nowrap ${
+                      activeCategory !== "Tất cả" ? "invisible" : ""
+                    }`}
+                  >
+                    {p.category}
+                  </span>
                 </div>
                 <div className="text-xs text-gray-500 mt-0.5 flex items-center">
                   <div className="relative inline-block border-b border-amber-200 border-dashed">

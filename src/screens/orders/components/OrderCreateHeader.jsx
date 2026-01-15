@@ -2,6 +2,7 @@ import React from "react";
 import { ScanBarcode } from "lucide-react";
 import SearchInput from "../../../components/common/SearchInput";
 import AnimatedFilterTabs from "../../../components/common/AnimatedFilterTabs";
+import ScrollableTabs from "../../../components/common/ScrollableTabs";
 import { motion, AnimatePresence } from "framer-motion";
 
 const OrderCreateHeader = ({
@@ -80,34 +81,14 @@ const OrderCreateHeader = ({
             </div>
 
             {/* Hàng 4: Thanh Tab Danh mục (Scrollable) */}
-            <div className="px-3 py-2 overflow-x-auto no-scrollbar border-b border-amber-100">
-              <div className="flex gap-2 min-w-max">
-                {categoryTabs.map((tab) => {
-                  const isActive = activeCategory === tab.key;
-                  return (
-                    <button
-                      key={tab.key}
-                      onClick={() => setActiveCategory(tab.key)}
-                      className={`relative px-3 py-2 text-sm font-medium transition-colors z-0 outline-none select-none ${
-                        isActive ? "text-rose-600" : "text-amber-500"
-                      }`}
-                    >
-                      {isActive && (
-                        <motion.div
-                          layoutId="order-category-underline"
-                          className="absolute bottom-0 left-0 right-0 h-0.5 bg-rose-500"
-                          transition={{
-                            type: "spring",
-                            stiffness: 300,
-                            damping: 30,
-                          }}
-                        />
-                      )}
-                      <span className="relative z-10">{tab.label}</span>
-                    </button>
-                  );
-                })}
-              </div>
+            <div className="px-3 py-2 border-b border-amber-100">
+              <ScrollableTabs
+                tabs={categoryTabs}
+                activeTab={activeCategory}
+                onTabChange={setActiveCategory}
+                layoutIdPrefix="order-category"
+                className="-mx-3" // Negative margin to handle padding
+              />
             </div>
           </motion.div>
         )}

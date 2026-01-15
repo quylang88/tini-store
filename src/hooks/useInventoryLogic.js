@@ -31,7 +31,7 @@ const useInventoryLogic = ({
   const initialFormDataRef = useRef(null);
 
   // State quản lý danh mục đang xem (cho phép chọn nhiều danh mục).
-  const [activeCategories, setActiveCategories] = useState([]);
+  const [activeCategory, setActiveCategory] = useState("Tất cả");
   const [warehouseFilter, setWarehouseFilter] = useState("all");
 
   // Form data phục vụ nhập kho: nhập giá, tồn kho, phí gửi theo từng kho.
@@ -43,7 +43,7 @@ const useInventoryLogic = ({
     handleShippingMethodChange,
     handleDecimalChange,
     handleImageSelect,
-  } = useInventoryFormState({ settings, activeCategories });
+  } = useInventoryFormState({ settings, activeCategory });
 
   const handleScanSuccess = (decodedText) => {
     setShowScanner(false);
@@ -152,7 +152,7 @@ const useInventoryLogic = ({
       setEditingLotId(null);
       const nextFormData = createFormDataForNewProduct({
         settings,
-        activeCategories,
+        activeCategory,
       });
       setFormData(nextFormData);
       initialFormDataRef.current = nextFormData;
@@ -210,23 +210,11 @@ const useInventoryLogic = ({
   const { filteredProducts, nameSuggestions } = useInventoryFilters({
     products,
     searchTerm,
-    activeCategories,
+    activeCategory,
     warehouseFilter,
     editingProduct,
     formDataName: formData.name,
   });
-
-  const toggleCategory = (category) => {
-    setActiveCategories((prev) => {
-      if (category === "Tất cả") {
-        return [];
-      }
-      if (prev.includes(category)) {
-        return prev.filter((item) => item !== category);
-      }
-      return [...prev, category];
-    });
-  };
 
   const handleSelectExistingProduct = (product) => {
     setEditingProduct(product);
@@ -246,10 +234,10 @@ const useInventoryLogic = ({
     setConfirmModal,
     errorModal,
     setErrorModal,
-    activeCategories,
+    activeCategory,
+    setActiveCategory,
     warehouseFilter,
     setWarehouseFilter,
-    toggleCategory,
     handleCurrencyChange,
     handleShippingMethodChange,
     formData,

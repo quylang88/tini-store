@@ -53,20 +53,21 @@ const OrderCreateView = ({
   const lastScrollTop = useRef(0);
 
   const handleScroll = (e) => {
-    const currentScrollTop = e.target.scrollTop;
+    const target = e.target;
+    const currentScrollTop = target.scrollTop;
+    const scrollHeight = target.scrollHeight;
+    const clientHeight = target.clientHeight;
     const direction = currentScrollTop > lastScrollTop.current ? "down" : "up";
+    const isNearBottom = currentScrollTop + clientHeight > scrollHeight - 50;
 
     // Threshold
     if (Math.abs(currentScrollTop - lastScrollTop.current) > 10) {
       if (direction === "down") {
         setIsHeaderExpanded(false);
         setIsFooterVisible(false);
-      } else {
+      } else if (!isNearBottom) {
         setIsFooterVisible(true);
-        // Chỉ hiển thị lại header khi scroll lên gần đầu trang
-        if (currentScrollTop < 50) {
-          setIsHeaderExpanded(true);
-        }
+        setIsHeaderExpanded(true);
       }
       lastScrollTop.current = currentScrollTop;
     }
