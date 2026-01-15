@@ -1,10 +1,9 @@
-/* eslint-disable no-unused-vars */
-import React from 'react';
-import { Image as ImageIcon, Trash2 } from 'lucide-react';
-import { formatNumber } from '../../utils/helpers';
-import { getLatestCost, getLatestUnitCost } from '../../utils/purchaseUtils';
-import { normalizeWarehouseStock } from '../../utils/warehouseUtils';
-import { motion, AnimatePresence } from 'framer-motion';
+import React from "react";
+import { Image as ImageIcon, Trash2 } from "lucide-react";
+import { formatNumber } from "../../utils/helpers";
+import { getLatestCost, getLatestUnitCost } from "../../utils/purchaseUtils";
+import { normalizeWarehouseStock } from "../../utils/warehouseUtils";
+import { motion, AnimatePresence } from "framer-motion";
 
 const ProductList = ({ products, onDelete, onOpenDetail }) => {
   return (
@@ -17,7 +16,7 @@ const ProductList = ({ products, onDelete, onOpenDetail }) => {
            and messy reordering animations ("rối") in this specific list view.
       */}
       <AnimatePresence mode="popLayout">
-        {products.map(product => {
+        {products.map((product) => {
           // Hiển thị nhanh giá nhập, lợi nhuận và tồn kho từng kho.
           const latestCost = getLatestCost(product);
           const latestUnitCost = getLatestUnitCost(product);
@@ -37,17 +36,29 @@ const ProductList = ({ products, onDelete, onOpenDetail }) => {
             >
               <div className="w-16 h-16 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0 border border-gray-200 relative">
                 {product.image ? (
-                  <img src={product.image} className="w-full h-full object-cover" alt={product.name} />
+                  <img
+                    src={product.image}
+                    className="w-full h-full object-cover"
+                    alt={product.name}
+                  />
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center text-gray-300"><ImageIcon size={20} /></div>
+                  <div className="w-full h-full flex items-center justify-center text-gray-300">
+                    <ImageIcon size={20} />
+                  </div>
                 )}
               </div>
               <div className="flex-1 min-w-0">
                 <div className="grid grid-cols-2 gap-2 text-[10px]">
                   <div className="space-y-1">
-                    <div className="font-bold text-amber-900 truncate text-sm">{product.name}</div>
-                    <div className="text-gray-400 font-mono">{product.barcode || '---'}</div>
-                    <div className="text-amber-700 font-bold text-sm">{formatNumber(product.price)}đ</div>
+                    <div className="font-bold text-amber-900 truncate text-sm">
+                      {product.name}
+                    </div>
+                    <div className="text-gray-400 font-mono">
+                      {product.barcode || "---"}
+                    </div>
+                    <div className="text-amber-700 font-bold text-sm">
+                      {formatNumber(product.price)}đ
+                    </div>
                     {hasProfitData && (
                       <div className="text-[10px] text-emerald-600">
                         Lợi nhuận: {formatNumber(expectedProfit)}đ
@@ -58,8 +69,12 @@ const ProductList = ({ products, onDelete, onOpenDetail }) => {
                     <div className="text-[10px] bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded inline-block">
                       {product.category}
                     </div>
-                    <div className="text-amber-600">Vĩnh Phúc: {stockByWarehouse.vinhPhuc} sp</div>
-                    <div className="text-amber-600">Lâm Đồng: {stockByWarehouse.daLat} sp</div>
+                    <div className="text-amber-600">
+                      Vĩnh Phúc: {stockByWarehouse.vinhPhuc} sp
+                    </div>
+                    <div className="text-amber-600">
+                      Lâm Đồng: {stockByWarehouse.daLat} sp
+                    </div>
                     <div className="text-[10px] text-amber-500">
                       Giá nhập mới nhất: {formatNumber(latestCost)}đ
                     </div>
@@ -80,13 +95,13 @@ const ProductList = ({ products, onDelete, onOpenDetail }) => {
           );
         })}
       </AnimatePresence>
-      
+
       {/* Animated Empty State to prevent jumping */}
       {products.length === 0 && (
-        <motion.div 
+        <motion.div
+          key="empty-state"
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0 }}
           transition={{ duration: 0.2 }}
           className="text-center text-gray-400 mt-10 text-sm"
         >

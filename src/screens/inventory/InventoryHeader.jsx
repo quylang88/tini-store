@@ -73,31 +73,64 @@ const InventoryHeader = ({
 
               {/* Filter Danh mục - Vẫn giữ logic chọn nhiều nhưng thêm animation nhẹ */}
               <div className="flex flex-wrap gap-2">
-                <motion.button
-                  layout
+                <button
                   onClick={() => onToggleCategory("Tất cả")}
-                  className={`px-3 py-1.5 text-[11px] font-semibold rounded-full border transition-colors ${
+                  className={`relative px-3 py-1.5 text-[11px] font-semibold rounded-full border transition-colors z-0 ${
                     activeCategories.length === 0
-                      ? "bg-amber-500 text-white border-amber-500"
-                      : "bg-transparent text-amber-700 border-amber-200"
+                      ? "text-white border-transparent"
+                      : "text-amber-700 border-amber-200 bg-transparent"
                   }`}
+                  style={{ WebkitTapHighlightColor: "transparent" }}
                 >
-                  Tất cả
-                </motion.button>
-                {categories.map((cat) => (
-                  <motion.button
-                    layout
-                    key={cat}
-                    onClick={() => onToggleCategory(cat)}
-                    className={`px-3 py-1.5 text-[11px] font-semibold rounded-full border transition-colors ${
-                      activeCategories.includes(cat)
-                        ? "bg-amber-500 text-white border-amber-500"
-                        : "bg-transparent text-amber-700 border-amber-200"
-                    }`}
-                  >
-                    {cat}
-                  </motion.button>
-                ))}
+                  <AnimatePresence>
+                    {activeCategories.length === 0 && (
+                      <motion.div
+                        className="absolute inset-0 bg-amber-500 rounded-full -z-10"
+                        initial={{ scale: 0.8, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        exit={{ scale: 0.8, opacity: 0 }}
+                        transition={{
+                          type: "spring",
+                          stiffness: 300,
+                          damping: 30,
+                        }}
+                      />
+                    )}
+                  </AnimatePresence>
+                  <span className="relative z-10">Tất cả</span>
+                </button>
+                {categories.map((cat) => {
+                  const isActive = activeCategories.includes(cat);
+                  return (
+                    <button
+                      key={cat}
+                      onClick={() => onToggleCategory(cat)}
+                      className={`relative px-3 py-1.5 text-[11px] font-semibold rounded-full border transition-colors z-0 ${
+                        isActive
+                          ? "text-white border-transparent"
+                          : "text-amber-700 border-amber-200 bg-transparent"
+                      }`}
+                      style={{ WebkitTapHighlightColor: "transparent" }}
+                    >
+                      <AnimatePresence>
+                        {isActive && (
+                          <motion.div
+                            className="absolute inset-0 bg-amber-500 rounded-full -z-10"
+                            initial={{ scale: 0.8, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            exit={{ scale: 0.8, opacity: 0 }}
+                            transition={{
+                              type: "spring",
+                              stiffness: 300,
+                              damping: 30,
+                            }}
+                          />
+                        )}
+                      </AnimatePresence>
+                      <span className="relative z-10">{cat}</span>
+                    </button>
+                  );
+                })}
               </div>
             </div>
           </motion.div>
