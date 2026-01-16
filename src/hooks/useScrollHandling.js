@@ -45,26 +45,26 @@ const useScrollHandling = ({
     const diff = currentScrollTop - lastScrollTop.current;
 
     // Bỏ qua các thay đổi nhỏ để tránh noise, trừ khi ở gần đỉnh
-    // Nhưng với scroll down (diff > 0), ta xử lý ngay để đảm bảo ẩn search bar khi scroll chậm
-    if (Math.abs(diff) > 2 || currentScrollTop < 50) {
+    // Với scroll down, ta cho phép xử lý ngay (diff > 0) để đảm bảo độ nhạy
+    if (Math.abs(diff) > 2 || currentScrollTop < 50 || diff > 0) {
       if (diff > 0) {
         // SCROLL DOWN
         // Chỉ ẩn nếu nội dung đủ dài (tránh lỗi giật ngược trên danh sách ngắn)
         if (scrollRange > scrollThreshold) {
-          // Giai đoạn 1: Ẩn Filter, TabBar, AddButton
-          // Chỉ ẩn Filter khi đã scroll qua khỏi header (vd: > 50px) để tránh giật khi vừa nhích nhẹ ở đỉnh
-          if (currentScrollTop > 50) {
+          // Giai đoạn 1: Thu gọn Filter, ẩn TabBar, ẩn AddButton
+          // Bắt đầu thu gọn Filter ngay khi rời đỉnh (vd: > 20px) để tạo hiệu ứng "từ từ biến mất"
+          if (currentScrollTop > 20) {
              setIsHeaderExpanded(false);
           }
 
           setIsAddButtonVisible(false);
           if (setTabBarVisible) setTabBarVisible(false);
 
-          // Giai đoạn 2: Ẩn thanh Search (toàn bộ header) khi scroll sâu hơn
-          if (currentScrollTop > 100) {
+          // Giai đoạn 2: Ẩn thanh Search (toàn bộ header) khi scroll sâu hơn một chút (vd: > 80px)
+          if (currentScrollTop > 80) {
             setIsHeaderVisible(false);
           } else {
-            // Giữ search bar nếu mới chỉ scroll nhẹ
+            // Giữ search bar khi mới scroll qua filter
             setIsHeaderVisible(true);
           }
         }

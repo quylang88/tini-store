@@ -28,7 +28,8 @@ const OrderCreateProductList = ({
   };
 
   return (
-    <div
+    <motion.div
+      layout
       className="flex-1 overflow-y-auto p-3 space-y-3 pb-40 min-h-0"
       onScroll={handleScroll}
     >

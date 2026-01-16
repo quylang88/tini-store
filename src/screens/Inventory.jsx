@@ -113,7 +113,11 @@ const Inventory = ({
         </AnimatePresence>
 
         {/* Product List cuộn bên dưới InventoryHeader */}
-        <div className="flex-1 overflow-y-auto min-h-0" onScroll={handleScroll}>
+        <motion.div
+          layout
+          className="flex-1 overflow-y-auto min-h-0"
+          onScroll={handleScroll}
+        >
           <ProductList
             products={filteredProducts}
             onDelete={handleDelete}
@@ -121,7 +125,7 @@ const Inventory = ({
             activeCategory={activeCategory}
             activeWarehouse={warehouseFilter}
           />
-        </div>
+        </motion.div>
       </div>
 
       {/* Nút thêm hàng mới nổi theo cùng vị trí với màn tạo đơn để đồng bộ UX. */}
