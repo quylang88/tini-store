@@ -5,7 +5,7 @@ import useOrderCatalog from "./orders/useOrderCatalog";
 import { buildCartFromItems } from "./orders/orderDraftUtils";
 
 const DEFAULT_STATUS = "shipping";
-const DEFAULT_WAREHOUSE = "daLat";
+const DEFAULT_WAREHOUSE = "vinhPhuc";
 const DEFAULT_ORDER_TYPE = "delivery";
 
 const useOrdersLogic = ({ products, setProducts, orders, setOrders }) => {
