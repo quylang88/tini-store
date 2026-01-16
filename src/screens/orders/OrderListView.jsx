@@ -36,8 +36,12 @@ const OrderListView = ({
 
     if (Math.abs(currentScrollTop - lastScrollTop.current) > 10) {
       if (direction === "down") {
-        setIsAddButtonVisible(false);
-        if (setTabBarVisible) setTabBarVisible(false);
+        // Safety check
+        const scrollRange = scrollHeight - clientHeight;
+        if (scrollRange > 300) {
+          setIsAddButtonVisible(false);
+          if (setTabBarVisible) setTabBarVisible(false);
+        }
       } else if (!isNearBottom) {
         // Scroll up: Show Add Button immediately
         setIsAddButtonVisible(true);

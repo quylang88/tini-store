@@ -45,10 +45,14 @@ const Inventory = ({
     // Threshold to avoid jitter
     if (Math.abs(currentScrollTop - lastScrollTop.current) > 10) {
       if (direction === "down") {
-        // Scroll down: Hide entire header, add button, and tab bar
-        setIsHeaderVisible(false);
-        setIsAddButtonVisible(false);
-        if (setTabBarVisible) setTabBarVisible(false);
+        // Safety check: Don't hide if hiding would make the list non-scrollable
+        const scrollRange = scrollHeight - clientHeight;
+        if (scrollRange > 300) {
+          // Scroll down: Hide entire header, add button, and tab bar
+          setIsHeaderVisible(false);
+          setIsAddButtonVisible(false);
+          if (setTabBarVisible) setTabBarVisible(false);
+        }
       } else if (!isNearBottom) {
         // Scroll up: Show header (but collapsed - search only), add button
         setIsHeaderVisible(true);

@@ -66,9 +66,13 @@ const OrderCreateView = ({
     // Threshold
     if (Math.abs(currentScrollTop - lastScrollTop.current) > 10) {
       if (direction === "down") {
-        setIsHeaderVisible(false); // Hide entire header
-        setIsFooterVisible(false);
-        if (setTabBarVisible) setTabBarVisible(false);
+        // Safety check: Don't hide if hiding would make the list non-scrollable
+        const scrollRange = scrollHeight - clientHeight;
+        if (scrollRange > 300) {
+          setIsHeaderVisible(false); // Hide entire header
+          setIsFooterVisible(false);
+          if (setTabBarVisible) setTabBarVisible(false);
+        }
       } else if (!isNearBottom) {
         setIsHeaderVisible(true); // Show header
         setIsHeaderExpanded(false); // Collapsed (Search only)
