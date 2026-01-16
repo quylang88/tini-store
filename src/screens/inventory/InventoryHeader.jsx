@@ -1,6 +1,5 @@
 import React from "react";
-import { ScanBarcode } from "lucide-react";
-import SearchInput from "../../components/common/SearchInput";
+import SearchBarWithScanner from "../../components/common/SearchBarWithScanner";
 import AnimatedFilterTabs from "../../components/common/AnimatedFilterTabs";
 import ScrollableTabs from "../../components/common/ScrollableTabs";
 import { motion, AnimatePresence } from "framer-motion";
@@ -31,31 +30,14 @@ const InventoryHeader = ({
   ];
 
   return (
-    <div className="bg-amber-50/90 sticky top-0 z-10 shadow-sm backdrop-blur">
-      {/* Header & Search */}
+    <div className="bg-amber-50/90 backdrop-blur">
+      {/* Search & Scanner Row */}
       <div className="p-3 border-b border-amber-100">
-        <div className="flex justify-between items-center mb-3">
-          <img
-            src="/tiny-shop-transparent.png"
-            alt="Tiny Shop"
-            className="h-12 w-auto object-contain"
-          />
-          <div className="flex gap-2">
-            <button
-              onClick={onShowScanner}
-              className="bg-amber-100 text-amber-700 w-9 h-9 rounded-full flex items-center justify-center active:scale-95 transition"
-            >
-              <ScanBarcode size={20} />
-            </button>
-          </div>
-        </div>
-        {/* Ô tìm kiếm dùng chung để giữ UI đồng nhất giữa các màn hình */}
-        <SearchInput
-          value={searchTerm}
-          onChange={onSearchChange}
-          onClear={onClearSearch}
-          placeholder="Tìm tên hoặc quét mã..."
-          inputClassName="w-full bg-amber-100/70 pl-9 pr-9 py-2 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-rose-300"
+        <SearchBarWithScanner
+          searchTerm={searchTerm}
+          onSearchChange={onSearchChange}
+          onClearSearch={onClearSearch}
+          onShowScanner={onShowScanner}
         />
       </div>
 

@@ -9,6 +9,7 @@ import ConfirmModalHost from "../components/modals/ConfirmModalHost";
 import ErrorModal from "../components/modals/ErrorModal";
 import FloatingAddButton from "../components/common/FloatingAddButton";
 import useInventoryLogic from "../hooks/useInventoryLogic";
+import AppHeader from "../components/common/AppHeader";
 
 const Inventory = ({
   products,
@@ -88,7 +89,9 @@ const Inventory = ({
   // Đã loại bỏ useFilterTransition để tránh remount list gây khựng.
 
   return (
-    <div className="flex flex-col h-full bg-transparent">
+    <div className="relative h-full bg-transparent flex flex-col">
+      <AppHeader className="z-20" />
+
       {showScanner && (
         <BarcodeScanner
           onScanSuccess={handleScanSuccess}
@@ -96,19 +99,34 @@ const Inventory = ({
         />
       )}
 
-      {/* Tách phần header & tab danh mục để Inventory gọn hơn */}
-      <InventoryHeader
-        searchTerm={searchTerm}
-        onSearchChange={(e) => setSearchTerm(e.target.value)}
-        onClearSearch={() => setSearchTerm("")}
-        onShowScanner={() => setShowScanner(true)}
-        activeCategory={activeCategory}
-        setActiveCategory={setActiveCategory}
-        warehouseFilter={warehouseFilter}
-        onWarehouseChange={setWarehouseFilter}
-        categories={settings.categories}
-        isExpanded={isHeaderExpanded}
-      />
+      {/* Container cho nội dung chính, bắt đầu từ dưới AppHeader */}
+      <div className="flex flex-col h-full pt-[72px]">
+        {/* InventoryHeader cố định phía trên danh sách */}
+        <div className="z-10 bg-amber-50 shadow-sm shrink-0">
+          <InventoryHeader
+            searchTerm={searchTerm}
+            onSearchChange={(e) => setSearchTerm(e.target.value)}
+            onClearSearch={() => setSearchTerm("")}
+            onShowScanner={() => setShowScanner(true)}
+            activeCategory={activeCategory}
+            setActiveCategory={setActiveCategory}
+            warehouseFilter={warehouseFilter}
+            onWarehouseChange={setWarehouseFilter}
+            categories={settings.categories}
+            isExpanded={isHeaderExpanded}
+          />
+        </div>
+
+        {/* Product List cuộn bên dưới InventoryHeader */}
+        <div className="flex-1 overflow-y-auto min-h-0" onScroll={handleScroll}>
+          <ProductList
+            products={filteredProducts}
+            onDelete={handleDelete}
+            onOpenDetail={setDetailProduct}
+            activeCategory={activeCategory}
+          />
+        </div>
+      </div>
 
       {/* Nút thêm hàng mới nổi theo cùng vị trí với màn tạo đơn để đồng bộ UX. */}
       <AnimatePresence>
@@ -127,17 +145,6 @@ const Inventory = ({
           </motion.div>
         )}
       </AnimatePresence>
-
-      {/* Tách danh sách sản phẩm thành component riêng */}
-      {/* Loại bỏ key={...} để React tự diff và giữ DOM, tránh nháy hình */}
-      <div className="flex-1 overflow-y-auto min-h-0" onScroll={handleScroll}>
-        <ProductList
-          products={filteredProducts}
-          onDelete={handleDelete}
-          onOpenDetail={setDetailProduct}
-          activeCategory={activeCategory}
-        />
-      </div>
 
       {/* Tách form modal và bổ sung nút chụp ảnh từ camera */}
       <ProductModal
