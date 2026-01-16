@@ -1,10 +1,10 @@
 import React, { useRef } from "react";
 import { ScanBarcode, Upload, Camera } from "lucide-react";
-import { formatInputNumber, formatNumber } from "../../utils/helpers";
-import { getWarehouseLabel } from "../../utils/warehouseUtils";
-import SheetModal from "../../components/modals/SheetModal";
-import Button from "../../components/common/Button";
-import useModalCache from "../../hooks/useModalCache";
+import { formatInputNumber, formatNumber } from "../../../utils/helpers";
+import { getWarehouseLabel } from "../../../utils/warehouseUtils";
+import SheetModal from "../../../components/modals/SheetModal";
+import Button from "../../../components/common/Button";
+import useModalCache from "../../../hooks/useModalCache";
 
 const ProductModal = ({
   isOpen,

@@ -7,7 +7,7 @@ import Dashboard from "./screens/Dashboard";
 import Inventory from "./screens/Inventory";
 import Orders from "./screens/Orders";
 import Settings from "./screens/Settings";
-import StatsDetail from "./screens/StatsDetail";
+import StatsDetail from "./screens/dashboard/StatsDetail";
 import { normalizePurchaseLots } from "./utils/purchaseUtils";
 
 // --- IMPORT COMPONENT CHUNG ---
