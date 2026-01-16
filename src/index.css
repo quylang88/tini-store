@@ -10,6 +10,16 @@
   --sal: env(safe-area-inset-left);
 }
 
+html, body, #root {
+  height: 100%;
+}
+
+html {
+  /* Match the lightest color of the app gradient to hide overscroll gap */
+  background-color: #FFF7ED; /* amber-50 */
+  overscroll-behavior-y: none;
+}
+
 body {
   /* Prevent pull-to-refresh on mobile */
   overscroll-behavior-y: none;

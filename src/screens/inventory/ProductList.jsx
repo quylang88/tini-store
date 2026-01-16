@@ -5,7 +5,13 @@ import { getLatestCost, getLatestUnitCost } from "../../utils/purchaseUtils";
 import { normalizeWarehouseStock } from "../../utils/warehouseUtils";
 import { motion, AnimatePresence } from "framer-motion";
 
-const ProductList = ({ products, onDelete, onOpenDetail, activeCategory }) => {
+const ProductList = ({
+  products,
+  onDelete,
+  onOpenDetail,
+  activeCategory,
+  activeWarehouse,
+}) => {
   return (
     <div className="flex-1 overflow-y-auto p-3 space-y-3 pb-24">
       {/* 
@@ -73,12 +79,21 @@ const ProductList = ({ products, onDelete, onOpenDetail, activeCategory }) => {
                     >
                       {product.category}
                     </div>
-                    <div className="text-amber-600">
-                      Vĩnh Phúc: {stockByWarehouse.vinhPhuc} sp
-                    </div>
-                    <div className="text-amber-600">
-                      Lâm Đồng: {stockByWarehouse.daLat} sp
-                    </div>
+
+                    {/* Logic hiển thị kho dựa trên activeWarehouse */}
+                    {(activeWarehouse === "all" ||
+                      activeWarehouse === "vinhPhuc") && (
+                      <div className="text-amber-600">
+                        Vĩnh Phúc: {stockByWarehouse.vinhPhuc} sp
+                      </div>
+                    )}
+                    {(activeWarehouse === "all" ||
+                      activeWarehouse === "daLat") && (
+                      <div className="text-amber-600">
+                        Lâm Đồng: {stockByWarehouse.daLat} sp
+                      </div>
+                    )}
+
                     <div className="text-[10px] text-amber-500">
                       Giá nhập mới nhất: {formatNumber(latestCost)}đ
                     </div>

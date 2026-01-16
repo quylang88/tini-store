@@ -78,10 +78,7 @@ const OrderCreateView = ({
   const warehouseTabs = WAREHOUSES.map((w) => ({ key: w.key, label: w.label }));
 
   // Tab danh mục dạng cuộn ngang
-  const categoryTabs = [
-    { key: "Tất cả", label: "Tất cả" },
-    ...categories.map((c) => ({ key: c, label: c })),
-  ];
+  // (Removed categoryTabs as ProductFilterHeader handles it via categories list)
 
   return (
     <div className="flex flex-col h-full bg-transparent pb-safe-area relative">
@@ -99,10 +96,9 @@ const OrderCreateView = ({
         searchTerm={searchTerm}
         setSearchTerm={setSearchTerm}
         isHeaderExpanded={isHeaderExpanded}
-        warehouseTabs={warehouseTabs}
         selectedWarehouse={selectedWarehouse}
         setSelectedWarehouse={setSelectedWarehouse}
-        categoryTabs={categoryTabs}
+        categories={categories}
         activeCategory={activeCategory}
         setActiveCategory={setActiveCategory}
       />

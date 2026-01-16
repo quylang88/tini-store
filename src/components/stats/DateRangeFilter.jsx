@@ -309,7 +309,7 @@ const DateRangeFilter = ({ customRange, setCustomRange }) => {
       <button
         type="button"
         onClick={handleReset}
-        className="w-full rounded-lg border border-amber-200 bg-white px-3 py-2 text-xs font-semibold text-amber-700 transition active:bg-amber-50"
+        className="w-full rounded-lg border border-amber-300 bg-amber-100 px-3 py-2 text-xs font-bold text-amber-800 transition active:bg-amber-200 shadow-sm"
       >
         Reset
       </button>

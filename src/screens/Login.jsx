@@ -51,21 +51,18 @@ const Login = ({ onLogin }) => {
 
   if (!imgLoaded) {
     return (
-      <SplashScreen
-        showWarning={showWarning}
-        onConfirm={handleForceContinue}
-      />
+      <SplashScreen showWarning={showWarning} onConfirm={handleForceContinue} />
     );
   }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-amber-50 via-rose-50 to-orange-100 flex items-center justify-center p-4">
       <div className="bg-white/90 w-full max-w-sm rounded-2xl shadow-xl backdrop-blur overflow-hidden animate-fade-in border border-white/70">
-        <div className="h-32 overflow-hidden">
+        <div className="h-40 overflow-hidden">
           <img
             src="/tiny-shop.png"
             alt="Tiny Shop"
-            className="h-full w-full object-cover"
+            className="h-full w-full object-cover object-[center_35%]"
             loading="eager"
             fetchPriority="high"
             decoding="sync"
