@@ -9,33 +9,10 @@ const OrderCreateHeader = ({
   isHeaderExpanded,
   selectedWarehouse,
   setSelectedWarehouse,
-  // categoryTabs, // Removed as we pass raw names now (or need to map back if passed)
-  // But wait, parent passes categoryTabs (objects). We need to support that or change parent.
-  // The plan said "Update OrderCreateHeader... Ensure props are mapped correctly".
-  // Since ProductFilterHeader takes string array, we might need to extract names if categoryTabs are passed.
-  // However, simpler is to use `categoryTabs` prop if passed, or extract strings.
-  // Let's check `categoryTabs` structure: { key, label }.
-  // If we just pass categories (strings), ProductFilterHeader builds tabs.
-  // OrderCreateView computes `categoryTabs` from `categories`.
-  // So we can just pass `settings.categories` if available, or map `categoryTabs`.
-  // But `OrderCreateHeader` props are fixed by parent usage.
-  // We need to see what `categoryTabs` contains. It contains "Tất cả" + categories.
-  // So `categories` (the raw list) is not directly passed to OrderCreateHeader currently.
-  // We should modify OrderCreateHeader to accept `categories` (raw) or map `categoryTabs` back to strings?
-  // Mapping back is hacky.
-  // Better: Update `OrderCreateView` to pass `categories` (raw) to `OrderCreateHeader`.
-  categoryTabs,
+  categories,
   activeCategory,
   setActiveCategory,
 }) => {
-  // Extract category names from tabs if needed, or better, change parent.
-  // Let's assume we change parent. But for now let's see if we can derive it.
-  // categoryTabs = [{key: 'Tất cả'...}, {key: 'X', label: 'X'}...]
-  // We can map `categoryTabs.slice(1).map(t => t.key)` to get categories.
-  const categories = categoryTabs
-    ? categoryTabs.filter(t => t.key !== "Tất cả").map(t => t.key)
-    : [];
-
   return (
     <div className="bg-amber-50/90 sticky top-0 z-10 shadow-sm backdrop-blur">
       {/* Hàng 1: Tiêu đề */}
@@ -72,10 +49,7 @@ const OrderCreateHeader = ({
 
         isExpanded={isHeaderExpanded}
         namespace="order"
-        className="!bg-transparent !backdrop-blur-none" // Remove bg because wrapper has it?
-        // Wrapper has `bg-amber-50/90`. ProductFilterHeader has `bg-amber-50/90`.
-        // If we nest them, opacity adds up.
-        // We should probably override className to remove bg or make it transparent.
+        className="!bg-transparent !backdrop-blur-none"
       />
     </div>
   );
