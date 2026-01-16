@@ -24,6 +24,7 @@ const ProductFilterHeader = ({
 
   // Configuration
   isExpanded = true,
+  enableFilters = true, // New prop to toggle filter section rendering
   className = "",
   namespace = "common", // for layoutId uniqueness
   placeholder = "Nhập tên hoặc quét mã sản phẩm...",
@@ -57,44 +58,46 @@ const ProductFilterHeader = ({
       </div>
 
       {/* Expandable Filter Area (Warehouse + Categories) */}
-      <AnimatePresence initial={false}>
-        {isExpanded && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: "auto", opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.3, ease: "easeInOut" }}
-            className="overflow-hidden border-b border-amber-100"
-          >
-            <div className="px-3 pb-3 pt-3 space-y-3">
-              {/* Warehouse Tabs */}
-              <div className="flex items-center gap-2">
-                {warehouseLabel && (
-                  <span className="text-xs font-semibold text-amber-700 shrink-0">
-                    {warehouseLabel}
-                  </span>
-                )}
-                <AnimatedFilterTabs
-                  tabs={finalWarehouseTabs}
-                  activeTab={warehouseFilter}
-                  onChange={onWarehouseChange}
-                  layoutIdPrefix={`${namespace}-warehouse`}
-                  className="flex-1"
+      {enableFilters && (
+        <AnimatePresence initial={false}>
+          {isExpanded && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: "auto", opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.3, ease: "easeInOut" }}
+              className="overflow-hidden border-b border-amber-100"
+            >
+              <div className="px-3 pb-3 pt-3 space-y-3">
+                {/* Warehouse Tabs */}
+                <div className="flex items-center gap-2">
+                  {warehouseLabel && (
+                    <span className="text-xs font-semibold text-amber-700 shrink-0">
+                      {warehouseLabel}
+                    </span>
+                  )}
+                  <AnimatedFilterTabs
+                    tabs={finalWarehouseTabs}
+                    activeTab={warehouseFilter}
+                    onChange={onWarehouseChange}
+                    layoutIdPrefix={`${namespace}-warehouse`}
+                    className="flex-1"
+                  />
+                </div>
+
+                {/* Category Tabs (Scrollable) */}
+                <ScrollableTabs
+                  tabs={categoryTabs}
+                  activeTab={activeCategory}
+                  onTabChange={setActiveCategory}
+                  layoutIdPrefix={`${namespace}-category`}
+                  className="-mx-3" // Negative margin to align with padding of parent
                 />
               </div>
-
-              {/* Category Tabs (Scrollable) */}
-              <ScrollableTabs
-                tabs={categoryTabs}
-                activeTab={activeCategory}
-                onTabChange={setActiveCategory}
-                layoutIdPrefix={`${namespace}-category`}
-                className="-mx-3" // Negative margin to align with padding of parent
-              />
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      )}
     </div>
   );
 };

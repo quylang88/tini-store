@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useEffect } from "react";
 import { ShoppingCart, Plus } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { formatNumber } from "../../utils/helpers";
@@ -6,6 +6,7 @@ import { getWarehouseLabel } from "../../utils/warehouseUtils";
 import { getOrderDisplayName } from "../../utils/orderUtils";
 import FloatingActionButton from "../../components/common/FloatingActionButton";
 import AppHeader from "../../components/common/AppHeader";
+import useScrollHandling from "../../hooks/useScrollHandling";
 
 // Giao diện danh sách đơn tách riêng để dễ quản lý và thêm nút huỷ đơn
 const OrderListView = ({
@@ -18,33 +19,18 @@ const OrderListView = ({
   onSelectOrder,
   setTabBarVisible,
 }) => {
-  // Logic scroll ẩn/hiện UI giống màn Inventory
-  const [isAddButtonVisible, setIsAddButtonVisible] = useState(true);
-  const [isScrolled, setIsScrolled] = useState(false);
-  const lastScrollTop = useRef(0);
-
-  const handleScroll = (e) => {
-    const target = e.target;
-    const currentScrollTop = target.scrollTop;
-    const scrollHeight = target.scrollHeight;
-    const clientHeight = target.clientHeight;
-    const direction = currentScrollTop > lastScrollTop.current ? "down" : "up";
-    const isNearBottom = currentScrollTop + clientHeight > scrollHeight - 50;
-
-    // Update scrolled state
-    setIsScrolled(currentScrollTop > 10);
-
-    if (Math.abs(currentScrollTop - lastScrollTop.current) > 10) {
-      if (direction === "down") {
-        setIsAddButtonVisible(false);
-        if (setTabBarVisible) setTabBarVisible(false);
-      } else if (!isNearBottom) {
-        setIsAddButtonVisible(true);
-        if (setTabBarVisible) setTabBarVisible(true);
-      }
-      lastScrollTop.current = currentScrollTop;
+  // Ensure TabBar is visible when mounting this view (e.g. returning from Create View)
+  useEffect(() => {
+    if (setTabBarVisible) {
+      setTabBarVisible(true);
     }
-  };
+  }, [setTabBarVisible]);
+
+  // Logic scroll ẩn/hiện UI sử dụng hook mới
+  const { isAddButtonVisible, isScrolled, handleScroll } = useScrollHandling({
+    mode: "simple",
+    setTabBarVisible,
+  });
 
   return (
     <div className="relative h-full bg-transparent pb-20">

@@ -65,17 +65,11 @@ const Orders = ({
     isCreateView,
   } = useOrdersLogic({ products, setProducts, orders, setOrders });
 
-  // Khi vào màn hình Tạo đơn (isCreateView = true), ẩn TabBar để mở rộng không gian
-  React.useEffect(() => {
-    if (setTabBarVisible) {
-      setTabBarVisible(!isCreateView);
-    }
-  }, [isCreateView, setTabBarVisible]);
-
   const renderContent = () => {
     if (isCreateView) {
       return (
         <OrderCreateView
+          setTabBarVisible={setTabBarVisible} // Pass TabBar control to Create View
           settings={settings}
           cart={cart}
           showScanner={showScanner}
@@ -140,6 +134,7 @@ const Orders = ({
           handleEditOrder={handleEditOrder}
           handleCancelOrder={handleCancelOrder}
           onSelectOrder={setSelectedOrder}
+          setTabBarVisible={setTabBarVisible}
         />
         <OrderDetailModal
           order={selectedOrder}

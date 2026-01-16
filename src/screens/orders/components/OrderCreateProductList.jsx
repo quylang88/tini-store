@@ -3,6 +3,7 @@ import { Plus, Minus, Search, Image as ImageIcon } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { formatInputNumber } from "../../../utils/helpers";
 import { getWarehouseLabel } from "../../../utils/warehouseUtils";
+import ProductFilterSection from "../../../components/common/ProductFilterSection";
 
 const OrderCreateProductList = ({
   filteredProducts,
@@ -15,6 +16,13 @@ const OrderCreateProductList = ({
   adjustQuantity,
   handleQuantityChange,
   activeCategory,
+  // Filter Props
+  setSelectedWarehouse,
+  setActiveCategory,
+  categories,
+  warehouseTabs,
+  warehouseLabel,
+  className = "",
 }) => {
   // Khi đang sửa đơn, cộng lại số lượng cũ để hiển thị tồn kho chính xác
   const getAvailableStock = (productId, stock) => {
@@ -29,9 +37,23 @@ const OrderCreateProductList = ({
 
   return (
     <div
-      className="flex-1 overflow-y-auto p-3 space-y-3 pb-40 min-h-0"
+      className={`flex-1 overflow-y-auto p-3 space-y-3 pb-40 min-h-0 ${className}`}
       onScroll={handleScroll}
     >
+      {/* Filter Section rendered inside the scroll view */}
+      <ProductFilterSection
+        warehouseFilter={selectedWarehouse}
+        onWarehouseChange={setSelectedWarehouse}
+        activeCategory={activeCategory}
+        setActiveCategory={setActiveCategory}
+        categories={categories}
+        warehouseTabs={warehouseTabs}
+        warehouseLabel={warehouseLabel}
+        namespace="order-create"
+        className="-mx-3 -mt-3 mb-3 pt-3" // Not sticky, scrolls with list
+      />
+      {/* Re-adding -mx-3 to compensate for parent padding */}
+
       <AnimatePresence mode="popLayout">
         {filteredProducts.map((p) => {
           const qty = cart[p.id] || 0;
