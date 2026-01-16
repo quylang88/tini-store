@@ -1,9 +1,16 @@
-import React, { useState } from "react";
-import { ArrowUpRight, DollarSign, TrendingUp } from "lucide-react";
+import React, { useState, useMemo } from "react";
+import {
+  ArrowUpRight,
+  DollarSign,
+  TrendingUp,
+  Package,
+  AlertTriangle,
+  ShoppingCart,
+  ArchiveX,
+} from "lucide-react";
 import { formatNumber } from "../utils/helpers";
 import useDashboardLogic from "../hooks/useDashboardLogic";
 import MetricCard from "../components/stats/MetricCard";
-import AnimatedFilterTabs from "../components/common/AnimatedFilterTabs";
 import TopSellingSection from "../components/stats/TopSellingSection";
 import TopListModal from "../components/stats/TopListModal";
 import FloatingActionButton from "../components/common/FloatingActionButton";
@@ -11,14 +18,16 @@ import AppHeader from "../components/common/AppHeader";
 
 const Dashboard = ({ products, orders, onOpenDetail }) => {
   const {
-    rangeOptions,
+    currentDate, // Sử dụng ngày từ hook
     topOptions,
     topLimit,
     setTopLimit,
-    activeRange,
-    setActiveRange,
+    filteredPaidOrders,
     totalRevenue,
     totalProfit,
+    totalCapital,
+    slowMovingProducts,
+    outOfStockProducts, // Danh sách hết hàng
     topByProfit,
     topByQuantity,
   } = useDashboardLogic({ products, orders, rangeMode: "dashboard" });
@@ -32,30 +41,37 @@ const Dashboard = ({ products, orders, onOpenDetail }) => {
     activeModal === "quantity" ? "Top số lượng" : "Top lợi nhuận";
   const modalItems = activeModal === "quantity" ? topByQuantity : topByProfit;
 
-  // Transform rangeOptions for AnimatedFilterTabs
-  const rangeTabs = rangeOptions.map((opt) => ({
-    key: opt.id,
-    label: opt.label,
-  }));
+  // Tính số lượng đơn hàng
+  const orderCount = filteredPaidOrders.length;
+
+  // Tạo nhãn tháng hiện tại sử dụng ngày tập trung
+  const currentMonthLabel = useMemo(() => {
+    if (!currentDate) return "Đang tải...";
+    return `Tháng ${String(currentDate.getMonth() + 1).padStart(
+      2,
+      "0"
+    )}/${currentDate.getFullYear()}`;
+  }, [currentDate]);
 
   return (
     <div className="relative h-full bg-inherit">
       <AppHeader />
 
-      {/* Scrollable Content */}
+      {/* Nội dung cuộn */}
       <div className="h-full overflow-y-auto min-h-0 p-4 pt-[80px] space-y-4 pb-24 animate-fade-in">
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-3">
-          {/* Căn bộ lọc thời gian gọn trong thẻ riêng để dành chỗ cho nút nổi phía dưới. */}
-          <div className="flex flex-wrap items-center gap-2 justify-between">
-            <AnimatedFilterTabs
-              tabs={rangeTabs}
-              activeTab={activeRange}
-              onChange={setActiveRange}
-              layoutIdPrefix="dashboard-range"
-            />
+        {/* Nhãn tiêu đề */}
+        <div className="flex items-center justify-between">
+          <div>
+            <div className="text-xs text-amber-500 font-bold uppercase">
+              Tổng quan
+            </div>
+            <h2 className="text-xl font-bold text-amber-900">
+              {currentMonthLabel}
+            </h2>
           </div>
         </div>
 
+        {/* Lưới chỉ số (Metrics Grid) */}
         <div className="grid grid-cols-2 gap-3">
           <MetricCard
             icon={DollarSign}
@@ -70,9 +86,116 @@ const Dashboard = ({ products, orders, onOpenDetail }) => {
             value={`${formatNumber(totalProfit)}đ`}
             className="bg-emerald-400 shadow-emerald-100"
           />
+
+          <MetricCard
+            icon={ShoppingCart}
+            label="Số đơn"
+            value={orderCount}
+            className="bg-amber-400 shadow-amber-200"
+          />
+
+          <MetricCard
+            icon={Package}
+            label="Vốn tồn kho"
+            value={`${formatNumber(totalCapital)}đ`}
+            className="bg-blue-400 shadow-blue-200"
+          />
         </div>
 
-        {/* Reusable Top Selling Section */}
+        {/* Phần Hết Hàng (Out of Stock) - Horizontal Scroll */}
+        {outOfStockProducts.length > 0 && (
+          <div className="space-y-2">
+            <div className="flex items-center gap-2 px-1">
+              <ArchiveX size={16} className="text-red-500" />
+              <h3 className="text-xs font-bold uppercase text-red-600">
+                Hết hàng ({outOfStockProducts.length})
+              </h3>
+            </div>
+
+            <div className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4 custom-scrollbar">
+              {outOfStockProducts.map((product) => (
+                <div
+                  key={product.id}
+                  className="flex-shrink-0 w-64 bg-white rounded-xl shadow-sm border border-red-100 p-3 flex gap-3 opacity-90"
+                >
+                  <div className="w-12 h-12 rounded-lg bg-red-50 p-1 border border-red-100 flex-shrink-0 grayscale">
+                    {product.image ? (
+                      <img
+                        src={product.image}
+                        alt=""
+                        className="w-full h-full object-contain"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-red-300">
+                        <Package size={20} />
+                      </div>
+                    )}
+                  </div>
+                  <div className="min-w-0 flex-1 flex flex-col justify-between">
+                    <div className="text-sm font-semibold text-gray-800 truncate">
+                      {product.name}
+                    </div>
+                    <div className="flex items-center justify-between text-xs mt-1">
+                      <span className="text-red-500 font-medium bg-red-50 px-2 py-0.5 rounded-full">
+                        Hết hàng
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Phần Hàng tồn kho lâu (Cuộn ngang) */}
+        {slowMovingProducts.length > 0 && (
+          <div className="space-y-2">
+            <div className="flex items-center gap-2 px-1">
+              <AlertTriangle size={16} className="text-orange-500" />
+              <h3 className="text-xs font-bold uppercase text-orange-600">
+                Cảnh báo hàng tồn ({slowMovingProducts.length})
+              </h3>
+            </div>
+
+            <div className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4 custom-scrollbar">
+              {slowMovingProducts.map((product) => (
+                <div
+                  key={product.id}
+                  className="flex-shrink-0 w-64 bg-white rounded-xl shadow-sm border border-orange-100 p-3 flex gap-3"
+                >
+                  <div className="w-12 h-12 rounded-lg bg-orange-50 p-1 border border-orange-100 flex-shrink-0">
+                    {product.image ? (
+                      <img
+                        src={product.image}
+                        alt=""
+                        className="w-full h-full object-contain"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-orange-300">
+                        <Package size={20} />
+                      </div>
+                    )}
+                  </div>
+                  <div className="min-w-0 flex-1 flex flex-col justify-between">
+                    <div className="text-sm font-semibold text-gray-800 truncate">
+                      {product.name}
+                    </div>
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-orange-600 font-medium">
+                        {product.daysNoSale} ngày
+                      </span>
+                      <span className="text-gray-500">
+                        Tồn: <b>{product.stock}</b>
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Phần Top Bán Chạy (Tái sử dụng) */}
         <TopSellingSection
           topOptions={topOptions}
           activeTopOption={topLimit}
@@ -80,6 +203,7 @@ const Dashboard = ({ products, orders, onOpenDetail }) => {
           topByProfit={topByProfit}
           topByQuantity={topByQuantity}
           onOpenModal={openTopModal}
+          layoutIdPrefix="dashboard-top-selling"
         />
 
         {/* Modal mở khi người dùng chạm vào từng nhóm top để xem chi tiết. */}

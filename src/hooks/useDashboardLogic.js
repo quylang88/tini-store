@@ -2,8 +2,9 @@ import { useMemo, useState } from "react";
 import { getLatestUnitCost } from "../utils/purchaseUtils";
 
 // Tạo label thời gian động theo tháng/năm hiện tại và tách bộ lọc cho dashboard vs chi tiết.
-const buildRangeOptions = (mode = "dashboard") => {
-  const now = new Date();
+const buildRangeOptions = (mode = "dashboard", now) => {
+  if (!now) return [];
+
   const monthLabel = `Tháng ${String(now.getMonth() + 1).padStart(2, "0")}`;
   const yearLabel = `Năm ${now.getFullYear()}`;
 
@@ -24,12 +25,20 @@ const TOP_OPTIONS = [
 ];
 
 const useDashboardLogic = ({ products, orders, rangeMode = "dashboard" }) => {
+  // Trạng thái ngày tập trung. Sử dụng khởi tạo lười (lazy initialization) để đặt "now" khi mount.
+  // Mặc dù new Date() về kỹ thuật là không tinh khiết (impure), nhưng nó ổn định sau lần render đầu tiên.
+  const [currentDate] = useState(() => new Date());
+
   const [activeRange, setActiveRange] = useState(
     rangeMode === "detail" ? "custom" : "month"
   );
   const [topLimit, setTopLimit] = useState(3);
   const [customRange, setCustomRange] = useState({ start: null, end: null });
-  const rangeOptions = useMemo(() => buildRangeOptions(rangeMode), [rangeMode]);
+
+  const rangeOptions = useMemo(
+    () => buildRangeOptions(rangeMode, currentDate),
+    [rangeMode, currentDate]
+  );
 
   // Map giá vốn theo sản phẩm để tính lợi nhuận ổn định
   const costMap = useMemo(
@@ -49,7 +58,7 @@ const useDashboardLogic = ({ products, orders, rangeMode = "dashboard" }) => {
   const activeOption = useMemo(
     () =>
       rangeOptions.find((option) => option.id === activeRange) ||
-      rangeOptions[0],
+      rangeOptions[0] || { days: null },
     [activeRange, rangeOptions]
   );
 
@@ -60,12 +69,12 @@ const useDashboardLogic = ({ products, orders, rangeMode = "dashboard" }) => {
       start.setHours(0, 0, 0, 0);
       return start;
     }
-    if (!activeOption.days) return null;
-    const start = new Date();
+    if (!activeOption.days || !currentDate) return null;
+    const start = new Date(currentDate);
     start.setHours(0, 0, 0, 0);
     start.setDate(start.getDate() - activeOption.days + 1);
     return start;
-  }, [activeOption, activeRange, customRange.start]);
+  }, [activeOption, activeRange, customRange.start, currentDate]);
 
   const rangeEnd = useMemo(() => {
     if (activeRange === "custom") {
@@ -74,11 +83,11 @@ const useDashboardLogic = ({ products, orders, rangeMode = "dashboard" }) => {
       end.setHours(23, 59, 59, 999);
       return end;
     }
-    if (!activeOption.days) return null;
-    const end = new Date();
+    if (!activeOption.days || !currentDate) return null;
+    const end = new Date(currentDate);
     end.setHours(23, 59, 59, 999);
     return end;
-  }, [activeOption, activeRange, customRange.end]);
+  }, [activeOption, activeRange, customRange.end, currentDate]);
 
   const filteredPaidOrders = useMemo(() => {
     if (!rangeStart && !rangeEnd) return paidOrders;
@@ -111,6 +120,81 @@ const useDashboardLogic = ({ products, orders, rangeMode = "dashboard" }) => {
       }, 0),
     [filteredPaidOrders, costMap]
   );
+
+  // --- Logic mới cho Vốn & Hàng tồn lâu ---
+
+  // Tính Tổng Vốn Tồn Kho
+  // Logic CŨ: Tổng của (tồn kho * giá nhập mới nhất) cho tất cả sản phẩm
+  // Logic MỚI: Tính theo từng lô (purchaseLots)
+  const totalCapital = useMemo(() => {
+    return products.reduce((sum, product) => {
+      const stock = product.stock || 0;
+      if (stock <= 0) return sum;
+
+      // Nếu có purchaseLots, tính chính xác từng lô
+      if (product.purchaseLots && product.purchaseLots.length > 0) {
+        const lotSum = product.purchaseLots.reduce((lSum, lot) => {
+          const qty = Number(lot.quantity) || 0;
+          const cost = Number(lot.cost) || 0;
+          return lSum + qty * cost;
+        }, 0);
+        return sum + lotSum;
+      }
+
+      // Fallback nếu chưa có lots: dùng giá nhập mới nhất (costMap)
+      const cost = costMap.get(product.id) || 0;
+      return sum + stock * cost;
+    }, 0);
+  }, [products, costMap]);
+
+  // Tính Hàng Tồn Kho Lâu (Slow Moving)
+  // Logic MỚI: "tính từ ngày nhập hàng xa nhất mà hàng đó còn tồn + 60 ngày"
+  const slowMovingProducts = useMemo(() => {
+    if (!currentDate) return [];
+    const warningDays = 60;
+
+    return products
+      .filter((p) => (p.stock || 0) > 0)
+      .map((p) => {
+        let dateToCheck = new Date(p.createdAt || currentDate.getTime());
+
+        // Tìm lô cũ nhất còn hàng (quantity > 0)
+        if (p.purchaseLots && p.purchaseLots.length > 0) {
+          // Lọc các lô còn hàng
+          const activeLots = p.purchaseLots.filter(
+            (l) => (Number(l.quantity) || 0) > 0
+          );
+          if (activeLots.length > 0) {
+            // Sắp xếp theo ngày tạo (cũ nhất đầu tiên)
+            activeLots.sort(
+              (a, b) => new Date(a.createdAt) - new Date(b.createdAt)
+            );
+            const oldestLot = activeLots[0];
+            if (oldestLot.createdAt) {
+              dateToCheck = new Date(oldestLot.createdAt);
+            }
+          }
+        }
+
+        const diffTime = Math.abs(currentDate - dateToCheck);
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+        return {
+          ...p,
+          daysNoSale: diffDays,
+          lastImportDate: dateToCheck, // Dùng để debug hoặc hiển thị
+        };
+      })
+      .filter((p) => p.daysNoSale > warningDays)
+      .sort((a, b) => b.daysNoSale - a.daysNoSale);
+  }, [products, currentDate]);
+
+  // Tính Hàng Hết Hàng (Out of Stock)
+  const outOfStockProducts = useMemo(() => {
+    return products.filter((p) => (p.stock || 0) <= 0);
+  }, [products]);
+
+  // --- Kết thúc Logic mới ---
 
   const productMeta = useMemo(
     () => new Map(products.map((product) => [product.id, product])),
@@ -162,6 +246,7 @@ const useDashboardLogic = ({ products, orders, rangeMode = "dashboard" }) => {
   );
 
   return {
+    currentDate, // Trả về giá trị này để các component tiêu thụ có thể sử dụng cùng một tham chiếu
     rangeOptions,
     topOptions: TOP_OPTIONS,
     topLimit,
@@ -186,6 +271,9 @@ const useDashboardLogic = ({ products, orders, rangeMode = "dashboard" }) => {
     filteredPaidOrders,
     totalRevenue,
     totalProfit,
+    totalCapital, // Đã export
+    slowMovingProducts, // Đã export
+    outOfStockProducts, // Đã export: Danh sách hết hàng
     topByProfit,
     topByQuantity,
   };

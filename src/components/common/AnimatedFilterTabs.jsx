@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 
 const AnimatedFilterTabs = ({
@@ -9,6 +9,18 @@ const AnimatedFilterTabs = ({
   className = "",
   tabClassName = "",
 }) => {
+  // Trạng thái để kiểm soát việc render animation
+  const [canAnimate, setCanAnimate] = useState(false);
+
+  useEffect(() => {
+    // Chỉ cho phép animation sau khi component đã mount xong
+    // Điều này ngăn animation chạy khi quay lại màn hình
+    const timer = setTimeout(() => {
+      setCanAnimate(true);
+    }, 100);
+    return () => clearTimeout(timer);
+  }, []);
+
   return (
     <div className={`flex flex-wrap gap-2 ${className}`}>
       {tabs.map((tab) => {
@@ -28,7 +40,12 @@ const AnimatedFilterTabs = ({
               <motion.div
                 layoutId={`${layoutIdPrefix}-active-pill`}
                 className="absolute inset-0 bg-amber-500 rounded-full -z-10"
-                transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                initial={false}
+                transition={
+                  canAnimate
+                    ? { type: "spring", stiffness: 300, damping: 30 }
+                    : { duration: 0 }
+                }
               />
             )}
             <span className="relative z-10">{tab.label}</span>

@@ -159,7 +159,7 @@ const StatsDetail = ({ products, orders, onBack }) => {
         </div>
       </div>
 
-      {/* Reusable Top Selling Section */}
+      {/* Phần Top Bán Chạy (Tái sử dụng) */}
       <TopSellingSection
         topOptions={topOptions}
         activeTopOption={topLimit}
@@ -167,6 +167,7 @@ const StatsDetail = ({ products, orders, onBack }) => {
         topByProfit={topByProfit}
         topByQuantity={topByQuantity}
         onOpenModal={openTopModal}
+        layoutIdPrefix="stats-detail-top-selling"
       />
 
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 space-y-3">
