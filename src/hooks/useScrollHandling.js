@@ -42,31 +42,36 @@ const useScrollHandling = ({
     // Cập nhật trạng thái shadow cho header
     setIsScrolled(currentScrollTop > 10);
 
-    if (Math.abs(currentScrollTop - lastScrollTop.current) > 10) {
+    if (Math.abs(currentScrollTop - lastScrollTop.current) > 5) {
       if (direction === "down") {
         // Chỉ ẩn nếu nội dung đủ dài (tránh lỗi giật ngược trên danh sách ngắn)
         if (scrollRange > scrollThreshold) {
-          setIsHeaderVisible(false);
+          // Giai đoạn 1: Ẩn Filter, TabBar, AddButton ngay khi vừa scroll
+          setIsHeaderExpanded(false);
           setIsAddButtonVisible(false);
           if (setTabBarVisible) setTabBarVisible(false);
+
+          // Giai đoạn 2: Ẩn thanh Search (toàn bộ header) khi scroll sâu hơn (vd: > 100px)
+          if (currentScrollTop > 100) {
+            setIsHeaderVisible(false);
+          } else {
+            // Giữ search bar nếu mới chỉ scroll nhẹ
+            setIsHeaderVisible(true);
+          }
         }
       } else if (!isNearBottom) {
-        // Scroll Up: Luôn hiện Header (collapsed) và Add Button
+        // Scroll Up:
+        // 1. Luôn hiện thanh Search và Add Button (tạo cảm giác mượt)
         setIsHeaderVisible(true);
         setIsAddButtonVisible(true);
 
-        // Chỉ thu gọn Header nếu danh sách đủ dài.
-        // Nếu ngắn, giữ nguyên expanded để tránh layout jump.
-        if (scrollRange > scrollThreshold) {
-             setIsHeaderExpanded(false);
-        } else {
-             setIsHeaderExpanded(true);
-        }
-
-        // Nếu về hẳn đầu trang: Mở rộng Header và hiện TabBar
-        if (currentScrollTop < 10) {
+        // 2. TabBar và Filter chỉ hiện khi về hẳn đầu trang (hoặc danh sách ngắn)
+        if (scrollRange <= scrollThreshold || currentScrollTop < 10) {
            setIsHeaderExpanded(true);
            if (setTabBarVisible) setTabBarVisible(true);
+        } else {
+           // Nếu đang ở giữa danh sách, giữ Filter thu gọn
+           setIsHeaderExpanded(false);
         }
       }
       lastScrollTop.current = currentScrollTop;
