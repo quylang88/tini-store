@@ -65,7 +65,7 @@ const Login = ({ onLogin }) => {
           <img
             src="/tiny-shop.png"
             alt="Tiny Shop"
-            className="h-full w-full object-contain object-center"
+            className="h-full w-full object-cover object-center"
             loading="eager"
             fetchPriority="high"
             decoding="sync"
