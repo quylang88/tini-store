@@ -42,6 +42,11 @@ const OrderCreateHeader = ({
 
         warehouseFilter={selectedWarehouse}
         onWarehouseChange={setSelectedWarehouse}
+        warehouseTabs={[
+          { key: "vinhPhuc", label: "Vĩnh Phúc" },
+          { key: "daLat", label: "Lâm Đồng" },
+        ]}
+        warehouseLabel="Kho xuất:"
 
         activeCategory={activeCategory}
         setActiveCategory={setActiveCategory}

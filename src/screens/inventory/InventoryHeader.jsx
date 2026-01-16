@@ -21,6 +21,12 @@ const InventoryHeader = ({
       onShowScanner={onShowScanner}
       warehouseFilter={warehouseFilter}
       onWarehouseChange={onWarehouseChange}
+      // Explicitly pass full options for Inventory (though it defaults to this)
+      warehouseTabs={[
+        { key: "all", label: "Tất cả" },
+        { key: "vinhPhuc", label: "Vĩnh Phúc" },
+        { key: "daLat", label: "Lâm Đồng" },
+      ]}
       activeCategory={activeCategory}
       setActiveCategory={setActiveCategory}
       categories={categories}

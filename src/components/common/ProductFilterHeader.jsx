@@ -14,6 +14,8 @@ const ProductFilterHeader = ({
   // Warehouse Filter
   warehouseFilter,
   onWarehouseChange,
+  warehouseTabs, // Optional prop
+  warehouseLabel, // Optional prop for label text
 
   // Category Filter
   activeCategory,
@@ -26,12 +28,14 @@ const ProductFilterHeader = ({
   namespace = "common", // for layoutId uniqueness
   placeholder = "Nhập tên hoặc quét mã sản phẩm...",
 }) => {
-  // Warehouse Configuration (Unified)
-  const warehouseTabs = [
+  // Default Warehouse Configuration (if not provided)
+  const defaultWarehouseTabs = [
     { key: "all", label: "Tất cả" },
     { key: "vinhPhuc", label: "Vĩnh Phúc" },
     { key: "daLat", label: "Lâm Đồng" },
   ];
+
+  const finalWarehouseTabs = warehouseTabs || defaultWarehouseTabs;
 
   // Category Configuration (Unified)
   const categoryTabs = [
@@ -64,12 +68,20 @@ const ProductFilterHeader = ({
           >
             <div className="px-3 py-3 space-y-3">
               {/* Warehouse Tabs */}
-              <AnimatedFilterTabs
-                tabs={warehouseTabs}
-                activeTab={warehouseFilter}
-                onChange={onWarehouseChange}
-                layoutIdPrefix={`${namespace}-warehouse`}
-              />
+              <div className="flex items-center gap-2">
+                {warehouseLabel && (
+                  <span className="text-xs font-semibold text-amber-700 shrink-0">
+                    {warehouseLabel}
+                  </span>
+                )}
+                <AnimatedFilterTabs
+                  tabs={finalWarehouseTabs}
+                  activeTab={warehouseFilter}
+                  onChange={onWarehouseChange}
+                  layoutIdPrefix={`${namespace}-warehouse`}
+                  className="flex-1"
+                />
+              </div>
 
               {/* Category Tabs (Scrollable) */}
               <ScrollableTabs

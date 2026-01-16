@@ -238,6 +238,7 @@ const useOrdersLogic = ({ products, setProducts, orders, setOrders }) => {
       });
       return false;
     }
+
     if (
       orderType === "delivery" &&
       (!customerName.trim() || !customerAddress.trim())
