@@ -77,7 +77,7 @@ const ColorfulShopIcon = () => (
 
 const SplashScreen = ({ showWarning, onConfirm }) => {
   return (
-    <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-gradient-to-br from-orange-50 via-rose-50 to-amber-100 p-6 text-center overflow-hidden">
+    <div className="fixed top-0 left-0 h-[100dvh] w-screen z-50 flex flex-col items-center justify-center bg-gradient-to-br from-orange-50 via-rose-50 to-amber-100 p-6 text-center overflow-hidden">
       {/* Background decoration elements */}
       <div className="absolute top-10 left-10 w-20 h-20 bg-yellow-200 rounded-full blur-3xl opacity-50 animate-pulse"></div>
       <div className="absolute bottom-20 right-10 w-32 h-32 bg-rose-200 rounded-full blur-3xl opacity-50 animate-pulse delay-700"></div>

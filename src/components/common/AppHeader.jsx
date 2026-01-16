@@ -3,7 +3,7 @@ import React from "react";
 const AppHeader = ({ className = "" }) => {
   return (
     <div
-      className={`absolute top-0 left-0 right-0 z-20 px-4 py-0 bg-gradient-to-b from-amber-50/95 to-amber-50/80 backdrop-blur-md shadow-sm ${className}`}
+      className={`absolute top-0 left-0 right-0 z-20 px-4 py-0 bg-amber-50 shadow-sm ${className}`}
     >
       <div className="flex items-center justify-center gap-2">
         <img

@@ -135,10 +135,12 @@ const Inventory = ({
       <AnimatePresence>
         {isAddButtonVisible && (
           <motion.div
+            layout
+            layoutId="floating-action-button"
             initial={{ scale: 0, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0, opacity: 0 }}
-            className="fixed right-5 bottom-24 z-30"
+            className="fixed right-5 bottom-[calc(env(safe-area-inset-bottom)+90px)] z-30"
           >
             <FloatingActionButton
               onClick={() => openModal()}

@@ -46,7 +46,7 @@ const ProductFilterHeader = ({
   return (
     <div className={`bg-amber-50/90 backdrop-blur ${className}`}>
       {/* Search Bar Row */}
-      <div className="p-3 border-b border-amber-100">
+      <div className="px-3 pt-3 pb-1">
         <SearchBarWithScanner
           searchTerm={searchTerm}
           onSearchChange={onSearchChange}
@@ -66,7 +66,7 @@ const ProductFilterHeader = ({
             transition={{ duration: 0.3, ease: "easeInOut" }}
             className="overflow-hidden border-b border-amber-100"
           >
-            <div className="px-3 py-3 space-y-3">
+            <div className="px-3 pb-3 pt-1 space-y-3">
               {/* Warehouse Tabs */}
               <div className="flex items-center gap-2">
                 {warehouseLabel && (
