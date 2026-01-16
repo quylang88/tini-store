@@ -1,8 +1,5 @@
 import React from "react";
-import SearchBarWithScanner from "../../../components/common/SearchBarWithScanner";
-import WarehouseFilter from "../../../components/common/WarehouseFilter";
-import ScrollableTabs from "../../../components/common/ScrollableTabs";
-import { motion, AnimatePresence } from "framer-motion";
+import ProductFilterHeader from "../../../components/common/ProductFilterHeader";
 
 const OrderCreateHeader = ({
   orderBeingEdited,
@@ -12,10 +9,33 @@ const OrderCreateHeader = ({
   isHeaderExpanded,
   selectedWarehouse,
   setSelectedWarehouse,
+  // categoryTabs, // Removed as we pass raw names now (or need to map back if passed)
+  // But wait, parent passes categoryTabs (objects). We need to support that or change parent.
+  // The plan said "Update OrderCreateHeader... Ensure props are mapped correctly".
+  // Since ProductFilterHeader takes string array, we might need to extract names if categoryTabs are passed.
+  // However, simpler is to use `categoryTabs` prop if passed, or extract strings.
+  // Let's check `categoryTabs` structure: { key, label }.
+  // If we just pass categories (strings), ProductFilterHeader builds tabs.
+  // OrderCreateView computes `categoryTabs` from `categories`.
+  // So we can just pass `settings.categories` if available, or map `categoryTabs`.
+  // But `OrderCreateHeader` props are fixed by parent usage.
+  // We need to see what `categoryTabs` contains. It contains "Tất cả" + categories.
+  // So `categories` (the raw list) is not directly passed to OrderCreateHeader currently.
+  // We should modify OrderCreateHeader to accept `categories` (raw) or map `categoryTabs` back to strings?
+  // Mapping back is hacky.
+  // Better: Update `OrderCreateView` to pass `categories` (raw) to `OrderCreateHeader`.
   categoryTabs,
   activeCategory,
   setActiveCategory,
 }) => {
+  // Extract category names from tabs if needed, or better, change parent.
+  // Let's assume we change parent. But for now let's see if we can derive it.
+  // categoryTabs = [{key: 'Tất cả'...}, {key: 'X', label: 'X'}...]
+  // We can map `categoryTabs.slice(1).map(t => t.key)` to get categories.
+  const categories = categoryTabs
+    ? categoryTabs.filter(t => t.key !== "Tất cả").map(t => t.key)
+    : [];
+
   return (
     <div className="bg-amber-50/90 sticky top-0 z-10 shadow-sm backdrop-blur">
       {/* Hàng 1: Tiêu đề */}
@@ -36,50 +56,27 @@ const OrderCreateHeader = ({
         </div>
       </div>
 
-      {/* Hàng 2: Thanh Tìm kiếm & Scan */}
-      <div className="px-3 py-2 border-b border-amber-100">
-        <SearchBarWithScanner
-          searchTerm={searchTerm}
-          onSearchChange={(e) => setSearchTerm(e.target.value)}
-          onClearSearch={() => setSearchTerm("")}
-          onShowScanner={() => setShowScanner(true)}
-          placeholder="Nhập tên hoặc quét mã sản phẩm..."
-        />
-      </div>
+      {/* Unified Search & Filter Component */}
+      <ProductFilterHeader
+        searchTerm={searchTerm}
+        onSearchChange={(e) => setSearchTerm(e.target.value)}
+        onClearSearch={() => setSearchTerm("")}
+        onShowScanner={() => setShowScanner(true)}
 
-      <AnimatePresence initial={false}>
-        {isHeaderExpanded && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: "auto", opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.3, ease: "easeInOut" }}
-            className="overflow-hidden"
-          >
-            {/* Hàng 3: Chọn kho xuất */}
-            <div className="px-3 py-2 border-b border-amber-100 flex items-center gap-2 text-xs font-semibold text-amber-700">
-              <span className="shrink-0">Kho xuất:</span>
-              <WarehouseFilter
-                activeTab={selectedWarehouse}
-                onChange={setSelectedWarehouse}
-                layoutIdPrefix="order-warehouse"
-                className="flex-1"
-              />
-            </div>
+        warehouseFilter={selectedWarehouse}
+        onWarehouseChange={setSelectedWarehouse}
 
-            {/* Hàng 4: Thanh Tab Danh mục (Scrollable) */}
-            <div className="px-3 py-2 border-b border-amber-100">
-              <ScrollableTabs
-                tabs={categoryTabs}
-                activeTab={activeCategory}
-                onTabChange={setActiveCategory}
-                layoutIdPrefix="order-category"
-                className="-mx-3" // Negative margin to handle padding
-              />
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+        activeCategory={activeCategory}
+        setActiveCategory={setActiveCategory}
+        categories={categories}
+
+        isExpanded={isHeaderExpanded}
+        namespace="order"
+        className="!bg-transparent !backdrop-blur-none" // Remove bg because wrapper has it?
+        // Wrapper has `bg-amber-50/90`. ProductFilterHeader has `bg-amber-50/90`.
+        // If we nest them, opacity adds up.
+        // We should probably override className to remove bg or make it transparent.
+      />
     </div>
   );
 };
