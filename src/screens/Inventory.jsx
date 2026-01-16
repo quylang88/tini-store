@@ -45,29 +45,30 @@ const Inventory = ({
     // Threshold to avoid jitter
     if (Math.abs(currentScrollTop - lastScrollTop.current) > 10) {
       if (direction === "down") {
-        // Safety check: Don't hide if hiding would make the list non-scrollable
+        // Kiểm tra an toàn: Chỉ ẩn nếu danh sách đủ dài
+        // Giảm ngưỡng xuống 200px (đủ cho Header ~120px + TabBar ~60px)
         const scrollRange = scrollHeight - clientHeight;
-        if (scrollRange > 300) {
-          // Scroll down: Hide entire header, add button, and tab bar
+        if (scrollRange > 200) {
+          // Scroll down: Ẩn toàn bộ header, nút thêm, và tab bar
           setIsHeaderVisible(false);
           setIsAddButtonVisible(false);
           if (setTabBarVisible) setTabBarVisible(false);
         }
       } else if (!isNearBottom) {
-        // Scroll up: Show header (but collapsed - search only), add button
+        // Scroll up: Hiện header (nhưng thu gọn - chỉ ô tìm kiếm), hiện nút thêm
         setIsHeaderVisible(true);
         setIsHeaderExpanded(false);
         setIsAddButtonVisible(true);
 
-        // TabBar remains hidden until top
+        // TabBar vẫn ẩn cho đến khi lên đỉnh
         if (currentScrollTop < 10) {
-           setIsHeaderExpanded(true); // Expand full header at top
+           setIsHeaderExpanded(true); // Mở rộng header khi ở đỉnh
            if (setTabBarVisible) setTabBarVisible(true);
         }
       }
       lastScrollTop.current = currentScrollTop;
     } else {
-        // Handle precise top reach even with small scroll delta
+        // Xử lý khi về đích chính xác (kể cả khi scroll chậm)
         if (currentScrollTop < 10) {
             setIsHeaderVisible(true);
             setIsHeaderExpanded(true);

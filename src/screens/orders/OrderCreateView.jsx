@@ -66,19 +66,20 @@ const OrderCreateView = ({
     // Threshold
     if (Math.abs(currentScrollTop - lastScrollTop.current) > 10) {
       if (direction === "down") {
-        // Safety check: Don't hide if hiding would make the list non-scrollable
+        // Kiểm tra an toàn: Chỉ ẩn nếu danh sách đủ dài
+        // Ngưỡng 200px (đủ cho Header ~120px + Footer ~80px)
         const scrollRange = scrollHeight - clientHeight;
-        if (scrollRange > 300) {
-          setIsHeaderVisible(false); // Hide entire header
+        if (scrollRange > 200) {
+          setIsHeaderVisible(false); // Ẩn toàn bộ header
           setIsFooterVisible(false);
           if (setTabBarVisible) setTabBarVisible(false);
         }
       } else if (!isNearBottom) {
-        setIsHeaderVisible(true); // Show header
-        setIsHeaderExpanded(false); // Collapsed (Search only)
+        setIsHeaderVisible(true); // Hiện header
+        setIsHeaderExpanded(false); // Thu gọn (chỉ ô search)
         setIsFooterVisible(true);
 
-        // Expand header only at top
+        // Mở rộng header khi lên đỉnh
         if (currentScrollTop < 10) {
            setIsHeaderExpanded(true);
            if (setTabBarVisible) setTabBarVisible(true);

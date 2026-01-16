@@ -31,29 +31,30 @@ const OrderListView = ({
     const direction = currentScrollTop > lastScrollTop.current ? "down" : "up";
     const isNearBottom = currentScrollTop + clientHeight > scrollHeight - 50;
 
-    // Update scrolled state
+    // Cập nhật trạng thái shadow cho header
     setIsScrolled(currentScrollTop > 10);
 
     if (Math.abs(currentScrollTop - lastScrollTop.current) > 10) {
       if (direction === "down") {
-        // Safety check
+        // Kiểm tra an toàn: Chỉ ẩn nếu danh sách đủ dài (tránh lỗi giật ngược scroll)
+        // Giảm ngưỡng xuống 100px (đủ cho TabBar ~60px)
         const scrollRange = scrollHeight - clientHeight;
-        if (scrollRange > 300) {
+        if (scrollRange > 100) {
           setIsAddButtonVisible(false);
           if (setTabBarVisible) setTabBarVisible(false);
         }
       } else if (!isNearBottom) {
-        // Scroll up: Show Add Button immediately
+        // Scroll lên: Hiện nút Add ngay lập tức
         setIsAddButtonVisible(true);
 
-        // TabBar only shows when at the very top
+        // TabBar chỉ hiện khi về hẳn đầu trang
         if (currentScrollTop < 10) {
           if (setTabBarVisible) setTabBarVisible(true);
         }
       }
       lastScrollTop.current = currentScrollTop;
     } else {
-       // Also check for top when scroll change is small (e.g. slow scroll to top)
+       // Kiểm tra trường hợp về đầu trang khi scroll chậm
        if (currentScrollTop < 10) {
           if (setTabBarVisible) setTabBarVisible(true);
        }
