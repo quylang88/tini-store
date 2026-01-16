@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 
 const AnimatedFilterTabs = ({
@@ -9,6 +9,18 @@ const AnimatedFilterTabs = ({
   className = "",
   tabClassName = "",
 }) => {
+  // Trạng thái để kiểm soát việc render animation
+  const [canAnimate, setCanAnimate] = useState(false);
+
+  useEffect(() => {
+    // Chỉ cho phép animation sau khi component đã mount xong
+    // Điều này ngăn animation chạy khi quay lại màn hình
+    const timer = setTimeout(() => {
+      setCanAnimate(true);
+    }, 100);
+    return () => clearTimeout(timer);
+  }, []);
+
   return (
     <div className={`flex flex-wrap gap-2 ${className}`}>
       {tabs.map((tab) => {
@@ -25,11 +37,22 @@ const AnimatedFilterTabs = ({
             style={{ WebkitTapHighlightColor: "transparent" }}
           >
             {isActive && (
+              // Chỉ sử dụng motion.div nếu canAnimate là true hoặc nếu ta không dùng layoutId khi chưa mount
+              // Để fix triệt để: Render static div khi chưa mount/animate, motion.div khi đã sẵn sàng
+              // Tuy nhiên, nếu render static div thì không có animation layoutId sau này?
+              // Giải pháp: Luôn render motion.div nhưng layoutId chỉ gán khi canAnimate?
+              // Không, thay đổi layoutId sẽ gây remount/flicker.
+              // Giải pháp tốt nhất: transition={{ duration: canAnimate ? undefined : 0 }}
+
               <motion.div
                 layoutId={`${layoutIdPrefix}-active-pill`}
                 className="absolute inset-0 bg-amber-500 rounded-full -z-10"
-                initial={false} // Ngăn chặn animation khi mount
-                transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                initial={false}
+                transition={
+                  canAnimate
+                    ? { type: "spring", stiffness: 300, damping: 30 }
+                    : { duration: 0 }
+                }
               />
             )}
             <span className="relative z-10">{tab.label}</span>

@@ -121,52 +121,71 @@ const useDashboardLogic = ({ products, orders, rangeMode = "dashboard" }) => {
   // --- Logic mới cho Vốn & Hàng tồn lâu ---
 
   // Tính Tổng Vốn Tồn Kho
-  // Logic: Tổng của (tồn kho * giá nhập mới nhất) cho tất cả sản phẩm
+  // Logic CŨ: Tổng của (tồn kho * giá nhập mới nhất) cho tất cả sản phẩm
+  // Logic MỚI: Tính theo từng lô (purchaseLots)
   const totalCapital = useMemo(() => {
     return products.reduce((sum, product) => {
       const stock = product.stock || 0;
       if (stock <= 0) return sum;
+
+      // Nếu có purchaseLots, tính chính xác từng lô
+      if (product.purchaseLots && product.purchaseLots.length > 0) {
+        const lotSum = product.purchaseLots.reduce((lSum, lot) => {
+          const qty = Number(lot.quantity) || 0;
+          const cost = Number(lot.cost) || 0;
+          return lSum + (qty * cost);
+        }, 0);
+        return sum + lotSum;
+      }
+
+      // Fallback nếu chưa có lots: dùng giá nhập mới nhất (costMap)
       const cost = costMap.get(product.id) || 0;
       return sum + (stock * cost);
     }, 0);
   }, [products, costMap]);
 
   // Tính Hàng Tồn Kho Lâu (Slow Moving)
+  // Logic MỚI: "tính từ ngày nhập hàng xa nhất mà hàng đó còn tồn + 60 ngày"
   const slowMovingProducts = useMemo(() => {
     if (!currentDate) return [];
-
-    // 1. Map ngày bán gần nhất dựa trên TẤT CẢ các đơn (bỏ qua bộ lọc)
-    const lastSoldMap = new Map();
-    orders.forEach(order => {
-      if (order.status === 'cancelled') return;
-      const date = new Date(order.date);
-      order.items.forEach(item => {
-        const current = lastSoldMap.get(item.productId);
-        if (!current || date > current) {
-          lastSoldMap.set(item.productId, date);
-        }
-      });
-    });
-
-    const warningDays = 60; // Ngưỡng cảnh báo
+    const warningDays = 60;
 
     return products
       .filter(p => (p.stock || 0) > 0)
       .map(p => {
-        const lastSold = lastSoldMap.get(p.id);
-        const dateToCheck = lastSold || new Date(p.createdAt || currentDate.getTime());
+        let dateToCheck = new Date(p.createdAt || currentDate.getTime());
+
+        // Tìm lô cũ nhất còn hàng (quantity > 0)
+        if (p.purchaseLots && p.purchaseLots.length > 0) {
+          // Lọc các lô còn hàng
+          const activeLots = p.purchaseLots.filter(l => (Number(l.quantity) || 0) > 0);
+          if (activeLots.length > 0) {
+            // Sắp xếp theo ngày tạo (cũ nhất đầu tiên)
+            activeLots.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+            const oldestLot = activeLots[0];
+            if (oldestLot.createdAt) {
+              dateToCheck = new Date(oldestLot.createdAt);
+            }
+          }
+        }
+
         const diffTime = Math.abs(currentDate - dateToCheck);
         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
         return {
           ...p,
           daysNoSale: diffDays,
-          lastSoldDate: lastSold
+          lastImportDate: dateToCheck // Dùng để debug hoặc hiển thị
         };
       })
       .filter(p => p.daysNoSale > warningDays)
       .sort((a, b) => b.daysNoSale - a.daysNoSale);
-  }, [products, orders, currentDate]);
+  }, [products, currentDate]);
+
+  // Tính Hàng Hết Hàng (Out of Stock)
+  const outOfStockProducts = useMemo(() => {
+    return products.filter(p => (p.stock || 0) <= 0);
+  }, [products]);
 
   // --- Kết thúc Logic mới ---
 
@@ -247,6 +266,7 @@ const useDashboardLogic = ({ products, orders, rangeMode = "dashboard" }) => {
     totalProfit,
     totalCapital, // Đã export
     slowMovingProducts, // Đã export
+    outOfStockProducts, // Đã export: Danh sách hết hàng
     topByProfit,
     topByQuantity,
   };
