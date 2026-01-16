@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useEffect } from "react";
 import { ShoppingCart, Plus } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { formatNumber } from "../../utils/helpers";
@@ -6,6 +6,7 @@ import { getWarehouseLabel } from "../../utils/warehouseUtils";
 import { getOrderDisplayName } from "../../utils/orderUtils";
 import FloatingActionButton from "../../components/common/FloatingActionButton";
 import AppHeader from "../../components/common/AppHeader";
+import useScrollHandling from "../../hooks/useScrollHandling";
 
 // Giao diện danh sách đơn tách riêng để dễ quản lý và thêm nút huỷ đơn
 const OrderListView = ({
@@ -18,42 +19,33 @@ const OrderListView = ({
   onSelectOrder,
   setTabBarVisible,
 }) => {
-  // Logic scroll ẩn/hiện UI giống màn Inventory
-  const [isAddButtonVisible, setIsAddButtonVisible] = useState(true);
-  const lastScrollTop = useRef(0);
-
-  const handleScroll = (e) => {
-    const target = e.target;
-    const currentScrollTop = target.scrollTop;
-    const scrollHeight = target.scrollHeight;
-    const clientHeight = target.clientHeight;
-    const direction = currentScrollTop > lastScrollTop.current ? "down" : "up";
-    const isNearBottom = currentScrollTop + clientHeight > scrollHeight - 50;
-
-    if (Math.abs(currentScrollTop - lastScrollTop.current) > 10) {
-      if (direction === "down") {
-        setIsAddButtonVisible(false);
-        if (setTabBarVisible) setTabBarVisible(false);
-      } else if (!isNearBottom) {
-        setIsAddButtonVisible(true);
-        if (setTabBarVisible) setTabBarVisible(true);
-      }
-      lastScrollTop.current = currentScrollTop;
+  // Ensure TabBar is visible when mounting this view (e.g. returning from Create View)
+  useEffect(() => {
+    if (setTabBarVisible) {
+      setTabBarVisible(true);
     }
-  };
+  }, [setTabBarVisible]);
+
+  // Logic scroll ẩn/hiện UI sử dụng hook mới
+  const { isAddButtonVisible, isScrolled, handleScroll } = useScrollHandling({
+    mode: "simple",
+    setTabBarVisible,
+  });
 
   return (
     <div className="relative h-full bg-transparent pb-20">
-      <AppHeader />
+      <AppHeader isScrolled={isScrolled} />
 
       {/* Nút tạo đơn mới nổi để tái sử dụng layout và tránh lặp code. */}
       <AnimatePresence>
         {isAddButtonVisible && (
           <motion.div
+            layout
+            layoutId="floating-action-button"
             initial={{ scale: 0, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0, opacity: 0 }}
-            className="fixed right-5 bottom-24 z-30"
+            className="fixed right-5 bottom-[calc(env(safe-area-inset-bottom)+90px)] z-30"
           >
             <FloatingActionButton
               onClick={onCreateOrder}

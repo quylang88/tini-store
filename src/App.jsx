@@ -129,7 +129,7 @@ const App = () => {
   }
 
   return (
-    <div className="h-screen bg-gradient-to-br from-amber-50 via-rose-50 to-orange-100 text-gray-900 font-sans overflow-hidden flex flex-col pt-[env(safe-area-inset-top)]">
+    <div className="h-screen bg-rose-50 text-gray-900 font-sans overflow-hidden flex flex-col pt-[env(safe-area-inset-top)]">
       <div className="flex-1 overflow-hidden relative">
         <AnimatePresence mode="popLayout" initial={false} custom={direction}>
           {activeTab === "dashboard" && (

@@ -43,11 +43,21 @@ const Settings = ({
     setSettings,
   });
 
+  const [isScrolled, setIsScrolled] = React.useState(false);
+
+  const handleScroll = (e) => {
+    const currentScrollTop = e.target.scrollTop;
+    setIsScrolled(currentScrollTop > 10);
+  };
+
   return (
     <div className="relative h-full bg-transparent">
-      <AppHeader />
+      <AppHeader isScrolled={isScrolled} />
 
-      <div className="h-full overflow-y-auto min-h-0 p-4 pt-[80px] space-y-6 pb-24">
+      <div
+        className="h-full overflow-y-auto min-h-0 p-4 pt-[80px] space-y-6 pb-24"
+        onScroll={handleScroll}
+      >
         {/* 1. Cấu hình Tiền tệ */}
         <SettingsSection
           title="Cấu hình Tiền tệ"
