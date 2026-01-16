@@ -28,11 +28,7 @@ const OrderCreateProductList = ({
   };
 
   return (
-    <motion.div
-      layout
-      className="flex-1 overflow-y-auto p-3 space-y-3 pb-40 min-h-0"
-      onScroll={handleScroll}
-    >
+    <div className="p-3 space-y-3 pb-40">
       <AnimatePresence mode="popLayout">
         {filteredProducts.map((p) => {
           const qty = cart[p.id] || 0;

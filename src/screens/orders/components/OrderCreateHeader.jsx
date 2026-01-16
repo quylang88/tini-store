@@ -50,6 +50,7 @@ const OrderCreateHeader = ({
         setActiveCategory={setActiveCategory}
         categories={categories}
         isExpanded={isHeaderExpanded}
+        enableFilters={false}
         namespace="order"
         className="!bg-transparent !backdrop-blur-none"
       />

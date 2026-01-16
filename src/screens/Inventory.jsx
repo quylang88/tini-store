@@ -3,6 +3,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Plus } from "lucide-react";
 import BarcodeScanner from "../components/BarcodeScanner";
 import ProductFilterHeader from "../components/common/ProductFilterHeader";
+import ProductFilterSection from "../components/common/ProductFilterSection";
 import ProductList from "./inventory/ProductList";
 import ProductDetailModal from "./inventory/ProductDetailModal";
 import ProductModal from "./inventory/ProductModal";
@@ -59,7 +60,6 @@ const Inventory = ({
 
   // States for scroll animation reused via hook
   const {
-    isHeaderExpanded,
     isHeaderVisible,
     isAddButtonVisible,
     isScrolled,
@@ -84,40 +84,45 @@ const Inventory = ({
       )}
 
       {/* Container cho nội dung chính, bắt đầu từ dưới AppHeader */}
-      <div className="flex flex-col h-full pt-[72px]">
-        {/* InventoryHeader cố định phía trên danh sách */}
+      <div className="flex flex-col h-full pt-[72px] relative">
+        {/* InventoryHeader (Sticky/Fixed - Chỉ chứa Search Bar) */}
         <AnimatePresence>
           {isHeaderVisible && (
             <motion.div
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: "auto", opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              transition={{ duration: 0.2 }}
-              className="z-10 bg-amber-50 shadow-sm shrink-0 overflow-hidden"
+              initial={{ y: -100 }}
+              animate={{ y: 0 }}
+              exit={{ y: -100 }}
+              transition={{ duration: 0.3 }}
+              className="absolute top-0 left-0 right-0 z-10 shadow-sm"
             >
               <ProductFilterHeader
                 searchTerm={searchTerm}
                 onSearchChange={(e) => setSearchTerm(e.target.value)}
                 onClearSearch={() => setSearchTerm("")}
                 onShowScanner={() => setShowScanner(true)}
-                activeCategory={activeCategory}
-                setActiveCategory={setActiveCategory}
-                warehouseFilter={warehouseFilter}
-                onWarehouseChange={setWarehouseFilter}
-                categories={settings.categories}
-                isExpanded={isHeaderExpanded}
+                enableFilters={false} // Tắt render filter ở header cố định
                 namespace="inventory"
               />
             </motion.div>
           )}
         </AnimatePresence>
 
-        {/* Product List cuộn bên dưới InventoryHeader */}
+        {/* Product List cuộn bên dưới */}
         <motion.div
           layout
-          className="flex-1 overflow-y-auto min-h-0"
+          className="flex-1 overflow-y-auto min-h-0 pt-[60px]" // Padding top để tránh search bar che mất filter
           onScroll={handleScroll}
         >
+          {/* Filter Section nằm trong dòng chảy cuộn (để scroll tự nhiên) */}
+          <ProductFilterSection
+            activeCategory={activeCategory}
+            setActiveCategory={setActiveCategory}
+            warehouseFilter={warehouseFilter}
+            onWarehouseChange={setWarehouseFilter}
+            categories={settings.categories}
+            namespace="inventory"
+          />
+
           <ProductList
             products={filteredProducts}
             onDelete={handleDelete}

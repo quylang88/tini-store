@@ -5,6 +5,7 @@ import { WAREHOUSES } from "../../utils/warehouseUtils";
 import { motion, AnimatePresence } from "framer-motion";
 
 import useScrollHandling from "../../hooks/useScrollHandling";
+import ProductFilterSection from "../../../components/common/ProductFilterSection";
 import OrderCreateHeader from "./components/OrderCreateHeader";
 import OrderCreateProductList from "./components/OrderCreateProductList";
 import OrderCreateFooter from "./components/OrderCreateFooter";
@@ -78,15 +79,15 @@ const OrderCreateView = ({
         />
       )}
 
-      {/* Header Cố định */}
+      {/* Header Cố định (Search Only) */}
       <AnimatePresence>
         {isHeaderVisible && (
           <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: "auto", opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className="shrink-0 overflow-hidden"
+            initial={{ y: -100 }}
+            animate={{ y: 0 }}
+            exit={{ y: -100 }}
+            transition={{ duration: 0.3 }}
+            className="absolute top-0 left-0 right-0 z-10 shadow-sm"
           >
             <OrderCreateHeader
               orderBeingEdited={orderBeingEdited}
@@ -104,19 +105,35 @@ const OrderCreateView = ({
         )}
       </AnimatePresence>
 
-      {/* List Sản Phẩm (Đã Lọc) */}
-      <OrderCreateProductList
-        filteredProducts={filteredProducts}
-        handleScroll={handleScroll}
-        cart={cart}
-        selectedWarehouse={selectedWarehouse}
-        orderBeingEdited={orderBeingEdited}
-        priceOverrides={priceOverrides}
-        handlePriceChange={handlePriceChange}
-        adjustQuantity={adjustQuantity}
-        handleQuantityChange={handleQuantityChange}
-        activeCategory={activeCategory}
-      />
+      {/* List Sản Phẩm (Đã Lọc) + In-flow Filters */}
+      <motion.div
+        layout
+        className="flex-1 overflow-y-auto min-h-0 pt-[60px]" // Padding for sticky header
+        onScroll={handleScroll}
+      >
+        <ProductFilterSection
+          activeCategory={activeCategory}
+          setActiveCategory={setActiveCategory}
+          warehouseFilter={selectedWarehouse}
+          onWarehouseChange={setSelectedWarehouse}
+          categories={categories}
+          warehouseLabel="Kho xuất:"
+          namespace="order"
+        />
+
+        <OrderCreateProductList
+          filteredProducts={filteredProducts}
+          // handleScroll passed to container instead
+          cart={cart}
+          selectedWarehouse={selectedWarehouse}
+          orderBeingEdited={orderBeingEdited}
+          priceOverrides={priceOverrides}
+          handlePriceChange={handlePriceChange}
+          adjustQuantity={adjustQuantity}
+          handleQuantityChange={handleQuantityChange}
+          activeCategory={activeCategory}
+        />
+      </motion.div>
 
       {/* Tạo đơn hàng - Footer */}
       <OrderCreateFooter

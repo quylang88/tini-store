@@ -13,17 +13,16 @@ const useScrollHandling = ({
   scrollThreshold = 200,
   dataDependency = null,
 }) => {
-  const [isHeaderExpanded, setIsHeaderExpanded] = useState(true);
+  // Removed isHeaderExpanded as Filter is now handled by native scroll
   const [isHeaderVisible, setIsHeaderVisible] = useState(true);
   const [isAddButtonVisible, setIsAddButtonVisible] = useState(true);
   const [isScrolled, setIsScrolled] = useState(false);
   const lastScrollTop = useRef(0);
 
-  // Reset trạng thái khi dữ liệu thay đổi (vd: sau khi xoá sản phẩm)
+  // Reset trạng thái khi dữ liệu thay đổi
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsHeaderVisible(true);
-      setIsHeaderExpanded(true);
       setIsAddButtonVisible(true);
       if (setTabBarVisible) setTabBarVisible(true);
     }, 0);
@@ -35,52 +34,42 @@ const useScrollHandling = ({
     const currentScrollTop = target.scrollTop;
     const scrollHeight = target.scrollHeight;
     const clientHeight = target.clientHeight;
-    const direction = currentScrollTop > lastScrollTop.current ? "down" : "up";
+
+    // Direction logic (unused locally but good for debugging)
+    // const direction = currentScrollTop > lastScrollTop.current ? "down" : "up";
+
     const isNearBottom = currentScrollTop + clientHeight > scrollHeight - 50;
     const scrollRange = scrollHeight - clientHeight;
 
-    // Cập nhật trạng thái shadow cho header
+    // Cập nhật trạng thái shadow cho header (khi scroll qua phần search)
     setIsScrolled(currentScrollTop > 10);
 
     const diff = currentScrollTop - lastScrollTop.current;
 
-    // Bỏ qua các thay đổi nhỏ để tránh noise, trừ khi ở gần đỉnh
-    // Với scroll down, ta cho phép xử lý ngay (diff > 0) để đảm bảo độ nhạy
     if (Math.abs(diff) > 2 || currentScrollTop < 50 || diff > 0) {
       if (diff > 0) {
         // SCROLL DOWN
-        // Chỉ ẩn nếu nội dung đủ dài (tránh lỗi giật ngược trên danh sách ngắn)
         if (scrollRange > scrollThreshold) {
-          // Giai đoạn 1: Thu gọn Filter, ẩn TabBar, ẩn AddButton
-          // Bắt đầu thu gọn Filter ngay khi rời đỉnh (vd: > 20px) để tạo hiệu ứng "từ từ biến mất"
-          if (currentScrollTop > 20) {
-             setIsHeaderExpanded(false);
-          }
-
           setIsAddButtonVisible(false);
           if (setTabBarVisible) setTabBarVisible(false);
 
-          // Giai đoạn 2: Ẩn thanh Search (toàn bộ header) khi scroll sâu hơn một chút (vd: > 80px)
+          // Ẩn thanh Search (sticky header) khi scroll sâu hơn
+          // Ngưỡng 80px để cho phép Filter (trong list) cuộn hết trước khi ẩn search
           if (currentScrollTop > 80) {
             setIsHeaderVisible(false);
           } else {
-            // Giữ search bar khi mới scroll qua filter
             setIsHeaderVisible(true);
           }
         }
       } else if (!isNearBottom && diff < 0) {
         // SCROLL UP
-        // 1. Luôn hiện thanh Search và Add Button ngay lập tức (tạo cảm giác mượt)
+        // Luôn hiện Search và Add Button ngay lập tức
         setIsHeaderVisible(true);
         setIsAddButtonVisible(true);
 
-        // 2. TabBar và Filter chỉ hiện khi về hẳn đầu trang (hoặc danh sách ngắn)
+        // TabBar chỉ hiện khi về hẳn đầu trang
         if (scrollRange <= scrollThreshold || currentScrollTop < 10) {
-           setIsHeaderExpanded(true);
            if (setTabBarVisible) setTabBarVisible(true);
-        } else {
-           // Nếu đang ở giữa danh sách, giữ Filter thu gọn
-           setIsHeaderExpanded(false);
         }
       }
       lastScrollTop.current = currentScrollTop;
@@ -88,7 +77,6 @@ const useScrollHandling = ({
        // Xử lý edge case: về đích chính xác
        if (currentScrollTop < 10) {
           setIsHeaderVisible(true);
-          setIsHeaderExpanded(true);
           setIsAddButtonVisible(true);
           if (setTabBarVisible) setTabBarVisible(true);
        }
@@ -96,7 +84,6 @@ const useScrollHandling = ({
   };
 
   return {
-    isHeaderExpanded,
     isHeaderVisible,
     isAddButtonVisible,
     isScrolled,
