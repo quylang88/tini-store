@@ -100,10 +100,10 @@ const StatsDetail = ({ products, orders, onBack }) => {
   return (
     <div className="h-full overflow-y-auto p-4 space-y-4 pb-24 animate-fade-in">
       <div>
-        <div className="text-xs text-amber-500 uppercase font-semibold whitespace-nowrap">
+        <div className="text-xl text-amber-700 font-bold whitespace-nowrap">
           Thống kê chi tiết
         </div>
-        <div className="text-sm font-bold text-amber-900 whitespace-nowrap">
+        <div className="text-sm font-medium text-amber-600 whitespace-nowrap">
           Phân tích doanh thu & lợi nhuận
         </div>
       </div>
