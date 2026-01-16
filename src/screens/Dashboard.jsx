@@ -53,12 +53,22 @@ const Dashboard = ({ products, orders, onOpenDetail }) => {
     )}/${currentDate.getFullYear()}`;
   }, [currentDate]);
 
+  const [isScrolled, setIsScrolled] = useState(false);
+
+  const handleScroll = (e) => {
+    const currentScrollTop = e.target.scrollTop;
+    setIsScrolled(currentScrollTop > 10);
+  };
+
   return (
     <div className="relative h-full bg-inherit">
-      <AppHeader />
+      <AppHeader isScrolled={isScrolled} />
 
       {/* Nội dung cuộn */}
-      <div className="h-full overflow-y-auto min-h-0 p-4 pt-[80px] space-y-4 pb-24 animate-fade-in">
+      <div
+        className="h-full overflow-y-auto min-h-0 p-4 pt-[80px] space-y-4 pb-24 animate-fade-in"
+        onScroll={handleScroll}
+      >
         {/* Nhãn tiêu đề */}
         <div className="flex items-center justify-between">
           <div>

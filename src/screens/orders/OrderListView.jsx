@@ -20,6 +20,7 @@ const OrderListView = ({
 }) => {
   // Logic scroll ẩn/hiện UI giống màn Inventory
   const [isAddButtonVisible, setIsAddButtonVisible] = useState(true);
+  const [isScrolled, setIsScrolled] = useState(false);
   const lastScrollTop = useRef(0);
 
   const handleScroll = (e) => {
@@ -29,6 +30,9 @@ const OrderListView = ({
     const clientHeight = target.clientHeight;
     const direction = currentScrollTop > lastScrollTop.current ? "down" : "up";
     const isNearBottom = currentScrollTop + clientHeight > scrollHeight - 50;
+
+    // Update scrolled state
+    setIsScrolled(currentScrollTop > 10);
 
     if (Math.abs(currentScrollTop - lastScrollTop.current) > 10) {
       if (direction === "down") {
@@ -44,7 +48,7 @@ const OrderListView = ({
 
   return (
     <div className="relative h-full bg-transparent pb-20">
-      <AppHeader />
+      <AppHeader isScrolled={isScrolled} />
 
       {/* Nút tạo đơn mới nổi để tái sử dụng layout và tránh lặp code. */}
       <AnimatePresence>
