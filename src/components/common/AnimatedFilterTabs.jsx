@@ -37,13 +37,6 @@ const AnimatedFilterTabs = ({
             style={{ WebkitTapHighlightColor: "transparent" }}
           >
             {isActive && (
-              // Chỉ sử dụng motion.div nếu canAnimate là true hoặc nếu ta không dùng layoutId khi chưa mount
-              // Để fix triệt để: Render static div khi chưa mount/animate, motion.div khi đã sẵn sàng
-              // Tuy nhiên, nếu render static div thì không có animation layoutId sau này?
-              // Giải pháp: Luôn render motion.div nhưng layoutId chỉ gán khi canAnimate?
-              // Không, thay đổi layoutId sẽ gây remount/flicker.
-              // Giải pháp tốt nhất: transition={{ duration: canAnimate ? undefined : 0 }}
-
               <motion.div
                 layoutId={`${layoutIdPrefix}-active-pill`}
                 className="absolute inset-0 bg-amber-500 rounded-full -z-10"
