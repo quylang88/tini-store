@@ -1,8 +1,8 @@
 import React from "react";
 import { Image as ImageIcon, Trash2 } from "lucide-react";
-import { formatNumber } from "../../../utils/helpers";
-import { getLatestCost, getLatestUnitCost } from "../../../utils/purchaseUtils";
-import { normalizeWarehouseStock } from "../../../utils/warehouseUtils";
+import { formatNumber } from "../../utils/helpers";
+import { getLatestCost, getLatestUnitCost } from "../../utils/purchaseUtils";
+import { normalizeWarehouseStock } from "../../utils/warehouseUtils";
 import { motion, AnimatePresence } from "framer-motion";
 
 const ProductList = ({

@@ -1,10 +1,10 @@
 import React from "react";
-import { formatNumber } from "../../../utils/helpers";
-import { getLatestCost, getLatestLot } from "../../../utils/purchaseUtils";
-import { getWarehouseLabel } from "../../../utils/warehouseUtils";
-import SheetModal from "../../../components/modals/SheetModal";
-import useModalCache from "../../../hooks/useModalCache";
-import Button from "../../../components/common/Button";
+import { formatNumber } from "../../utils/helpers";
+import { getLatestCost, getLatestLot } from "../../utils/purchaseUtils";
+import { getWarehouseLabel } from "../../utils/warehouseUtils";
+import SheetModal from "../../components/modals/SheetModal";
+import useModalCache from "../../hooks/useModalCache";
+import Button from "../../components/common/Button";
 
 // ProductDetailModal: Hiển thị lịch sử nhập hàng (View Only)
 const ProductDetailModal = ({ product, onClose, onEditLot }) => {
