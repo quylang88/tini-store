@@ -1,6 +1,6 @@
 import React from "react";
 import SearchBarWithScanner from "../../components/common/SearchBarWithScanner";
-import AnimatedFilterTabs from "../../components/common/AnimatedFilterTabs";
+import WarehouseFilter from "../../components/common/WarehouseFilter";
 import ScrollableTabs from "../../components/common/ScrollableTabs";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -16,13 +16,6 @@ const InventoryHeader = ({
   categories,
   isExpanded = true,
 }) => {
-  // Chuẩn bị dữ liệu cho AnimatedFilterTabs
-  const warehouseTabs = [
-    { key: "all", label: "Tất cả" },
-    { key: "daLat", label: "Lâm Đồng" },
-    { key: "vinhPhuc", label: "Vĩnh Phúc" },
-  ];
-
   // Chuẩn bị dữ liệu cho ScrollableTabs (danh mục)
   const categoryTabs = [
     { key: "Tất cả", label: "Tất cả" },
@@ -38,6 +31,7 @@ const InventoryHeader = ({
           onSearchChange={onSearchChange}
           onClearSearch={onClearSearch}
           onShowScanner={onShowScanner}
+          placeholder="Nhập tên hoặc quét mã sản phẩm..."
         />
       </div>
 
@@ -52,9 +46,8 @@ const InventoryHeader = ({
             className="overflow-hidden border-b border-amber-100"
           >
             <div className="px-3 py-3 space-y-3">
-              {/* Filter Kho - Dùng AnimatedFilterTabs cho hiệu ứng slide mượt */}
-              <AnimatedFilterTabs
-                tabs={warehouseTabs}
+              {/* Filter Kho */}
+              <WarehouseFilter
                 activeTab={warehouseFilter}
                 onChange={onWarehouseChange}
                 layoutIdPrefix="inventory-warehouse"

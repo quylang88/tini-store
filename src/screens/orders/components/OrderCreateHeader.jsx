@@ -1,6 +1,6 @@
 import React from "react";
 import SearchBarWithScanner from "../../../components/common/SearchBarWithScanner";
-import AnimatedFilterTabs from "../../../components/common/AnimatedFilterTabs";
+import WarehouseFilter from "../../../components/common/WarehouseFilter";
 import ScrollableTabs from "../../../components/common/ScrollableTabs";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -10,7 +10,6 @@ const OrderCreateHeader = ({
   searchTerm,
   setSearchTerm,
   isHeaderExpanded,
-  warehouseTabs,
   selectedWarehouse,
   setSelectedWarehouse,
   categoryTabs,
@@ -44,7 +43,7 @@ const OrderCreateHeader = ({
           onSearchChange={(e) => setSearchTerm(e.target.value)}
           onClearSearch={() => setSearchTerm("")}
           onShowScanner={() => setShowScanner(true)}
-          placeholder="Tìm tên hoặc mã sản phẩm..."
+          placeholder="Nhập tên hoặc quét mã sản phẩm..."
         />
       </div>
 
@@ -60,8 +59,7 @@ const OrderCreateHeader = ({
             {/* Hàng 3: Chọn kho xuất */}
             <div className="px-3 py-2 border-b border-amber-100 flex items-center gap-2 text-xs font-semibold text-amber-700">
               <span className="shrink-0">Kho xuất:</span>
-              <AnimatedFilterTabs
-                tabs={warehouseTabs}
+              <WarehouseFilter
                 activeTab={selectedWarehouse}
                 onChange={setSelectedWarehouse}
                 layoutIdPrefix="order-warehouse"

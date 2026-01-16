@@ -125,6 +125,7 @@ const Inventory = ({
             onDelete={handleDelete}
             onOpenDetail={setDetailProduct}
             activeCategory={activeCategory}
+            activeWarehouse={warehouseFilter}
           />
         </div>
       </div>
