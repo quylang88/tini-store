@@ -1,9 +1,8 @@
-import React, { useState } from "react";
-import { ArrowUpRight, DollarSign, TrendingUp, Package, AlertTriangle } from "lucide-react";
+import React, { useState, useMemo } from "react";
+import { ArrowUpRight, DollarSign, TrendingUp, Package, AlertTriangle, ShoppingCart } from "lucide-react";
 import { formatNumber } from "../utils/helpers";
 import useDashboardLogic from "../hooks/useDashboardLogic";
 import MetricCard from "../components/stats/MetricCard";
-import AnimatedFilterTabs from "../components/common/AnimatedFilterTabs";
 import TopSellingSection from "../components/stats/TopSellingSection";
 import TopListModal from "../components/stats/TopListModal";
 import FloatingActionButton from "../components/common/FloatingActionButton";
@@ -11,12 +10,10 @@ import AppHeader from "../components/common/AppHeader";
 
 const Dashboard = ({ products, orders, onOpenDetail }) => {
   const {
-    rangeOptions,
     topOptions,
     topLimit,
     setTopLimit,
-    activeRange,
-    setActiveRange,
+    filteredPaidOrders,
     totalRevenue,
     totalProfit,
     totalCapital,
@@ -34,11 +31,14 @@ const Dashboard = ({ products, orders, onOpenDetail }) => {
     activeModal === "quantity" ? "Top số lượng" : "Top lợi nhuận";
   const modalItems = activeModal === "quantity" ? topByQuantity : topByProfit;
 
-  // Transform rangeOptions for AnimatedFilterTabs
-  const rangeTabs = rangeOptions.map((opt) => ({
-    key: opt.id,
-    label: opt.label,
-  }));
+  // Derive order count
+  const orderCount = filteredPaidOrders.length;
+
+  // Generate current month label
+  const currentMonthLabel = useMemo(() => {
+    const now = new Date();
+    return `Tháng ${String(now.getMonth() + 1).padStart(2, "0")}/${now.getFullYear()}`;
+  }, []);
 
   return (
     <div className="relative h-full bg-inherit">
@@ -46,16 +46,13 @@ const Dashboard = ({ products, orders, onOpenDetail }) => {
 
       {/* Scrollable Content */}
       <div className="h-full overflow-y-auto min-h-0 p-4 pt-[80px] space-y-4 pb-24 animate-fade-in">
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-3">
-          {/* Căn bộ lọc thời gian gọn trong thẻ riêng để dành chỗ cho nút nổi phía dưới. */}
-          <div className="flex flex-wrap items-center gap-2 justify-between">
-            <AnimatedFilterTabs
-              tabs={rangeTabs}
-              activeTab={activeRange}
-              onChange={setActiveRange}
-              layoutIdPrefix="dashboard-range"
-            />
-          </div>
+
+        {/* Header Label */}
+        <div className="flex items-center justify-between">
+           <div>
+              <div className="text-xs text-amber-500 font-bold uppercase">Tổng quan</div>
+              <h2 className="text-xl font-bold text-amber-900">{currentMonthLabel}</h2>
+           </div>
         </div>
 
         {/* Metrics Grid */}
@@ -75,10 +72,17 @@ const Dashboard = ({ products, orders, onOpenDetail }) => {
           />
 
           <MetricCard
+             icon={ShoppingCart}
+             label="Số đơn"
+             value={orderCount}
+             className="bg-amber-400 shadow-amber-200"
+          />
+
+          <MetricCard
             icon={Package}
             label="Vốn tồn kho"
             value={`${formatNumber(totalCapital)}đ`}
-            className="bg-blue-400 shadow-blue-200 col-span-2"
+            className="bg-blue-400 shadow-blue-200"
           />
         </div>
 
