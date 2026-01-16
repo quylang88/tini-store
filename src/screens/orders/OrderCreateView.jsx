@@ -5,7 +5,7 @@ import { WAREHOUSES } from "../../utils/warehouseUtils";
 import { motion, AnimatePresence } from "framer-motion";
 
 import useScrollHandling from "../../hooks/useScrollHandling";
-import ProductFilterSection from "../../../components/common/ProductFilterSection";
+import ProductFilterSection from "../../components/common/ProductFilterSection";
 import OrderCreateHeader from "./components/OrderCreateHeader";
 import OrderCreateProductList from "./components/OrderCreateProductList";
 import OrderCreateFooter from "./components/OrderCreateFooter";
