@@ -29,7 +29,7 @@ const Inventory = ({
     isAddButtonVisible,
     isScrolled,
     handleScroll,
-  } = useScrollHandling({ mode: "staged", setTabBarVisible });
+  } = useScrollHandling({ mode: "staged", setTabBarVisible, searchHideThreshold: 100 });
 
   const {
     isModalOpen,
@@ -104,7 +104,7 @@ const Inventory = ({
 
         {/* Product List cuộn bên dưới InventoryHeader */}
         <div
-          className="flex-1 overflow-y-auto min-h-0 pt-[70px]"
+          className="flex-1 overflow-y-auto min-h-0 pt-[56px]"
           onScroll={handleScroll}
         >
           {/* Filter Section nằm trong luồng scroll */}

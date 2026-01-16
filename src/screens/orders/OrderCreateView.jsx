@@ -55,7 +55,7 @@ const OrderCreateView = ({
     isSearchVisible,
     isAddButtonVisible: isFooterVisible, // Reuse logic for footer (behaves like Add Button/TabBar)
     handleScroll,
-  } = useScrollHandling({ mode: "staged", setTabBarVisible });
+  } = useScrollHandling({ mode: "staged", setTabBarVisible, searchHideThreshold: 100 });
 
   const categories = settings?.categories || ["Chung"];
   const warehouseTabs = WAREHOUSES.map((w) => ({ key: w.key, label: w.label }));
@@ -92,7 +92,7 @@ const OrderCreateView = ({
       </motion.div>
 
       {/* List Sản Phẩm (Đã Lọc) */}
-      <div className="flex-1 overflow-hidden flex flex-col pt-[130px]">
+      <div className="flex-1 overflow-hidden flex flex-col pt-[106px]">
         <OrderCreateProductList
           filteredProducts={filteredProducts}
           handleScroll={handleScroll}

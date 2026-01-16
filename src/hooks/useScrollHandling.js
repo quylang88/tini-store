@@ -7,16 +7,16 @@ import { useState, useRef, useEffect } from "react";
  * @param {Object} config
  * @param {'staged' | 'simple'} config.mode - 'staged' (Header hides after short scroll) or 'simple' (only TabBar/AddButton hide).
  * @param {Function} config.setTabBarVisible - Optional callback to control global TabBar.
+ * @param {number} config.searchHideThreshold - Custom threshold for hiding search bar (default 60).
  * @returns {Object} { isSearchVisible, isAddButtonVisible, handleScroll, isScrolled }
  */
-const useScrollHandling = ({ mode = "staged", setTabBarVisible } = {}) => {
+const useScrollHandling = ({ mode = "staged", setTabBarVisible, searchHideThreshold = 60 } = {}) => {
   const [isSearchVisible, setSearchVisible] = useState(true); // For Header/Search
   const [isAddButtonVisible, setAddButtonVisible] = useState(true); // For FAB
   const [isScrolled, setIsScrolled] = useState(false); // For Header shadow
 
   const lastScrollTop = useRef(0);
   const scrollThreshold = 10; // Minimum delta to trigger change
-  const searchHideThreshold = 60; // Distance to scroll down before hiding search in 'staged' mode
 
   const handleScroll = (e) => {
     const target = e.target;

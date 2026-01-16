@@ -47,10 +47,7 @@ const OrderCreateProductList = ({
         categories={categories}
         warehouseTabs={warehouseTabs}
         namespace="order-create"
-        className="-mx-3 -mt-3 mb-3 pt-3 sticky top-0 z-10 shadow-sm" // Sticky behavior within list if desired, or just in-flow
-        // User asked for "filter danh mục sẽ gắn vào list để scroll down cùng với list"
-        // This means it scrolls WITH the list (not sticky).
-        // Removing "sticky" class to ensure it scrolls away.
+        className="-mx-3 -mt-3 mb-3 pt-3" // Not sticky, scrolls with list
       />
       {/* Re-adding -mx-3 to compensate for parent padding */}
 
