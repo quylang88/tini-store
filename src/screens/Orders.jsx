@@ -126,6 +126,7 @@ const Orders = ({
               }, 300);
             }
           }}
+          setTabBarVisible={setTabBarVisible}
         />
       );
     }

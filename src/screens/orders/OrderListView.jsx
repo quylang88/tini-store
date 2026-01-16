@@ -39,10 +39,20 @@ const OrderListView = ({
         setIsAddButtonVisible(false);
         if (setTabBarVisible) setTabBarVisible(false);
       } else if (!isNearBottom) {
+        // Scroll up: Show Add Button immediately
         setIsAddButtonVisible(true);
-        if (setTabBarVisible) setTabBarVisible(true);
+
+        // TabBar only shows when at the very top
+        if (currentScrollTop < 10) {
+          if (setTabBarVisible) setTabBarVisible(true);
+        }
       }
       lastScrollTop.current = currentScrollTop;
+    } else {
+       // Also check for top when scroll change is small (e.g. slow scroll to top)
+       if (currentScrollTop < 10) {
+          if (setTabBarVisible) setTabBarVisible(true);
+       }
     }
   };
 

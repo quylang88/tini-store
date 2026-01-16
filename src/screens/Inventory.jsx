@@ -24,6 +24,7 @@ const Inventory = ({
 
   // States for scroll animation
   const [isHeaderExpanded, setIsHeaderExpanded] = useState(true);
+  const [isHeaderVisible, setIsHeaderVisible] = useState(true);
   const [isAddButtonVisible, setIsAddButtonVisible] = useState(true);
   const [isScrolled, setIsScrolled] = useState(false);
   const lastScrollTop = useRef(0);
@@ -44,16 +45,31 @@ const Inventory = ({
     // Threshold to avoid jitter
     if (Math.abs(currentScrollTop - lastScrollTop.current) > 10) {
       if (direction === "down") {
-        setIsHeaderExpanded(false);
+        // Scroll down: Hide entire header, add button, and tab bar
+        setIsHeaderVisible(false);
         setIsAddButtonVisible(false);
         if (setTabBarVisible) setTabBarVisible(false);
       } else if (!isNearBottom) {
-        // Only show if scrolling up AND not near bottom
+        // Scroll up: Show header (but collapsed - search only), add button
+        setIsHeaderVisible(true);
+        setIsHeaderExpanded(false);
         setIsAddButtonVisible(true);
-        setIsHeaderExpanded(true);
-        if (setTabBarVisible) setTabBarVisible(true);
+
+        // TabBar remains hidden until top
+        if (currentScrollTop < 10) {
+           setIsHeaderExpanded(true); // Expand full header at top
+           if (setTabBarVisible) setTabBarVisible(true);
+        }
       }
       lastScrollTop.current = currentScrollTop;
+    } else {
+        // Handle precise top reach even with small scroll delta
+        if (currentScrollTop < 10) {
+            setIsHeaderVisible(true);
+            setIsHeaderExpanded(true);
+            setIsAddButtonVisible(true);
+            if (setTabBarVisible) setTabBarVisible(true);
+        }
     }
   };
 
@@ -107,21 +123,31 @@ const Inventory = ({
       {/* Container cho nội dung chính, bắt đầu từ dưới AppHeader */}
       <div className="flex flex-col h-full pt-[72px]">
         {/* InventoryHeader cố định phía trên danh sách */}
-        <div className="z-10 bg-amber-50 shadow-sm shrink-0">
-          <ProductFilterHeader
-            searchTerm={searchTerm}
-            onSearchChange={(e) => setSearchTerm(e.target.value)}
-            onClearSearch={() => setSearchTerm("")}
-            onShowScanner={() => setShowScanner(true)}
-            activeCategory={activeCategory}
-            setActiveCategory={setActiveCategory}
-            warehouseFilter={warehouseFilter}
-            onWarehouseChange={setWarehouseFilter}
-            categories={settings.categories}
-            isExpanded={isHeaderExpanded}
-            namespace="inventory"
-          />
-        </div>
+        <AnimatePresence>
+          {isHeaderVisible && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: "auto", opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="z-10 bg-amber-50 shadow-sm shrink-0 overflow-hidden"
+            >
+              <ProductFilterHeader
+                searchTerm={searchTerm}
+                onSearchChange={(e) => setSearchTerm(e.target.value)}
+                onClearSearch={() => setSearchTerm("")}
+                onShowScanner={() => setShowScanner(true)}
+                activeCategory={activeCategory}
+                setActiveCategory={setActiveCategory}
+                warehouseFilter={warehouseFilter}
+                onWarehouseChange={setWarehouseFilter}
+                categories={settings.categories}
+                isExpanded={isHeaderExpanded}
+                namespace="inventory"
+              />
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Product List cuộn bên dưới InventoryHeader */}
         <div className="flex-1 overflow-y-auto min-h-0" onScroll={handleScroll}>

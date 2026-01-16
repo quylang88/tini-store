@@ -2,6 +2,7 @@
 import React, { useState, useRef } from "react";
 import BarcodeScanner from "../../components/BarcodeScanner";
 import { WAREHOUSES } from "../../utils/warehouseUtils";
+import { motion, AnimatePresence } from "framer-motion";
 
 import OrderCreateHeader from "./components/OrderCreateHeader";
 import OrderCreateProductList from "./components/OrderCreateProductList";
@@ -46,9 +47,11 @@ const OrderCreateView = ({
   handleOpenReview,
   handleCloseReview,
   handleConfirmOrder,
+  setTabBarVisible,
 }) => {
   // State scroll animation
   const [isHeaderExpanded, setIsHeaderExpanded] = useState(true);
+  const [isHeaderVisible, setIsHeaderVisible] = useState(true);
   const [isFooterVisible, setIsFooterVisible] = useState(true);
   const lastScrollTop = useRef(0);
 
@@ -63,13 +66,28 @@ const OrderCreateView = ({
     // Threshold
     if (Math.abs(currentScrollTop - lastScrollTop.current) > 10) {
       if (direction === "down") {
-        setIsHeaderExpanded(false);
+        setIsHeaderVisible(false); // Hide entire header
         setIsFooterVisible(false);
+        if (setTabBarVisible) setTabBarVisible(false);
       } else if (!isNearBottom) {
+        setIsHeaderVisible(true); // Show header
+        setIsHeaderExpanded(false); // Collapsed (Search only)
         setIsFooterVisible(true);
-        setIsHeaderExpanded(true);
+
+        // Expand header only at top
+        if (currentScrollTop < 10) {
+           setIsHeaderExpanded(true);
+           if (setTabBarVisible) setTabBarVisible(true);
+        }
       }
       lastScrollTop.current = currentScrollTop;
+    } else {
+        if (currentScrollTop < 10) {
+            setIsHeaderVisible(true);
+            setIsHeaderExpanded(true);
+            setIsFooterVisible(true);
+            if (setTabBarVisible) setTabBarVisible(true);
+        }
     }
   };
 
@@ -90,18 +108,30 @@ const OrderCreateView = ({
       )}
 
       {/* Header Cố định */}
-      <OrderCreateHeader
-        orderBeingEdited={orderBeingEdited}
-        setShowScanner={setShowScanner}
-        searchTerm={searchTerm}
-        setSearchTerm={setSearchTerm}
-        isHeaderExpanded={isHeaderExpanded}
-        selectedWarehouse={selectedWarehouse}
-        setSelectedWarehouse={setSelectedWarehouse}
-        categories={categories}
-        activeCategory={activeCategory}
-        setActiveCategory={setActiveCategory}
-      />
+      <AnimatePresence>
+        {isHeaderVisible && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="shrink-0 overflow-hidden"
+          >
+            <OrderCreateHeader
+              orderBeingEdited={orderBeingEdited}
+              setShowScanner={setShowScanner}
+              searchTerm={searchTerm}
+              setSearchTerm={setSearchTerm}
+              isHeaderExpanded={isHeaderExpanded}
+              selectedWarehouse={selectedWarehouse}
+              setSelectedWarehouse={setSelectedWarehouse}
+              categories={categories}
+              activeCategory={activeCategory}
+              setActiveCategory={setActiveCategory}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* List Sản Phẩm (Đã Lọc) */}
       <OrderCreateProductList
