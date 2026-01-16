@@ -21,6 +21,7 @@ const OrderCreateProductList = ({
   setActiveCategory,
   categories,
   warehouseTabs,
+  warehouseLabel,
   className = "",
 }) => {
   // Khi đang sửa đơn, cộng lại số lượng cũ để hiển thị tồn kho chính xác
@@ -47,6 +48,7 @@ const OrderCreateProductList = ({
         setActiveCategory={setActiveCategory}
         categories={categories}
         warehouseTabs={warehouseTabs}
+        warehouseLabel={warehouseLabel}
         namespace="order-create"
         className="-mx-3 -mt-3 mb-3 pt-3" // Not sticky, scrolls with list
       />

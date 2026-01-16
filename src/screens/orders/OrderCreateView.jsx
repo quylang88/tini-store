@@ -61,9 +61,8 @@ const OrderCreateView = ({
   // State scroll animation
   const {
     isSearchVisible,
-    isAddButtonVisible: isFooterVisible,
     handleScroll,
-  } = useScrollHandling({ mode: "staged", setTabBarVisible, searchHideThreshold: 100 });
+  } = useScrollHandling({ mode: "staged", searchHideThreshold: 100 });
 
   const categories = settings?.categories || ["Chung"];
   const warehouseTabs = WAREHOUSES.map((w) => ({ key: w.key, label: w.label }));
@@ -140,13 +139,14 @@ const OrderCreateView = ({
           setSelectedWarehouse={setSelectedWarehouse}
           categories={categories}
           warehouseTabs={warehouseTabs}
+          warehouseLabel="Kho xuất:"
         />
       </div>
 
       {/* Tạo đơn hàng - Footer */}
       <OrderCreateFooter
         totalAmount={totalAmount}
-        isFooterVisible={isFooterVisible}
+        isFooterVisible={true}
         handleCancelDraft={handleCancelDraft}
         handleOpenReview={handleOpenReview}
         orderBeingEdited={orderBeingEdited}

@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useEffect } from "react";
 import { ShoppingCart, Plus } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { formatNumber } from "../../utils/helpers";
@@ -19,6 +19,13 @@ const OrderListView = ({
   onSelectOrder,
   setTabBarVisible,
 }) => {
+  // Ensure TabBar is visible when mounting this view (e.g. returning from Create View)
+  useEffect(() => {
+    if (setTabBarVisible) {
+      setTabBarVisible(true);
+    }
+  }, [setTabBarVisible]);
+
   // Logic scroll ẩn/hiện UI sử dụng hook mới
   const {
     isAddButtonVisible,
