@@ -23,8 +23,10 @@ const useImagePreloader = (imageSrc, shouldLoad = true) => {
 
     // Kiểm tra mạng ngay lập tức
     if (!navigator.onLine) {
-      setShowWarning(true);
+      // Đặt ref ngay lập tức để chặn việc load ảnh (nếu ảnh có trong cache load ngay sau đó)
       warningTriggeredRef.current = true;
+      // Defer state update để tránh lỗi "synchronous setState in effect" của ESLint
+      setTimeout(() => setShowWarning(true), 0);
     }
 
     const img = new Image();
