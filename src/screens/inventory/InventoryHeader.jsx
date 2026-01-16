@@ -34,12 +34,7 @@ const InventoryHeader = ({
     <div className="bg-amber-50/90 sticky top-0 z-10 shadow-sm backdrop-blur">
       {/* Header & Search */}
       <div className="p-3 border-b border-amber-100">
-        <div className="flex justify-between items-center mb-3">
-          <img
-            src="/tiny-shop-transparent.png"
-            alt="Tiny Shop"
-            className="h-12 w-auto object-contain"
-          />
+        <div className="flex justify-end items-center mb-3">
           <div className="flex gap-2">
             <button
               onClick={onShowScanner}

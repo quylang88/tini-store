@@ -5,6 +5,7 @@ import { formatNumber } from "../../utils/helpers";
 import { getWarehouseLabel } from "../../utils/warehouseUtils";
 import { getOrderDisplayName } from "../../utils/orderUtils";
 import FloatingAddButton from "../../components/common/FloatingAddButton";
+import AppHeader from "../../components/common/AppHeader";
 
 // Giao diện danh sách đơn tách riêng để dễ quản lý và thêm nút huỷ đơn
 const OrderListView = ({
@@ -42,14 +43,9 @@ const OrderListView = ({
   };
 
   return (
-    <div className="flex flex-col h-full bg-transparent pb-20">
-      <div className="bg-amber-50/90 p-4 border-b border-amber-100 sticky top-0 z-10 flex justify-between items-center shadow-sm backdrop-blur">
-        <img
-          src="/tiny-shop-transparent.png"
-          alt="Tiny Shop"
-          className="h-12 w-auto object-contain"
-        />
-      </div>
+    <div className="relative h-full bg-transparent pb-20">
+      <AppHeader />
+
       {/* Nút tạo đơn mới nổi để tái sử dụng layout và tránh lặp code. */}
       <AnimatePresence>
         {isAddButtonVisible && (
@@ -69,7 +65,7 @@ const OrderListView = ({
       </AnimatePresence>
 
       <div
-        className="flex-1 overflow-y-auto p-3 space-y-3 min-h-0"
+        className="h-full overflow-y-auto p-3 pt-[80px] space-y-3 min-h-0"
         onScroll={handleScroll}
       >
         {orders.map((order) => {
