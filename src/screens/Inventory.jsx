@@ -25,6 +25,7 @@ const Inventory = ({
   // States for scroll animation
   const [isHeaderExpanded, setIsHeaderExpanded] = useState(true);
   const [isAddButtonVisible, setIsAddButtonVisible] = useState(true);
+  const [isScrolled, setIsScrolled] = useState(false);
   const lastScrollTop = useRef(0);
 
   const handleScroll = (e) => {
@@ -33,6 +34,9 @@ const Inventory = ({
     const scrollHeight = target.scrollHeight;
     const clientHeight = target.clientHeight;
     const direction = currentScrollTop > lastScrollTop.current ? "down" : "up";
+
+    // Update scrolled state for header shadow
+    setIsScrolled(currentScrollTop > 10);
 
     // Ignore bounce at the bottom (iOS rubber band effect)
     const isNearBottom = currentScrollTop + clientHeight > scrollHeight - 50;
@@ -91,7 +95,7 @@ const Inventory = ({
 
   return (
     <div className="relative h-full bg-transparent flex flex-col">
-      <AppHeader className="z-20" />
+      <AppHeader className="z-20" isScrolled={isScrolled} />
 
       {showScanner && (
         <BarcodeScanner
@@ -135,10 +139,12 @@ const Inventory = ({
       <AnimatePresence>
         {isAddButtonVisible && (
           <motion.div
+            layout
+            layoutId="floating-action-button"
             initial={{ scale: 0, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0, opacity: 0 }}
-            className="fixed right-5 bottom-24 z-30"
+            className="fixed right-5 bottom-[calc(env(safe-area-inset-bottom)+90px)] z-30"
           >
             <FloatingActionButton
               onClick={() => openModal()}

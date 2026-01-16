@@ -20,6 +20,7 @@ const OrderListView = ({
 }) => {
   // Logic scroll ẩn/hiện UI giống màn Inventory
   const [isAddButtonVisible, setIsAddButtonVisible] = useState(true);
+  const [isScrolled, setIsScrolled] = useState(false);
   const lastScrollTop = useRef(0);
 
   const handleScroll = (e) => {
@@ -29,6 +30,9 @@ const OrderListView = ({
     const clientHeight = target.clientHeight;
     const direction = currentScrollTop > lastScrollTop.current ? "down" : "up";
     const isNearBottom = currentScrollTop + clientHeight > scrollHeight - 50;
+
+    // Update scrolled state
+    setIsScrolled(currentScrollTop > 10);
 
     if (Math.abs(currentScrollTop - lastScrollTop.current) > 10) {
       if (direction === "down") {
@@ -44,16 +48,18 @@ const OrderListView = ({
 
   return (
     <div className="relative h-full bg-transparent pb-20">
-      <AppHeader />
+      <AppHeader isScrolled={isScrolled} />
 
       {/* Nút tạo đơn mới nổi để tái sử dụng layout và tránh lặp code. */}
       <AnimatePresence>
         {isAddButtonVisible && (
           <motion.div
+            layout
+            layoutId="floating-action-button"
             initial={{ scale: 0, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0, opacity: 0 }}
-            className="fixed right-5 bottom-24 z-30"
+            className="fixed right-5 bottom-[calc(env(safe-area-inset-bottom)+90px)] z-30"
           >
             <FloatingActionButton
               onClick={onCreateOrder}
