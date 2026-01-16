@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { ArrowUpRight, DollarSign, TrendingUp } from "lucide-react";
+import { ArrowUpRight, DollarSign, TrendingUp, Package, AlertTriangle } from "lucide-react";
 import { formatNumber } from "../utils/helpers";
 import useDashboardLogic from "../hooks/useDashboardLogic";
 import MetricCard from "../components/stats/MetricCard";
@@ -19,6 +19,8 @@ const Dashboard = ({ products, orders, onOpenDetail }) => {
     setActiveRange,
     totalRevenue,
     totalProfit,
+    totalCapital,
+    slowMovingProducts,
     topByProfit,
     topByQuantity,
   } = useDashboardLogic({ products, orders, rangeMode: "dashboard" });
@@ -56,6 +58,7 @@ const Dashboard = ({ products, orders, onOpenDetail }) => {
           </div>
         </div>
 
+        {/* Metrics Grid */}
         <div className="grid grid-cols-2 gap-3">
           <MetricCard
             icon={DollarSign}
@@ -70,7 +73,49 @@ const Dashboard = ({ products, orders, onOpenDetail }) => {
             value={`${formatNumber(totalProfit)}đ`}
             className="bg-emerald-400 shadow-emerald-100"
           />
+
+          <MetricCard
+            icon={Package}
+            label="Vốn tồn kho"
+            value={`${formatNumber(totalCapital)}đ`}
+            className="bg-blue-400 shadow-blue-200 col-span-2"
+          />
         </div>
+
+        {/* Slow Moving Inventory Section (Horizontal Scroll) */}
+        {slowMovingProducts.length > 0 && (
+          <div className="space-y-2">
+             <div className="flex items-center gap-2 px-1">
+                <AlertTriangle size={16} className="text-orange-500" />
+                <h3 className="text-xs font-bold uppercase text-orange-600">
+                  Cảnh báo hàng tồn ({slowMovingProducts.length})
+                </h3>
+             </div>
+
+             <div className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4 custom-scrollbar">
+                {slowMovingProducts.map(product => (
+                  <div key={product.id} className="flex-shrink-0 w-64 bg-white rounded-xl shadow-sm border border-orange-100 p-3 flex gap-3">
+                     <div className="w-12 h-12 rounded-lg bg-orange-50 p-1 border border-orange-100 flex-shrink-0">
+                       {product.image ? (
+                         <img src={product.image} alt="" className="w-full h-full object-contain" />
+                       ) : (
+                         <div className="w-full h-full flex items-center justify-center text-orange-300">
+                           <Package size={20} />
+                         </div>
+                       )}
+                     </div>
+                     <div className="min-w-0 flex-1 flex flex-col justify-between">
+                        <div className="text-sm font-semibold text-gray-800 truncate">{product.name}</div>
+                        <div className="flex items-center justify-between text-xs">
+                           <span className="text-orange-600 font-medium">{product.daysNoSale} ngày</span>
+                           <span className="text-gray-500">Tồn: <b>{product.stock}</b></span>
+                        </div>
+                     </div>
+                  </div>
+                ))}
+             </div>
+          </div>
+        )}
 
         {/* Reusable Top Selling Section */}
         <TopSellingSection

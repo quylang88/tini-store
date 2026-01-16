@@ -112,6 +112,57 @@ const useDashboardLogic = ({ products, orders, rangeMode = "dashboard" }) => {
     [filteredPaidOrders, costMap]
   );
 
+  // --- New Logic for Capital & Slow Moving ---
+
+  // Calculate Total Capital (Vốn tồn kho)
+  // Logic: Sum of (stock * latest_unit_cost) for all products
+  const totalCapital = useMemo(() => {
+    return products.reduce((sum, product) => {
+      const stock = product.stock || 0;
+      if (stock <= 0) return sum;
+      const cost = costMap.get(product.id) || 0;
+      return sum + (stock * cost);
+    }, 0);
+  }, [products, costMap]);
+
+  // Calculate Slow Moving Inventory (Hàng tồn)
+  const slowMovingProducts = useMemo(() => {
+    // 1. Map last sold date based on ALL orders (ignore filter)
+    const lastSoldMap = new Map();
+    orders.forEach(order => {
+      if (order.status === 'cancelled') return;
+      const date = new Date(order.date);
+      order.items.forEach(item => {
+        const current = lastSoldMap.get(item.productId);
+        if (!current || date > current) {
+          lastSoldMap.set(item.productId, date);
+        }
+      });
+    });
+
+    const now = new Date();
+    const warningDays = 60; // Threshold
+
+    return products
+      .filter(p => (p.stock || 0) > 0)
+      .map(p => {
+        const lastSold = lastSoldMap.get(p.id);
+        const dateToCheck = lastSold || new Date(p.createdAt || Date.now());
+        const diffTime = Math.abs(now - dateToCheck);
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+        return {
+          ...p,
+          daysNoSale: diffDays,
+          lastSoldDate: lastSold
+        };
+      })
+      .filter(p => p.daysNoSale > warningDays)
+      .sort((a, b) => b.daysNoSale - a.daysNoSale);
+  }, [products, orders]);
+
+  // --- End New Logic ---
+
   const productMeta = useMemo(
     () => new Map(products.map((product) => [product.id, product])),
     [products]
@@ -186,6 +237,8 @@ const useDashboardLogic = ({ products, orders, rangeMode = "dashboard" }) => {
     filteredPaidOrders,
     totalRevenue,
     totalProfit,
+    totalCapital, // Exposed
+    slowMovingProducts, // Exposed
     topByProfit,
     topByQuantity,
   };
