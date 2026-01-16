@@ -9,7 +9,7 @@ const AppHeader = ({ className = "" }) => {
         <img
           src="/tiny-shop-transparent.png"
           alt="Tiny Shop"
-          className="h-12 w-auto object-contain"
+          className="h-12 w-auto object-contain drop-shadow-md filter contrast-125 saturate-150"
         />
       </div>
     </div>
