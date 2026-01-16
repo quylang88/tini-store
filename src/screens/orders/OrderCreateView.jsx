@@ -1,5 +1,6 @@
 /* eslint-disable no-unused-vars */
 import React, { useState, useRef } from "react";
+import { motion } from "framer-motion";
 import BarcodeScanner from "../../components/BarcodeScanner";
 import { WAREHOUSES } from "../../utils/warehouseUtils";
 
@@ -7,6 +8,7 @@ import OrderCreateHeader from "./components/OrderCreateHeader";
 import OrderCreateProductList from "./components/OrderCreateProductList";
 import OrderCreateFooter from "./components/OrderCreateFooter";
 import OrderCreateReviewModal from "./components/OrderCreateReviewModal";
+import useScrollHandling from "../../hooks/useScrollHandling";
 
 // Giao diện tạo/sửa đơn được tách riêng để Orders.jsx gọn hơn
 const OrderCreateView = ({
@@ -46,39 +48,17 @@ const OrderCreateView = ({
   handleOpenReview,
   handleCloseReview,
   handleConfirmOrder,
+  setTabBarVisible,
 }) => {
-  // State scroll animation
-  const [isHeaderExpanded, setIsHeaderExpanded] = useState(true);
-  const [isFooterVisible, setIsFooterVisible] = useState(true);
-  const lastScrollTop = useRef(0);
-
-  const handleScroll = (e) => {
-    const target = e.target;
-    const currentScrollTop = target.scrollTop;
-    const scrollHeight = target.scrollHeight;
-    const clientHeight = target.clientHeight;
-    const direction = currentScrollTop > lastScrollTop.current ? "down" : "up";
-    const isNearBottom = currentScrollTop + clientHeight > scrollHeight - 50;
-
-    // Threshold
-    if (Math.abs(currentScrollTop - lastScrollTop.current) > 10) {
-      if (direction === "down") {
-        setIsHeaderExpanded(false);
-        setIsFooterVisible(false);
-      } else if (!isNearBottom) {
-        setIsFooterVisible(true);
-        setIsHeaderExpanded(true);
-      }
-      lastScrollTop.current = currentScrollTop;
-    }
-  };
+  // State scroll animation using the new hook
+  const {
+    isSearchVisible,
+    isAddButtonVisible: isFooterVisible, // Reuse logic for footer (behaves like Add Button/TabBar)
+    handleScroll,
+  } = useScrollHandling({ mode: "staged", setTabBarVisible });
 
   const categories = settings?.categories || ["Chung"];
-
   const warehouseTabs = WAREHOUSES.map((w) => ({ key: w.key, label: w.label }));
-
-  // Tab danh mục dạng cuộn ngang
-  // (Removed categoryTabs as ProductFilterHeader handles it via categories list)
 
   return (
     <div className="flex flex-col h-full bg-transparent pb-safe-area relative">
@@ -89,33 +69,48 @@ const OrderCreateView = ({
         />
       )}
 
-      {/* Header Cố định */}
-      <OrderCreateHeader
-        orderBeingEdited={orderBeingEdited}
-        setShowScanner={setShowScanner}
-        searchTerm={searchTerm}
-        setSearchTerm={setSearchTerm}
-        isHeaderExpanded={isHeaderExpanded}
-        selectedWarehouse={selectedWarehouse}
-        setSelectedWarehouse={setSelectedWarehouse}
-        categories={categories}
-        activeCategory={activeCategory}
-        setActiveCategory={setActiveCategory}
-      />
+      {/* Header Cố định (Title + Search) */}
+      <motion.div
+        className="z-10 bg-amber-50/90 shadow-sm backdrop-blur absolute top-0 left-0 right-0"
+        initial={{ y: 0 }}
+        animate={{ y: isSearchVisible ? 0 : -130 }} // Assuming header height is around 130px
+        transition={{ duration: 0.3 }}
+      >
+        <OrderCreateHeader
+          orderBeingEdited={orderBeingEdited}
+          setShowScanner={setShowScanner}
+          searchTerm={searchTerm}
+          setSearchTerm={setSearchTerm}
+          isHeaderExpanded={true} // Always expanded internally, container handles visibility
+          enableFilters={false} // Disable filters in header
+          selectedWarehouse={selectedWarehouse}
+          setSelectedWarehouse={setSelectedWarehouse}
+          categories={categories}
+          activeCategory={activeCategory}
+          setActiveCategory={setActiveCategory}
+        />
+      </motion.div>
 
       {/* List Sản Phẩm (Đã Lọc) */}
-      <OrderCreateProductList
-        filteredProducts={filteredProducts}
-        handleScroll={handleScroll}
-        cart={cart}
-        selectedWarehouse={selectedWarehouse}
-        orderBeingEdited={orderBeingEdited}
-        priceOverrides={priceOverrides}
-        handlePriceChange={handlePriceChange}
-        adjustQuantity={adjustQuantity}
-        handleQuantityChange={handleQuantityChange}
-        activeCategory={activeCategory}
-      />
+      <div className="flex-1 overflow-hidden flex flex-col pt-[130px]">
+        <OrderCreateProductList
+          filteredProducts={filteredProducts}
+          handleScroll={handleScroll}
+          cart={cart}
+          selectedWarehouse={selectedWarehouse}
+          orderBeingEdited={orderBeingEdited}
+          priceOverrides={priceOverrides}
+          handlePriceChange={handlePriceChange}
+          adjustQuantity={adjustQuantity}
+          handleQuantityChange={handleQuantityChange}
+          activeCategory={activeCategory}
+          // Filter Props passed down for In-Flow rendering
+          setActiveCategory={setActiveCategory}
+          setSelectedWarehouse={setSelectedWarehouse}
+          categories={categories}
+          warehouseTabs={warehouseTabs}
+        />
+      </div>
 
       {/* Tạo đơn hàng - Footer */}
       <OrderCreateFooter

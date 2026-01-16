@@ -12,6 +12,7 @@ const OrderCreateHeader = ({
   categories,
   activeCategory,
   setActiveCategory,
+  enableFilters = true,
 }) => {
   return (
     <div className="bg-amber-50/90 sticky top-0 z-10 shadow-sm backdrop-blur">
@@ -39,6 +40,7 @@ const OrderCreateHeader = ({
         onSearchChange={(e) => setSearchTerm(e.target.value)}
         onClearSearch={() => setSearchTerm("")}
         onShowScanner={() => setShowScanner(true)}
+        enableFilters={enableFilters}
         warehouseFilter={selectedWarehouse}
         onWarehouseChange={setSelectedWarehouse}
         warehouseTabs={[

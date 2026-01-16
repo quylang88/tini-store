@@ -1,8 +1,9 @@
-import React, { useState, useRef } from "react";
+import React, { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Plus } from "lucide-react";
 import BarcodeScanner from "../components/BarcodeScanner";
 import ProductFilterHeader from "../components/common/ProductFilterHeader";
+import ProductFilterSection from "../components/common/ProductFilterSection";
 import ProductList from "./inventory/ProductList";
 import ProductDetailModal from "./inventory/ProductDetailModal";
 import ProductModal from "./inventory/ProductModal";
@@ -10,6 +11,7 @@ import ConfirmModalHost from "../components/modals/ConfirmModalHost";
 import ErrorModal from "../components/modals/ErrorModal";
 import FloatingActionButton from "../components/common/FloatingActionButton";
 import useInventoryLogic from "../hooks/useInventoryLogic";
+import useScrollHandling from "../hooks/useScrollHandling";
 import AppHeader from "../components/common/AppHeader";
 
 const Inventory = ({
@@ -22,40 +24,12 @@ const Inventory = ({
 }) => {
   const [detailProduct, setDetailProduct] = useState(null);
 
-  // States for scroll animation
-  const [isHeaderExpanded, setIsHeaderExpanded] = useState(true);
-  const [isAddButtonVisible, setIsAddButtonVisible] = useState(true);
-  const [isScrolled, setIsScrolled] = useState(false);
-  const lastScrollTop = useRef(0);
-
-  const handleScroll = (e) => {
-    const target = e.target;
-    const currentScrollTop = target.scrollTop;
-    const scrollHeight = target.scrollHeight;
-    const clientHeight = target.clientHeight;
-    const direction = currentScrollTop > lastScrollTop.current ? "down" : "up";
-
-    // Update scrolled state for header shadow
-    setIsScrolled(currentScrollTop > 10);
-
-    // Ignore bounce at the bottom (iOS rubber band effect)
-    const isNearBottom = currentScrollTop + clientHeight > scrollHeight - 50;
-
-    // Threshold to avoid jitter
-    if (Math.abs(currentScrollTop - lastScrollTop.current) > 10) {
-      if (direction === "down") {
-        setIsHeaderExpanded(false);
-        setIsAddButtonVisible(false);
-        if (setTabBarVisible) setTabBarVisible(false);
-      } else if (!isNearBottom) {
-        // Only show if scrolling up AND not near bottom
-        setIsAddButtonVisible(true);
-        setIsHeaderExpanded(true);
-        if (setTabBarVisible) setTabBarVisible(true);
-      }
-      lastScrollTop.current = currentScrollTop;
-    }
-  };
+  const {
+    isSearchVisible,
+    isAddButtonVisible,
+    isScrolled,
+    handleScroll,
+  } = useScrollHandling({ mode: "staged", setTabBarVisible });
 
   const {
     isModalOpen,
@@ -105,26 +79,43 @@ const Inventory = ({
       )}
 
       {/* Container cho nội dung chính, bắt đầu từ dưới AppHeader */}
-      <div className="flex flex-col h-full pt-[72px]">
-        {/* InventoryHeader cố định phía trên danh sách */}
-        <div className="z-10 bg-amber-50 shadow-sm shrink-0">
+      <div className="flex flex-col h-full pt-[72px] relative">
+        {/* InventoryHeader cố định phía trên danh sách (Chỉ Search) */}
+        <motion.div
+          className="absolute top-[72px] left-0 right-0 z-10 bg-amber-50 shadow-sm"
+          initial={{ y: 0 }}
+          animate={{ y: isSearchVisible ? 0 : -80 }}
+          transition={{ duration: 0.3 }}
+        >
           <ProductFilterHeader
             searchTerm={searchTerm}
             onSearchChange={(e) => setSearchTerm(e.target.value)}
             onClearSearch={() => setSearchTerm("")}
             onShowScanner={() => setShowScanner(true)}
+            enableFilters={false} // Tắt filter trong header cố định
             activeCategory={activeCategory}
             setActiveCategory={setActiveCategory}
             warehouseFilter={warehouseFilter}
             onWarehouseChange={setWarehouseFilter}
             categories={settings.categories}
-            isExpanded={isHeaderExpanded}
             namespace="inventory"
           />
-        </div>
+        </motion.div>
 
         {/* Product List cuộn bên dưới InventoryHeader */}
-        <div className="flex-1 overflow-y-auto min-h-0" onScroll={handleScroll}>
+        <div
+          className="flex-1 overflow-y-auto min-h-0 pt-[70px]"
+          onScroll={handleScroll}
+        >
+          {/* Filter Section nằm trong luồng scroll */}
+          <ProductFilterSection
+            warehouseFilter={warehouseFilter}
+            onWarehouseChange={setWarehouseFilter}
+            activeCategory={activeCategory}
+            setActiveCategory={setActiveCategory}
+            categories={settings.categories}
+            namespace="inventory"
+          />
           <ProductList
             products={filteredProducts}
             onDelete={handleDelete}
