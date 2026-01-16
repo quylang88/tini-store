@@ -46,7 +46,8 @@ const useScrollHandling = ({
 
     const diff = currentScrollTop - lastScrollTop.current;
 
-    if (Math.abs(diff) > 2 || currentScrollTop < 50 || diff > 0) {
+    // Remove strict noise filter to ensure responsiveness on small scroll-ups
+    if (Math.abs(diff) > 0 || currentScrollTop < 50) {
       if (diff > 0) {
         // SCROLL DOWN
         if (scrollRange > scrollThreshold) {

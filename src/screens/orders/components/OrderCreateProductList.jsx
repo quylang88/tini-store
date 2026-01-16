@@ -6,7 +6,6 @@ import { getWarehouseLabel } from "../../../utils/warehouseUtils";
 
 const OrderCreateProductList = ({
   filteredProducts,
-  handleScroll,
   cart,
   selectedWarehouse,
   orderBeingEdited,

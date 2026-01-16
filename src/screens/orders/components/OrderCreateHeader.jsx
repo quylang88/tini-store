@@ -6,7 +6,6 @@ const OrderCreateHeader = ({
   setShowScanner,
   searchTerm,
   setSearchTerm,
-  isHeaderExpanded,
   selectedWarehouse,
   setSelectedWarehouse,
   categories,
@@ -49,7 +48,6 @@ const OrderCreateHeader = ({
         activeCategory={activeCategory}
         setActiveCategory={setActiveCategory}
         categories={categories}
-        isExpanded={isHeaderExpanded}
         enableFilters={false}
         namespace="order"
         className="!bg-transparent !backdrop-blur-none"

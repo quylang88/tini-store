@@ -53,7 +53,6 @@ const OrderCreateView = ({
 }) => {
   // Reuse scroll logic
   const {
-    isHeaderExpanded,
     isHeaderVisible,
     isAddButtonVisible: isFooterVisible, // Map add button visibility to footer
     handleScroll,
@@ -94,7 +93,6 @@ const OrderCreateView = ({
               setShowScanner={setShowScanner}
               searchTerm={searchTerm}
               setSearchTerm={setSearchTerm}
-              isHeaderExpanded={isHeaderExpanded}
               selectedWarehouse={selectedWarehouse}
               setSelectedWarehouse={setSelectedWarehouse}
               categories={categories}
@@ -123,7 +121,6 @@ const OrderCreateView = ({
 
         <OrderCreateProductList
           filteredProducts={filteredProducts}
-          // handleScroll passed to container instead
           cart={cart}
           selectedWarehouse={selectedWarehouse}
           orderBeingEdited={orderBeingEdited}
