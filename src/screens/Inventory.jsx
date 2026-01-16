@@ -23,19 +23,6 @@ const Inventory = ({
 }) => {
   const [detailProduct, setDetailProduct] = useState(null);
 
-  // States for scroll animation reused via hook
-  const {
-    isHeaderExpanded,
-    isHeaderVisible,
-    isAddButtonVisible,
-    isScrolled,
-    handleScroll,
-  } = useScrollHandling({
-    setTabBarVisible,
-    scrollThreshold: 200,
-    dataDependency: products.length, // Updated to use products directly or filtered
-  });
-
   const {
     isModalOpen,
     showScanner,
@@ -69,6 +56,19 @@ const Inventory = ({
     handleSelectExistingProduct,
     setWarehouseFilter,
   } = useInventoryLogic({ products, setProducts, orders, setOrders, settings });
+
+  // States for scroll animation reused via hook
+  const {
+    isHeaderExpanded,
+    isHeaderVisible,
+    isAddButtonVisible,
+    isScrolled,
+    handleScroll,
+  } = useScrollHandling({
+    setTabBarVisible,
+    scrollThreshold: 200,
+    dataDependency: filteredProducts.length, // Updated to use filteredProducts correctly
+  });
 
   // Đã loại bỏ useFilterTransition để tránh remount list gây khựng.
 

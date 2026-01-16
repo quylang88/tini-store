@@ -42,16 +42,25 @@ const useScrollHandling = ({
     // Cập nhật trạng thái shadow cho header
     setIsScrolled(currentScrollTop > 10);
 
-    if (Math.abs(currentScrollTop - lastScrollTop.current) > 5) {
-      if (direction === "down") {
+    const diff = currentScrollTop - lastScrollTop.current;
+
+    // Bỏ qua các thay đổi nhỏ để tránh noise, trừ khi ở gần đỉnh
+    // Nhưng với scroll down (diff > 0), ta xử lý ngay để đảm bảo ẩn search bar khi scroll chậm
+    if (Math.abs(diff) > 2 || currentScrollTop < 50) {
+      if (diff > 0) {
+        // SCROLL DOWN
         // Chỉ ẩn nếu nội dung đủ dài (tránh lỗi giật ngược trên danh sách ngắn)
         if (scrollRange > scrollThreshold) {
-          // Giai đoạn 1: Ẩn Filter, TabBar, AddButton ngay khi vừa scroll
-          setIsHeaderExpanded(false);
+          // Giai đoạn 1: Ẩn Filter, TabBar, AddButton
+          // Chỉ ẩn Filter khi đã scroll qua khỏi header (vd: > 50px) để tránh giật khi vừa nhích nhẹ ở đỉnh
+          if (currentScrollTop > 50) {
+             setIsHeaderExpanded(false);
+          }
+
           setIsAddButtonVisible(false);
           if (setTabBarVisible) setTabBarVisible(false);
 
-          // Giai đoạn 2: Ẩn thanh Search (toàn bộ header) khi scroll sâu hơn (vd: > 100px)
+          // Giai đoạn 2: Ẩn thanh Search (toàn bộ header) khi scroll sâu hơn
           if (currentScrollTop > 100) {
             setIsHeaderVisible(false);
           } else {
@@ -59,9 +68,9 @@ const useScrollHandling = ({
             setIsHeaderVisible(true);
           }
         }
-      } else if (!isNearBottom) {
-        // Scroll Up:
-        // 1. Luôn hiện thanh Search và Add Button (tạo cảm giác mượt)
+      } else if (!isNearBottom && diff < 0) {
+        // SCROLL UP
+        // 1. Luôn hiện thanh Search và Add Button ngay lập tức (tạo cảm giác mượt)
         setIsHeaderVisible(true);
         setIsAddButtonVisible(true);
 
@@ -76,7 +85,7 @@ const useScrollHandling = ({
       }
       lastScrollTop.current = currentScrollTop;
     } else {
-       // Xử lý trường hợp về đầu trang chậm hoặc chính xác
+       // Xử lý edge case: về đích chính xác
        if (currentScrollTop < 10) {
           setIsHeaderVisible(true);
           setIsHeaderExpanded(true);
