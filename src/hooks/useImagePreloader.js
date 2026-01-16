@@ -12,9 +12,14 @@ const useImagePreloader = (imageSrc, shouldLoad = true) => {
   const [showWarning, setShowWarning] = useState(false);
 
   const warningTriggeredRef = useRef(false);
+  const isLoadedRef = useRef(false);
 
   useEffect(() => {
     if (!shouldLoad) return;
+
+    // Reset refs on effect run (in case props change)
+    isLoadedRef.current = false;
+    warningTriggeredRef.current = false;
 
     // Kiểm tra mạng ngay lập tức
     if (!navigator.onLine) {
@@ -26,6 +31,9 @@ const useImagePreloader = (imageSrc, shouldLoad = true) => {
     img.src = imageSrc;
 
     const onLoad = () => {
+      // Update ref immediately
+      isLoadedRef.current = true;
+
       // Nếu đã hiện cảnh báo thì không tự động vào nữa, bắt buộc user ấn nút
       if (!warningTriggeredRef.current) {
         setIsLoaded(true);
@@ -33,21 +41,18 @@ const useImagePreloader = (imageSrc, shouldLoad = true) => {
     };
 
     img.onload = onLoad;
-    img.onerror = onLoad; // Tiếp tục xử lý (có thể sẽ hiện warning nếu timeout, hoặc vào luôn nếu nhanh)
+    img.onerror = onLoad;
 
     // Fallback nếu ảnh đã có trong cache
     if (img.complete) onLoad();
 
     // Timeout hiển thị cảnh báo nếu mạng chậm (7 giây)
     const timeoutId = setTimeout(() => {
-      // Chỉ hiện warning nếu chưa load xong
-      setIsLoaded((currentLoaded) => {
-        if (!currentLoaded) {
-          setShowWarning(true);
-          warningTriggeredRef.current = true;
-        }
-        return currentLoaded;
-      });
+      // Chỉ hiện warning nếu chưa load xong (check ref instead of state closure)
+      if (!isLoadedRef.current) {
+        setShowWarning(true);
+        warningTriggeredRef.current = true;
+      }
     }, 7000);
 
     return () => clearTimeout(timeoutId);
