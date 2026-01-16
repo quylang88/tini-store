@@ -7,6 +7,7 @@ import InfoModal from "../components/modals/InfoModal";
 import SettingsSection from "./settings/SettingsSection";
 import useSettingsLogic from "../hooks/useSettingsLogic";
 import Button from "../components/common/Button";
+import AppHeader from "../components/common/AppHeader";
 
 const Settings = ({
   products,
@@ -43,14 +44,10 @@ const Settings = ({
   });
 
   return (
-    <>
-      <div className="p-4 space-y-6 overflow-y-auto pb-24 h-full bg-transparent">
-        <img
-          src="/tiny-shop-transparent.png"
-          alt="Tiny Shop"
-          className="h-12 w-auto object-contain"
-        />
+    <div className="relative h-full bg-transparent">
+      <AppHeader />
 
+      <div className="h-full overflow-y-auto min-h-0 p-4 pt-[80px] space-y-6 pb-24">
         {/* 1. Cấu hình Tiền tệ */}
         <SettingsSection
           title="Cấu hình Tiền tệ"
@@ -225,7 +222,7 @@ const Settings = ({
         message={infoModal?.message}
         onClose={() => setInfoModal(null)}
       />
-    </>
+    </div>
   );
 };
 

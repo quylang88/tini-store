@@ -6,6 +6,7 @@ import MetricCard from "../components/stats/MetricCard";
 import OptionPills from "../components/stats/OptionPills";
 import RankBadge from "../components/stats/RankBadge";
 import TopListModal from "../components/stats/TopListModal";
+import AppHeader from "../components/common/AppHeader";
 import { AnimatePresence, motion } from "framer-motion";
 
 const Dashboard = ({ products, orders, onOpenDetail }) => {
@@ -33,16 +34,7 @@ const Dashboard = ({ products, orders, onOpenDetail }) => {
 
   return (
     <div className="relative h-full bg-inherit">
-      {/* Fixed Header */}
-      <div className="absolute top-0 left-0 right-0 z-20 p-4 pb-2 bg-gradient-to-b from-amber-50/95 to-amber-50/80 backdrop-blur-md shadow-sm">
-        <div className="flex items-center justify-between gap-2">
-          <img
-            src="/tiny-shop-transparent.png"
-            alt="Tiny Shop"
-            className="h-12 w-auto object-contain"
-          />
-        </div>
-      </div>
+      <AppHeader />
 
       {/* Scrollable Content */}
       <div className="h-full overflow-y-auto min-h-0 p-4 pt-[80px] space-y-4 pb-24 animate-fade-in">
