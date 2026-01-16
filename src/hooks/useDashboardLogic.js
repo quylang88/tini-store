@@ -25,8 +25,8 @@ const TOP_OPTIONS = [
 ];
 
 const useDashboardLogic = ({ products, orders, rangeMode = "dashboard" }) => {
-  // Centralized date state. Using lazy initialization to set "now" on mount.
-  // Although new Date() is technically impure, it's stable after the first render.
+  // Trạng thái ngày tập trung. Sử dụng khởi tạo lười (lazy initialization) để đặt "now" khi mount.
+  // Mặc dù new Date() về kỹ thuật là không tinh khiết (impure), nhưng nó ổn định sau lần render đầu tiên.
   const [currentDate] = useState(() => new Date());
 
   const [activeRange, setActiveRange] = useState(
@@ -118,10 +118,10 @@ const useDashboardLogic = ({ products, orders, rangeMode = "dashboard" }) => {
     [filteredPaidOrders, costMap]
   );
 
-  // --- New Logic for Capital & Slow Moving ---
+  // --- Logic mới cho Vốn & Hàng tồn lâu ---
 
-  // Calculate Total Capital (Vốn tồn kho)
-  // Logic: Sum of (stock * latest_unit_cost) for all products
+  // Tính Tổng Vốn Tồn Kho
+  // Logic: Tổng của (tồn kho * giá nhập mới nhất) cho tất cả sản phẩm
   const totalCapital = useMemo(() => {
     return products.reduce((sum, product) => {
       const stock = product.stock || 0;
@@ -131,11 +131,11 @@ const useDashboardLogic = ({ products, orders, rangeMode = "dashboard" }) => {
     }, 0);
   }, [products, costMap]);
 
-  // Calculate Slow Moving Inventory (Hàng tồn)
+  // Tính Hàng Tồn Kho Lâu (Slow Moving)
   const slowMovingProducts = useMemo(() => {
     if (!currentDate) return [];
 
-    // 1. Map last sold date based on ALL orders (ignore filter)
+    // 1. Map ngày bán gần nhất dựa trên TẤT CẢ các đơn (bỏ qua bộ lọc)
     const lastSoldMap = new Map();
     orders.forEach(order => {
       if (order.status === 'cancelled') return;
@@ -148,7 +148,7 @@ const useDashboardLogic = ({ products, orders, rangeMode = "dashboard" }) => {
       });
     });
 
-    const warningDays = 60; // Threshold
+    const warningDays = 60; // Ngưỡng cảnh báo
 
     return products
       .filter(p => (p.stock || 0) > 0)
@@ -168,7 +168,7 @@ const useDashboardLogic = ({ products, orders, rangeMode = "dashboard" }) => {
       .sort((a, b) => b.daysNoSale - a.daysNoSale);
   }, [products, orders, currentDate]);
 
-  // --- End New Logic ---
+  // --- Kết thúc Logic mới ---
 
   const productMeta = useMemo(
     () => new Map(products.map((product) => [product.id, product])),
@@ -220,7 +220,7 @@ const useDashboardLogic = ({ products, orders, rangeMode = "dashboard" }) => {
   );
 
   return {
-    currentDate, // Return this so consumers can use the exact same reference
+    currentDate, // Trả về giá trị này để các component tiêu thụ có thể sử dụng cùng một tham chiếu
     rangeOptions,
     topOptions: TOP_OPTIONS,
     topLimit,
@@ -245,8 +245,8 @@ const useDashboardLogic = ({ products, orders, rangeMode = "dashboard" }) => {
     filteredPaidOrders,
     totalRevenue,
     totalProfit,
-    totalCapital, // Exposed
-    slowMovingProducts, // Exposed
+    totalCapital, // Đã export
+    slowMovingProducts, // Đã export
     topByProfit,
     topByQuantity,
   };

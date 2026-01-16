@@ -13,8 +13,8 @@ const TopSellingSection = ({
   onOpenModal,
   layoutIdPrefix = "top-selling-tabs",
 }) => {
-  // Convert topOptions to format required by AnimatedFilterTabs (key, label)
-  // Assuming topOptions has { id, label }
+  // Chuyển đổi topOptions sang định dạng yêu cầu của AnimatedFilterTabs (key, label)
+  // Giả sử topOptions có { id, label }
   const tabs = topOptions.map((opt) => ({
     key: opt.id,
     label: opt.label,
@@ -30,7 +30,7 @@ const TopSellingSection = ({
           </h3>
         </div>
 
-        {/* Reusing AnimatedFilterTabs for consistent "sliding pill" effect */}
+        {/* Tái sử dụng AnimatedFilterTabs để có hiệu ứng "viên thuốc trượt" đồng nhất */}
         <AnimatedFilterTabs
           tabs={tabs}
           activeTab={activeTopOption}
@@ -41,7 +41,7 @@ const TopSellingSection = ({
       </div>
 
       <div className="grid grid-cols-2 gap-4">
-        {/* Top Profit Column */}
+        {/* Cột Top Lợi Nhuận */}
         <button
           type="button"
           onClick={() => onOpenModal("profit")}
@@ -53,7 +53,7 @@ const TopSellingSection = ({
             </h4>
           </div>
           <div className="space-y-2 text-sm text-rose-800">
-            <AnimatePresence mode="wait">
+            <AnimatePresence mode="wait" initial={false}>
               {topByProfit.map((p, idx) => (
                 <motion.div
                   key={p.id || p.name}
@@ -77,7 +77,7 @@ const TopSellingSection = ({
           </div>
         </button>
 
-        {/* Top Quantity Column */}
+        {/* Cột Top Số Lượng */}
         <button
           type="button"
           onClick={() => onOpenModal("quantity")}
@@ -89,7 +89,7 @@ const TopSellingSection = ({
             </h4>
           </div>
           <div className="space-y-2 text-sm text-emerald-800">
-            <AnimatePresence mode="wait">
+            <AnimatePresence mode="wait" initial={false}>
               {topByQuantity.map((p, idx) => (
                 <motion.div
                   key={p.id || p.name}

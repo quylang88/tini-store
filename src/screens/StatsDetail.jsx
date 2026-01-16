@@ -159,7 +159,7 @@ const StatsDetail = ({ products, orders, onBack }) => {
         </div>
       </div>
 
-      {/* Reusable Top Selling Section */}
+      {/* Phần Top Bán Chạy (Tái sử dụng) */}
       <TopSellingSection
         topOptions={topOptions}
         activeTopOption={topLimit}

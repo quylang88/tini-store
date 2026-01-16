@@ -28,6 +28,7 @@ const AnimatedFilterTabs = ({
               <motion.div
                 layoutId={`${layoutIdPrefix}-active-pill`}
                 className="absolute inset-0 bg-amber-500 rounded-full -z-10"
+                initial={false} // Ngăn chặn animation khi mount
                 transition={{ type: "spring", stiffness: 300, damping: 30 }}
               />
             )}

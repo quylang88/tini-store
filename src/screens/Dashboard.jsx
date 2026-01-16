@@ -10,7 +10,7 @@ import AppHeader from "../components/common/AppHeader";
 
 const Dashboard = ({ products, orders, onOpenDetail }) => {
   const {
-    currentDate, // Use the date from the hook
+    currentDate, // Sử dụng ngày từ hook
     topOptions,
     topLimit,
     setTopLimit,
@@ -32,10 +32,10 @@ const Dashboard = ({ products, orders, onOpenDetail }) => {
     activeModal === "quantity" ? "Top số lượng" : "Top lợi nhuận";
   const modalItems = activeModal === "quantity" ? topByQuantity : topByProfit;
 
-  // Derive order count
+  // Tính số lượng đơn hàng
   const orderCount = filteredPaidOrders.length;
 
-  // Generate current month label using the centralized date
+  // Tạo nhãn tháng hiện tại sử dụng ngày tập trung
   const currentMonthLabel = useMemo(() => {
     if (!currentDate) return "Đang tải...";
     return `Tháng ${String(currentDate.getMonth() + 1).padStart(2, "0")}/${currentDate.getFullYear()}`;
@@ -45,10 +45,10 @@ const Dashboard = ({ products, orders, onOpenDetail }) => {
     <div className="relative h-full bg-inherit">
       <AppHeader />
 
-      {/* Scrollable Content */}
+      {/* Nội dung cuộn */}
       <div className="h-full overflow-y-auto min-h-0 p-4 pt-[80px] space-y-4 pb-24 animate-fade-in">
 
-        {/* Header Label */}
+        {/* Nhãn tiêu đề */}
         <div className="flex items-center justify-between">
            <div>
               <div className="text-xs text-amber-500 font-bold uppercase">Tổng quan</div>
@@ -56,7 +56,7 @@ const Dashboard = ({ products, orders, onOpenDetail }) => {
            </div>
         </div>
 
-        {/* Metrics Grid */}
+        {/* Lưới chỉ số (Metrics Grid) */}
         <div className="grid grid-cols-2 gap-3">
           <MetricCard
             icon={DollarSign}
@@ -87,7 +87,7 @@ const Dashboard = ({ products, orders, onOpenDetail }) => {
           />
         </div>
 
-        {/* Slow Moving Inventory Section (Horizontal Scroll) */}
+        {/* Phần Hàng tồn kho lâu (Cuộn ngang) */}
         {slowMovingProducts.length > 0 && (
           <div className="space-y-2">
              <div className="flex items-center gap-2 px-1">
@@ -122,7 +122,7 @@ const Dashboard = ({ products, orders, onOpenDetail }) => {
           </div>
         )}
 
-        {/* Reusable Top Selling Section */}
+        {/* Phần Top Bán Chạy (Tái sử dụng) */}
         <TopSellingSection
           topOptions={topOptions}
           activeTopOption={topLimit}
