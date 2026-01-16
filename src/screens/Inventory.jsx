@@ -2,7 +2,7 @@ import React, { useState, useRef } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Plus } from "lucide-react";
 import BarcodeScanner from "../components/BarcodeScanner";
-import InventoryHeader from "./inventory/InventoryHeader";
+import ProductFilterHeader from "../components/common/ProductFilterHeader";
 import ProductList from "./inventory/ProductList";
 import ProductDetailModal from "./inventory/ProductDetailModal";
 import ProductModal from "./inventory/ProductModal";
@@ -104,7 +104,7 @@ const Inventory = ({
       <div className="flex flex-col h-full pt-[72px]">
         {/* InventoryHeader cố định phía trên danh sách */}
         <div className="z-10 bg-amber-50 shadow-sm shrink-0">
-          <InventoryHeader
+          <ProductFilterHeader
             searchTerm={searchTerm}
             onSearchChange={(e) => setSearchTerm(e.target.value)}
             onClearSearch={() => setSearchTerm("")}
@@ -115,6 +115,7 @@ const Inventory = ({
             onWarehouseChange={setWarehouseFilter}
             categories={settings.categories}
             isExpanded={isHeaderExpanded}
+            namespace="inventory"
           />
         </div>
 

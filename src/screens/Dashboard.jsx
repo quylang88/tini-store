@@ -62,7 +62,7 @@ const Dashboard = ({ products, orders, onOpenDetail }) => {
         {/* Nhãn tiêu đề */}
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-xl font-bold text-amber-700">
+            <h2 className="text-xl font-bold text-amber-700 pt-2">
               {currentMonthLabel}
             </h2>
           </div>
