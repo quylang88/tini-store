@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { getLatestUnitCost } from "../utils/purchaseUtils";
 
 // Tạo label thời gian động theo tháng/năm hiện tại và tách bộ lọc cho dashboard vs chi tiết.
@@ -25,12 +25,9 @@ const TOP_OPTIONS = [
 ];
 
 const useDashboardLogic = ({ products, orders, rangeMode = "dashboard" }) => {
-  // Centralized date state to avoid impure calls during render
-  const [currentDate, setCurrentDate] = useState(null);
-
-  useEffect(() => {
-    setCurrentDate(new Date());
-  }, []);
+  // Centralized date state. Using lazy initialization to set "now" on mount.
+  // Although new Date() is technically impure, it's stable after the first render.
+  const [currentDate] = useState(() => new Date());
 
   const [activeRange, setActiveRange] = useState(
     rangeMode === "detail" ? "custom" : "month"
