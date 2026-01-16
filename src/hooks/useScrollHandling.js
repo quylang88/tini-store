@@ -21,10 +21,13 @@ const useScrollHandling = ({
 
   // Reset trạng thái khi dữ liệu thay đổi (vd: sau khi xoá sản phẩm)
   useEffect(() => {
-    setIsHeaderVisible(true);
-    setIsHeaderExpanded(true);
-    setIsAddButtonVisible(true);
-    if (setTabBarVisible) setTabBarVisible(true);
+    const timer = setTimeout(() => {
+      setIsHeaderVisible(true);
+      setIsHeaderExpanded(true);
+      setIsAddButtonVisible(true);
+      if (setTabBarVisible) setTabBarVisible(true);
+    }, 0);
+    return () => clearTimeout(timer);
   }, [dataDependency, setTabBarVisible]);
 
   const handleScroll = (e) => {
