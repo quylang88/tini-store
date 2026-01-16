@@ -1,6 +1,8 @@
 import React, { useState, useRef } from "react";
 import { ShoppingCart, Plus } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
+
+import useScrollHandling from "../../hooks/useScrollHandling";
 import { formatNumber } from "../../utils/helpers";
 import { getWarehouseLabel } from "../../utils/warehouseUtils";
 import { getOrderDisplayName } from "../../utils/orderUtils";
@@ -18,48 +20,16 @@ const OrderListView = ({
   onSelectOrder,
   setTabBarVisible,
 }) => {
-  // Logic scroll ẩn/hiện UI giống màn Inventory
-  const [isAddButtonVisible, setIsAddButtonVisible] = useState(true);
-  const [isScrolled, setIsScrolled] = useState(false);
-  const lastScrollTop = useRef(0);
-
-  const handleScroll = (e) => {
-    const target = e.target;
-    const currentScrollTop = target.scrollTop;
-    const scrollHeight = target.scrollHeight;
-    const clientHeight = target.clientHeight;
-    const direction = currentScrollTop > lastScrollTop.current ? "down" : "up";
-    const isNearBottom = currentScrollTop + clientHeight > scrollHeight - 50;
-
-    // Cập nhật trạng thái shadow cho header
-    setIsScrolled(currentScrollTop > 10);
-
-    if (Math.abs(currentScrollTop - lastScrollTop.current) > 10) {
-      if (direction === "down") {
-        // Kiểm tra an toàn: Chỉ ẩn nếu danh sách đủ dài (tránh lỗi giật ngược scroll)
-        // Giảm ngưỡng xuống 100px (đủ cho TabBar ~60px)
-        const scrollRange = scrollHeight - clientHeight;
-        if (scrollRange > 100) {
-          setIsAddButtonVisible(false);
-          if (setTabBarVisible) setTabBarVisible(false);
-        }
-      } else if (!isNearBottom) {
-        // Scroll lên: Hiện nút Add ngay lập tức
-        setIsAddButtonVisible(true);
-
-        // TabBar chỉ hiện khi về hẳn đầu trang
-        if (currentScrollTop < 10) {
-          if (setTabBarVisible) setTabBarVisible(true);
-        }
-      }
-      lastScrollTop.current = currentScrollTop;
-    } else {
-       // Kiểm tra trường hợp về đầu trang khi scroll chậm
-       if (currentScrollTop < 10) {
-          if (setTabBarVisible) setTabBarVisible(true);
-       }
-    }
-  };
+  // Reuse scroll logic
+  const {
+    isAddButtonVisible,
+    isScrolled,
+    handleScroll,
+  } = useScrollHandling({
+    setTabBarVisible,
+    scrollThreshold: 100, // Reduced threshold for Order List
+    dataDependency: orders.length,
+  });
 
   return (
     <div className="relative h-full bg-transparent pb-20">

@@ -10,6 +10,7 @@ import ConfirmModalHost from "../components/modals/ConfirmModalHost";
 import ErrorModal from "../components/modals/ErrorModal";
 import FloatingActionButton from "../components/common/FloatingActionButton";
 import useInventoryLogic from "../hooks/useInventoryLogic";
+import useScrollHandling from "../hooks/useScrollHandling";
 import AppHeader from "../components/common/AppHeader";
 
 const Inventory = ({
@@ -22,61 +23,18 @@ const Inventory = ({
 }) => {
   const [detailProduct, setDetailProduct] = useState(null);
 
-  // States for scroll animation
-  const [isHeaderExpanded, setIsHeaderExpanded] = useState(true);
-  const [isHeaderVisible, setIsHeaderVisible] = useState(true);
-  const [isAddButtonVisible, setIsAddButtonVisible] = useState(true);
-  const [isScrolled, setIsScrolled] = useState(false);
-  const lastScrollTop = useRef(0);
-
-  const handleScroll = (e) => {
-    const target = e.target;
-    const currentScrollTop = target.scrollTop;
-    const scrollHeight = target.scrollHeight;
-    const clientHeight = target.clientHeight;
-    const direction = currentScrollTop > lastScrollTop.current ? "down" : "up";
-
-    // Update scrolled state for header shadow
-    setIsScrolled(currentScrollTop > 10);
-
-    // Ignore bounce at the bottom (iOS rubber band effect)
-    const isNearBottom = currentScrollTop + clientHeight > scrollHeight - 50;
-
-    // Threshold to avoid jitter
-    if (Math.abs(currentScrollTop - lastScrollTop.current) > 10) {
-      if (direction === "down") {
-        // Kiểm tra an toàn: Chỉ ẩn nếu danh sách đủ dài
-        // Giảm ngưỡng xuống 200px (đủ cho Header ~120px + TabBar ~60px)
-        const scrollRange = scrollHeight - clientHeight;
-        if (scrollRange > 200) {
-          // Scroll down: Ẩn toàn bộ header, nút thêm, và tab bar
-          setIsHeaderVisible(false);
-          setIsAddButtonVisible(false);
-          if (setTabBarVisible) setTabBarVisible(false);
-        }
-      } else if (!isNearBottom) {
-        // Scroll up: Hiện header (nhưng thu gọn - chỉ ô tìm kiếm), hiện nút thêm
-        setIsHeaderVisible(true);
-        setIsHeaderExpanded(false);
-        setIsAddButtonVisible(true);
-
-        // TabBar vẫn ẩn cho đến khi lên đỉnh
-        if (currentScrollTop < 10) {
-           setIsHeaderExpanded(true); // Mở rộng header khi ở đỉnh
-           if (setTabBarVisible) setTabBarVisible(true);
-        }
-      }
-      lastScrollTop.current = currentScrollTop;
-    } else {
-        // Xử lý khi về đích chính xác (kể cả khi scroll chậm)
-        if (currentScrollTop < 10) {
-            setIsHeaderVisible(true);
-            setIsHeaderExpanded(true);
-            setIsAddButtonVisible(true);
-            if (setTabBarVisible) setTabBarVisible(true);
-        }
-    }
-  };
+  // States for scroll animation reused via hook
+  const {
+    isHeaderExpanded,
+    isHeaderVisible,
+    isAddButtonVisible,
+    isScrolled,
+    handleScroll,
+  } = useScrollHandling({
+    setTabBarVisible,
+    scrollThreshold: 200,
+    dataDependency: products.length, // Updated to use products directly or filtered
+  });
 
   const {
     isModalOpen,

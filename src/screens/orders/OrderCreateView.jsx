@@ -4,6 +4,7 @@ import BarcodeScanner from "../../components/BarcodeScanner";
 import { WAREHOUSES } from "../../utils/warehouseUtils";
 import { motion, AnimatePresence } from "framer-motion";
 
+import useScrollHandling from "../../hooks/useScrollHandling";
 import OrderCreateHeader from "./components/OrderCreateHeader";
 import OrderCreateProductList from "./components/OrderCreateProductList";
 import OrderCreateFooter from "./components/OrderCreateFooter";
@@ -49,52 +50,17 @@ const OrderCreateView = ({
   handleConfirmOrder,
   setTabBarVisible,
 }) => {
-  // State scroll animation
-  const [isHeaderExpanded, setIsHeaderExpanded] = useState(true);
-  const [isHeaderVisible, setIsHeaderVisible] = useState(true);
-  const [isFooterVisible, setIsFooterVisible] = useState(true);
-  const lastScrollTop = useRef(0);
-
-  const handleScroll = (e) => {
-    const target = e.target;
-    const currentScrollTop = target.scrollTop;
-    const scrollHeight = target.scrollHeight;
-    const clientHeight = target.clientHeight;
-    const direction = currentScrollTop > lastScrollTop.current ? "down" : "up";
-    const isNearBottom = currentScrollTop + clientHeight > scrollHeight - 50;
-
-    // Threshold
-    if (Math.abs(currentScrollTop - lastScrollTop.current) > 10) {
-      if (direction === "down") {
-        // Kiểm tra an toàn: Chỉ ẩn nếu danh sách đủ dài
-        // Ngưỡng 200px (đủ cho Header ~120px + Footer ~80px)
-        const scrollRange = scrollHeight - clientHeight;
-        if (scrollRange > 200) {
-          setIsHeaderVisible(false); // Ẩn toàn bộ header
-          setIsFooterVisible(false);
-          if (setTabBarVisible) setTabBarVisible(false);
-        }
-      } else if (!isNearBottom) {
-        setIsHeaderVisible(true); // Hiện header
-        setIsHeaderExpanded(false); // Thu gọn (chỉ ô search)
-        setIsFooterVisible(true);
-
-        // Mở rộng header khi lên đỉnh
-        if (currentScrollTop < 10) {
-           setIsHeaderExpanded(true);
-           if (setTabBarVisible) setTabBarVisible(true);
-        }
-      }
-      lastScrollTop.current = currentScrollTop;
-    } else {
-        if (currentScrollTop < 10) {
-            setIsHeaderVisible(true);
-            setIsHeaderExpanded(true);
-            setIsFooterVisible(true);
-            if (setTabBarVisible) setTabBarVisible(true);
-        }
-    }
-  };
+  // Reuse scroll logic
+  const {
+    isHeaderExpanded,
+    isHeaderVisible,
+    isAddButtonVisible: isFooterVisible, // Map add button visibility to footer
+    handleScroll,
+  } = useScrollHandling({
+    setTabBarVisible,
+    scrollThreshold: 200,
+    dataDependency: filteredProducts.length,
+  });
 
   const categories = settings?.categories || ["Chung"];
 
