@@ -1,10 +1,10 @@
 import React, { useState, useRef } from "react";
-import { ShoppingCart } from "lucide-react";
+import { ShoppingCart, Plus } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { formatNumber } from "../../utils/helpers";
 import { getWarehouseLabel } from "../../utils/warehouseUtils";
 import { getOrderDisplayName } from "../../utils/orderUtils";
-import FloatingAddButton from "../../components/common/FloatingAddButton";
+import FloatingActionButton from "../../components/common/FloatingActionButton";
 import AppHeader from "../../components/common/AppHeader";
 
 // Giao diện danh sách đơn tách riêng để dễ quản lý và thêm nút huỷ đơn
@@ -55,9 +55,11 @@ const OrderListView = ({
             exit={{ scale: 0, opacity: 0 }}
             className="fixed right-5 bottom-24 z-30"
           >
-            <FloatingAddButton
+            <FloatingActionButton
               onClick={onCreateOrder}
               ariaLabel="Tạo đơn mới"
+              icon={Plus}
+              color="rose"
               className="!static"
             />
           </motion.div>

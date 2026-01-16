@@ -1,5 +1,6 @@
 import React, { useState, useRef } from "react";
 import { AnimatePresence, motion } from "framer-motion";
+import { Plus } from "lucide-react";
 import BarcodeScanner from "../components/BarcodeScanner";
 import InventoryHeader from "./inventory/InventoryHeader";
 import ProductList from "./inventory/ProductList";
@@ -7,7 +8,7 @@ import ProductDetailModal from "./inventory/ProductDetailModal";
 import ProductModal from "./inventory/ProductModal";
 import ConfirmModalHost from "../components/modals/ConfirmModalHost";
 import ErrorModal from "../components/modals/ErrorModal";
-import FloatingAddButton from "../components/common/FloatingAddButton";
+import FloatingActionButton from "../components/common/FloatingActionButton";
 import useInventoryLogic from "../hooks/useInventoryLogic";
 import AppHeader from "../components/common/AppHeader";
 
@@ -137,9 +138,11 @@ const Inventory = ({
             exit={{ scale: 0, opacity: 0 }}
             className="fixed right-5 bottom-24 z-30"
           >
-            <FloatingAddButton
+            <FloatingActionButton
               onClick={() => openModal()}
               ariaLabel="Thêm hàng mới"
+              icon={Plus}
+              color="rose"
               className="!static" // Override absolute positioning if needed by wrapper
             />
           </motion.div>

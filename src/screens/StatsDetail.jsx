@@ -1,15 +1,13 @@
 /* eslint-disable no-unused-vars */
 import React, { useMemo, useState } from "react";
-import { BarChart3, DollarSign, TrendingUp, Trophy } from "lucide-react";
+import { BarChart3, DollarSign, TrendingUp } from "lucide-react";
 import { formatNumber } from "../utils/helpers";
 import useDashboardLogic from "../hooks/useDashboardLogic";
 import { getLatestUnitCost } from "../utils/purchaseUtils";
 import MetricCard from "../components/stats/MetricCard";
-import OptionPills from "../components/stats/OptionPills";
-import RankBadge from "../components/stats/RankBadge";
+import TopSellingSection from "../components/stats/TopSellingSection";
 import TopListModal from "../components/stats/TopListModal";
 import DateRangeFilter from "../components/stats/DateRangeFilter";
-import { AnimatePresence, motion } from "framer-motion";
 
 const StatsDetail = ({ products, orders, onBack }) => {
   const {
@@ -161,81 +159,15 @@ const StatsDetail = ({ products, orders, onBack }) => {
         </div>
       </div>
 
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 space-y-3">
-        <div className="flex items-center justify-between gap-2 text-amber-700">
-          <div className="flex items-center gap-2">
-            <Trophy size={18} />
-            <h3 className="text-sm font-bold uppercase">Top bán chạy</h3>
-          </div>
-          <OptionPills
-            options={topOptions}
-            activeId={topLimit}
-            onChange={setTopLimit}
-            containerClassName="flex items-center gap-1 flex-nowrap overflow-x-auto no-scrollbar"
-            buttonClassName="px-2 py-1 rounded-full text-[11px] font-semibold border transition whitespace-nowrap"
-            activeClassName="bg-rose-500 text-white border-rose-400 shadow-sm"
-            inactiveClassName="bg-rose-50 text-rose-600 border-rose-100"
-          />
-        </div>
-        <div className="grid grid-cols-2 gap-3">
-          <button
-            type="button"
-            onClick={() => openTopModal("profit")}
-            className="rounded-xl border border-rose-100 bg-rose-50/60 p-3 text-left transition active:bg-rose-50 focus:outline-none"
-          >
-            <div className="text-xs font-semibold uppercase text-rose-600 mb-2">
-              Top lợi nhuận
-            </div>
-            <div className="space-y-2 text-sm text-rose-800">
-              <AnimatePresence mode="wait">
-                {topByProfit.map((item, index) => (
-                  <motion.div
-                    key={item.id || item.name}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    className="flex items-center gap-2"
-                  >
-                    <RankBadge rank={index + 1} />
-                    <span className="min-w-0 flex-1 truncate">{item.name}</span>
-                  </motion.div>
-                ))}
-              </AnimatePresence>
-              {topByProfit.length === 0 && (
-                <div className="text-xs text-rose-400">Chưa có dữ liệu</div>
-              )}
-            </div>
-          </button>
-          <button
-            type="button"
-            onClick={() => openTopModal("quantity")}
-            className="rounded-xl border border-emerald-100 bg-emerald-50/60 p-3 text-left transition active:bg-emerald-50 focus:outline-none"
-          >
-            <div className="text-xs font-semibold uppercase text-emerald-600 mb-2">
-              Top số lượng
-            </div>
-            <div className="space-y-2 text-sm text-emerald-800">
-              <AnimatePresence mode="wait">
-                {topByQuantity.map((item, index) => (
-                  <motion.div
-                    key={item.id || item.name}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    className="flex items-center gap-2"
-                  >
-                    <RankBadge rank={index + 1} />
-                    <span className="min-w-0 flex-1 truncate">{item.name}</span>
-                  </motion.div>
-                ))}
-              </AnimatePresence>
-              {topByQuantity.length === 0 && (
-                <div className="text-xs text-emerald-400">Chưa có dữ liệu</div>
-              )}
-            </div>
-          </button>
-        </div>
-      </div>
+      {/* Reusable Top Selling Section */}
+      <TopSellingSection
+        topOptions={topOptions}
+        activeTopOption={topLimit}
+        onOptionChange={setTopLimit}
+        topByProfit={topByProfit}
+        topByQuantity={topByQuantity}
+        onOpenModal={openTopModal}
+      />
 
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 space-y-3">
         <div className="flex items-center gap-2 text-amber-700">
