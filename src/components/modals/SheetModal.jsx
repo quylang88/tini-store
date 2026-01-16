@@ -41,7 +41,7 @@ const SheetModal = ({
         {(title || showCloseIcon) && (
           <div className="flex justify-between items-center p-5 pb-0">
             {title ? (
-              <h3 className="font-bold text-lg text-amber-900">{title}</h3>
+              <h3 className="font-bold text-lg text-amber-800">{title}</h3>
             ) : (
               <div />
             )}

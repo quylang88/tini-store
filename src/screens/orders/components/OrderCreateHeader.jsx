@@ -18,7 +18,7 @@ const OrderCreateHeader = ({
       {/* Hàng 1: Tiêu đề */}
       <div className="p-3 border-b border-amber-100 flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-bold text-amber-900">
+          <h2 className="text-xl font-bold text-amber-800">
             {orderBeingEdited
               ? `Sửa đơn #${
                   orderBeingEdited.orderNumber ?? orderBeingEdited.id.slice(-4)
