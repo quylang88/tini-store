@@ -21,6 +21,7 @@ const OrderCreateProductList = ({
   setActiveCategory,
   categories,
   warehouseTabs,
+  className = "",
 }) => {
   // Khi đang sửa đơn, cộng lại số lượng cũ để hiển thị tồn kho chính xác
   const getAvailableStock = (productId, stock) => {
@@ -35,7 +36,7 @@ const OrderCreateProductList = ({
 
   return (
     <div
-      className="flex-1 overflow-y-auto p-3 space-y-3 pb-40 min-h-0"
+      className={`flex-1 overflow-y-auto p-3 space-y-3 pb-40 min-h-0 ${className}`}
       onScroll={handleScroll}
     >
       {/* Filter Section rendered inside the scroll view */}
