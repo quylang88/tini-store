@@ -10,6 +10,7 @@ import AppHeader from "../components/common/AppHeader";
 
 const Dashboard = ({ products, orders, onOpenDetail }) => {
   const {
+    currentDate, // Use the date from the hook
     topOptions,
     topLimit,
     setTopLimit,
@@ -34,11 +35,11 @@ const Dashboard = ({ products, orders, onOpenDetail }) => {
   // Derive order count
   const orderCount = filteredPaidOrders.length;
 
-  // Generate current month label
+  // Generate current month label using the centralized date
   const currentMonthLabel = useMemo(() => {
-    const now = new Date();
-    return `Tháng ${String(now.getMonth() + 1).padStart(2, "0")}/${now.getFullYear()}`;
-  }, []);
+    if (!currentDate) return "Đang tải...";
+    return `Tháng ${String(currentDate.getMonth() + 1).padStart(2, "0")}/${currentDate.getFullYear()}`;
+  }, [currentDate]);
 
   return (
     <div className="relative h-full bg-inherit">

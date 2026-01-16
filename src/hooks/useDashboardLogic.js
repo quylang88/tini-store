@@ -1,9 +1,10 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { getLatestUnitCost } from "../utils/purchaseUtils";
 
 // Tạo label thời gian động theo tháng/năm hiện tại và tách bộ lọc cho dashboard vs chi tiết.
-const buildRangeOptions = (mode = "dashboard") => {
-  const now = new Date();
+const buildRangeOptions = (mode = "dashboard", now) => {
+  if (!now) return [];
+
   const monthLabel = `Tháng ${String(now.getMonth() + 1).padStart(2, "0")}`;
   const yearLabel = `Năm ${now.getFullYear()}`;
 
@@ -24,12 +25,20 @@ const TOP_OPTIONS = [
 ];
 
 const useDashboardLogic = ({ products, orders, rangeMode = "dashboard" }) => {
+  // Centralized date state to avoid impure calls during render
+  const [currentDate, setCurrentDate] = useState(null);
+
+  useEffect(() => {
+    setCurrentDate(new Date());
+  }, []);
+
   const [activeRange, setActiveRange] = useState(
     rangeMode === "detail" ? "custom" : "month"
   );
   const [topLimit, setTopLimit] = useState(3);
   const [customRange, setCustomRange] = useState({ start: null, end: null });
-  const rangeOptions = useMemo(() => buildRangeOptions(rangeMode), [rangeMode]);
+
+  const rangeOptions = useMemo(() => buildRangeOptions(rangeMode, currentDate), [rangeMode, currentDate]);
 
   // Map giá vốn theo sản phẩm để tính lợi nhuận ổn định
   const costMap = useMemo(
@@ -49,7 +58,7 @@ const useDashboardLogic = ({ products, orders, rangeMode = "dashboard" }) => {
   const activeOption = useMemo(
     () =>
       rangeOptions.find((option) => option.id === activeRange) ||
-      rangeOptions[0],
+      rangeOptions[0] || { days: null },
     [activeRange, rangeOptions]
   );
 
@@ -60,12 +69,12 @@ const useDashboardLogic = ({ products, orders, rangeMode = "dashboard" }) => {
       start.setHours(0, 0, 0, 0);
       return start;
     }
-    if (!activeOption.days) return null;
-    const start = new Date();
+    if (!activeOption.days || !currentDate) return null;
+    const start = new Date(currentDate);
     start.setHours(0, 0, 0, 0);
     start.setDate(start.getDate() - activeOption.days + 1);
     return start;
-  }, [activeOption, activeRange, customRange.start]);
+  }, [activeOption, activeRange, customRange.start, currentDate]);
 
   const rangeEnd = useMemo(() => {
     if (activeRange === "custom") {
@@ -74,11 +83,11 @@ const useDashboardLogic = ({ products, orders, rangeMode = "dashboard" }) => {
       end.setHours(23, 59, 59, 999);
       return end;
     }
-    if (!activeOption.days) return null;
-    const end = new Date();
+    if (!activeOption.days || !currentDate) return null;
+    const end = new Date(currentDate);
     end.setHours(23, 59, 59, 999);
     return end;
-  }, [activeOption, activeRange, customRange.end]);
+  }, [activeOption, activeRange, customRange.end, currentDate]);
 
   const filteredPaidOrders = useMemo(() => {
     if (!rangeStart && !rangeEnd) return paidOrders;
@@ -127,6 +136,8 @@ const useDashboardLogic = ({ products, orders, rangeMode = "dashboard" }) => {
 
   // Calculate Slow Moving Inventory (Hàng tồn)
   const slowMovingProducts = useMemo(() => {
+    if (!currentDate) return [];
+
     // 1. Map last sold date based on ALL orders (ignore filter)
     const lastSoldMap = new Map();
     orders.forEach(order => {
@@ -140,15 +151,14 @@ const useDashboardLogic = ({ products, orders, rangeMode = "dashboard" }) => {
       });
     });
 
-    const now = new Date();
     const warningDays = 60; // Threshold
 
     return products
       .filter(p => (p.stock || 0) > 0)
       .map(p => {
         const lastSold = lastSoldMap.get(p.id);
-        const dateToCheck = lastSold || new Date(p.createdAt || Date.now());
-        const diffTime = Math.abs(now - dateToCheck);
+        const dateToCheck = lastSold || new Date(p.createdAt || currentDate.getTime());
+        const diffTime = Math.abs(currentDate - dateToCheck);
         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
         return {
@@ -159,7 +169,7 @@ const useDashboardLogic = ({ products, orders, rangeMode = "dashboard" }) => {
       })
       .filter(p => p.daysNoSale > warningDays)
       .sort((a, b) => b.daysNoSale - a.daysNoSale);
-  }, [products, orders]);
+  }, [products, orders, currentDate]);
 
   // --- End New Logic ---
 
@@ -213,6 +223,7 @@ const useDashboardLogic = ({ products, orders, rangeMode = "dashboard" }) => {
   );
 
   return {
+    currentDate, // Return this so consumers can use the exact same reference
     rangeOptions,
     topOptions: TOP_OPTIONS,
     topLimit,
