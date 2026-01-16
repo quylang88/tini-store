@@ -80,6 +80,7 @@ const Dashboard = ({ products, orders, onOpenDetail }) => {
           topByProfit={topByProfit}
           topByQuantity={topByQuantity}
           onOpenModal={openTopModal}
+          layoutIdPrefix="dashboard-top-selling"
         />
 
         {/* Modal mở khi người dùng chạm vào từng nhóm top để xem chi tiết. */}

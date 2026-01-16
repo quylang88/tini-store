@@ -11,6 +11,7 @@ const TopSellingSection = ({
   topByProfit,
   topByQuantity,
   onOpenModal,
+  layoutIdPrefix = "top-selling-tabs",
 }) => {
   // Convert topOptions to format required by AnimatedFilterTabs (key, label)
   // Assuming topOptions has { id, label }
@@ -34,7 +35,7 @@ const TopSellingSection = ({
           tabs={tabs}
           activeTab={activeTopOption}
           onChange={onOptionChange}
-          layoutIdPrefix="top-selling-tabs"
+          layoutIdPrefix={layoutIdPrefix}
           className="flex-nowrap overflow-x-auto no-scrollbar"
         />
       </div>
