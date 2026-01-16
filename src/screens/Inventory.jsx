@@ -89,8 +89,8 @@ const Inventory = ({
   // Đã loại bỏ useFilterTransition để tránh remount list gây khựng.
 
   return (
-    <div className="relative h-full bg-transparent">
-      <AppHeader />
+    <div className="relative h-full bg-transparent flex flex-col">
+      <AppHeader className="z-20" />
 
       {showScanner && (
         <BarcodeScanner
@@ -99,29 +99,33 @@ const Inventory = ({
         />
       )}
 
-      {/* Container cuộn cho toàn bộ nội dung dưới AppHeader */}
-      <div className="h-full overflow-y-auto min-h-0 pt-[80px]" onScroll={handleScroll}>
-        {/* Tách phần header & tab danh mục để Inventory gọn hơn */}
-        <InventoryHeader
-          searchTerm={searchTerm}
-          onSearchChange={(e) => setSearchTerm(e.target.value)}
-          onClearSearch={() => setSearchTerm("")}
-          onShowScanner={() => setShowScanner(true)}
-          activeCategory={activeCategory}
-          setActiveCategory={setActiveCategory}
-          warehouseFilter={warehouseFilter}
-          onWarehouseChange={setWarehouseFilter}
-          categories={settings.categories}
-          isExpanded={isHeaderExpanded}
-        />
+      {/* Container cho nội dung chính, bắt đầu từ dưới AppHeader */}
+      <div className="flex flex-col h-full pt-[72px]">
+        {/* InventoryHeader cố định phía trên danh sách */}
+        <div className="z-10 bg-amber-50 shadow-sm shrink-0">
+          <InventoryHeader
+            searchTerm={searchTerm}
+            onSearchChange={(e) => setSearchTerm(e.target.value)}
+            onClearSearch={() => setSearchTerm("")}
+            onShowScanner={() => setShowScanner(true)}
+            activeCategory={activeCategory}
+            setActiveCategory={setActiveCategory}
+            warehouseFilter={warehouseFilter}
+            onWarehouseChange={setWarehouseFilter}
+            categories={settings.categories}
+            isExpanded={isHeaderExpanded}
+          />
+        </div>
 
-        {/* Product List */}
-        <ProductList
-          products={filteredProducts}
-          onDelete={handleDelete}
-          onOpenDetail={setDetailProduct}
-          activeCategory={activeCategory}
-        />
+        {/* Product List cuộn bên dưới InventoryHeader */}
+        <div className="flex-1 overflow-y-auto min-h-0" onScroll={handleScroll}>
+          <ProductList
+            products={filteredProducts}
+            onDelete={handleDelete}
+            onOpenDetail={setDetailProduct}
+            activeCategory={activeCategory}
+          />
+        </div>
       </div>
 
       {/* Nút thêm hàng mới nổi theo cùng vị trí với màn tạo đơn để đồng bộ UX. */}

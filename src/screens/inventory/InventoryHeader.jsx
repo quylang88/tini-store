@@ -31,7 +31,7 @@ const InventoryHeader = ({
   ];
 
   return (
-    <div className="bg-amber-50/90 sticky top-0 z-10 shadow-sm backdrop-blur">
+    <div className="bg-amber-50/90 backdrop-blur">
       {/* Header & Search */}
       <div className="p-3 border-b border-amber-100">
         <div className="flex justify-end items-center mb-3">
