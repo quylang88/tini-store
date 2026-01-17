@@ -108,7 +108,7 @@ const StatsDetail = ({ products, orders, onBack }) => {
         </div>
       </div>
 
-      <div className="bg-amber-50 rounded-2xl shadow-sm border border-amber-100 p-3">
+      <div className="bg-amber-100 rounded-2xl shadow-sm border border-amber-200 p-3">
         {/* Bộ lọc thời gian chi tiết hơn để xem theo nhiều khoảng khác nhau. */}
         <DateRangeFilter
           customRange={customRange}
@@ -121,15 +121,15 @@ const StatsDetail = ({ products, orders, onBack }) => {
           icon={DollarSign}
           label="Doanh thu"
           value={`${formatNumber(totalRevenue)}đ`}
-          className="bg-amber-50 border border-amber-100 shadow-sm text-rose-700"
+          className="bg-amber-100 border border-amber-200 shadow-sm text-rose-700"
         />
         <MetricCard
           icon={TrendingUp}
           label="Lợi nhuận"
           value={`${formatNumber(totalProfit)}đ`}
-          className="bg-amber-50 border border-amber-100 shadow-sm text-rose-700"
+          className="bg-amber-100 border border-amber-200 shadow-sm text-rose-700"
         />
-        <div className="bg-amber-50 text-rose-900 p-4 rounded-2xl shadow-sm border border-amber-100 col-span-2">
+        <div className="bg-amber-100 text-rose-900 p-4 rounded-2xl shadow-sm border border-amber-200 col-span-2">
           <div className="grid grid-cols-3 gap-3 text-xs">
             <div>
               <div className="text-rose-500 uppercase font-semibold">
@@ -170,13 +170,13 @@ const StatsDetail = ({ products, orders, onBack }) => {
         layoutIdPrefix="stats-detail-top-selling"
       />
 
-      <div className="bg-amber-50 rounded-2xl shadow-sm border border-amber-100 p-4 space-y-3">
+      <div className="bg-amber-100 rounded-2xl shadow-sm border border-amber-200 p-4 space-y-3">
         <div className="flex items-center gap-2 text-rose-700">
           <BarChart3 size={18} />
           <h3 className="text-sm font-bold uppercase">So sánh kỳ hiện tại</h3>
         </div>
         <div className="grid grid-cols-2 gap-3 text-xs">
-          <div className="rounded-xl border border-amber-100 bg-amber-100 p-3">
+          <div className="rounded-xl border border-rose-100 bg-rose-50 p-3">
             <div className="text-rose-600 font-semibold uppercase mb-2">
               Kỳ hiện tại
             </div>
@@ -232,7 +232,7 @@ const StatsDetail = ({ products, orders, onBack }) => {
         </div>
       </div>
 
-      <div className="bg-amber-50 rounded-2xl shadow-sm border border-amber-100 p-4 space-y-2">
+      <div className="bg-amber-100 rounded-2xl shadow-sm border border-amber-200 p-4 space-y-2">
         <div className="flex items-center gap-2 text-rose-700">
           <TrendingUp size={18} />
           <h3 className="text-sm font-bold uppercase">Ý tưởng thêm</h3>

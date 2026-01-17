@@ -21,7 +21,7 @@ const TopSellingSection = ({
   }));
 
   return (
-    <div className="bg-amber-50 rounded-2xl shadow-sm border border-amber-100 p-4 space-y-4">
+    <div className="bg-amber-100 rounded-2xl shadow-sm border border-amber-200 p-4 space-y-4">
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2 text-rose-700">
           <Trophy size={18} />

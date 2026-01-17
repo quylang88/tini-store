@@ -84,28 +84,28 @@ const Dashboard = ({ products, orders, onOpenDetail }) => {
             icon={DollarSign}
             label="Doanh thu"
             value={`${formatNumber(totalRevenue)}đ`}
-            className="bg-amber-50 border border-amber-100 shadow-sm text-rose-700"
+            className="bg-amber-100 border border-amber-200 shadow-sm text-rose-700"
           />
 
           <MetricCard
             icon={TrendingUp}
             label="Lợi nhuận"
             value={`${formatNumber(totalProfit)}đ`}
-            className="bg-amber-50 border border-amber-100 shadow-sm text-rose-700"
+            className="bg-amber-100 border border-amber-200 shadow-sm text-rose-700"
           />
 
           <MetricCard
             icon={ShoppingCart}
             label="Số đơn"
             value={orderCount}
-            className="bg-amber-50 border border-amber-100 shadow-sm text-rose-700"
+            className="bg-amber-100 border border-amber-200 shadow-sm text-rose-700"
           />
 
           <MetricCard
             icon={Package}
             label="Vốn tồn kho"
             value={`${formatNumber(totalCapital)}đ`}
-            className="bg-amber-50 border border-amber-100 shadow-sm text-rose-700"
+            className="bg-amber-100 border border-amber-200 shadow-sm text-rose-700"
           />
         </div>
 
