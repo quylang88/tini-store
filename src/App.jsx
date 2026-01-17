@@ -100,9 +100,9 @@ const App = () => {
         return;
       }
 
-      // Case B: Không bật tự động, nhưng quá hạn mặc định (3 ngày) -> Hiện nhắc nhở
+      // Case B: Không bật tự động, nhưng quá hạn mặc định (7 ngày) -> Hiện nhắc nhở
       const isAutoOff = !settings.autoBackupInterval;
-      if (isAutoOff && daysSinceBackup > 3) {
+      if (isAutoOff && daysSinceBackup > 7) {
         setBackupReminderOpen(true);
         sessionStorage.setItem("hasCheckedBackup", "true");
       }

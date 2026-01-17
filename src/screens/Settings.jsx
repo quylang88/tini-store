@@ -10,6 +10,8 @@ import SettingsSection from "./settings/SettingsSection";
 import useSettingsLogic from "../hooks/useSettingsLogic";
 import Button from "../components/common/Button";
 import AppHeader from "../components/common/AppHeader";
+import AnimatedFilterTabs from "../components/common/AnimatedFilterTabs";
+import { AnimatePresence, motion } from "framer-motion";
 
 const Settings = ({
   products,
@@ -44,6 +46,8 @@ const Settings = ({
     settings,
     setSettings,
   });
+
+  const isAutoBackupOn = settings.autoBackupInterval > 0;
 
   const [isScrolled, setIsScrolled] = React.useState(false);
 
@@ -166,29 +170,51 @@ const Settings = ({
           </p>
 
           {/* Tùy chọn Tự động sao lưu */}
-          <div className="flex items-center justify-between bg-amber-50 p-3 rounded-lg border border-amber-100">
-            <span className="text-sm font-medium text-amber-900">
-              Tự động sao lưu
-            </span>
-            <select
-              className="bg-white border border-amber-200 text-amber-800 text-sm rounded-lg px-2 py-1.5 outline-none focus:border-amber-400"
-              value={settings.autoBackupInterval || 0}
-              onChange={(e) => {
-                const value = parseInt(e.target.value, 10);
-                saveSettings({ ...settings, autoBackupInterval: value });
-              }}
-            >
-              <option value={0}>Tắt (Thủ công)</option>
-              <option value={1}>Mỗi ngày</option>
-              <option value={3}>Mỗi 3 ngày</option>
-              <option value={7}>Mỗi tuần</option>
-            </select>
+          <div className="bg-amber-50 p-3 rounded-lg border border-amber-100 space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-medium text-amber-900">
+                Tự động sao lưu
+              </span>
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  className="sr-only peer"
+                  checked={isAutoBackupOn}
+                  onChange={(e) => {
+                    const isChecked = e.target.checked;
+                    handleAutoBackupChange(isChecked ? 3 : 0);
+                  }}
+                />
+                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-500"></div>
+              </label>
+            </div>
+
+            <AnimatePresence>
+              {isAutoBackupOn && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: "auto", opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  className="overflow-hidden"
+                >
+                  <AnimatedFilterTabs
+                    tabs={[
+                      { key: 3, label: "Mỗi 3 ngày" },
+                      { key: 7, label: "Mỗi 7 ngày" },
+                    ]}
+                    activeTab={settings.autoBackupInterval}
+                    onChange={(key) => handleAutoBackupChange(key)}
+                    className="justify-end"
+                  />
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
 
           <div className="space-y-2 pt-2">
             <button
               onClick={exportData}
-              className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-orange-500 to-amber-500 text-white py-3.5 rounded-xl font-bold shadow-lg shadow-orange-500/30 active:scale-95 transition-all"
+              className="w-full flex items-center justify-center gap-2 bg-amber-600 hover:bg-amber-700 text-white py-3.5 rounded-xl font-bold shadow-sm active:scale-95 transition-all"
             >
               <Download size={20} /> Tải Dữ Liệu Về Máy (Backup)
             </button>
@@ -229,7 +255,7 @@ const Settings = ({
         {/* 4. Nút Đăng Xuất */}
         <button
           onClick={onLogout}
-          className="w-full flex items-center justify-center gap-2 mt-4 bg-stone-100 text-stone-500 py-3 rounded-xl font-bold active:bg-stone-200 transition"
+          className="w-full flex items-center justify-center gap-2 mt-4 bg-rose-50 text-rose-600 border border-rose-100 py-3 rounded-xl font-bold active:bg-rose-100 transition"
         >
           <LogOut size={20} /> Đăng Xuất
         </button>

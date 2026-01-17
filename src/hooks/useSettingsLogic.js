@@ -27,8 +27,15 @@ const useSettingsLogic = ({
   };
 
   // Thay đổi tần suất sao lưu tự động
-  const handleAutoBackupChange = (e) => {
-    const value = parseInt(e.target.value, 10);
+  const handleAutoBackupChange = (value) => {
+    if (value === 0) {
+      // Khi tắt tự động, hiện thông báo
+      setInfoModal({
+        title: "Đã tắt tự động sao lưu",
+        message:
+          "Bạn sẽ nhận được nhắc nhở sao lưu thủ công mỗi 7 ngày để đảm bảo an toàn dữ liệu.",
+      });
+    }
     saveSettings({ ...settings, autoBackupInterval: value });
   };
 
