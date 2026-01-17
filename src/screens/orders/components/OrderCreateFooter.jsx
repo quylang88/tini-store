@@ -18,7 +18,7 @@ const OrderCreateFooter = ({
           animate={{ y: 0 }}
           exit={{ y: "100%" }}
           transition={{ type: "spring", stiffness: 300, damping: 30 }}
-          className="fixed bottom-0 left-0 right-0 bg-amber-50/90 border-t border-amber-200 p-4 pb-[calc(env(safe-area-inset-bottom)+28px)] z-[60] shadow-[0_-4px_15px_rgba(0,0,0,0.1)] backdrop-blur"
+          className="fixed bottom-0 left-0 right-0 bg-rose-50/90 border-t border-rose-200 p-4 pb-[calc(env(safe-area-inset-bottom)+28px)] z-[60] shadow-[0_-4px_15px_rgba(0,0,0,0.1)] backdrop-blur"
         >
           <div className="flex justify-between items-center mb-3">
             <span className="text-gray-500 font-medium text-sm">Tổng đơn:</span>
@@ -29,7 +29,7 @@ const OrderCreateFooter = ({
           <div className="flex gap-3">
             <button
               onClick={handleCancelDraft}
-              className="flex-1 bg-white text-amber-700 py-3.5 rounded-xl font-bold border border-amber-200 shadow-sm active:scale-95 transition"
+              className="flex-1 bg-white text-rose-700 py-3.5 rounded-xl font-bold border border-rose-200 shadow-sm active:scale-95 transition"
             >
               {orderBeingEdited ? "Huỷ sửa" : "Huỷ đơn"}
             </button>

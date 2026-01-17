@@ -13,9 +13,9 @@ const toneMap = {
     value: "text-rose-600",
   },
   quantity: {
-    title: "text-emerald-800",
-    badge: "bg-emerald-50 text-emerald-700 border-emerald-100",
-    value: "text-emerald-700",
+    title: "text-amber-800",
+    badge: "bg-amber-50 text-amber-700 border-amber-100",
+    value: "text-amber-700",
   },
 };
 
@@ -37,9 +37,19 @@ const TopListModal = ({ open, onClose, title, items, mode }) => {
   const tone = toneMap[cachedData.mode] || toneMap.profit;
   const valueLabel = cachedData.mode === "quantity" ? "Số lượng" : "Lợi nhuận";
 
-  // Nút đóng ở dưới cùng
+  // Nút đóng ở dưới cùng. Nếu là profit (Rose) thì override style của sheetClose (Amber)
+  const isProfit = cachedData.mode === "profit";
   const footer = (
-    <Button variant="sheetClose" size="sm" onClick={onClose}>
+    <Button
+      variant="sheetClose"
+      size="sm"
+      onClick={onClose}
+      className={
+        isProfit
+          ? "border-rose-300 bg-rose-100 text-rose-900 active:border-rose-400 active:bg-rose-200"
+          : ""
+      }
+    >
       Đóng
     </Button>
   );
