@@ -81,18 +81,21 @@ const ProductList = ({
                     </div>
 
                     {/* Logic hiển thị kho dựa trên activeWarehouse */}
-                    {(activeWarehouse === "all" ||
-                      activeWarehouse === "vinhPhuc") && (
-                      <div className="text-amber-600">
-                        Vĩnh Phúc: {stockByWarehouse.vinhPhuc} sp
-                      </div>
-                    )}
-                    {(activeWarehouse === "all" ||
-                      activeWarehouse === "daLat") && (
-                      <div className="text-amber-600">
-                        Lâm Đồng: {stockByWarehouse.daLat} sp
-                      </div>
-                    )}
+                    {/* Slot 1: Chỉ hiện Vĩnh Phúc khi xem Tất cả. Các trường hợp khác ẩn để giữ khoảng trống */}
+                    <div
+                      className={`text-amber-600 ${
+                        activeWarehouse !== "all" ? "invisible" : ""
+                      }`}
+                    >
+                      Vĩnh Phúc: {stockByWarehouse.vinhPhuc} sp
+                    </div>
+
+                    {/* Slot 2: Hiện Lâm Đồng (mặc định) hoặc Vĩnh Phúc (khi filter VP) */}
+                    <div className="text-amber-600">
+                      {activeWarehouse === "vinhPhuc"
+                        ? `Vĩnh Phúc: ${stockByWarehouse.vinhPhuc} sp`
+                        : `Lâm Đồng: ${stockByWarehouse.daLat} sp`}
+                    </div>
 
                     <div className="text-[10px] text-amber-500">
                       Giá nhập mới nhất: {formatNumber(latestCost)}đ
