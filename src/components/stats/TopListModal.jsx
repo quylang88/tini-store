@@ -13,9 +13,9 @@ const toneMap = {
     value: "text-rose-600",
   },
   quantity: {
-    title: "text-emerald-800",
-    badge: "bg-emerald-50 text-emerald-700 border-emerald-100",
-    value: "text-emerald-700",
+    title: "text-amber-800",
+    badge: "bg-amber-50 text-amber-700 border-amber-100",
+    value: "text-amber-700",
   },
 };
 
@@ -37,9 +37,21 @@ const TopListModal = ({ open, onClose, title, items, mode }) => {
   const tone = toneMap[cachedData.mode] || toneMap.profit;
   const valueLabel = cachedData.mode === "quantity" ? "Số lượng" : "Lợi nhuận";
 
-  // Nút đóng ở dưới cùng
+  // Nút đóng ở dưới cùng.
+  // Nếu là profit (Rose) thì override style của sheetClose (mặc định là Amber).
+  // Nếu là quantity (Amber) thì dùng mặc định sheetClose (Amber).
+  const isProfit = cachedData.mode === "profit";
   const footer = (
-    <Button variant="sheetClose" size="sm" onClick={onClose}>
+    <Button
+      variant="sheetClose"
+      size="sm"
+      onClick={onClose}
+      className={
+        isProfit
+          ? "border-rose-300 bg-rose-100 text-rose-900 active:border-rose-400 active:bg-rose-200"
+          : ""
+      }
+    >
       Đóng
     </Button>
   );
@@ -52,7 +64,11 @@ const TopListModal = ({ open, onClose, title, items, mode }) => {
       showCloseIcon={false} // Tắt nút X
     >
       <div className="flex flex-col space-y-4 pt-3">
-        <div className="border-b border-amber-100 pb-4">
+        <div
+          className={`border-b ${
+            isProfit ? "border-rose-100" : "border-amber-100"
+          } pb-4`}
+        >
           <div className="flex items-center justify-between gap-2">
             <h3 className={`text-sm font-bold uppercase ${tone.title}`}>
               {cachedData.title}
