@@ -36,6 +36,7 @@ const Settings = ({
     fetchOnlineRate,
     exportData,
     importData,
+    handleAutoBackupChange,
   } = useSettingsLogic({
     products,
     orders,

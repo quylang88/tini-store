@@ -28,11 +28,16 @@ export const parseBackupFile = (file) => {
         } else {
           reject(new Error("File backup thiếu dữ liệu products hoặc orders."));
         }
-      } catch (err) {
-        reject(new Error("Không thể đọc file backup. File có thể bị lỗi."));
+      } catch (error) {
+        reject(
+          new Error(
+            "Không thể đọc file backup. File có thể bị lỗi: " + error.message
+          )
+        );
       }
     };
-    reader.onerror = () => reject(new Error("Lỗi đọc file."));
+    reader.onerror = () =>
+      reject(new Error("Lỗi đọc file: " + (reader.error?.message || "Unknown")));
     reader.readAsText(file);
   });
 };
