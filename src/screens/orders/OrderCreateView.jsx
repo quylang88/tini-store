@@ -77,9 +77,13 @@ const OrderCreateView = ({
 
   // Heights for Layout
   // Title Header: ~53px (p-3 = 12px*2 + text-xl line-height) - actually measured around 53-60px
+  // When editing, Title Header is taller (~74px) due to extra status text
   // Search Header: ~56px
-  // Total Fixed Height: ~109-116px
-  // We use pt-[116px] for the list to clear both.
+  // We calculate dynamic top/padding based on orderBeingEdited
+
+  const headerHeight = orderBeingEdited ? 78 : 53;
+  const searchBarHeight = 60; // Slightly more than 56 to avoid overlap
+  const listPaddingTop = headerHeight + searchBarHeight;
 
   return (
     <div className="flex flex-col h-full bg-rose-50 pb-safe-area relative">
@@ -96,17 +100,14 @@ const OrderCreateView = ({
       </div>
 
       {/* 2. Search Header (Animated, Z-10) - Ẩn khi scroll */}
-      {/* Nó nằm ngay dưới Header Tiêu đề (top ~ 53px). 
-          Khi ẩn, nó trượt lên trên (Y negative) để chui xuống dưới Header Tiêu đề. 
-          Hoặc đơn giản là trượt lên trên top=0. */}
+      {/* Nó nằm ngay dưới Header Tiêu đề (top ~ 53px hoặc ~78px).
+          Khi ẩn, nó trượt lên trên (Y negative) để chui xuống dưới Header Tiêu đề. */}
       <motion.div
         className="absolute left-0 right-0 z-10"
-        // Dựa vào chiều cao thực tế của OrderCreateHeader, hãy ước lượng top.
-        // Giả sử OrderCreateHeader cao ~53px.
-        initial={{ top: 53 }}
+        initial={{ top: headerHeight }}
         animate={{
-          top: 53,
-          y: isSearchVisible ? 0 : -60, // Slide up by ~60px (height of search bar)
+          top: headerHeight,
+          y: isSearchVisible ? 0 : -searchBarHeight, // Slide up by height of search bar
         }}
         transition={{ duration: 0.3 }}
       >
@@ -133,7 +134,7 @@ const OrderCreateView = ({
         <OrderCreateProductList
           filteredProducts={filteredProducts}
           handleScroll={handleScroll}
-          className="pt-[109px]" // Pass className to handle padding
+          style={{ paddingTop: listPaddingTop }} // Pass dynamic style for padding
           cart={cart}
           selectedWarehouse={selectedWarehouse}
           orderBeingEdited={orderBeingEdited}
