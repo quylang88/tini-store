@@ -1,7 +1,10 @@
 import React from "react";
 
-const MetricCard = ({ icon: Icon, label, value, className = "" }) => (
-  <div className={`text-white p-4 rounded-2xl shadow-lg ${className}`}>
+const MetricCard = ({ icon: Icon, label, value, className = "", ...props }) => (
+  <div
+    className={`text-white p-4 rounded-2xl shadow-lg ${className}`}
+    {...props}
+  >
     <div className="flex items-center gap-2 opacity-90 mb-2">
       {Icon && <Icon size={18} />}
       <span className="text-xs font-bold uppercase">{label}</span>

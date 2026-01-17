@@ -1,10 +1,10 @@
 import React, { useMemo } from "react";
 import { Image as ImageIcon } from "lucide-react";
-import SheetModal from "../modals/SheetModal";
+import SheetModal from "../../components/modals/SheetModal";
 import { formatNumber } from "../../utils/helpers";
-import RankBadge from "./RankBadge";
+import RankBadge from "../../components/stats/RankBadge";
 import useModalCache from "../../hooks/useModalCache";
-import Button from "../common/Button";
+import Button from "../../components/common/Button";
 
 const toneMap = {
   profit: {

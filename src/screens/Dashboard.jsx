@@ -12,7 +12,8 @@ import { formatNumber } from "../utils/helpers";
 import useDashboardLogic from "../hooks/useDashboardLogic";
 import MetricCard from "../components/stats/MetricCard";
 import TopSellingSection from "../components/stats/TopSellingSection";
-import TopListModal from "../components/stats/TopListModal";
+import TopListModal from "./dashboard/TopListModal";
+import OutOfStockModal from "./dashboard/OutOfStockModal";
 import FloatingActionButton from "../components/common/FloatingActionButton";
 import AppHeader from "../components/common/AppHeader";
 
@@ -33,6 +34,7 @@ const Dashboard = ({ products, orders, onOpenDetail }) => {
   } = useDashboardLogic({ products, orders, rangeMode: "dashboard" });
 
   const [activeModal, setActiveModal] = useState(null);
+  const [showOutOfStockModal, setShowOutOfStockModal] = useState(false);
 
   const openTopModal = (type) => setActiveModal(type);
   const closeTopModal = () => setActiveModal(null);
@@ -107,52 +109,15 @@ const Dashboard = ({ products, orders, onOpenDetail }) => {
             value={`${formatNumber(totalCapital)}đ`}
             className="bg-blue-400 shadow-blue-200"
           />
+
+          <MetricCard
+            icon={ArchiveX}
+            label="Hết hàng"
+            value={outOfStockProducts.length}
+            className="bg-rose-100 text-rose-700 shadow-rose-200 cursor-pointer active:scale-95 transition-transform"
+            onClick={() => setShowOutOfStockModal(true)}
+          />
         </div>
-
-        {/* Phần Hết Hàng (Out of Stock) - Horizontal Scroll */}
-        {outOfStockProducts.length > 0 && (
-          <div className="space-y-2">
-            <div className="flex items-center gap-2 px-1">
-              <ArchiveX size={16} className="text-rose-500" />
-              <h3 className="text-xs font-bold uppercase text-rose-700">
-                Hết hàng ({outOfStockProducts.length})
-              </h3>
-            </div>
-
-            <div className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4 custom-scrollbar">
-              {outOfStockProducts.map((product) => (
-                <div
-                  key={product.id}
-                  className="flex-shrink-0 w-64 bg-amber-50 rounded-xl shadow-sm border border-red-100 p-3 flex gap-3 opacity-90"
-                >
-                  <div className="w-12 h-12 rounded-lg bg-red-50 p-1 border border-red-100 flex-shrink-0 grayscale">
-                    {product.image ? (
-                      <img
-                        src={product.image}
-                        alt=""
-                        className="w-full h-full object-contain"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-red-300">
-                        <Package size={20} />
-                      </div>
-                    )}
-                  </div>
-                  <div className="min-w-0 flex-1 flex flex-col justify-between">
-                    <div className="text-sm font-semibold text-rose-700 truncate">
-                      {product.name}
-                    </div>
-                    <div className="flex items-center justify-between text-xs mt-1">
-                      <span className="text-rose-600 font-medium bg-rose-50 px-2 py-0.5 rounded-full">
-                        Hết hàng
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
 
         {/* Phần Hàng tồn kho lâu (Cuộn ngang) */}
         {slowMovingProducts.length > 0 && (
@@ -220,6 +185,12 @@ const Dashboard = ({ products, orders, onOpenDetail }) => {
           title={modalTitle}
           items={modalItems}
           mode={activeModal === "quantity" ? "quantity" : "profit"}
+        />
+
+        <OutOfStockModal
+          open={showOutOfStockModal}
+          onClose={() => setShowOutOfStockModal(false)}
+          products={outOfStockProducts}
         />
       </div>
 

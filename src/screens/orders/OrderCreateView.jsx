@@ -77,9 +77,13 @@ const OrderCreateView = ({
 
   // Heights for Layout
   // Title Header: ~45px (compact)
+  // When editing, Title Header is taller (~74px) due to extra status text
   // Search Header: ~56px
-  // Total Fixed Height: ~101px
-  // We use pt-[101px] for the list to clear both.
+  // We calculate dynamic top/padding based on orderBeingEdited
+  
+  const headerHeight = orderBeingEdited ? 68 : 53;
+  const searchBarHeight = 60; // Slightly more than 56 to avoid overlap
+  const listPaddingTop = headerHeight + searchBarHeight;
 
   return (
     <div className="flex flex-col h-full bg-rose-50 pb-safe-area relative">
@@ -96,14 +100,14 @@ const OrderCreateView = ({
       </div>
 
       {/* 2. Search Header (Animated, Z-10) - Ẩn khi scroll */}
-      {/* Nó nằm ngay dưới Header Tiêu đề (top ~ 45px). 
+      {/* Nó nằm ngay dưới Header Tiêu đề (top ~ 53px hoặc ~78px). 
           Khi ẩn, nó trượt lên trên (Y negative) để chui xuống dưới Header Tiêu đề. */}
       <motion.div
         className="absolute left-0 right-0 z-10"
-        initial={{ top: 45 }}
+        initial={{ top: headerHeight }}
         animate={{
-          top: 45,
-          y: isSearchVisible ? 0 : -60, // Slide up by ~60px (height of search bar)
+          top: headerHeight,
+          y: isSearchVisible ? 0 : -searchBarHeight, // Slide up by height of search bar
         }}
         transition={{ duration: 0.3 }}
       >
@@ -130,7 +134,7 @@ const OrderCreateView = ({
         <OrderCreateProductList
           filteredProducts={filteredProducts}
           handleScroll={handleScroll}
-          className="pt-[101px]" // Pass className to handle padding
+          style={{ paddingTop: listPaddingTop }} // Pass dynamic style for padding
           cart={cart}
           selectedWarehouse={selectedWarehouse}
           orderBeingEdited={orderBeingEdited}
