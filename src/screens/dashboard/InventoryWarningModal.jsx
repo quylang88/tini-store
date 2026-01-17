@@ -1,26 +1,23 @@
 import React from "react";
-import { ArchiveX } from "lucide-react";
+import { Package } from "lucide-react";
 import SheetModal from "../../components/modals/SheetModal";
 import Button from "../../components/common/Button";
 
-// Custom theme for "Out of Stock" (Slate/Gray alert tone)
+// Custom theme for "Inventory Warning" (Violet tone)
 const theme = {
-  title: "text-slate-700",
-  badge: "bg-slate-100 text-slate-600 border-slate-200",
-  value: "text-slate-600",
+  title: "text-violet-700",
+  badge: "bg-violet-50 text-violet-600 border-violet-100",
+  value: "text-violet-600",
 };
 
-// Modal hiển thị danh sách sản phẩm hết hàng
-const OutOfStockModal = ({ open, onClose, products = [] }) => {
-  // Simple caching logic to prevent content flicker on close (optional, but good practice if mirroring TopListModal)
-  // Here we just use the props directly since it's a simple list.
-
+// Modal displaying inventory warning products (slow moving, etc.)
+const InventoryWarningModal = ({ open, onClose, products = [] }) => {
   const footer = (
     <Button
       variant="sheetClose"
       size="sm"
       onClick={onClose}
-      className="!bg-slate-100 !border-slate-300 !text-slate-900 active:!bg-slate-200"
+      className="!bg-violet-100 !border-violet-300 !text-violet-900 active:!bg-violet-200"
     >
       Đóng
     </Button>
@@ -35,10 +32,10 @@ const OutOfStockModal = ({ open, onClose, products = [] }) => {
     >
       <div className="flex flex-col space-y-4 pt-3">
         {/* Header */}
-        <div className="border-b border-slate-100 pb-4">
+        <div className="border-b border-violet-100 pb-4">
           <div className="flex items-center justify-between gap-2">
             <h3 className={`text-sm font-bold uppercase ${theme.title}`}>
-              Sản phẩm hết hàng
+              Hàng tồn
             </h3>
             <span
               className={`text-[11px] font-semibold border rounded-full px-2 py-0.5 ${theme.badge}`}
@@ -55,7 +52,7 @@ const OutOfStockModal = ({ open, onClose, products = [] }) => {
               key={product.id || product.name}
               className="flex items-center gap-3"
             >
-              <div className="w-10 h-10 rounded-lg bg-slate-100 overflow-hidden flex-shrink-0 border border-slate-200 p-1">
+              <div className="w-10 h-10 rounded-lg bg-violet-50 overflow-hidden flex-shrink-0 border border-violet-100 p-1">
                 {product.image ? (
                   <img
                     src={product.image}
@@ -63,8 +60,8 @@ const OutOfStockModal = ({ open, onClose, products = [] }) => {
                     alt={product.name}
                   />
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center text-slate-400">
-                    <ArchiveX size={16} />
+                  <div className="w-full h-full flex items-center justify-center text-violet-300">
+                    <Package size={16} />
                   </div>
                 )}
               </div>
@@ -72,15 +69,15 @@ const OutOfStockModal = ({ open, onClose, products = [] }) => {
                 <div className="text-sm font-semibold text-gray-800">
                   {product.name}
                 </div>
-                <div className="flex items-center gap-2 mt-0.5">
-                  <span className="text-xs text-slate-600 font-medium bg-slate-100 px-1.5 py-0.5 rounded">
-                    Hết hàng
-                  </span>
-                  {product.category && (
-                    <span className="text-[10px] text-gray-500">
-                      {product.category}
+                <div className="flex items-center justify-between mt-0.5">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-violet-500 font-medium bg-violet-50 px-1.5 py-0.5 rounded">
+                      {product.daysNoSale} ngày không bán
                     </span>
-                  )}
+                  </div>
+                  <span className="text-[11px] font-medium text-gray-500">
+                    Tồn: <b className="text-violet-600">{product.stock}</b>
+                  </span>
                 </div>
               </div>
             </div>
@@ -88,7 +85,7 @@ const OutOfStockModal = ({ open, onClose, products = [] }) => {
 
           {products.length === 0 && (
             <div className="text-center text-sm text-gray-400 py-4">
-              Không có sản phẩm nào hết hàng
+              Không có sản phẩm cảnh báo
             </div>
           )}
         </div>
@@ -97,4 +94,4 @@ const OutOfStockModal = ({ open, onClose, products = [] }) => {
   );
 };
 
-export default OutOfStockModal;
+export default InventoryWarningModal;
