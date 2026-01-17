@@ -6,8 +6,9 @@ import ErrorModal from "../components/modals/ErrorModal";
 import InfoModal from "../components/modals/InfoModal";
 import SettingsSection from "./settings/SettingsSection";
 import useSettingsLogic from "../hooks/useSettingsLogic";
-import Button from "../components/common/Button";
 import AppHeader from "../components/common/AppHeader";
+import AnimatedFilterTabs from "../components/common/AnimatedFilterTabs";
+import { AnimatePresence, motion } from "framer-motion";
 
 const Settings = ({
   products,
@@ -34,6 +35,7 @@ const Settings = ({
     fetchOnlineRate,
     exportData,
     importData,
+    handleAutoBackupChange,
   } = useSettingsLogic({
     products,
     orders,
@@ -42,6 +44,8 @@ const Settings = ({
     settings,
     setSettings,
   });
+
+  const isAutoBackupOn = settings.autoBackupInterval > 0;
 
   const [isScrolled, setIsScrolled] = React.useState(false);
 
@@ -163,19 +167,73 @@ const Settings = ({
             xuyên để tránh mất dữ liệu.
           </p>
 
-          <button
-            onClick={exportData}
-            className="w-full flex items-center justify-center gap-2 bg-rose-50 text-rose-700 py-3 rounded-xl font-bold active:bg-rose-100 transition border border-rose-100"
-          >
-            <Download size={20} /> Tải Dữ Liệu Về Máy (Backup)
-          </button>
+          {/* Tùy chọn Tự động sao lưu */}
+          <div className="bg-amber-50 p-3 rounded-lg border border-amber-100 space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-medium text-amber-900">
+                Tự động sao lưu
+              </span>
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  className="sr-only peer"
+                  checked={isAutoBackupOn}
+                  onChange={(e) => {
+                    const isChecked = e.target.checked;
+                    handleAutoBackupChange(isChecked ? 3 : 0);
+                  }}
+                />
+                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-500"></div>
+              </label>
+            </div>
+
+            <AnimatePresence>
+              {isAutoBackupOn && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: "auto", opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  className="overflow-hidden"
+                >
+                  <AnimatedFilterTabs
+                    tabs={[
+                      { key: 3, label: "Mỗi 3 ngày" },
+                      { key: 7, label: "Mỗi 7 ngày" },
+                    ]}
+                    activeTab={settings.autoBackupInterval}
+                    onChange={(key) => handleAutoBackupChange(key)}
+                    className="justify-end"
+                  />
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+
+          <div className="space-y-2 pt-2">
+            <button
+              onClick={exportData}
+              className="w-full flex items-center justify-center gap-2 bg-amber-600 hover:bg-amber-700 text-white py-3.5 rounded-xl font-bold shadow-sm active:scale-95 transition-all"
+            >
+              <Download size={20} /> Tải Dữ Liệu Về Máy (Backup)
+            </button>
+            {settings.lastBackupDate && (
+              <p className="text-xs text-center text-amber-600 font-medium">
+                Lần cuối:{" "}
+                {new Date(settings.lastBackupDate).toLocaleDateString("vi-VN")}{" "}
+                {new Date(settings.lastBackupDate).toLocaleTimeString("vi-VN", {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}
+              </p>
+            )}
+          </div>
 
           <div className="relative pt-2">
             <div className="absolute inset-0 flex items-center">
               <div className="w-full border-t border-gray-200"></div>
             </div>
             <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-white text-amber-500">hoặc</span>
+              <span className="px-2 bg-white text-stone-400">hoặc</span>
             </div>
           </div>
 
@@ -186,20 +244,19 @@ const Settings = ({
               className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
               accept=".json"
             />
-            <button className="w-full flex items-center justify-center gap-2 bg-gray-100 text-amber-800 py-3 rounded-xl font-bold group-active:bg-gray-200 transition border border-gray-200">
+            <button className="w-full flex items-center justify-center gap-2 bg-white text-stone-600 py-3 rounded-xl font-bold active:bg-stone-50 transition border border-stone-200 shadow-sm hover:text-amber-600 hover:border-amber-200">
               <Upload size={20} /> Khôi Phục Dữ Liệu (Restore)
             </button>
           </div>
         </SettingsSection>
 
         {/* 4. Nút Đăng Xuất */}
-        <Button
-          variant="softDanger"
+        <button
           onClick={onLogout}
-          className="flex items-center justify-center gap-2 mt-4"
+          className="w-full flex items-center justify-center gap-2 mt-4 bg-rose-50 text-rose-600 border border-rose-100 py-3 rounded-xl font-bold active:bg-rose-100 transition"
         >
           <LogOut size={20} /> Đăng Xuất
-        </Button>
+        </button>
 
         {/* Footer info */}
         <div className="text-center text-xs text-amber-500 pb-4">

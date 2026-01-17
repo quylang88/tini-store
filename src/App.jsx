@@ -16,6 +16,7 @@ import ConfirmModal from "./components/modals/ConfirmModal";
 import ScreenTransition from "./components/common/ScreenTransition";
 import SplashScreen from "./components/common/SplashScreen";
 import useImagePreloader from "./hooks/useImagePreloader";
+import { exportDataToJSON } from "./utils/backupUtils";
 
 // Định nghĩa thứ tự tab để xác định hướng chuyển cảnh
 const TAB_ORDER = {
@@ -35,6 +36,7 @@ const App = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
   const [direction, setDirection] = useState(0); // 1: phải sang trái (push), -1: trái sang phải (pop)
   const [logoutModalOpen, setLogoutModalOpen] = useState(false);
+  const [backupReminderOpen, setBackupReminderOpen] = useState(false);
 
   // --- 2. KHỞI TẠO DỮ LIỆU TỪ LOCALSTORAGE ---
   const [products, setProducts] = useState(() => {
@@ -84,6 +86,55 @@ const App = () => {
   const handleLogout = () => {
     setLogoutModalOpen(true);
   };
+
+  const handleBackupNow = React.useCallback(() => {
+    const now = new Date().toISOString();
+    const newSettings = { ...settings, lastBackupDate: now };
+    setSettings(newSettings);
+    exportDataToJSON(products, orders, newSettings);
+    setBackupReminderOpen(false);
+  }, [settings, products, orders]);
+
+  // --- 3b. KIỂM TRA SAO LƯU (AUTO REMINDER / DOWNLOAD) ---
+  useEffect(() => {
+    if (!isAuthenticated || products.length === 0) return;
+
+    const checkBackupStatus = () => {
+      if (sessionStorage.getItem("hasCheckedBackup")) return;
+
+      const lastBackup = settings.lastBackupDate
+        ? new Date(settings.lastBackupDate).getTime()
+        : 0;
+      const now = Date.now();
+      const daysSinceBackup = (now - lastBackup) / (1000 * 60 * 60 * 24);
+
+      // Case A: Tự động sao lưu được bật và đã đến hạn
+      if (
+        settings.autoBackupInterval > 0 &&
+        daysSinceBackup >= settings.autoBackupInterval
+      ) {
+        handleBackupNow();
+        sessionStorage.setItem("hasCheckedBackup", "true");
+        return;
+      }
+
+      // Case B: Không bật tự động, nhưng quá hạn mặc định (7 ngày) -> Hiện nhắc nhở
+      const isAutoOff = !settings.autoBackupInterval;
+      if (isAutoOff && daysSinceBackup > 7) {
+        setBackupReminderOpen(true);
+        sessionStorage.setItem("hasCheckedBackup", "true");
+      }
+    };
+
+    const timer = setTimeout(checkBackupStatus, 2000);
+    return () => clearTimeout(timer);
+  }, [
+    isAuthenticated,
+    products.length,
+    settings.lastBackupDate,
+    settings.autoBackupInterval,
+    handleBackupNow,
+  ]);
 
   // Hàm chuyển tab có tính toán hướng animation
   const handleTabChange = (newTab) => {
@@ -234,6 +285,17 @@ const App = () => {
           handleTabChange("dashboard");
           setLogoutModalOpen(false);
         }}
+      />
+
+      <ConfirmModal
+        open={backupReminderOpen}
+        title="Sao lưu dữ liệu?"
+        message="Bạn chưa sao lưu dữ liệu trong vài ngày qua. Hãy tải về máy để tránh mất mát khi xoá app."
+        confirmLabel="Sao lưu ngay"
+        cancelLabel="Để sau"
+        tone="info"
+        onCancel={() => setBackupReminderOpen(false)}
+        onConfirm={handleBackupNow}
       />
     </div>
   );
