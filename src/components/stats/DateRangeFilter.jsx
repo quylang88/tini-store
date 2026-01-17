@@ -160,28 +160,28 @@ const DateRangeFilter = ({ customRange, setCustomRange }) => {
   }, [calendarOpen]);
 
   return (
-    <div className="grid gap-2 text-xs text-amber-700" ref={containerRef}>
+    <div className="grid gap-2 text-xs text-rose-700" ref={containerRef}>
       <div className="flex flex-col gap-1">
-        <span className="text-[11px] font-semibold uppercase text-amber-500">
+        <span className="text-[11px] font-semibold uppercase text-rose-500">
           Khoảng thời gian
         </span>
         <div className="relative">
           <button
             type="button"
             onClick={() => setCalendarOpen((open) => !open)}
-            className="flex w-full items-center justify-between gap-2 rounded-lg border border-amber-100 bg-amber-50/70 px-3 py-2 text-xs text-amber-900"
+            className="flex w-full items-center justify-between gap-2 rounded-lg border border-rose-300 bg-white px-3 py-2 text-xs text-rose-900 shadow-sm transition active:bg-rose-50"
           >
-            <span className="font-semibold text-amber-900">
+            <span className="font-semibold text-rose-900">
               {startDate ? formatDateDisplay(startDate) : "Chọn ngày bắt đầu"}
             </span>
-            <span className="text-amber-400">→</span>
-            <span className="font-semibold text-amber-900">
+            <span className="text-rose-400">→</span>
+            <span className="font-semibold text-rose-900">
               {endDate ? formatDateDisplay(endDate) : "Chọn ngày kết thúc"}
             </span>
           </button>
           {calendarOpen && (
             <div className="absolute z-20 mt-2 w-full rounded-xl border border-amber-100 bg-white p-3 shadow-lg">
-              <div className="mb-2 flex items-center justify-between text-xs font-semibold text-amber-700">
+              <div className="mb-2 flex items-center justify-between text-xs font-semibold text-rose-700">
                 <button
                   type="button"
                   onClick={() =>
@@ -190,7 +190,7 @@ const DateRangeFilter = ({ customRange, setCustomRange }) => {
                         new Date(month.getFullYear(), month.getMonth() - 1, 1)
                     )
                   }
-                  className="rounded-full px-2 py-1 text-amber-500 active:bg-amber-50"
+                  className="rounded-full px-2 py-1 text-rose-500 active:bg-rose-50"
                 >
                   ‹
                 </button>
@@ -206,12 +206,12 @@ const DateRangeFilter = ({ customRange, setCustomRange }) => {
                         new Date(month.getFullYear(), month.getMonth() + 1, 1)
                     )
                   }
-                  className="rounded-full px-2 py-1 text-amber-500 active:bg-amber-50"
+                  className="rounded-full px-2 py-1 text-rose-500 active:bg-rose-50"
                 >
                   ›
                 </button>
               </div>
-              <div className="grid grid-cols-7 gap-1 text-[11px] font-semibold text-amber-400">
+              <div className="grid grid-cols-7 gap-1 text-[11px] font-semibold text-rose-400">
                 {["T2", "T3", "T4", "T5", "T6", "T7", "CN"].map((day) => (
                   <div key={day} className="text-center">
                     {day}
@@ -251,13 +251,13 @@ const DateRangeFilter = ({ customRange, setCustomRange }) => {
                       className={[
                         "rounded-lg px-2 py-1 text-center transition",
                         inRange
-                          ? "bg-amber-100 text-amber-900"
-                          : "text-amber-700 active:bg-amber-50",
+                          ? "bg-rose-100 text-rose-900"
+                          : "text-rose-700 active:bg-rose-50",
                         isStart || isEnd
-                          ? "bg-amber-500 text-white active:bg-amber-500"
+                          ? "bg-rose-600 text-white font-bold shadow-md scale-110 ring-2 ring-rose-300 ring-offset-1 z-10"
                           : "",
                         isToday && !isStart && !isEnd
-                          ? "border border-amber-400 font-semibold"
+                          ? "border border-rose-400 font-semibold"
                           : "",
                       ]
                         .filter(Boolean)
@@ -274,13 +274,13 @@ const DateRangeFilter = ({ customRange, setCustomRange }) => {
       </div>
       <div className="grid grid-cols-2 gap-2">
         <label className="flex flex-col gap-1">
-          <span className="text-[11px] font-semibold uppercase text-amber-500">
+          <span className="text-[11px] font-semibold uppercase text-rose-500">
             Theo tháng
           </span>
           <select
             value={quickMonth}
             onChange={handleQuickMonthChange}
-            className="rounded-lg border border-amber-100 bg-white px-2 py-1.5 text-xs text-amber-900"
+            className="rounded-lg border border-rose-300 bg-white px-2 py-1.5 text-xs text-rose-900 shadow-sm focus:border-rose-400 focus:ring-1 focus:ring-rose-400 outline-none transition-colors"
           >
             <option value="">Chọn tháng</option>
             {Array.from({ length: 12 }, (_, index) => {
@@ -294,7 +294,7 @@ const DateRangeFilter = ({ customRange, setCustomRange }) => {
           </select>
         </label>
         <label className="flex flex-col gap-1">
-          <span className="text-[11px] font-semibold uppercase text-amber-500">
+          <span className="text-[11px] font-semibold uppercase text-rose-500">
             Theo năm
           </span>
           <input
@@ -302,14 +302,17 @@ const DateRangeFilter = ({ customRange, setCustomRange }) => {
             value={quickYear}
             onChange={handleQuickYearChange}
             placeholder="Nhập năm"
-            className="rounded-lg border border-amber-100 bg-white px-2 py-1.5 text-xs text-amber-900"
+            className="rounded-lg border border-rose-300 bg-white px-2 py-1.5 text-xs text-rose-900 placeholder-rose-300 shadow-sm focus:border-rose-400 focus:ring-1 focus:ring-rose-400 outline-none transition-colors"
           />
         </label>
       </div>
       <button
         type="button"
-        onClick={handleReset}
-        className="w-full rounded-lg border border-amber-300 bg-amber-100 px-3 py-2 text-xs font-bold text-amber-800 transition active:bg-amber-200 shadow-sm"
+        onClick={() => {
+          handleReset();
+          updateCustomRange({ start: null, end: null });
+        }}
+        className="w-full rounded-lg border border-rose-300 bg-rose-100 px-3 py-2 text-xs font-bold text-rose-800 transition active:bg-rose-200 shadow-sm"
       >
         Reset
       </button>

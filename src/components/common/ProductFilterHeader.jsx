@@ -45,7 +45,7 @@ const ProductFilterHeader = ({
   ];
 
   return (
-    <div className={`bg-amber-50/90 backdrop-blur ${className}`}>
+    <div className={`bg-rose-50/90 backdrop-blur ${className}`}>
       {/* Search Bar Row */}
       <div className="px-3 pt-3 pb-1">
         <SearchBarWithScanner
@@ -66,13 +66,13 @@ const ProductFilterHeader = ({
               animate={{ height: "auto", opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
               transition={{ duration: 0.3, ease: "easeInOut" }}
-              className="overflow-hidden border-b border-amber-100"
+              className="overflow-hidden"
             >
               <div className="px-3 pb-3 pt-3 space-y-3">
                 {/* Warehouse Tabs */}
                 <div className="flex items-center gap-2">
                   {warehouseLabel && (
-                    <span className="text-xs font-semibold text-amber-700 shrink-0">
+                    <span className="text-xs font-semibold text-rose-700 shrink-0">
                       {warehouseLabel}
                     </span>
                   )}

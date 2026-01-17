@@ -50,7 +50,7 @@ const OrderCreateReviewModal = ({
       }
     >
       <div className="space-y-4">
-        <div className="text-xs text-amber-600 -mt-2 mb-2">
+        <div className="text-xs text-rose-600 -mt-2 mb-2">
           Kiểm tra lại danh sách sản phẩm trước khi xác nhận.
         </div>
 
@@ -61,14 +61,14 @@ const OrderCreateReviewModal = ({
               className="flex justify-between text-sm text-gray-600"
             >
               <div className="min-w-0">
-                <div className="flex items-center gap-2 text-amber-900">
+                <div className="flex items-center gap-2 text-rose-900">
                   <span className="font-semibold truncate">{item.name}</span>
                   <span className="text-xs text-gray-400">
                     x{item.quantity}
                   </span>
                 </div>
               </div>
-              <div className="font-semibold text-amber-700">
+              <div className="font-semibold text-rose-700">
                 {formatNumber(item.price * item.quantity)}đ
               </div>
             </div>
@@ -81,7 +81,7 @@ const OrderCreateReviewModal = ({
         </div>
 
         <div className="space-y-2">
-          <label className="text-xs font-semibold text-amber-700">
+          <label className="text-xs font-semibold text-rose-700">
             Loại đơn hàng
           </label>
           <div className="flex gap-2">
@@ -90,8 +90,8 @@ const OrderCreateReviewModal = ({
               onClick={() => setOrderType("delivery")}
               className={`flex-1 px-3 py-2 rounded-lg text-xs font-semibold border transition ${
                 orderType === "delivery"
-                  ? "bg-amber-500 text-white border-amber-500"
-                  : "bg-amber-50 text-amber-700 border-amber-200"
+                  ? "bg-rose-500 text-white border-rose-500"
+                  : "bg-rose-50 text-rose-700 border-rose-200"
               }`}
             >
               Gửi khách
@@ -101,8 +101,8 @@ const OrderCreateReviewModal = ({
               onClick={() => setOrderType("warehouse")}
               className={`flex-1 px-3 py-2 rounded-lg text-xs font-semibold border transition ${
                 orderType === "warehouse"
-                  ? "bg-amber-500 text-white border-amber-500"
-                  : "bg-amber-50 text-amber-700 border-amber-200"
+                  ? "bg-rose-500 text-white border-rose-500"
+                  : "bg-rose-50 text-rose-700 border-rose-200"
               }`}
             >
               Bán tại kho
@@ -120,7 +120,7 @@ const OrderCreateReviewModal = ({
               transition={{ duration: 0.2 }}
               className="space-y-2 overflow-hidden"
             >
-              <label className="text-xs font-semibold text-amber-700">
+              <label className="text-xs font-semibold text-rose-700">
                 Thông tin khách hàng
               </label>
               <input
@@ -128,17 +128,17 @@ const OrderCreateReviewModal = ({
                 value={customerName}
                 onChange={(e) => setCustomerName(e.target.value)}
                 placeholder="Tên khách hàng"
-                className="w-full border border-amber-200 rounded-xl px-3 py-2 text-sm text-amber-900 focus:outline-none focus:ring-2 focus:ring-rose-200"
+                className="w-full border border-rose-200 rounded-xl px-3 py-2 text-sm text-rose-900 focus:outline-none focus:ring-2 focus:ring-rose-200"
               />
               <textarea
                 value={customerAddress}
                 onChange={(e) => setCustomerAddress(e.target.value)}
                 placeholder="Địa chỉ giao hàng"
                 rows={2}
-                className="w-full border border-amber-200 rounded-xl px-3 py-2 text-sm text-amber-900 focus:outline-none focus:ring-2 focus:ring-rose-200"
+                className="w-full border border-rose-200 rounded-xl px-3 py-2 text-sm text-rose-900 focus:outline-none focus:ring-2 focus:ring-rose-200"
               />
               <div>
-                <label className="text-xs font-semibold text-amber-700">
+                <label className="text-xs font-semibold text-rose-700">
                   Phí gửi khách
                 </label>
                 <input
@@ -147,7 +147,7 @@ const OrderCreateReviewModal = ({
                   value={formatInputNumber(shippingFee)}
                   onChange={(e) => setShippingFee(e.target.value)}
                   placeholder="Ví dụ: 25,000"
-                  className="mt-1 w-full border border-amber-200 rounded-xl px-3 py-2 text-sm text-amber-900 focus:outline-none focus:ring-2 focus:ring-rose-200"
+                  className="mt-1 w-full border border-rose-200 rounded-xl px-3 py-2 text-sm text-rose-900 focus:outline-none focus:ring-2 focus:ring-rose-200"
                 />
               </div>
             </motion.div>
@@ -159,21 +159,18 @@ const OrderCreateReviewModal = ({
               exit={{ opacity: 0, height: 0 }}
               transition={{ duration: 0.2 }}
               className="overflow-hidden"
-            >
-            </motion.div>
+            ></motion.div>
           )}
         </AnimatePresence>
 
         <div className="space-y-2">
-          <label className="text-xs font-semibold text-amber-700">
-            Ghi chú
-          </label>
+          <label className="text-xs font-semibold text-rose-700">Ghi chú</label>
           <textarea
             value={orderComment}
             onChange={(e) => setOrderComment(e.target.value)}
             placeholder="Ví dụ: khách hẹn lấy vào chiều nay..."
             rows={3}
-            className="w-full border border-amber-200 rounded-xl p-3 text-sm text-amber-900 focus:outline-none focus:ring-2 focus:ring-rose-200"
+            className="w-full border border-rose-200 rounded-xl p-3 text-sm text-rose-900 focus:outline-none focus:ring-2 focus:ring-rose-200"
           />
         </div>
       </div>

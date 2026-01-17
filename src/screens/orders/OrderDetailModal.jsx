@@ -20,6 +20,13 @@ const OrderDetailModal = ({ order, onClose, getOrderStatusInfo }) => {
   const statusInfo = getOrderStatusInfo?.(cachedOrder);
   const warehouseLabel = getWarehouseLabel(cachedOrder.warehouse || "daLat");
 
+  // Tính lợi nhuận ước tính (giống logic ở OrderListView)
+  const estimatedProfit =
+    cachedOrder.items.reduce((sum, item) => {
+      const cost = item.cost || 0;
+      return sum + (item.price - cost) * item.quantity;
+    }, 0) - (cachedOrder.shippingFee || 0);
+
   const footer = (
     <Button variant="sheetClose" size="sm" onClick={onClose}>
       Đóng
@@ -36,9 +43,9 @@ const OrderDetailModal = ({ order, onClose, getOrderStatusInfo }) => {
     >
       <div className="space-y-4">
         {/* Header Info */}
-        <div className="border-b border-amber-100 pb-4">
+        <div className="border-b border-rose-100 pb-4">
           <div className="flex items-center justify-between mb-2">
-            <div className="text-xs font-semibold text-amber-600">
+            <div className="text-xs font-semibold text-rose-600">
               {orderName}
             </div>
             {statusInfo && (
@@ -52,11 +59,11 @@ const OrderDetailModal = ({ order, onClose, getOrderStatusInfo }) => {
               </span>
             )}
           </div>
-          <div className="text-xs text-amber-600">
+          <div className="text-xs text-gray-500">
             {new Date(cachedOrder.date).toLocaleString()}
           </div>
           {cachedOrder.comment && (
-            <div className="mt-2 rounded-lg border border-amber-200 bg-white px-3 py-2 text-xs text-amber-800">
+            <div className="mt-2 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-800">
               {cachedOrder.comment}
             </div>
           )}
@@ -70,14 +77,14 @@ const OrderDetailModal = ({ order, onClose, getOrderStatusInfo }) => {
               className="flex justify-between text-sm text-gray-600"
             >
               <div className="min-w-0">
-                <div className="flex items-center gap-2 text-amber-900">
+                <div className="flex items-center gap-2 text-rose-900">
                   <span className="font-semibold truncate">{item.name}</span>
                   <span className="text-xs text-gray-400">
                     x{item.quantity}
                   </span>
                 </div>
               </div>
-              <div className="font-semibold text-amber-700">
+              <div className="font-semibold text-rose-700">
                 {formatNumber(item.price * item.quantity)}đ
               </div>
             </div>
@@ -85,40 +92,52 @@ const OrderDetailModal = ({ order, onClose, getOrderStatusInfo }) => {
         </div>
 
         {/* Summary */}
-        <div className="border-t border-amber-100 pt-4 bg-amber-50 -mx-5 px-5 -mb-2 pb-2 mt-4 space-y-2">
-          <div className="flex justify-between text-sm text-gray-500">
-            <span>Tại kho</span>
-            <span className="font-semibold text-amber-700">
-              {warehouseLabel}
-            </span>
-          </div>
+        <div className="border-t border-rose-100 pt-3 bg-rose-50 -mx-5 px-5 -mb-2 pb-2 mt-2 space-y-2">
+          {cachedOrder.orderType !== "warehouse" && (
+            <div className="flex justify-between text-sm text-gray-500">
+              <span>Tại kho</span>
+              <span className="font-semibold text-rose-700">
+                {warehouseLabel}
+              </span>
+            </div>
+          )}
           {cachedOrder.orderType === "delivery" && (
             <>
               <div className="flex justify-between text-sm text-gray-500">
                 <span>Khách hàng</span>
-                <span className="font-semibold text-amber-700">
+                <span className="font-semibold text-rose-700">
                   {cachedOrder.customerName || "-"}
                 </span>
               </div>
               <div className="flex justify-between text-sm text-gray-500">
                 <span>Địa chỉ</span>
-                <span className="font-semibold text-amber-700 text-right">
+                <span className="font-semibold text-rose-700 text-right">
                   {cachedOrder.customerAddress || "-"}
+                </span>
+              </div>
+              <div className="flex justify-between text-sm text-gray-500">
+                <span>Phí gửi khách</span>
+                <span className="font-semibold text-rose-700">
+                  {formatNumber(cachedOrder.shippingFee || 0)}đ
                 </span>
               </div>
             </>
           )}
-          <div className="flex justify-between text-sm text-gray-500">
-            <span>Phí gửi khách</span>
-            <span className="font-semibold text-amber-700">
-              {formatNumber(cachedOrder.shippingFee || 0)}đ
-            </span>
-          </div>
-          <div className="flex justify-between text-sm text-gray-500 mt-2 pt-2 border-t border-amber-200/50">
-            <span className="font-medium text-amber-900">Tổng đơn</span>
+          <div
+            className={`flex justify-between text-sm text-gray-500 ${
+              cachedOrder.orderType === "warehouse"
+                ? ""
+                : "mt-2 pt-2 border-t border-rose-200/50"
+            }`}
+          >
+            <span className="font-medium text-rose-900">Tổng đơn</span>
             <span className="text-lg font-bold text-rose-600">
               {formatNumber(cachedOrder.total)}đ
             </span>
+          </div>
+          <div className="flex justify-between text-sm text-emerald-600 pt-1">
+            <span className="font-medium">Lợi nhuận</span>
+            <span className="font-bold">{formatNumber(estimatedProfit)}đ</span>
           </div>
         </div>
       </div>
