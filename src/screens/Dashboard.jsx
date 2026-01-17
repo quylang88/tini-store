@@ -17,6 +17,7 @@ import OutOfStockModal from "./dashboard/OutOfStockModal";
 import InventoryWarningModal from "./dashboard/InventoryWarningModal";
 import FloatingActionButton from "../components/common/FloatingActionButton";
 import AppHeader from "../components/common/AppHeader";
+import StatBlock from "../components/dashboard/StatBlock";
 
 const Dashboard = ({ products, orders, onOpenDetail }) => {
   const {
@@ -83,7 +84,7 @@ const Dashboard = ({ products, orders, onOpenDetail }) => {
           </div>
         </div>
 
-        {/* Lưới chỉ số (Metrics Grid) */}
+        {/* Lưới chỉ số chính (4 block cố định) */}
         <div className="grid grid-cols-2 gap-3">
           <MetricCard
             icon={DollarSign}
@@ -112,27 +113,44 @@ const Dashboard = ({ products, orders, onOpenDetail }) => {
             value={`${formatNumber(totalCapital)}đ`}
             className="bg-blue-400 shadow-blue-200"
           />
-
-          {outOfStockProducts.length >= 1 && (
-            <MetricCard
-              icon={ArchiveX}
-              label="Hết hàng"
-              value={outOfStockProducts.length}
-              className="bg-teal-400 shadow-teal-200 cursor-pointer active:scale-95 transition-transform"
-              onClick={() => setShowOutOfStockModal(true)}
-            />
-          )}
-
-          {slowMovingProducts.length >= 1 && (
-            <MetricCard
-              icon={AlertTriangle}
-              label="Hàng tồn"
-              value={slowMovingProducts.length}
-              className="bg-violet-400 shadow-violet-200 cursor-pointer active:scale-95 transition-transform"
-              onClick={() => setShowInventoryWarningModal(true)}
-            />
-          )}
         </div>
+
+        {/* Khu vực Cảnh báo (Hết hàng & Hàng tồn) */}
+        {(outOfStockProducts.length > 0 || slowMovingProducts.length > 0) && (
+          <div className="bg-amber-50 rounded-2xl shadow-sm border border-amber-100 p-4 space-y-4">
+            <div className="flex items-center gap-2 text-rose-700">
+              <AlertTriangle size={18} />
+              <h3 className="font-bold text-rose-700 text-sm uppercase">
+                Cảnh báo
+              </h3>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              {outOfStockProducts.length > 0 && (
+                <StatBlock
+                  title="Hết hàng"
+                  icon={ArchiveX}
+                  color="teal"
+                  items={outOfStockProducts.slice(0, 3)}
+                  showRank={false}
+                  onClick={() => setShowOutOfStockModal(true)}
+                  emptyText="Không có sản phẩm hết hàng"
+                />
+              )}
+
+              {slowMovingProducts.length > 0 && (
+                <StatBlock
+                  title="Hàng tồn"
+                  icon={AlertTriangle}
+                  color="violet"
+                  items={slowMovingProducts.slice(0, 3)}
+                  showRank={false}
+                  onClick={() => setShowInventoryWarningModal(true)}
+                  emptyText="Không có hàng tồn lâu"
+                />
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Phần Top Bán Chạy (Tái sử dụng) */}
         <TopSellingSection

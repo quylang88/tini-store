@@ -1,8 +1,7 @@
 import React from "react";
 import { Trophy } from "lucide-react";
-import { AnimatePresence, motion } from "framer-motion";
 import AnimatedFilterTabs from "../common/AnimatedFilterTabs";
-import RankBadge from "./RankBadge";
+import StatBlock from "../dashboard/StatBlock";
 
 const TopSellingSection = ({
   topOptions,
@@ -14,7 +13,6 @@ const TopSellingSection = ({
   layoutIdPrefix = "top-selling-tabs",
 }) => {
   // Chuyển đổi topOptions sang định dạng yêu cầu của AnimatedFilterTabs (key, label)
-  // Giả sử topOptions có { id, label }
   const tabs = topOptions.map((opt) => ({
     key: opt.id,
     label: opt.label,
@@ -42,76 +40,22 @@ const TopSellingSection = ({
 
       <div className="grid grid-cols-2 gap-4">
         {/* Cột Top Lợi Nhuận - Rose Tone */}
-        <button
-          type="button"
+        <StatBlock
+          title="Top lợi nhuận"
+          color="rose"
+          items={topByProfit}
           onClick={() => onOpenModal("profit")}
-          className="rounded-xl border border-rose-200 bg-rose-100/60 p-3 text-left transition active:bg-rose-100 focus:outline-none"
-        >
-          <div className="flex items-center justify-between mb-3">
-            <h4 className="text-xs font-semibold uppercase text-rose-700">
-              Top lợi nhuận
-            </h4>
-          </div>
-          <div className="space-y-2 text-sm text-rose-800">
-            <AnimatePresence mode="wait" initial={false}>
-              {topByProfit.map((p, idx) => (
-                <motion.div
-                  key={p.id || p.name}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  className="flex items-center gap-2"
-                >
-                  <RankBadge rank={idx + 1} />
-                  <div className="min-w-0 flex-1">
-                    <div className="truncate">{p.name}</div>
-                  </div>
-                </motion.div>
-              ))}
-            </AnimatePresence>
-            {topByProfit.length === 0 && (
-              <div className="text-center text-rose-500 text-sm">
-                Chưa có dữ liệu
-              </div>
-            )}
-          </div>
-        </button>
+          emptyText="Chưa có dữ liệu"
+        />
 
         {/* Cột Top Số Lượng - Amber Tone */}
-        <button
-          type="button"
+        <StatBlock
+          title="Top số lượng"
+          color="amber"
+          items={topByQuantity}
           onClick={() => onOpenModal("quantity")}
-          className="rounded-xl border border-amber-200 bg-amber-100/80 p-3 text-left transition active:bg-amber-50 focus:outline-none"
-        >
-          <div className="flex items-center justify-between mb-3">
-            <h4 className="text-xs font-semibold uppercase text-amber-700">
-              Top số lượng
-            </h4>
-          </div>
-          <div className="space-y-2 text-sm text-amber-800">
-            <AnimatePresence mode="wait" initial={false}>
-              {topByQuantity.map((p, idx) => (
-                <motion.div
-                  key={p.id || p.name}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  className="flex items-center gap-2"
-                >
-                  <RankBadge rank={idx + 1} />
-                  <div className="min-w-0 flex-1">
-                    <div className="truncate">{p.name}</div>
-                  </div>
-                </motion.div>
-              ))}
-            </AnimatePresence>
-            {topByQuantity.length === 0 && (
-              <div className="text-center text-amber-500 text-sm">
-                Chưa có dữ liệu
-              </div>
-            )}
-          </div>
-        </button>
+          emptyText="Chưa có dữ liệu"
+        />
       </div>
     </div>
   );

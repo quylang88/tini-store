@@ -1,99 +1,28 @@
 import React from "react";
-import { ArchiveX } from "lucide-react";
-import SheetModal from "../../components/modals/SheetModal";
-import Button from "../../components/common/Button";
+import StatListModal from "../../components/dashboard/StatListModal";
 
-// Custom theme for "Out of Stock" (Teal alert tone)
-const theme = {
-  title: "text-teal-700",
-  badge: "bg-teal-50 text-teal-600 border-teal-100",
-  value: "text-teal-600",
-};
-
-// Modal hiển thị danh sách sản phẩm hết hàng
 const OutOfStockModal = ({ open, onClose, products = [] }) => {
-  // Simple caching logic to prevent content flicker on close (optional, but good practice if mirroring TopListModal)
-  // Here we just use the props directly since it's a simple list.
-
-  const footer = (
-    <Button
-      variant="sheetClose"
-      size="sm"
-      onClick={onClose}
-      className="!bg-teal-100 !border-teal-300 !text-teal-900 active:!bg-teal-200"
-    >
-      Đóng
-    </Button>
-  );
-
   return (
-    <SheetModal
+    <StatListModal
       open={open}
       onClose={onClose}
-      footer={footer}
-      showCloseIcon={false}
-    >
-      <div className="flex flex-col space-y-4 pt-3">
-        {/* Header */}
-        <div className="border-b border-teal-100 pb-4">
-          <div className="flex items-center justify-between gap-2">
-            <h3 className={`text-sm font-bold uppercase ${theme.title}`}>
-              Sản phẩm hết hàng
-            </h3>
-            <span
-              className={`text-[11px] font-semibold border rounded-full px-2 py-0.5 ${theme.badge}`}
-            >
-              {products.length} sản phẩm
+      title="Sản phẩm hết hàng"
+      items={products}
+      color="teal"
+      emptyText="Không có sản phẩm nào hết hàng"
+      renderItemContent={(product) => (
+        <div className="flex items-center gap-2 mt-0.5">
+          <span className="text-xs text-rose-600 font-medium bg-rose-50 px-1.5 py-0.5 rounded">
+            Hết hàng
+          </span>
+          {product.category && (
+            <span className="text-[10px] text-gray-500">
+              {product.category}
             </span>
-          </div>
-        </div>
-
-        {/* List */}
-        <div className="space-y-3">
-          {products.map((product) => (
-            <div
-              key={product.id || product.name}
-              className="flex items-center gap-3"
-            >
-              <div className="w-10 h-10 rounded-lg bg-slate-50 overflow-hidden flex-shrink-0 border border-slate-200 p-1">
-                {product.image ? (
-                  <img
-                    src={product.image}
-                    className="w-full h-full object-cover rounded-md"
-                    alt={product.name}
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center text-slate-300">
-                    <ArchiveX size={16} />
-                  </div>
-                )}
-              </div>
-              <div className="flex-1">
-                <div className="text-sm font-semibold text-gray-800">
-                  {product.name}
-                </div>
-                <div className="flex items-center gap-2 mt-0.5">
-                  <span className="text-xs text-rose-600 font-medium bg-rose-50 px-1.5 py-0.5 rounded">
-                    Hết hàng
-                  </span>
-                  {product.category && (
-                    <span className="text-[10px] text-gray-500">
-                      {product.category}
-                    </span>
-                  )}
-                </div>
-              </div>
-            </div>
-          ))}
-
-          {products.length === 0 && (
-            <div className="text-center text-sm text-gray-400 py-4">
-              Không có sản phẩm nào hết hàng
-            </div>
           )}
         </div>
-      </div>
-    </SheetModal>
+      )}
+    />
   );
 };
 
