@@ -14,6 +14,7 @@ import MetricCard from "../components/stats/MetricCard";
 import TopSellingSection from "../components/stats/TopSellingSection";
 import TopListModal from "./dashboard/TopListModal";
 import OutOfStockModal from "./dashboard/OutOfStockModal";
+import InventoryWarningModal from "./dashboard/InventoryWarningModal";
 import FloatingActionButton from "../components/common/FloatingActionButton";
 import AppHeader from "../components/common/AppHeader";
 
@@ -35,6 +36,8 @@ const Dashboard = ({ products, orders, onOpenDetail }) => {
 
   const [activeModal, setActiveModal] = useState(null);
   const [showOutOfStockModal, setShowOutOfStockModal] = useState(false);
+  const [showInventoryWarningModal, setShowInventoryWarningModal] =
+    useState(false);
 
   const openTopModal = (type) => setActiveModal(type);
   const closeTopModal = () => setActiveModal(null);
@@ -110,62 +113,26 @@ const Dashboard = ({ products, orders, onOpenDetail }) => {
             className="bg-blue-400 shadow-blue-200"
           />
 
-          <MetricCard
-            icon={ArchiveX}
-            label="Hết hàng"
-            value={outOfStockProducts.length}
-            className="bg-rose-100 text-rose-700 shadow-rose-200 cursor-pointer active:scale-95 transition-transform"
-            onClick={() => setShowOutOfStockModal(true)}
-          />
+          {outOfStockProducts.length >= 1 && (
+            <MetricCard
+              icon={ArchiveX}
+              label="Hết hàng"
+              value={outOfStockProducts.length}
+              className="bg-teal-400 shadow-teal-200 cursor-pointer active:scale-95 transition-transform"
+              onClick={() => setShowOutOfStockModal(true)}
+            />
+          )}
+
+          {slowMovingProducts.length >= 1 && (
+            <MetricCard
+              icon={AlertTriangle}
+              label="Hàng tồn"
+              value={slowMovingProducts.length}
+              className="bg-violet-400 shadow-violet-200 cursor-pointer active:scale-95 transition-transform"
+              onClick={() => setShowInventoryWarningModal(true)}
+            />
+          )}
         </div>
-
-        {/* Phần Hàng tồn kho lâu (Cuộn ngang) */}
-        {slowMovingProducts.length > 0 && (
-          <div className="space-y-2">
-            <div className="flex items-center gap-2 px-1">
-              <AlertTriangle size={16} className="text-rose-500" />
-              <h3 className="text-xs font-bold uppercase text-rose-700">
-                Cảnh báo hàng tồn ({slowMovingProducts.length})
-              </h3>
-            </div>
-
-            <div className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4 custom-scrollbar">
-              {slowMovingProducts.map((product) => (
-                <div
-                  key={product.id}
-                  className="flex-shrink-0 w-64 bg-amber-50 rounded-xl shadow-sm border border-orange-100 p-3 flex gap-3"
-                >
-                  <div className="w-12 h-12 rounded-lg bg-orange-50 p-1 border border-orange-100 flex-shrink-0">
-                    {product.image ? (
-                      <img
-                        src={product.image}
-                        alt=""
-                        className="w-full h-full object-contain"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-orange-300">
-                        <Package size={20} />
-                      </div>
-                    )}
-                  </div>
-                  <div className="min-w-0 flex-1 flex flex-col justify-between">
-                    <div className="text-sm font-semibold text-rose-700 truncate">
-                      {product.name}
-                    </div>
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="text-rose-600 font-medium">
-                        {product.daysNoSale} ngày
-                      </span>
-                      <span className="text-gray-500">
-                        Tồn: <b>{product.stock}</b>
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
 
         {/* Phần Top Bán Chạy (Tái sử dụng) */}
         <TopSellingSection
@@ -191,6 +158,12 @@ const Dashboard = ({ products, orders, onOpenDetail }) => {
           open={showOutOfStockModal}
           onClose={() => setShowOutOfStockModal(false)}
           products={outOfStockProducts}
+        />
+
+        <InventoryWarningModal
+          open={showInventoryWarningModal}
+          onClose={() => setShowInventoryWarningModal(false)}
+          products={slowMovingProducts}
         />
       </div>
 
