@@ -155,7 +155,7 @@ const OrderListView = ({
                     event.stopPropagation();
                     handleEditOrder(order);
                   }}
-                  className="text-xs font-semibold text-blue-600 bg-blue-50 border border-blue-300 px-3 py-1.5 rounded-full active:scale-95 transition"
+                  className="text-xs font-semibold text-orange-600 bg-orange-50 border border-orange-300 px-3 py-1.5 rounded-full active:scale-95 transition"
                 >
                   Sửa đơn
                 </button>

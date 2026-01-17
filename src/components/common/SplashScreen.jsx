@@ -124,15 +124,15 @@ const SplashScreen = ({ showWarning, onConfirm }) => {
           animate={{ opacity: 1, scale: 1 }}
           className="bg-white/90 backdrop-blur-md p-6 rounded-3xl shadow-2xl border border-rose-100 max-w-xs w-full relative z-20"
         >
-          <div className="flex justify-center mb-4 text-amber-500 bg-amber-50 w-16 h-16 rounded-full items-center mx-auto">
+          <div className="flex justify-center mb-4 text-rose-500 bg-rose-50 w-16 h-16 rounded-full items-center mx-auto">
             <WifiOff size={32} />
           </div>
 
-          <h3 className="text-lg font-bold text-amber-900 mb-2">
+          <h3 className="text-lg font-bold text-rose-900 mb-2">
             Kết nối mạng không ổn định...
           </h3>
 
-          <p className="text-sm text-amber-700 mb-6 leading-relaxed">
+          <p className="text-sm text-rose-700 mb-6 leading-relaxed">
             Ứng dụng vẫn có thể hoạt động ở chế độ <strong>offline</strong>,
             nhưng một số hình ảnh và chức năng có thể không khả dụng.
           </p>

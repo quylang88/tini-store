@@ -61,11 +61,19 @@ const OrderCreateView = ({
   // State scroll animation
   const { isSearchVisible, handleScroll } = useScrollHandling({
     mode: "staged",
-    searchHideThreshold: 100,
+    searchHideThreshold: 180,
   });
 
   const categories = settings?.categories || ["Chung"];
-  const warehouseTabs = WAREHOUSES.map((w) => ({ key: w.key, label: w.label }));
+  const warehouseTabs = WAREHOUSES.map((w) => ({
+    key: w.key,
+    label: w.label,
+  })).sort((a, b) => {
+    // Reorder to match "Vĩnh Phúc Lâm đồng" (Vĩnh Phúc first)
+    if (a.key === "vinhPhuc") return -1;
+    if (b.key === "vinhPhuc") return 1;
+    return 0;
+  });
 
   // Heights for Layout
   // Title Header: ~53px (p-3 = 12px*2 + text-xl line-height) - actually measured around 53-60px
@@ -125,7 +133,7 @@ const OrderCreateView = ({
         <OrderCreateProductList
           filteredProducts={filteredProducts}
           handleScroll={handleScroll}
-          className="pt-[113px]" // Pass className to handle padding
+          className="pt-[109px]" // Pass className to handle padding
           cart={cart}
           selectedWarehouse={selectedWarehouse}
           orderBeingEdited={orderBeingEdited}
@@ -139,7 +147,7 @@ const OrderCreateView = ({
           setSelectedWarehouse={setSelectedWarehouse}
           categories={categories}
           warehouseTabs={warehouseTabs}
-          warehouseLabel="Kho xuất:"
+          warehouseLabel="Kho xuất: "
         />
       </div>
 
