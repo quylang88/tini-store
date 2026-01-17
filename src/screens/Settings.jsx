@@ -2,6 +2,8 @@ import React from "react";
 import { Download, Upload, Plus, RefreshCw, X, LogOut } from "lucide-react";
 import { formatInputNumber, sanitizeNumberInput } from "../utils/helpers";
 import ConfirmModalHost from "../components/modals/ConfirmModalHost";
+import { format } from "date-fns";
+import { vi } from "date-fns/locale";
 import ErrorModal from "../components/modals/ErrorModal";
 import InfoModal from "../components/modals/InfoModal";
 import SettingsSection from "./settings/SettingsSection";
@@ -163,19 +165,31 @@ const Settings = ({
             xuyên để tránh mất dữ liệu.
           </p>
 
-          <button
-            onClick={exportData}
-            className="w-full flex items-center justify-center gap-2 bg-rose-50 text-rose-700 py-3 rounded-xl font-bold active:bg-rose-100 transition border border-rose-100"
-          >
-            <Download size={20} /> Tải Dữ Liệu Về Máy (Backup)
-          </button>
+          <div className="space-y-2">
+            <button
+              onClick={exportData}
+              className="w-full flex items-center justify-center gap-2 bg-emerald-600 text-white py-3.5 rounded-xl font-bold active:bg-emerald-700 transition shadow-sm border-b-4 border-emerald-700 active:border-b-0 active:translate-y-1"
+            >
+              <Download size={20} /> Tải Dữ Liệu Về Máy (Backup)
+            </button>
+            {settings.lastBackupDate && (
+              <p className="text-xs text-center text-emerald-600 font-medium">
+                Lần cuối:{" "}
+                {new Date(settings.lastBackupDate).toLocaleDateString("vi-VN")}{" "}
+                {new Date(settings.lastBackupDate).toLocaleTimeString("vi-VN", {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}
+              </p>
+            )}
+          </div>
 
           <div className="relative pt-2">
             <div className="absolute inset-0 flex items-center">
               <div className="w-full border-t border-gray-200"></div>
             </div>
             <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-white text-amber-500">hoặc</span>
+              <span className="px-2 bg-white text-gray-400">hoặc</span>
             </div>
           </div>
 
@@ -186,20 +200,19 @@ const Settings = ({
               className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
               accept=".json"
             />
-            <button className="w-full flex items-center justify-center gap-2 bg-gray-100 text-amber-800 py-3 rounded-xl font-bold group-active:bg-gray-200 transition border border-gray-200">
+            <button className="w-full flex items-center justify-center gap-2 bg-white text-gray-700 py-3 rounded-xl font-bold group-active:bg-gray-50 transition border-2 border-gray-200 border-dashed hover:border-emerald-500 hover:text-emerald-600">
               <Upload size={20} /> Khôi Phục Dữ Liệu (Restore)
             </button>
           </div>
         </SettingsSection>
 
         {/* 4. Nút Đăng Xuất */}
-        <Button
-          variant="softDanger"
+        <button
           onClick={onLogout}
-          className="flex items-center justify-center gap-2 mt-4"
+          className="w-full flex items-center justify-center gap-2 mt-4 bg-rose-50 text-rose-700 py-3 rounded-xl font-bold active:bg-rose-100 transition border border-rose-100"
         >
           <LogOut size={20} /> Đăng Xuất
-        </Button>
+        </button>
 
         {/* Footer info */}
         <div className="text-center text-xs text-amber-500 pb-4">

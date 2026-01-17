@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { formatNumber } from "../utils/helpers";
 import { normalizePurchaseLots } from "../utils/purchaseUtils";
+import { exportDataToJSON, parseBackupFile } from "../utils/backupUtils";
 
 const useSettingsLogic = ({
   products,
@@ -115,70 +116,50 @@ const useSettingsLogic = ({
 
   // Sao lưu dữ liệu (Backup)
   const exportData = () => {
-    const data = JSON.stringify({
-      products,
-      orders,
-      settings,
-    });
-    const blob = new Blob([data], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
+    // Cập nhật thời gian backup cuối cùng
+    const now = new Date().toISOString();
+    const newSettings = { ...settings, lastBackupDate: now };
+    setSettings(newSettings);
 
-    const link = document.createElement("a");
-    link.href = url;
-    const dateStr = new Date().toISOString().slice(0, 10);
-    link.download = `backup_shop_${dateStr}.json`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    // Xuất dữ liệu (dùng newSettings để file backup có thời gian cập nhật mới nhất)
+    exportDataToJSON(products, orders, newSettings);
   };
 
   // Khôi phục dữ liệu (Restore)
-  const importData = (e) => {
+  const importData = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
 
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      try {
-        const data = JSON.parse(event.target.result);
-        if (data.products && data.orders) {
-          setConfirmModal({
-            title: "Xác nhận khôi phục dữ liệu?",
-            message:
-              "CẢNH BÁO: Hành động này sẽ ghi đè toàn bộ dữ liệu hiện tại.",
-            confirmLabel: "Khôi phục",
-            tone: "danger",
-            onConfirm: () => {
-              setProducts(
-                data.products.map((product) => normalizePurchaseLots(product))
-              );
-              setOrders(data.orders);
-              if (data.settings) {
-                setSettings(data.settings);
-              }
-              // Thông báo sau khi khôi phục thành công.
-              setNoticeModal({
-                title: "Khôi phục thành công",
-                message: "Dữ liệu đã được khôi phục từ file backup.",
-              });
-            },
-          });
-        } else {
-          // Cảnh báo khi file thiếu dữ liệu cần thiết.
+    try {
+      const data = await parseBackupFile(file);
+      setConfirmModal({
+        title: "Xác nhận khôi phục dữ liệu?",
+        message: "CẢNH BÁO: Hành động này sẽ ghi đè toàn bộ dữ liệu hiện tại.",
+        confirmLabel: "Khôi phục",
+        tone: "danger",
+        onConfirm: () => {
+          setProducts(
+            data.products.map((product) => normalizePurchaseLots(product))
+          );
+          setOrders(data.orders);
+          if (data.settings) {
+            setSettings(data.settings);
+          }
+          // Thông báo sau khi khôi phục thành công.
           setNoticeModal({
-            title: "File không hợp lệ",
-            message: "File backup thiếu dữ liệu products hoặc orders.",
+            title: "Khôi phục thành công",
+            message: "Dữ liệu đã được khôi phục từ file backup.",
           });
-        }
-      } catch (err) {
-        // Cảnh báo khi không đọc được file.
-        setNoticeModal({
-          title: "Lỗi đọc file",
-          message: "Không thể đọc file backup. Vui lòng thử lại.",
-        });
-      }
-    };
-    reader.readAsText(file);
+        },
+      });
+    } catch (err) {
+      // Cảnh báo khi không đọc được file.
+      setNoticeModal({
+        title: "Lỗi đọc file",
+        message: err.message || "Không thể đọc file backup. Vui lòng thử lại.",
+      });
+    }
+
     // Reset input để có thể chọn lại cùng 1 file nếu cần
     e.target.value = null;
   };
