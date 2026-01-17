@@ -80,9 +80,10 @@ const OrderListView = ({
               return sum + (item.price - cost) * item.quantity;
             }, 0) - (order.shippingFee || 0);
           return (
-            <div
+            <motion.div
               key={order.id}
-              className="bg-amber-50 p-4 rounded-xl shadow-sm border border-amber-100 cursor-pointer hover:shadow-md transition"
+              whileTap={{ scale: 0.96 }}
+              className="bg-amber-50 p-4 rounded-xl shadow-sm border border-amber-100 cursor-pointer hover:shadow-md transition-shadow"
               onClick={() => onSelectOrder?.(order)}
             >
               <div className="flex justify-between mb-2 gap-2">
@@ -169,7 +170,7 @@ const OrderListView = ({
                   Huỷ đơn
                 </button>
               </div>
-            </div>
+            </motion.div>
           );
         })}
         {orders.length === 0 && (

@@ -35,10 +35,11 @@ const ProductList = ({
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
+              whileTap={{ scale: 0.96 }}
               transition={{ duration: 0.2 }}
               key={product.id}
               onClick={() => onOpenDetail(product)}
-              className="bg-amber-50 p-3 rounded-xl shadow-sm border border-amber-100 flex gap-3 items-start cursor-pointer hover:shadow-md transition"
+              className="bg-amber-50 p-3 rounded-xl shadow-sm border border-amber-100 flex gap-3 items-start cursor-pointer hover:shadow-md transition-shadow"
             >
               <div className="w-16 h-16 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0 border border-gray-200 relative">
                 {product.image ? (
