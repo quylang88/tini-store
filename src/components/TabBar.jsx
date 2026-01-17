@@ -29,7 +29,7 @@ const TabBar = ({ activeTab, setActiveTab, isVisible = true }) => {
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
               className={`flex flex-col items-center justify-center w-full h-full space-y-1 ${
-                isActive ? "text-rose-600" : "text-amber-400"
+                isActive ? "text-rose-600" : "text-amber-500"
               }`}
             >
               <Icon size={24} strokeWidth={isActive ? 2.5 : 2} />
