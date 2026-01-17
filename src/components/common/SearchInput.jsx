@@ -15,7 +15,7 @@ const SearchInput = ({
   return (
     <div className={`relative ${className}`}>
       {/* Icon kính lúp để nhận biết đây là ô tìm kiếm */}
-      <Search className="absolute left-3 top-2.5 text-amber-400" size={16} />
+      <Search className="absolute left-3 top-2.5 text-rose-400" size={16} />
       <input
         type="text"
         placeholder={placeholder}

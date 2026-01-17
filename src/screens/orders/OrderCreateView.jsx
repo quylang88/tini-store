@@ -115,7 +115,7 @@ const OrderCreateView = ({
           onWarehouseChange={setSelectedWarehouse}
           categories={categories}
           namespace="order-create-search"
-          className="!bg-amber-50/90 !backdrop-blur"
+          className="!bg-rose-50/90 !backdrop-blur"
         />
       </motion.div>
 

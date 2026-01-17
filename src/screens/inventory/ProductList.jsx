@@ -38,7 +38,7 @@ const ProductList = ({
               transition={{ duration: 0.2 }}
               key={product.id}
               onClick={() => onOpenDetail(product)}
-              className="bg-white p-3 rounded-xl shadow-sm border border-amber-100 flex gap-3 items-start cursor-pointer hover:shadow-md transition"
+              className="bg-amber-50 p-3 rounded-xl shadow-sm border border-amber-100 flex gap-3 items-start cursor-pointer hover:shadow-md transition"
             >
               <div className="w-16 h-16 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0 border border-gray-200 relative">
                 {product.image ? (

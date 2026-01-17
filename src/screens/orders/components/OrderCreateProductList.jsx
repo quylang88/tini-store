@@ -72,7 +72,7 @@ const OrderCreateProductList = ({
               exit={{ opacity: 0, scale: 0.95 }}
               transition={{ duration: 0.2 }}
               key={p.id}
-              className={`bg-white p-3 rounded-xl shadow-sm border border-amber-100 flex gap-3 items-center ${
+              className={`bg-amber-50 p-3 rounded-xl shadow-sm border border-amber-100 flex gap-3 items-center ${
                 isOutOfStock ? "opacity-50 grayscale" : ""
               }`}
             >

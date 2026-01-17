@@ -19,14 +19,14 @@ const SearchBarWithScanner = ({
           onChange={onSearchChange}
           onClear={onClearSearch}
           placeholder={placeholder}
-          inputClassName="w-full bg-amber-100/70 pl-9 pr-9 py-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-rose-300 transition-all"
+          inputClassName="w-full bg-rose-50 pl-9 pr-9 py-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-rose-300 transition-all"
         />
       </div>
 
       {/* Barcode Scanner Button - Fixed size, Distinct background */}
       <button
         onClick={onShowScanner}
-        className="flex-none w-10 h-10 bg-amber-200 text-amber-800 rounded-xl flex items-center justify-center active:scale-95 transition shadow-sm hover:bg-amber-300 border border-amber-300"
+        className="flex-none w-10 h-10 bg-rose-200 text-rose-800 rounded-xl flex items-center justify-center active:scale-95 transition shadow-sm hover:bg-rose-300 border border-rose-300"
         aria-label="Quét mã vạch"
       >
         <ScanBarcode size={22} />
