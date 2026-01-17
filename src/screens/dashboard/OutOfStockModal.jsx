@@ -3,11 +3,11 @@ import { ArchiveX } from "lucide-react";
 import SheetModal from "../../components/modals/SheetModal";
 import Button from "../../components/common/Button";
 
-// Custom theme for "Out of Stock" (Slate/Gray alert tone)
+// Custom theme for "Out of Stock" (Teal alert tone)
 const theme = {
-  title: "text-slate-700",
-  badge: "bg-slate-100 text-slate-600 border-slate-200",
-  value: "text-slate-600",
+  title: "text-teal-700",
+  badge: "bg-teal-50 text-teal-600 border-teal-100",
+  value: "text-teal-600",
 };
 
 // Modal hiển thị danh sách sản phẩm hết hàng
@@ -20,7 +20,7 @@ const OutOfStockModal = ({ open, onClose, products = [] }) => {
       variant="sheetClose"
       size="sm"
       onClick={onClose}
-      className="!bg-slate-100 !border-slate-300 !text-slate-900 active:!bg-slate-200"
+      className="!bg-teal-100 !border-teal-300 !text-teal-900 active:!bg-teal-200"
     >
       Đóng
     </Button>
@@ -35,7 +35,7 @@ const OutOfStockModal = ({ open, onClose, products = [] }) => {
     >
       <div className="flex flex-col space-y-4 pt-3">
         {/* Header */}
-        <div className="border-b border-slate-100 pb-4">
+        <div className="border-b border-teal-100 pb-4">
           <div className="flex items-center justify-between gap-2">
             <h3 className={`text-sm font-bold uppercase ${theme.title}`}>
               Sản phẩm hết hàng
@@ -55,7 +55,7 @@ const OutOfStockModal = ({ open, onClose, products = [] }) => {
               key={product.id || product.name}
               className="flex items-center gap-3"
             >
-              <div className="w-10 h-10 rounded-lg bg-slate-100 overflow-hidden flex-shrink-0 border border-slate-200 p-1">
+              <div className="w-10 h-10 rounded-lg bg-slate-50 overflow-hidden flex-shrink-0 border border-slate-200 p-1">
                 {product.image ? (
                   <img
                     src={product.image}
@@ -63,7 +63,7 @@ const OutOfStockModal = ({ open, onClose, products = [] }) => {
                     alt={product.name}
                   />
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center text-slate-400">
+                  <div className="w-full h-full flex items-center justify-center text-slate-300">
                     <ArchiveX size={16} />
                   </div>
                 )}
@@ -73,7 +73,7 @@ const OutOfStockModal = ({ open, onClose, products = [] }) => {
                   {product.name}
                 </div>
                 <div className="flex items-center gap-2 mt-0.5">
-                  <span className="text-xs text-slate-600 font-medium bg-slate-100 px-1.5 py-0.5 rounded">
+                  <span className="text-xs text-rose-600 font-medium bg-rose-50 px-1.5 py-0.5 rounded">
                     Hết hàng
                   </span>
                   {product.category && (

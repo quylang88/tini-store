@@ -113,21 +113,25 @@ const Dashboard = ({ products, orders, onOpenDetail }) => {
             className="bg-blue-400 shadow-blue-200"
           />
 
-          <MetricCard
-            icon={ArchiveX}
-            label="Hết hàng"
-            value={outOfStockProducts.length}
-            className="bg-slate-400 shadow-slate-200 cursor-pointer active:scale-95 transition-transform"
-            onClick={() => setShowOutOfStockModal(true)}
-          />
+          {outOfStockProducts.length >= 1 && (
+            <MetricCard
+              icon={ArchiveX}
+              label="Hết hàng"
+              value={outOfStockProducts.length}
+              className="bg-teal-400 shadow-teal-200 cursor-pointer active:scale-95 transition-transform"
+              onClick={() => setShowOutOfStockModal(true)}
+            />
+          )}
 
-          <MetricCard
-            icon={AlertTriangle}
-            label="Hàng tồn"
-            value={slowMovingProducts.length}
-            className="bg-violet-400 shadow-violet-200 cursor-pointer active:scale-95 transition-transform"
-            onClick={() => setShowInventoryWarningModal(true)}
-          />
+          {slowMovingProducts.length >= 1 && (
+            <MetricCard
+              icon={AlertTriangle}
+              label="Hàng tồn"
+              value={slowMovingProducts.length}
+              className="bg-violet-400 shadow-violet-200 cursor-pointer active:scale-95 transition-transform"
+              onClick={() => setShowInventoryWarningModal(true)}
+            />
+          )}
         </div>
 
         {/* Phần Top Bán Chạy (Tái sử dụng) */}
