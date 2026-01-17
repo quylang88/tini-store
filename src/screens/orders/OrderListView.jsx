@@ -82,7 +82,7 @@ const OrderListView = ({
           return (
             <div
               key={order.id}
-              className="bg-white p-4 rounded-xl shadow-sm border border-amber-100 transition cursor-pointer"
+              className="bg-amber-50 p-4 rounded-xl shadow-sm border border-amber-100 transition cursor-pointer"
               onClick={() => onSelectOrder?.(order)}
             >
               <div className="flex justify-between mb-2 gap-2">
@@ -155,7 +155,7 @@ const OrderListView = ({
                     event.stopPropagation();
                     handleEditOrder(order);
                   }}
-                  className="text-xs font-semibold text-amber-600 bg-amber-50 border border-amber-100 px-3 py-1.5 rounded-full active:scale-95 transition"
+                  className="text-xs font-semibold text-rose-600 bg-white border border-rose-200 px-3 py-1.5 rounded-full active:scale-95 transition"
                 >
                   Sửa đơn
                 </button>
