@@ -19,6 +19,7 @@ const ProductList = ({
         1. mode="popLayout": Ensures exiting items are removed from the layout flow immediately (position: absolute),
            preventing the "No products" text from jumping up after the exit animation finishes.
         2. 'layout' prop added: Synchronizes smoothness with Order screen animations.
+        3. Empty State moved INSIDE AnimatePresence to prevent layout jumps when switching between list and empty state.
       */}
       <AnimatePresence mode="popLayout">
         {products.map((product) => {
@@ -117,21 +118,22 @@ const ProductList = ({
             </motion.div>
           );
         })}
-      </AnimatePresence>
 
-      {/* Animated Empty State to prevent jumping */}
-      {products.length === 0 && (
-        <motion.div
-          layout
-          key="empty-state"
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.2 }}
-          className="text-center text-gray-400 mt-10 text-sm"
-        >
-          Không có sản phẩm nào
-        </motion.div>
-      )}
+        {/* Animated Empty State moved INSIDE AnimatePresence to prevent jumping */}
+        {products.length === 0 && (
+          <motion.div
+            layout
+            key="empty-state"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.2 }}
+            className="text-center text-gray-400 mt-10 text-sm"
+          >
+            Không có sản phẩm nào
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
