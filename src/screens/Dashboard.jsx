@@ -12,8 +12,8 @@ import { formatNumber } from "../utils/helpers";
 import useDashboardLogic from "../hooks/useDashboardLogic";
 import MetricCard from "../components/stats/MetricCard";
 import TopSellingSection from "../components/stats/TopSellingSection";
-import TopListModal from "../components/stats/TopListModal";
-import OutOfStockModal from "../components/dashboard/OutOfStockModal";
+import TopListModal from "./dashboard/TopListModal";
+import OutOfStockModal from "./dashboard/OutOfStockModal";
 import FloatingActionButton from "../components/common/FloatingActionButton";
 import AppHeader from "../components/common/AppHeader";
 
