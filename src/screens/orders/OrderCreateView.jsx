@@ -81,7 +81,7 @@ const OrderCreateView = ({
   // Search Header: ~56px
   // We calculate dynamic top/padding based on orderBeingEdited
 
-  const headerHeight = orderBeingEdited ? 78 : 53;
+  const headerHeight = orderBeingEdited ? 68 : 53;
   const searchBarHeight = 60; // Slightly more than 56 to avoid overlap
   const listPaddingTop = headerHeight + searchBarHeight;
 
