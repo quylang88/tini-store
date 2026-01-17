@@ -207,7 +207,7 @@ const Settings = ({
           <div className="space-y-2 pt-2">
             <button
               onClick={exportData}
-              className="w-full flex items-center justify-center gap-2 bg-rose-100 hover:bg-rose-200 text-rose-600 py-3.5 rounded-xl font-bold shadow-sm active:scale-95 border border-rose-300 transition-all"
+              className="w-full flex items-center justify-center gap-2 bg-rose-100 text-rose-600 py-3.5 rounded-xl font-bold shadow-sm active:bg-rose-200 active:scale-95 border border-rose-300 transition-all"
             >
               <Download size={20} /> Backup Dữ Liệu
             </button>
@@ -239,7 +239,7 @@ const Settings = ({
               className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
               accept=".json"
             />
-            <button className="w-full flex items-center justify-center gap-2 bg-white text-stone-600 py-3 rounded-xl font-bold active:bg-stone-50 transition border border-stone-200 shadow-sm hover:text-rose-600 hover:border-rose-200">
+            <button className="w-full flex items-center justify-center gap-2 bg-white text-stone-600 py-3 rounded-xl font-bold shadow-sm active:bg-stone-100 active:scale-95 border border-stone-200 transition-all">
               <Upload size={20} /> Khôi Phục Dữ Liệu
             </button>
           </div>
@@ -248,7 +248,7 @@ const Settings = ({
         {/* 4. Nút Đăng Xuất */}
         <button
           onClick={onLogout}
-          className="w-full flex items-center justify-center gap-2 mt-4 bg-rose-500 text-white py-3 rounded-xl font-bold active:bg-rose-400 transition"
+          className="w-full flex items-center justify-center gap-2 mt-4 bg-rose-500 text-white py-3 rounded-xl font-bold active:scale-95 active:bg-rose-400 transition-all"
         >
           <LogOut size={20} /> Đăng Xuất
         </button>
