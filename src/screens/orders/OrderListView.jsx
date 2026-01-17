@@ -82,7 +82,7 @@ const OrderListView = ({
           return (
             <div
               key={order.id}
-              className="bg-white p-4 rounded-xl shadow-sm border border-amber-100 transition cursor-pointer"
+              className="bg-amber-50 p-4 rounded-xl shadow-sm border border-amber-100 cursor-pointer hover:shadow-md transition"
               onClick={() => onSelectOrder?.(order)}
             >
               <div className="flex justify-between mb-2 gap-2">
@@ -144,8 +144,8 @@ const OrderListView = ({
                   }}
                   className={`text-xs font-semibold px-3 py-1.5 rounded-full border transition active:scale-95 ${
                     isPaid
-                      ? "text-red-600 bg-red-50 border-red-100"
-                      : "text-emerald-600 bg-emerald-50 border-emerald-100"
+                      ? "text-red-600 bg-red-50 border-red-300"
+                      : "text-emerald-600 bg-emerald-50 border-emerald-300"
                   }`}
                 >
                   {isPaid ? "Huỷ thanh toán" : "Thanh toán"}
@@ -155,7 +155,7 @@ const OrderListView = ({
                     event.stopPropagation();
                     handleEditOrder(order);
                   }}
-                  className="text-xs font-semibold text-amber-600 bg-amber-50 border border-amber-100 px-3 py-1.5 rounded-full active:scale-95 transition"
+                  className="text-xs font-semibold text-blue-600 bg-blue-50 border border-blue-300 px-3 py-1.5 rounded-full active:scale-95 transition"
                 >
                   Sửa đơn
                 </button>
@@ -164,7 +164,7 @@ const OrderListView = ({
                     event.stopPropagation();
                     handleCancelOrder(order.id);
                   }}
-                  className="text-xs font-semibold text-red-600 bg-red-50 border border-red-100 px-3 py-1.5 rounded-full active:scale-95 transition"
+                  className="text-xs font-semibold text-red-600 bg-red-50 border border-red-300 px-3 py-1.5 rounded-full active:scale-95 transition"
                 >
                   Huỷ đơn
                 </button>

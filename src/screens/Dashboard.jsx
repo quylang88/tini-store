@@ -123,7 +123,7 @@ const Dashboard = ({ products, orders, onOpenDetail }) => {
               {outOfStockProducts.map((product) => (
                 <div
                   key={product.id}
-                  className="flex-shrink-0 w-64 bg-amber-100 rounded-xl shadow-sm border border-red-100 p-3 flex gap-3 opacity-90"
+                  className="flex-shrink-0 w-64 bg-amber-50 rounded-xl shadow-sm border border-red-100 p-3 flex gap-3 opacity-90"
                 >
                   <div className="w-12 h-12 rounded-lg bg-red-50 p-1 border border-red-100 flex-shrink-0 grayscale">
                     {product.image ? (
@@ -168,7 +168,7 @@ const Dashboard = ({ products, orders, onOpenDetail }) => {
               {slowMovingProducts.map((product) => (
                 <div
                   key={product.id}
-                  className="flex-shrink-0 w-64 bg-amber-100 rounded-xl shadow-sm border border-orange-100 p-3 flex gap-3"
+                  className="flex-shrink-0 w-64 bg-amber-50 rounded-xl shadow-sm border border-orange-100 p-3 flex gap-3"
                 >
                   <div className="w-12 h-12 rounded-lg bg-orange-50 p-1 border border-orange-100 flex-shrink-0">
                     {product.image ? (
