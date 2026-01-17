@@ -77,13 +77,12 @@ const App = () => {
     localStorage.setItem("shop_settings", JSON.stringify(settings));
   }, [settings]);
 
-  // --- 3b. KIỂM TRA SAO LƯU (AUTO REMINDER) ---
+  // --- 3b. KIỂM TRA SAO LƯU (AUTO REMINDER / DOWNLOAD) ---
   useEffect(() => {
     if (!isAuthenticated || products.length === 0) return;
 
     const checkBackupStatus = () => {
-      // Chỉ hiện reminder 1 lần mỗi phiên làm việc
-      if (sessionStorage.getItem("hasShownBackupReminder")) return;
+      if (sessionStorage.getItem("hasCheckedBackup")) return;
 
       const lastBackup = settings.lastBackupDate
         ? new Date(settings.lastBackupDate).getTime()
@@ -91,17 +90,32 @@ const App = () => {
       const now = Date.now();
       const daysSinceBackup = (now - lastBackup) / (1000 * 60 * 60 * 24);
 
-      // Nếu chưa bao giờ backup hoặc đã quá 3 ngày
-      if (daysSinceBackup > 3) {
+      // Case A: Tự động sao lưu được bật và đã đến hạn
+      if (
+        settings.autoBackupInterval > 0 &&
+        daysSinceBackup >= settings.autoBackupInterval
+      ) {
+        handleBackupNow();
+        sessionStorage.setItem("hasCheckedBackup", "true");
+        return;
+      }
+
+      // Case B: Không bật tự động, nhưng quá hạn mặc định (3 ngày) -> Hiện nhắc nhở
+      const isAutoOff = !settings.autoBackupInterval;
+      if (isAutoOff && daysSinceBackup > 3) {
         setBackupReminderOpen(true);
-        sessionStorage.setItem("hasShownBackupReminder", "true");
+        sessionStorage.setItem("hasCheckedBackup", "true");
       }
     };
 
-    // Kiểm tra sau 2 giây để tránh conflict với animation load
     const timer = setTimeout(checkBackupStatus, 2000);
     return () => clearTimeout(timer);
-  }, [isAuthenticated, products.length, settings.lastBackupDate]);
+  }, [
+    isAuthenticated,
+    products.length,
+    settings.lastBackupDate,
+    settings.autoBackupInterval,
+  ]);
 
   // --- 4. HÀM XỬ LÝ NAV & AUTH ---
   const handleLoginSuccess = () => {

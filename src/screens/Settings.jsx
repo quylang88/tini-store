@@ -165,15 +165,35 @@ const Settings = ({
             xuyên để tránh mất dữ liệu.
           </p>
 
-          <div className="space-y-2">
+          {/* Tùy chọn Tự động sao lưu */}
+          <div className="flex items-center justify-between bg-amber-50 p-3 rounded-lg border border-amber-100">
+            <span className="text-sm font-medium text-amber-900">
+              Tự động sao lưu
+            </span>
+            <select
+              className="bg-white border border-amber-200 text-amber-800 text-sm rounded-lg px-2 py-1.5 outline-none focus:border-amber-400"
+              value={settings.autoBackupInterval || 0}
+              onChange={(e) => {
+                const value = parseInt(e.target.value, 10);
+                saveSettings({ ...settings, autoBackupInterval: value });
+              }}
+            >
+              <option value={0}>Tắt (Thủ công)</option>
+              <option value={1}>Mỗi ngày</option>
+              <option value={3}>Mỗi 3 ngày</option>
+              <option value={7}>Mỗi tuần</option>
+            </select>
+          </div>
+
+          <div className="space-y-2 pt-2">
             <button
               onClick={exportData}
-              className="w-full flex items-center justify-center gap-2 bg-emerald-600 text-white py-3.5 rounded-xl font-bold active:bg-emerald-700 transition shadow-sm border-b-4 border-emerald-700 active:border-b-0 active:translate-y-1"
+              className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-orange-500 to-amber-500 text-white py-3.5 rounded-xl font-bold shadow-lg shadow-orange-500/30 active:scale-95 transition-all"
             >
               <Download size={20} /> Tải Dữ Liệu Về Máy (Backup)
             </button>
             {settings.lastBackupDate && (
-              <p className="text-xs text-center text-emerald-600 font-medium">
+              <p className="text-xs text-center text-amber-600 font-medium">
                 Lần cuối:{" "}
                 {new Date(settings.lastBackupDate).toLocaleDateString("vi-VN")}{" "}
                 {new Date(settings.lastBackupDate).toLocaleTimeString("vi-VN", {
@@ -189,7 +209,7 @@ const Settings = ({
               <div className="w-full border-t border-gray-200"></div>
             </div>
             <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-white text-gray-400">hoặc</span>
+              <span className="px-2 bg-white text-stone-400">hoặc</span>
             </div>
           </div>
 
@@ -200,7 +220,7 @@ const Settings = ({
               className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
               accept=".json"
             />
-            <button className="w-full flex items-center justify-center gap-2 bg-white text-gray-700 py-3 rounded-xl font-bold group-active:bg-gray-50 transition border-2 border-gray-200 border-dashed hover:border-emerald-500 hover:text-emerald-600">
+            <button className="w-full flex items-center justify-center gap-2 bg-white text-stone-600 py-3 rounded-xl font-bold active:bg-stone-50 transition border border-stone-200 shadow-sm hover:text-amber-600 hover:border-amber-200">
               <Upload size={20} /> Khôi Phục Dữ Liệu (Restore)
             </button>
           </div>
@@ -209,7 +229,7 @@ const Settings = ({
         {/* 4. Nút Đăng Xuất */}
         <button
           onClick={onLogout}
-          className="w-full flex items-center justify-center gap-2 mt-4 bg-rose-50 text-rose-700 py-3 rounded-xl font-bold active:bg-rose-100 transition border border-rose-100"
+          className="w-full flex items-center justify-center gap-2 mt-4 bg-stone-100 text-stone-500 py-3 rounded-xl font-bold active:bg-stone-200 transition"
         >
           <LogOut size={20} /> Đăng Xuất
         </button>

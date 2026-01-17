@@ -26,6 +26,12 @@ const useSettingsLogic = ({
     // localStorage được xử lý ở App.jsx
   };
 
+  // Thay đổi tần suất sao lưu tự động
+  const handleAutoBackupChange = (e) => {
+    const value = parseInt(e.target.value, 10);
+    saveSettings({ ...settings, autoBackupInterval: value });
+  };
+
   // Thêm danh mục mới
   const handleAddCategory = () => {
     const trimmedCategory = newCategory.trim();
@@ -180,6 +186,7 @@ const useSettingsLogic = ({
     fetchOnlineRate,
     exportData,
     importData,
+    handleAutoBackupChange,
   };
 };
 
