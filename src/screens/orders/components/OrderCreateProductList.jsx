@@ -97,26 +97,11 @@ const OrderCreateProductList = ({
                     {p.name}
                   </div>
                   <div className="flex items-center">
-                    <input
-                      type="text"
-                      inputMode="numeric"
-                      value={
-                        priceOverrides?.[p.id] !== undefined
-                          ? formatInputNumber(priceOverrides[p.id])
-                          : formatInputNumber(p.price)
-                      }
-                      onChange={(e) => handlePriceChange(p.id, e.target.value)}
-                      style={{
-                        width: `${Math.max(
-                          2,
-                          (priceOverrides?.[p.id] !== undefined
-                            ? formatInputNumber(priceOverrides[p.id])
-                            : formatInputNumber(p.price)
-                          ).length
-                        )}ch`,
-                      }}
-                      className="font-bold text-rose-700 text-sm bg-transparent outline-none p-0"
-                    />
+                    <span className="font-bold text-rose-700 text-sm">
+                      {priceOverrides?.[p.id] !== undefined
+                        ? formatInputNumber(priceOverrides[p.id])
+                        : formatInputNumber(p.price)}
+                    </span>
                     <span className="text-rose-700 font-bold text-sm ml-0.5">
                       đ
                     </span>
