@@ -169,7 +169,7 @@ const DateRangeFilter = ({ customRange, setCustomRange }) => {
           <button
             type="button"
             onClick={() => setCalendarOpen((open) => !open)}
-            className="flex w-full items-center justify-between gap-2 rounded-lg border border-rose-200 bg-rose-50/70 px-3 py-2 text-xs text-rose-900"
+            className="flex w-full items-center justify-between gap-2 rounded-lg border border-rose-300 bg-white px-3 py-2 text-xs text-rose-900 shadow-sm transition active:bg-rose-50"
           >
             <span className="font-semibold text-rose-900">
               {startDate ? formatDateDisplay(startDate) : "Chọn ngày bắt đầu"}
@@ -254,7 +254,7 @@ const DateRangeFilter = ({ customRange, setCustomRange }) => {
                           ? "bg-rose-100 text-rose-900"
                           : "text-rose-700 active:bg-rose-50",
                         isStart || isEnd
-                          ? "bg-rose-500 text-white active:bg-rose-500"
+                          ? "bg-rose-600 text-white font-bold shadow-md scale-110 ring-2 ring-rose-300 ring-offset-1 z-10"
                           : "",
                         isToday && !isStart && !isEnd
                           ? "border border-rose-400 font-semibold"
@@ -280,7 +280,7 @@ const DateRangeFilter = ({ customRange, setCustomRange }) => {
           <select
             value={quickMonth}
             onChange={handleQuickMonthChange}
-            className="rounded-lg border border-rose-200 bg-rose-50 px-2 py-1.5 text-xs text-rose-800 focus:border-rose-300 focus:ring-1 focus:ring-rose-400 outline-none transition-colors"
+            className="rounded-lg border border-rose-300 bg-white px-2 py-1.5 text-xs text-rose-900 shadow-sm focus:border-rose-400 focus:ring-1 focus:ring-rose-400 outline-none transition-colors"
           >
             <option value="">Chọn tháng</option>
             {Array.from({ length: 12 }, (_, index) => {
@@ -302,13 +302,16 @@ const DateRangeFilter = ({ customRange, setCustomRange }) => {
             value={quickYear}
             onChange={handleQuickYearChange}
             placeholder="Nhập năm"
-            className="rounded-lg border border-rose-200 bg-rose-50 px-2 py-1.5 text-xs text-rose-800 placeholder-rose-300 focus:border-rose-300 focus:ring-1 focus:ring-rose-400 outline-none transition-colors"
+            className="rounded-lg border border-rose-300 bg-white px-2 py-1.5 text-xs text-rose-900 placeholder-rose-300 shadow-sm focus:border-rose-400 focus:ring-1 focus:ring-rose-400 outline-none transition-colors"
           />
         </label>
       </div>
       <button
         type="button"
-        onClick={handleReset}
+        onClick={() => {
+          handleReset();
+          updateCustomRange({ start: null, end: null });
+        }}
         className="w-full rounded-lg border border-rose-300 bg-rose-100 px-3 py-2 text-xs font-bold text-rose-800 transition active:bg-rose-200 shadow-sm"
       >
         Reset

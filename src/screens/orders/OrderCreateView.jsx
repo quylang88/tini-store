@@ -59,10 +59,10 @@ const OrderCreateView = ({
   }, [setTabBarVisible]);
 
   // State scroll animation
-  const {
-    isSearchVisible,
-    handleScroll,
-  } = useScrollHandling({ mode: "staged", searchHideThreshold: 100 }); 
+  const { isSearchVisible, handleScroll } = useScrollHandling({
+    mode: "staged",
+    searchHideThreshold: 100,
+  });
 
   const categories = settings?.categories || ["Chung"];
   const warehouseTabs = WAREHOUSES.map((w) => ({ key: w.key, label: w.label }));
@@ -94,12 +94,12 @@ const OrderCreateView = ({
       <motion.div
         className="absolute left-0 right-0 z-10 shadow-sm"
         // Dựa vào chiều cao thực tế của OrderCreateHeader, hãy ước lượng top.
-        // Giả sử OrderCreateHeader cao ~53px. 
-        initial={{ top: 53 }} 
-        animate={{ 
-          top: 53, 
-          y: isSearchVisible ? 0 : -60 // Slide up by ~60px (height of search bar)
-        }} 
+        // Giả sử OrderCreateHeader cao ~53px.
+        initial={{ top: 53 }}
+        animate={{
+          top: 53,
+          y: isSearchVisible ? 0 : -60, // Slide up by ~60px (height of search bar)
+        }}
         transition={{ duration: 0.3 }}
       >
         <ProductFilterHeader
@@ -115,7 +115,7 @@ const OrderCreateView = ({
           onWarehouseChange={setSelectedWarehouse}
           categories={categories}
           namespace="order-create-search"
-          className="!bg-amber-50/90 !backdrop-blur"
+          className="!bg-rose-50/90 !backdrop-blur"
         />
       </motion.div>
 

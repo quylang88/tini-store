@@ -38,7 +38,7 @@ const ProductList = ({
               transition={{ duration: 0.2 }}
               key={product.id}
               onClick={() => onOpenDetail(product)}
-              className="bg-white p-3 rounded-xl shadow-sm border border-amber-100 flex gap-3 items-start cursor-pointer hover:shadow-md transition"
+              className="bg-amber-50 p-3 rounded-xl shadow-sm border border-amber-100 flex gap-3 items-start cursor-pointer hover:shadow-md transition"
             >
               <div className="w-16 h-16 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0 border border-gray-200 relative">
                 {product.image ? (
@@ -56,13 +56,13 @@ const ProductList = ({
               <div className="flex-1 min-w-0">
                 <div className="grid grid-cols-2 gap-2 text-[10px]">
                   <div className="space-y-1">
-                    <div className="font-bold text-amber-900 truncate text-sm">
+                    <div className="font-bold text-rose-800 truncate text-sm">
                       {product.name}
                     </div>
                     <div className="text-gray-400 font-mono">
                       {product.barcode || "---"}
                     </div>
-                    <div className="text-amber-700 font-bold text-sm">
+                    <div className="text-rose-700 font-bold text-sm">
                       {formatNumber(product.price)}đ
                     </div>
                     {hasProfitData && (
@@ -105,7 +105,7 @@ const ProductList = ({
                   event.stopPropagation();
                   onDelete(product.id);
                 }}
-                className="w-8 h-8 rounded-full bg-rose-50 text-rose-600 active:bg-rose-100 flex items-center justify-center shadow-sm self-center"
+                className="w-8 h-8 rounded-full bg-rose-50 text-rose-600 active:bg-rose-100 flex items-center justify-center shadow-sm self-center border border-rose-300"
                 aria-label={`Xoá ${product.name}`}
               >
                 <Trash2 size={18} />
