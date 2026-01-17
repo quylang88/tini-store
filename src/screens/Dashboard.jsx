@@ -72,7 +72,7 @@ const Dashboard = ({ products, orders, onOpenDetail }) => {
         {/* Nhãn tiêu đề */}
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-xl font-bold text-amber-700">
+            <h2 className="text-xl font-bold text-rose-700">
               {currentMonthLabel}
             </h2>
           </div>
@@ -84,28 +84,28 @@ const Dashboard = ({ products, orders, onOpenDetail }) => {
             icon={DollarSign}
             label="Doanh thu"
             value={`${formatNumber(totalRevenue)}đ`}
-            className="bg-rose-400 shadow-rose-200"
+            className="bg-amber-50 border border-amber-100 shadow-sm text-rose-700"
           />
 
           <MetricCard
             icon={TrendingUp}
             label="Lợi nhuận"
             value={`${formatNumber(totalProfit)}đ`}
-            className="bg-emerald-400 shadow-emerald-100"
+            className="bg-amber-50 border border-amber-100 shadow-sm text-rose-700"
           />
 
           <MetricCard
             icon={ShoppingCart}
             label="Số đơn"
             value={orderCount}
-            className="bg-amber-400 shadow-amber-200"
+            className="bg-amber-50 border border-amber-100 shadow-sm text-rose-700"
           />
 
           <MetricCard
             icon={Package}
             label="Vốn tồn kho"
             value={`${formatNumber(totalCapital)}đ`}
-            className="bg-blue-400 shadow-blue-200"
+            className="bg-amber-50 border border-amber-100 shadow-sm text-rose-700"
           />
         </div>
 
@@ -113,8 +113,8 @@ const Dashboard = ({ products, orders, onOpenDetail }) => {
         {outOfStockProducts.length > 0 && (
           <div className="space-y-2">
             <div className="flex items-center gap-2 px-1">
-              <ArchiveX size={16} className="text-red-500" />
-              <h3 className="text-xs font-bold uppercase text-red-600">
+              <ArchiveX size={16} className="text-rose-500" />
+              <h3 className="text-xs font-bold uppercase text-rose-700">
                 Hết hàng ({outOfStockProducts.length})
               </h3>
             </div>
@@ -123,7 +123,7 @@ const Dashboard = ({ products, orders, onOpenDetail }) => {
               {outOfStockProducts.map((product) => (
                 <div
                   key={product.id}
-                  className="flex-shrink-0 w-64 bg-white rounded-xl shadow-sm border border-red-100 p-3 flex gap-3 opacity-90"
+                  className="flex-shrink-0 w-64 bg-amber-100 rounded-xl shadow-sm border border-red-100 p-3 flex gap-3 opacity-90"
                 >
                   <div className="w-12 h-12 rounded-lg bg-red-50 p-1 border border-red-100 flex-shrink-0 grayscale">
                     {product.image ? (
@@ -139,11 +139,11 @@ const Dashboard = ({ products, orders, onOpenDetail }) => {
                     )}
                   </div>
                   <div className="min-w-0 flex-1 flex flex-col justify-between">
-                    <div className="text-sm font-semibold text-gray-800 truncate">
+                    <div className="text-sm font-semibold text-rose-700 truncate">
                       {product.name}
                     </div>
                     <div className="flex items-center justify-between text-xs mt-1">
-                      <span className="text-red-500 font-medium bg-red-50 px-2 py-0.5 rounded-full">
+                      <span className="text-rose-600 font-medium bg-rose-50 px-2 py-0.5 rounded-full">
                         Hết hàng
                       </span>
                     </div>
@@ -158,8 +158,8 @@ const Dashboard = ({ products, orders, onOpenDetail }) => {
         {slowMovingProducts.length > 0 && (
           <div className="space-y-2">
             <div className="flex items-center gap-2 px-1">
-              <AlertTriangle size={16} className="text-orange-500" />
-              <h3 className="text-xs font-bold uppercase text-orange-600">
+              <AlertTriangle size={16} className="text-rose-500" />
+              <h3 className="text-xs font-bold uppercase text-rose-700">
                 Cảnh báo hàng tồn ({slowMovingProducts.length})
               </h3>
             </div>
@@ -168,7 +168,7 @@ const Dashboard = ({ products, orders, onOpenDetail }) => {
               {slowMovingProducts.map((product) => (
                 <div
                   key={product.id}
-                  className="flex-shrink-0 w-64 bg-white rounded-xl shadow-sm border border-orange-100 p-3 flex gap-3"
+                  className="flex-shrink-0 w-64 bg-amber-100 rounded-xl shadow-sm border border-orange-100 p-3 flex gap-3"
                 >
                   <div className="w-12 h-12 rounded-lg bg-orange-50 p-1 border border-orange-100 flex-shrink-0">
                     {product.image ? (
@@ -184,11 +184,11 @@ const Dashboard = ({ products, orders, onOpenDetail }) => {
                     )}
                   </div>
                   <div className="min-w-0 flex-1 flex flex-col justify-between">
-                    <div className="text-sm font-semibold text-gray-800 truncate">
+                    <div className="text-sm font-semibold text-rose-700 truncate">
                       {product.name}
                     </div>
                     <div className="flex items-center justify-between text-xs">
-                      <span className="text-orange-600 font-medium">
+                      <span className="text-rose-600 font-medium">
                         {product.daysNoSale} ngày
                       </span>
                       <span className="text-gray-500">

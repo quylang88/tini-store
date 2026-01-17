@@ -100,15 +100,15 @@ const StatsDetail = ({ products, orders, onBack }) => {
   return (
     <div className="h-full overflow-y-auto p-4 space-y-4 pb-24 animate-fade-in">
       <div>
-        <div className="text-xl text-amber-700 font-bold whitespace-nowrap">
+        <div className="text-xl text-rose-700 font-bold whitespace-nowrap">
           Thống kê chi tiết
         </div>
-        <div className="text-sm font-medium text-amber-900 whitespace-nowrap">
+        <div className="text-sm font-medium text-rose-900 whitespace-nowrap">
           Phân tích doanh thu & lợi nhuận
         </div>
       </div>
 
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-3">
+      <div className="bg-amber-50 rounded-2xl shadow-sm border border-amber-100 p-3">
         {/* Bộ lọc thời gian chi tiết hơn để xem theo nhiều khoảng khác nhau. */}
         <DateRangeFilter
           customRange={customRange}
@@ -121,37 +121,37 @@ const StatsDetail = ({ products, orders, onBack }) => {
           icon={DollarSign}
           label="Doanh thu"
           value={`${formatNumber(totalRevenue)}đ`}
-          className="bg-rose-400 shadow-rose-200"
+          className="bg-amber-50 border border-amber-100 shadow-sm text-rose-700"
         />
         <MetricCard
           icon={TrendingUp}
           label="Lợi nhuận"
           value={`${formatNumber(totalProfit)}đ`}
-          className="bg-emerald-400 shadow-emerald-100"
+          className="bg-amber-50 border border-amber-100 shadow-sm text-rose-700"
         />
-        <div className="bg-white text-amber-900 p-4 rounded-2xl shadow-sm border border-gray-100 col-span-2">
+        <div className="bg-amber-50 text-rose-900 p-4 rounded-2xl shadow-sm border border-amber-100 col-span-2">
           <div className="grid grid-cols-3 gap-3 text-xs">
             <div>
-              <div className="text-amber-500 uppercase font-semibold">
+              <div className="text-rose-500 uppercase font-semibold">
                 Số đơn
               </div>
-              <div className="text-lg font-bold text-amber-900">
+              <div className="text-lg font-bold text-rose-900">
                 {orderCount}
               </div>
             </div>
             <div>
-              <div className="text-amber-500 uppercase font-semibold">
+              <div className="text-rose-500 uppercase font-semibold">
                 Giá trị TB
               </div>
-              <div className="text-lg font-bold text-amber-900">
+              <div className="text-lg font-bold text-rose-900">
                 {formatNumber(avgOrder)}đ
               </div>
             </div>
             <div>
-              <div className="text-amber-500 uppercase font-semibold">
+              <div className="text-rose-500 uppercase font-semibold">
                 Biên lợi nhuận
               </div>
-              <div className="text-lg font-bold text-amber-900">
+              <div className="text-lg font-bold text-rose-900">
                 {profitMargin.toFixed(1)}%
               </div>
             </div>
@@ -170,17 +170,17 @@ const StatsDetail = ({ products, orders, onBack }) => {
         layoutIdPrefix="stats-detail-top-selling"
       />
 
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 space-y-3">
-        <div className="flex items-center gap-2 text-amber-700">
+      <div className="bg-amber-50 rounded-2xl shadow-sm border border-amber-100 p-4 space-y-3">
+        <div className="flex items-center gap-2 text-rose-700">
           <BarChart3 size={18} />
           <h3 className="text-sm font-bold uppercase">So sánh kỳ hiện tại</h3>
         </div>
         <div className="grid grid-cols-2 gap-3 text-xs">
-          <div className="rounded-xl border border-amber-100 bg-amber-50/70 p-3">
-            <div className="text-amber-600 font-semibold uppercase mb-2">
+          <div className="rounded-xl border border-amber-100 bg-amber-100 p-3">
+            <div className="text-rose-600 font-semibold uppercase mb-2">
               Kỳ hiện tại
             </div>
-            <div className="space-y-1 text-amber-900">
+            <div className="space-y-1 text-rose-900">
               <div>
                 Doanh thu:{" "}
                 <span className="font-semibold">
@@ -227,17 +227,17 @@ const StatsDetail = ({ products, orders, onBack }) => {
             </div>
           </div>
         </div>
-        <div className="text-[11px] text-amber-500">
+        <div className="text-[11px] text-rose-500">
           So sánh theo cùng số ngày của kỳ đang chọn để dễ theo dõi biến động.
         </div>
       </div>
 
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 space-y-2">
-        <div className="flex items-center gap-2 text-amber-700">
+      <div className="bg-amber-50 rounded-2xl shadow-sm border border-amber-100 p-4 space-y-2">
+        <div className="flex items-center gap-2 text-rose-700">
           <TrendingUp size={18} />
           <h3 className="text-sm font-bold uppercase">Ý tưởng thêm</h3>
         </div>
-        <ul className="text-xs text-amber-700 space-y-1 list-disc list-inside">
+        <ul className="text-xs text-rose-700 space-y-1 list-disc list-inside">
           <li>
             Tỉ trọng doanh thu theo danh mục/sản phẩm và mức tăng trưởng theo
             kỳ.

@@ -21,11 +21,11 @@ const TopSellingSection = ({
   }));
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 space-y-4">
+    <div className="bg-amber-50 rounded-2xl shadow-sm border border-amber-100 p-4 space-y-4">
       <div className="flex items-center justify-between gap-2">
-        <div className="flex items-center gap-2 text-amber-700">
+        <div className="flex items-center gap-2 text-rose-700">
           <Trophy size={18} />
-          <h3 className="font-bold text-amber-800 text-sm uppercase">
+          <h3 className="font-bold text-rose-700 text-sm uppercase">
             Top bán chạy
           </h3>
         </div>
@@ -37,11 +37,14 @@ const TopSellingSection = ({
           onChange={onOptionChange}
           layoutIdPrefix={layoutIdPrefix}
           className="flex-nowrap overflow-x-auto no-scrollbar"
+          activeColor="bg-rose-500"
+          inactiveTextColor="text-rose-700"
+          inactiveBorderColor="border-rose-200"
         />
       </div>
 
       <div className="grid grid-cols-2 gap-4">
-        {/* Cột Top Lợi Nhuận */}
+        {/* Cột Top Lợi Nhuận - Rose Tone */}
         <button
           type="button"
           onClick={() => onOpenModal("profit")}
@@ -77,18 +80,18 @@ const TopSellingSection = ({
           </div>
         </button>
 
-        {/* Cột Top Số Lượng */}
+        {/* Cột Top Số Lượng - Amber Tone */}
         <button
           type="button"
           onClick={() => onOpenModal("quantity")}
-          className="rounded-xl border border-emerald-100 bg-emerald-50/60 p-3 text-left transition active:bg-emerald-50 focus:outline-none"
+          className="rounded-xl border border-amber-100 bg-amber-50/60 p-3 text-left transition active:bg-amber-50 focus:outline-none"
         >
           <div className="flex items-center justify-between mb-3">
-            <h4 className="text-xs font-semibold uppercase text-emerald-600">
+            <h4 className="text-xs font-semibold uppercase text-amber-600">
               Top số lượng
             </h4>
           </div>
-          <div className="space-y-2 text-sm text-emerald-800">
+          <div className="space-y-2 text-sm text-amber-800">
             <AnimatePresence mode="wait" initial={false}>
               {topByQuantity.map((p, idx) => (
                 <motion.div
@@ -106,7 +109,7 @@ const TopSellingSection = ({
               ))}
             </AnimatePresence>
             {topByQuantity.length === 0 && (
-              <div className="text-center text-emerald-500 text-sm">
+              <div className="text-center text-amber-500 text-sm">
                 Chưa có dữ liệu
               </div>
             )}

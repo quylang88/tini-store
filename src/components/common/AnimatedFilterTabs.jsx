@@ -8,6 +8,9 @@ const AnimatedFilterTabs = ({
   layoutIdPrefix = "tabs",
   className = "",
   tabClassName = "",
+  activeColor = "bg-amber-500", // Default active background
+  inactiveTextColor = "text-amber-700", // Default inactive text
+  inactiveBorderColor = "border-amber-200", // Default inactive border
 }) => {
   // Trạng thái để kiểm soát việc render animation
   const [canAnimate, setCanAnimate] = useState(false);
@@ -32,14 +35,14 @@ const AnimatedFilterTabs = ({
             className={`relative px-3 py-1.5 text-xs font-semibold rounded-full border transition-colors z-0 ${tabClassName} ${
               isActive
                 ? "text-white border-transparent"
-                : "text-amber-700 border-amber-200 hover:bg-amber-100/50"
+                : `${inactiveTextColor} ${inactiveBorderColor} hover:bg-opacity-50 hover:bg-gray-100`
             }`}
             style={{ WebkitTapHighlightColor: "transparent" }}
           >
             {isActive && (
               <motion.div
                 layoutId={`${layoutIdPrefix}-active-pill`}
-                className="absolute inset-0 bg-amber-500 rounded-full -z-10"
+                className={`absolute inset-0 rounded-full -z-10 ${activeColor}`}
                 initial={false}
                 transition={
                   canAnimate
