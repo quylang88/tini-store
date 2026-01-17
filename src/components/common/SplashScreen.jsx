@@ -1,5 +1,6 @@
 import React from "react";
 import { motion } from "framer-motion";
+import { Wifi } from "lucide-react";
 import NetworkWarning from "./NetworkWarning";
 
 // Component SVG "Cửa hàng màu sắc" thay thế cho icon đơn điệu
@@ -82,7 +83,14 @@ const SplashScreen = ({ showWarning, onConfirm }) => {
   };
 
   if (showWarning) {
-    return <NetworkWarning onConfirm={handleConfirm} />;
+    return (
+      <NetworkWarning
+        onConfirm={handleConfirm}
+        title="Kết nối mạng không ổn định"
+        description="Vui lòng kiểm tra đường truyền internet. Ứng dụng sẽ tự động kết nối lại khi có mạng."
+        Icon={Wifi}
+      />
+    );
   }
 
   return (

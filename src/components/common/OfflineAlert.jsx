@@ -15,13 +15,6 @@ const OfflineAlert = ({ initialAcknowledged = false }) => {
   useEffect(() => {
     const handleOnline = () => {
       setIsOffline(false);
-      // We do NOT reset dismissed state when back online, because the user said "once logged in, it doesn't appear again".
-      // If we clear it here, a momentary network blip would re-enable the warning for the next drop.
-      // But maybe "only show once" means "once per session"?
-      // If I clear it here, then if network drops again 5 mins later, it shows again.
-      // If the user wants "Show once per session", I should NOT clear it here.
-      // Let's assume "only show once" means strictly once per session.
-      // sessionStorage.removeItem("offline_dismissed");
     };
 
     const handleOffline = () => {
@@ -58,7 +51,11 @@ const OfflineAlert = ({ initialAcknowledged = false }) => {
           exit={{ opacity: 0 }}
           className="fixed inset-0 z-[100]"
         >
-          <NetworkWarning onConfirm={handleConfirm} />
+          <NetworkWarning
+            onConfirm={handleConfirm}
+            title="Mất kết nối mạng"
+            description="Vui lòng kiểm tra lại kết nối mạng. Một số hình ảnh và tính năng có thể không khả dụng."
+          />
         </motion.div>
       )}
     </AnimatePresence>
