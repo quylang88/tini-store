@@ -69,14 +69,14 @@ const Settings = ({
           iconClassName="text-blue-500"
         >
           <div>
-            <label className="block text-xs font-bold text-amber-700 uppercase mb-2">
+            <label className="block text-xs font-bold text-rose-700 uppercase mb-2">
               Tỷ giá nhập kho (JPY ➔ VND)
             </label>
             <div className="flex gap-2">
               <div className="relative flex-1">
                 <input
                   inputMode="numeric"
-                  className="w-full border border-gray-200 rounded-lg pl-3 pr-12 py-3 outline-none focus:border-rose-400 font-medium text-lg text-amber-900"
+                  className="w-full border border-gray-200 rounded-lg pl-3 pr-12 py-3 outline-none focus:border-rose-400 font-medium text-lg text-rose-900"
                   value={formatInputNumber(settings.exchangeRate)}
                   onChange={(e) => {
                     const rawValue = sanitizeNumberInput(e.target.value);
@@ -85,7 +85,7 @@ const Settings = ({
                   }}
                   placeholder="Ví dụ: 175"
                 />
-                <span className="absolute right-3 top-3.5 text-amber-500 text-sm font-bold">
+                <span className="absolute right-3 top-3.5 text-rose-500 text-sm font-bold">
                   VND
                 </span>
               </div>
@@ -95,7 +95,7 @@ const Settings = ({
                   fetchOnlineRate();
                 }}
                 disabled={isFetchingRate}
-                className="bg-rose-50 text-rose-600 px-4 py-2 rounded-lg font-medium text-sm flex flex-col items-center justify-center min-w-[80px] active:bg-rose-100 transition"
+                className="bg-rose-100 text-rose-600 px-4 py-2 rounded-lg font-medium text-sm flex flex-col items-center justify-center min-w-[80px] active:bg-rose-100 border border-rose-300 transition"
               >
                 {isFetchingRate ? (
                   <RefreshCw size={20} className="animate-spin" />
@@ -107,7 +107,7 @@ const Settings = ({
                 )}
               </button>
             </div>
-            <p className="text-xs text-amber-600 mt-2">
+            <p className="text-xs text-rose-600 mt-2">
               * Tỷ giá này sẽ được tự động điền khi bạn nhập kho mới. Bạn nên
               nhập tỷ giá thực tế mua vào.
             </p>
@@ -122,7 +122,7 @@ const Settings = ({
         >
           <div className="flex gap-2">
             <input
-              className="flex-1 border border-gray-200 rounded-lg px-3 py-2 outline-none focus:border-rose-400 text-sm text-amber-900"
+              className="flex-1 border border-gray-200 rounded-lg px-3 py-2 outline-none focus:border-rose-400 text-sm text-rose-900"
               placeholder="Nhập tên danh mục mới..."
               value={newCategory}
               onChange={(e) => setNewCategory(e.target.value)}
@@ -140,13 +140,13 @@ const Settings = ({
             {settings.categories.map((cat) => (
               <div
                 key={cat}
-                className="bg-gray-100 text-amber-800 px-3 py-1.5 rounded-full text-sm flex items-center gap-2 border border-gray-200"
+                className="bg-rose-50 text-rose-800 px-3 py-1.5 rounded-full text-sm flex items-center gap-2 border border-gray-200"
               >
                 {cat}
                 {cat !== "Chung" && (
                   <button
                     onClick={() => handleDeleteCategory(cat)}
-                    className="text-amber-500 active:text-red-500 p-0.5 rounded-full active:bg-gray-200 transition"
+                    className="text-rose-500 active:text-red-500 p-0.5 rounded-full active:bg-gray-200 transition"
                   >
                     <X size={14} />
                   </button>
@@ -162,15 +162,10 @@ const Settings = ({
           icon={Download}
           iconClassName="text-orange-500"
         >
-          <p className="text-sm text-amber-700">
-            Dữ liệu hiện tại chỉ lưu trên trình duyệt này. Hãy tải về máy thường
-            xuyên để tránh mất dữ liệu.
-          </p>
-
           {/* Tùy chọn Tự động sao lưu */}
-          <div className="bg-amber-50 p-3 rounded-lg border border-amber-100 space-y-3">
+          <div className="bg-amber-100 p-3 rounded-lg border border-amber-200 space-y-3">
             <div className="flex items-center justify-between">
-              <span className="text-sm font-medium text-amber-900">
+              <span className="text-sm font-medium text-rose-900">
                 Tự động sao lưu
               </span>
               <label className="relative inline-flex items-center cursor-pointer">
@@ -183,7 +178,7 @@ const Settings = ({
                     handleAutoBackupChange(isChecked ? 3 : 0);
                   }}
                 />
-                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-500"></div>
+                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-rose-500"></div>
               </label>
             </div>
 
@@ -197,8 +192,8 @@ const Settings = ({
                 >
                   <AnimatedFilterTabs
                     tabs={[
-                      { key: 3, label: "Mỗi 3 ngày" },
-                      { key: 7, label: "Mỗi 7 ngày" },
+                      { key: 3, label: "3 ngày" },
+                      { key: 7, label: "7 ngày" },
                     ]}
                     activeTab={settings.autoBackupInterval}
                     onChange={(key) => handleAutoBackupChange(key)}
@@ -212,12 +207,12 @@ const Settings = ({
           <div className="space-y-2 pt-2">
             <button
               onClick={exportData}
-              className="w-full flex items-center justify-center gap-2 bg-amber-600 hover:bg-amber-700 text-white py-3.5 rounded-xl font-bold shadow-sm active:scale-95 transition-all"
+              className="w-full flex items-center justify-center gap-2 bg-rose-100 hover:bg-rose-200 text-rose-600 py-3.5 rounded-xl font-bold shadow-sm active:scale-95 border border-rose-300 transition-all"
             >
-              <Download size={20} /> Tải Dữ Liệu Về Máy (Backup)
+              <Download size={20} /> Backup Dữ Liệu
             </button>
             {settings.lastBackupDate && (
-              <p className="text-xs text-center text-amber-600 font-medium">
+              <p className="text-xs text-center text-rose-600 font-medium">
                 Lần cuối:{" "}
                 {new Date(settings.lastBackupDate).toLocaleDateString("vi-VN")}{" "}
                 {new Date(settings.lastBackupDate).toLocaleTimeString("vi-VN", {
@@ -230,10 +225,10 @@ const Settings = ({
 
           <div className="relative pt-2">
             <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-200"></div>
+              <div className="w-full border-t border-rose-200"></div>
             </div>
             <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-white text-stone-400">hoặc</span>
+              <span className="px-2 bg-amber-50 text-rose-500">hoặc</span>
             </div>
           </div>
 
@@ -244,8 +239,8 @@ const Settings = ({
               className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
               accept=".json"
             />
-            <button className="w-full flex items-center justify-center gap-2 bg-white text-stone-600 py-3 rounded-xl font-bold active:bg-stone-50 transition border border-stone-200 shadow-sm hover:text-amber-600 hover:border-amber-200">
-              <Upload size={20} /> Khôi Phục Dữ Liệu (Restore)
+            <button className="w-full flex items-center justify-center gap-2 bg-white text-stone-600 py-3 rounded-xl font-bold active:bg-stone-50 transition border border-stone-200 shadow-sm hover:text-rose-600 hover:border-rose-200">
+              <Upload size={20} /> Khôi Phục Dữ Liệu
             </button>
           </div>
         </SettingsSection>
@@ -253,16 +248,16 @@ const Settings = ({
         {/* 4. Nút Đăng Xuất */}
         <button
           onClick={onLogout}
-          className="w-full flex items-center justify-center gap-2 mt-4 bg-rose-50 text-rose-600 border border-rose-100 py-3 rounded-xl font-bold active:bg-rose-100 transition"
+          className="w-full flex items-center justify-center gap-2 mt-4 bg-rose-500 text-white py-3 rounded-xl font-bold active:bg-rose-400 transition"
         >
           <LogOut size={20} /> Đăng Xuất
         </button>
 
         {/* Footer info */}
-        <div className="text-center text-xs text-amber-500 pb-4">
-          Phiên bản 3.0 - Tiny Shop
+        <div className="text-center text-xs text-rose-400 pb-4">
+          Phiên bản 26.2 - Tiny Shop
           <br />
-          Dữ liệu được lưu trữ cục bộ (Local Storage)
+          Được phát triển bởi Quý Lăng &copy; 2026
         </div>
       </div>
 

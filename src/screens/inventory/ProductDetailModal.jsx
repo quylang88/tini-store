@@ -19,12 +19,7 @@ const ProductDetailModal = ({ product, onClose, onEditLot }) => {
   const lots = cachedProduct.purchaseLots || [];
 
   const footer = (
-    <Button
-      variant="sheetClose"
-      size="sm"
-      onClick={onClose}
-      className="bg-rose-100 text-rose-600 border-rose-200 active:bg-rose-200"
-    >
+    <Button variant="sheetClose" size="sm" onClick={onClose}>
       Đóng
     </Button>
   );

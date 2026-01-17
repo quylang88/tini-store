@@ -45,8 +45,8 @@ const TopListModal = ({ open, onClose, title, items, mode }) => {
       size="sm"
       onClick={onClose}
       className={
-        isProfit
-          ? "border-rose-300 bg-rose-100 text-rose-900 active:border-rose-400 active:bg-rose-200"
+        !isProfit
+          ? "border-amber-300 bg-amber-100 text-amber-900 active:border-amber-400 active:bg-amber-200"
           : ""
       }
     >
