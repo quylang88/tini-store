@@ -21,7 +21,7 @@ const OrderDetailModal = ({ order, onClose, getOrderStatusInfo }) => {
   const warehouseLabel = getWarehouseLabel(cachedOrder.warehouse || "daLat");
 
   const footer = (
-    <Button variant="primary" size="sm" onClick={onClose}>
+    <Button variant="sheetClose" size="sm" onClick={onClose}>
       Đóng
     </Button>
   );
