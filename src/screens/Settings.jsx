@@ -232,17 +232,15 @@ const Settings = ({
             </div>
           </div>
 
-          <div className="relative group">
+          <label className="w-full flex items-center justify-center gap-2 bg-white text-stone-600 py-3 rounded-xl font-bold shadow-sm active:bg-stone-100 active:scale-95 border border-stone-200 transition-all cursor-pointer">
             <input
               type="file"
               onChange={importData}
-              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+              className="hidden"
               accept=".json"
             />
-            <button className="w-full flex items-center justify-center gap-2 bg-white text-stone-600 py-3 rounded-xl font-bold shadow-sm active:bg-stone-100 active:scale-95 border border-stone-200 transition-all">
-              <Upload size={20} /> Khôi Phục Dữ Liệu
-            </button>
-          </div>
+            <Upload size={20} /> Khôi Phục Dữ Liệu
+          </label>
         </SettingsSection>
 
         {/* 4. Nút Đăng Xuất */}
