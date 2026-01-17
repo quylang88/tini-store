@@ -33,11 +33,11 @@ const ProductDetailModal = ({ product, onClose, onEditLot }) => {
       footer={footer}
     >
       <div className="space-y-4">
-        <div className="flex flex-col border-b border-amber-100 pb-4">
-          <div className="text-sm font-semibold text-amber-800">
+        <div className="flex flex-col border-b border-rose-100 pb-4">
+          <div className="text-sm font-semibold text-rose-800">
             Giá bán: {formatNumber(cachedProduct.price)}đ
           </div>
-          <div className="text-xs text-amber-600 mt-1">
+          <div className="text-xs text-rose-600 mt-1">
             Giá nhập mới nhất: {formatNumber(latestCost)}đ
             {latestLot
               ? ` • Kho: ${getWarehouseLabel(latestLot.warehouse)}`
@@ -62,13 +62,13 @@ const ProductDetailModal = ({ product, onClose, onEditLot }) => {
                   key={lot.id}
                   type="button"
                   onClick={() => onEditLot?.(lot)}
-                  className="w-full text-left border border-amber-100 rounded-xl p-3 space-y-1 active:border-amber-200 bg-amber-50 transition"
+                  className="w-full text-left border border-rose-100 rounded-xl p-3 space-y-1 active:border-rose-200 bg-rose-50 transition"
                 >
-                  <div className="flex items-center justify-between text-sm text-amber-800">
+                  <div className="flex items-center justify-between text-sm text-rose-800">
                     <span className="font-semibold">
                       {formatNumber(lot.cost)}đ
                     </span>
-                    <span className="text-xs text-amber-600">
+                    <span className="text-xs text-rose-600">
                       {getWarehouseLabel(lot.warehouse)}
                     </span>
                   </div>

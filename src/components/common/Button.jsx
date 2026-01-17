@@ -2,11 +2,11 @@ import React from "react";
 
 const variants = {
   primary:
-    "bg-amber-500 text-white shadow-lg shadow-amber-200 active:bg-amber-600 active:scale-95",
+    "bg-rose-500 text-white shadow-lg shadow-rose-200 active:bg-rose-600 active:scale-95",
   secondary:
-    "border border-amber-200 text-amber-700 bg-white shadow-sm active:bg-amber-50 active:scale-95",
+    "border border-rose-200 text-rose-700 bg-white shadow-sm active:bg-rose-50 active:scale-95",
   sheetClose:
-    "border border-amber-300 bg-amber-100 text-amber-900 active:border-amber-400 active:bg-amber-200",
+    "border border-rose-300 bg-rose-100 text-rose-900 active:border-rose-400 active:bg-rose-200",
   danger: "bg-rose-500 text-white shadow-md shadow-rose-200 active:scale-95",
   softDanger:
     "bg-rose-50 text-rose-600 border border-rose-100 active:bg-rose-100 active:scale-95",

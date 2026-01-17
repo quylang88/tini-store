@@ -41,14 +41,14 @@ const SheetModal = ({
         {(title || showCloseIcon) && (
           <div className="flex justify-between items-center p-5 pb-0">
             {title ? (
-              <h3 className="font-bold text-lg text-amber-800">{title}</h3>
+              <h3 className="font-bold text-lg text-rose-800">{title}</h3>
             ) : (
               <div />
             )}
             {showCloseIcon && (
               <button
                 onClick={onClose}
-                className="bg-amber-100 text-amber-900 p-1.5 rounded-full hover:bg-amber-200 active:scale-95 transition-all"
+                className="bg-rose-100 text-rose-900 p-1.5 rounded-full hover:bg-rose-200 active:scale-95 transition-all"
               >
                 <X size={18} />
               </button>
