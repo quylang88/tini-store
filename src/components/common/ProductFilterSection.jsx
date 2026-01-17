@@ -29,7 +29,7 @@ const ProductFilterSection = ({
   ];
 
   return (
-    <div className={`px-3 py-3 space-y-3 bg-rose-50 ${className}`}>
+    <div className={`px-3 pt-5 pb-3 space-y-3 bg-rose-50 ${className}`}>
       {/* Warehouse Tabs */}
       <div className="flex items-center gap-2">
         {warehouseLabel && (

@@ -100,7 +100,7 @@ const OrderCreateView = ({
           Khi ẩn, nó trượt lên trên (Y negative) để chui xuống dưới Header Tiêu đề. 
           Hoặc đơn giản là trượt lên trên top=0. */}
       <motion.div
-        className="absolute left-0 right-0 z-10 shadow-sm"
+        className="absolute left-0 right-0 z-10"
         // Dựa vào chiều cao thực tế của OrderCreateHeader, hãy ước lượng top.
         // Giả sử OrderCreateHeader cao ~53px.
         initial={{ top: 53 }}
