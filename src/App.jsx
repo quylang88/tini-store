@@ -14,7 +14,8 @@ import { normalizePurchaseLots } from "./utils/purchaseUtils";
 import TabBar from "./components/TabBar";
 import ConfirmModal from "./components/modals/ConfirmModal";
 import ScreenTransition from "./components/common/ScreenTransition";
-import SplashScreen from "./components/common/SplashScreen";
+import SplashScreen from "./screens/login/SplashScreen";
+import OfflineAlert from "./screens/login/OfflineAlert";
 import useImagePreloader from "./hooks/useImagePreloader";
 import { exportDataToJSON } from "./utils/backupUtils";
 
@@ -165,8 +166,17 @@ const App = () => {
   const {
     isLoaded: appReady,
     showWarning,
-    handleForceContinue,
+    handleForceContinue: originalHandleForceContinue,
   } = useImagePreloader("/tiny-shop-transparent.png", isAuthenticated);
+
+  const [offlineAcknowledged, setOfflineAcknowledged] = useState(false);
+
+  const handleForceContinue = () => {
+    if (showWarning) {
+      setOfflineAcknowledged(true);
+    }
+    originalHandleForceContinue();
+  };
 
   // --- 6. RENDERING ---
   if (!isAuthenticated) {
@@ -181,6 +191,7 @@ const App = () => {
 
   return (
     <div className="h-screen bg-rose-50 text-gray-900 font-sans overflow-hidden flex flex-col pt-[env(safe-area-inset-top)]">
+      <OfflineAlert initialAcknowledged={offlineAcknowledged} />
       <div className="flex-1 overflow-hidden relative">
         <AnimatePresence mode="popLayout" initial={false} custom={direction}>
           {activeTab === "dashboard" && (
