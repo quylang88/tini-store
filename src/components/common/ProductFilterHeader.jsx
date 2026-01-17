@@ -66,7 +66,7 @@ const ProductFilterHeader = ({
               animate={{ height: "auto", opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
               transition={{ duration: 0.3, ease: "easeInOut" }}
-              className="overflow-hidden border-b border-rose-100"
+              className="overflow-hidden"
             >
               <div className="px-3 pb-3 pt-3 space-y-3">
                 {/* Warehouse Tabs */}

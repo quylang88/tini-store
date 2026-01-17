@@ -50,7 +50,7 @@ const OrderCreateProductList = ({
         warehouseTabs={warehouseTabs}
         warehouseLabel={warehouseLabel}
         namespace="order-create"
-        className="-mx-3 -mt-3 mb-3 pt-3" // Not sticky, scrolls with list
+        className="-mx-3 -mt-3 mb-0 pt-3 pb-0" // Not sticky, scrolls with list
       />
       {/* Re-adding -mx-3 to compensate for parent padding */}
 
