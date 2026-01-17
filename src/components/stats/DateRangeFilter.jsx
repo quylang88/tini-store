@@ -280,7 +280,7 @@ const DateRangeFilter = ({ customRange, setCustomRange }) => {
           <select
             value={quickMonth}
             onChange={handleQuickMonthChange}
-            className="rounded-lg border border-amber-100 bg-white px-2 py-1.5 text-xs text-rose-900"
+            className="rounded-lg border border-amber-200 bg-rose-50 px-2 py-1.5 text-xs text-rose-900 focus:border-rose-500 focus:ring-1 focus:ring-rose-500 outline-none transition-colors"
           >
             <option value="">Chọn tháng</option>
             {Array.from({ length: 12 }, (_, index) => {
@@ -302,7 +302,7 @@ const DateRangeFilter = ({ customRange, setCustomRange }) => {
             value={quickYear}
             onChange={handleQuickYearChange}
             placeholder="Nhập năm"
-            className="rounded-lg border border-amber-100 bg-white px-2 py-1.5 text-xs text-rose-900"
+            className="rounded-lg border border-amber-200 bg-rose-50 px-2 py-1.5 text-xs text-rose-900 placeholder-rose-300 focus:border-rose-500 focus:ring-1 focus:ring-rose-500 outline-none transition-colors"
           />
         </label>
       </div>
