@@ -77,6 +77,24 @@ const App = () => {
     localStorage.setItem("shop_settings", JSON.stringify(settings));
   }, [settings]);
 
+  // --- 4. HÀM XỬ LÝ NAV & AUTH ---
+  const handleLoginSuccess = () => {
+    setIsAuthenticated(true);
+    sessionStorage.setItem("tini_auth", "true");
+  };
+
+  const handleLogout = () => {
+    setLogoutModalOpen(true);
+  };
+
+  const handleBackupNow = React.useCallback(() => {
+    const now = new Date().toISOString();
+    const newSettings = { ...settings, lastBackupDate: now };
+    setSettings(newSettings);
+    exportDataToJSON(products, orders, newSettings);
+    setBackupReminderOpen(false);
+  }, [settings, products, orders]);
+
   // --- 3b. KIỂM TRA SAO LƯU (AUTO REMINDER / DOWNLOAD) ---
   useEffect(() => {
     if (!isAuthenticated || products.length === 0) return;
@@ -115,25 +133,8 @@ const App = () => {
     products.length,
     settings.lastBackupDate,
     settings.autoBackupInterval,
+    handleBackupNow,
   ]);
-
-  // --- 4. HÀM XỬ LÝ NAV & AUTH ---
-  const handleLoginSuccess = () => {
-    setIsAuthenticated(true);
-    sessionStorage.setItem("tini_auth", "true");
-  };
-
-  const handleLogout = () => {
-    setLogoutModalOpen(true);
-  };
-
-  const handleBackupNow = () => {
-    const now = new Date().toISOString();
-    const newSettings = { ...settings, lastBackupDate: now };
-    setSettings(newSettings);
-    exportDataToJSON(products, orders, newSettings);
-    setBackupReminderOpen(false);
-  };
 
   // Hàm chuyển tab có tính toán hướng animation
   const handleTabChange = (newTab) => {

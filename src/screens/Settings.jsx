@@ -2,8 +2,6 @@ import React from "react";
 import { Download, Upload, Plus, RefreshCw, X, LogOut } from "lucide-react";
 import { formatInputNumber, sanitizeNumberInput } from "../utils/helpers";
 import ConfirmModalHost from "../components/modals/ConfirmModalHost";
-import { format } from "date-fns";
-import { vi } from "date-fns/locale";
 import ErrorModal from "../components/modals/ErrorModal";
 import InfoModal from "../components/modals/InfoModal";
 import SettingsSection from "./settings/SettingsSection";
