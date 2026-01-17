@@ -74,7 +74,7 @@ const OrderCreateView = ({
   // We use pt-[116px] for the list to clear both.
 
   return (
-    <div className="flex flex-col h-full bg-transparent pb-safe-area relative">
+    <div className="flex flex-col h-full bg-rose-50 pb-safe-area relative">
       {showScanner && (
         <BarcodeScanner
           onScanSuccess={handleScanForSale}
