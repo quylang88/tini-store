@@ -90,22 +90,13 @@ const OrderCreateProductList = ({
                 )}
               </div>
 
-              <div className="flex-1 min-w-0">
-                <div className="flex justify-between items-start">
-                  <div className="font-bold text-sm text-amber-900 truncate pr-1">
+              <div className="flex-1 min-w-0 grid grid-cols-2 gap-2 text-[10px]">
+                {/* Cột 1: Tên + Giá bán */}
+                <div className="space-y-1">
+                  <div className="font-bold text-rose-800 text-sm truncate">
                     {p.name}
                   </div>
-                  {/* Badge danh mục */}
-                  <span
-                    className={`text-[10px] text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded border border-gray-200 whitespace-nowrap ${
-                      activeCategory !== "Tất cả" ? "invisible" : ""
-                    }`}
-                  >
-                    {p.category}
-                  </span>
-                </div>
-                <div className="text-xs text-gray-500 mt-0.5 flex items-center">
-                  <div className="relative inline-block border-b border-amber-200 border-dashed">
+                  <div className="flex items-center">
                     <input
                       type="text"
                       inputMode="numeric"
@@ -115,22 +106,41 @@ const OrderCreateProductList = ({
                           : formatInputNumber(p.price)
                       }
                       onChange={(e) => handlePriceChange(p.id, e.target.value)}
-                      className="font-semibold text-amber-700 bg-transparent w-20 outline-none p-0 text-xs"
+                      style={{
+                        width: `${Math.max(
+                          2,
+                          (priceOverrides?.[p.id] !== undefined
+                            ? formatInputNumber(priceOverrides[p.id])
+                            : formatInputNumber(p.price)
+                          ).length
+                        )}ch`,
+                      }}
+                      className="font-bold text-rose-700 text-sm bg-transparent outline-none p-0"
                     />
-                    <span className="absolute right-0 top-0 pointer-events-none bg-transparent">
+                    <span className="text-rose-700 font-bold text-sm ml-0.5">
                       đ
                     </span>
                   </div>
-                  <span className="mx-1">|</span>
-                  <span>
-                    Kho {getWarehouseLabel(selectedWarehouse)}: {availableStock}
+                </div>
+
+                {/* Cột 2: Danh mục + Kho hàng */}
+                <div className="text-right space-y-1">
+                  <span
+                    className={`text-[10px] text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded whitespace-nowrap inline-block ${
+                      activeCategory !== "Tất cả" ? "invisible" : ""
+                    }`}
+                  >
+                    {p.category}
                   </span>
+                  <div className="text-amber-600 text-[10px]">
+                    Kho {getWarehouseLabel(selectedWarehouse)}: {availableStock}
+                  </div>
                 </div>
               </div>
 
-              {/* Bộ điều khiển số lượng */}
+              {/* Bộ điều khiển số lượng - giữ nguyên ở bên phải cùng */}
               {qty > 0 ? (
-                <div className="flex items-center bg-rose-50 rounded-lg h-9 border border-rose-100 overflow-hidden shadow-sm">
+                <div className="flex items-center bg-rose-50 rounded-lg h-9 border border-rose-100 overflow-hidden shadow-sm shrink-0">
                   <button
                     onClick={() => adjustQuantity(p.id, -1, availableStock)}
                     className="w-9 h-full flex items-center justify-center text-rose-600 active:bg-rose-200 transition"
@@ -158,7 +168,7 @@ const OrderCreateProductList = ({
                 <button
                   onClick={() => adjustQuantity(p.id, 1, availableStock)}
                   disabled={isOutOfStock}
-                  className="bg-amber-100 text-amber-800 px-4 py-2 rounded-lg text-xs font-bold active:scale-95 transition"
+                  className="bg-amber-100 text-amber-800 px-4 py-2 rounded-lg text-xs font-bold active:scale-95 transition shrink-0"
                 >
                   {isOutOfStock ? "Hết" : "Thêm"}
                 </button>
