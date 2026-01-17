@@ -168,7 +168,14 @@ const DateRangeFilter = ({ customRange, setCustomRange }) => {
         <div className="relative">
           <button
             type="button"
-            onClick={() => setCalendarOpen((open) => !open)}
+            onClick={() => {
+              if (!calendarOpen) {
+                setCalendarOpen(true);
+                updateCustomRange({ start: null, end: null });
+              } else {
+                setCalendarOpen(false);
+              }
+            }}
             className="flex w-full items-center justify-between gap-2 rounded-lg border border-rose-300 bg-white px-3 py-2 text-xs text-rose-900 shadow-sm transition hover:border-rose-400 active:bg-rose-50"
           >
             <span className="font-semibold text-rose-900">
@@ -254,7 +261,7 @@ const DateRangeFilter = ({ customRange, setCustomRange }) => {
                           ? "bg-rose-100 text-rose-900"
                           : "text-rose-700 active:bg-rose-50",
                         isStart || isEnd
-                          ? "bg-rose-500 text-white active:bg-rose-500"
+                          ? "bg-rose-600 text-white font-bold shadow-md scale-110 ring-2 ring-rose-300 ring-offset-1 z-10"
                           : "",
                         isToday && !isStart && !isEnd
                           ? "border border-rose-400 font-semibold"
