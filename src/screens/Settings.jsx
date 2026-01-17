@@ -95,7 +95,7 @@ const Settings = ({
                   fetchOnlineRate();
                 }}
                 disabled={isFetchingRate}
-                className="bg-rose-100 text-rose-600 px-4 py-2 rounded-lg font-medium text-sm flex flex-col items-center justify-center min-w-[80px] active:bg-rose-100 border border-rose-300 transition"
+                className="bg-rose-100 text-rose-600 px-4 py-1 rounded-lg font-medium text-sm flex flex-col items-center justify-center min-w-[80px] active:bg-rose-100 active:scale-95 border border-rose-300 transition"
               >
                 {isFetchingRate ? (
                   <RefreshCw size={20} className="animate-spin" />
