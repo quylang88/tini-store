@@ -106,7 +106,7 @@ const ProductModal = ({
             )}
           </div>
 
-          {/* Ẩn nút chụp ảnh khi đang ở chế độ thêm hàng cho sản phẩm cũ (không cho sửa ảnh) */}
+          {/* Chỉ hiển thị nút tải/chụp ảnh khi TẠO MỚI (không phải editingProduct) */}
           {!editingProduct && (
             <div className="grid grid-cols-2 gap-3">
               <label
@@ -124,6 +124,7 @@ const ProductModal = ({
             </div>
           )}
 
+          {/* Input file luôn cần render để ref hoạt động nhưng disabled nếu editingProduct */}
           <input
             type="file"
             id="inventory-upload"
@@ -150,11 +151,14 @@ const ProductModal = ({
           <div className="flex flex-col gap-1">
             <label className="text-xs font-bold text-rose-700 uppercase flex justify-between">
               Mã Vạch{" "}
-              <ScanBarcode
-                size={14}
-                className="text-rose-600 cursor-pointer"
-                onClick={onShowScanner}
-              />
+              {/* Chỉ hiện nút scan khi tạo mới */}
+              {!editingProduct && (
+                <ScanBarcode
+                  size={14}
+                  className="text-rose-600 cursor-pointer"
+                  onClick={onShowScanner}
+                />
+              )}
             </label>
             <input
               className="w-full border-b border-gray-200 py-2 focus:border-rose-400 outline-none text-rose-900 font-mono text-sm"
@@ -162,7 +166,7 @@ const ProductModal = ({
               onChange={(e) =>
                 setFormData({ ...formData, barcode: e.target.value })
               }
-              placeholder="Quét/Nhập..."
+              placeholder={editingProduct ? "---" : "Quét/Nhập..."}
               disabled={Boolean(editingProduct)}
             />
           </div>

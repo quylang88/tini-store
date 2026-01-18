@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef } from "react";
 import { Camera, ScanBarcode, Upload } from "lucide-react";
 import SheetModal from "../../components/modals/SheetModal";
 import Button from "../../components/common/Button";
@@ -12,29 +12,19 @@ const ProductBasicInfoModal = ({
   onSave,
   onShowScanner,
 }) => {
+  // Directly initialize state from props.
+  // This requires the parent to use a unique `key` prop so that the component
+  // is remounted (and state re-initialized) when the product changes.
   const [formData, setFormData] = useState({
-    name: "",
-    category: "",
-    barcode: "",
-    price: "",
-    image: null,
+    name: product?.name || "",
+    category: product?.category || categories[0] || "",
+    barcode: product?.barcode || "",
+    price: product?.price || "",
+    image: product?.image || null,
   });
 
   const uploadInputRef = useRef(null);
   const cameraInputRef = useRef(null);
-
-  // Initialize form data when product changes
-  useEffect(() => {
-    if (product) {
-      setFormData({
-        name: product.name || "",
-        category: product.category || categories[0] || "",
-        barcode: product.barcode || "",
-        price: product.price || "",
-        image: product.image || null,
-      });
-    }
-  }, [product, categories]);
 
   const handleImageChange = (event) => {
     const file = event.target.files?.[0];
