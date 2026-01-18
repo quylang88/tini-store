@@ -13,13 +13,15 @@ const ProductList = ({
   activeWarehouse,
 }) => {
   return (
-    <div className="flex-1 overflow-y-auto p-3 space-y-3 pb-24">
+    <div className="flex-1 overflow-y-auto p-3 flex flex-col gap-3 pb-24">
       {/* 
         Fixes:
-        1. mode="popLayout": Ensures exiting items are removed from the layout flow immediately (position: absolute),
-           preventing the "No products" text from jumping up after the exit animation finishes.
-        2. 'layout' prop added: Synchronizes smoothness with Order screen animations.
-        3. Empty State moved INSIDE AnimatePresence to prevent layout jumps when switching between list and empty state.
+        1. Used 'flex flex-col gap-3' instead of 'space-y-3' to avoid layout jumps caused by
+           'space-y' margin selectors interacting with absolute positioned (exiting) elements.
+        2. mode="popLayout": Ensures exiting items are removed from the layout flow immediately (position: absolute).
+        3. Empty State is rendered OUTSIDE AnimatePresence as a static div.
+           Combined with 'popLayout', this ensures the text appears instantly in the correct position
+           without being pushed around by exiting items or animating itself.
       */}
       <AnimatePresence mode="popLayout">
         {products.map((product) => {
@@ -118,21 +120,17 @@ const ProductList = ({
             </motion.div>
           );
         })}
-
-        {/*
-          Completely static Empty State.
-          No animation props, no layout prop.
-          Just a keyed motion.div to participate in AnimatePresence (for mounting/unmounting).
-        */}
-        {products.length === 0 && (
-          <motion.div
-            key="empty-state"
-            className="text-center text-gray-400 mt-10 text-sm"
-          >
-            Không có sản phẩm nào
-          </motion.div>
-        )}
       </AnimatePresence>
+
+      {/*
+        Completely static Empty State OUTSIDE AnimatePresence.
+        No animation props, no key needed.
+      */}
+      {products.length === 0 && (
+        <div className="text-center text-gray-400 mt-10 text-sm">
+          Không có sản phẩm nào
+        </div>
+      )}
     </div>
   );
 };
