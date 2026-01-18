@@ -19,6 +19,7 @@ import OfflineAlert from "./screens/login/OfflineAlert";
 import useImagePreloader from "./hooks/useImagePreloader";
 import { exportDataToJSON } from "./utils/backupUtils";
 import { sendNotification } from "./utils/notificationUtils";
+import useDailyGreeting from "./hooks/useDailyGreeting";
 
 // Định nghĩa thứ tự tab để xác định hướng chuyển cảnh
 const TAB_ORDER = {
@@ -180,6 +181,9 @@ const App = () => {
   } = useImagePreloader("/tiny-shop-transparent.png", isAuthenticated);
 
   const [offlineAcknowledged, setOfflineAcknowledged] = useState(false);
+
+  // --- 5c. DAILY GREETING NOTIFICATION ---
+  useDailyGreeting(isAuthenticated);
 
   const handleForceContinue = () => {
     if (showWarning) {

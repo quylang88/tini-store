@@ -4,13 +4,15 @@ export const exportDataToJSON = (products, orders, settings) => {
     orders,
     settings,
   });
-  const blob = new Blob([data], { type: "application/json" });
+  // Sử dụng application/octet-stream để ép buộc trình duyệt (đặc biệt là iOS)
+  // hiểu đây là file cần tải xuống thay vì mở preview text/json.
+  const blob = new Blob([data], { type: "application/octet-stream" });
   const url = URL.createObjectURL(blob);
 
   const link = document.createElement("a");
   link.href = url;
   const dateStr = new Date().toISOString().slice(0, 10);
-  link.download = `backup_shop_${dateStr}.json`;
+  link.download = `tiny_shop_${dateStr}.json`;
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
@@ -31,14 +33,14 @@ export const parseBackupFile = (file) => {
       } catch (error) {
         reject(
           new Error(
-            "Không thể đọc file backup. File có thể bị lỗi: " + error.message
-          )
+            "Không thể đọc file backup. File có thể bị lỗi: " + error.message,
+          ),
         );
       }
     };
     reader.onerror = () =>
       reject(
-        new Error("Lỗi đọc file: " + (reader.error?.message || "Unknown"))
+        new Error("Lỗi đọc file: " + (reader.error?.message || "Unknown")),
       );
     reader.readAsText(file);
   });
