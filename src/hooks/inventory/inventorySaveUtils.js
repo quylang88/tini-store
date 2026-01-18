@@ -1,3 +1,4 @@
+import { normalizeString } from "../../utils/helpers";
 import { normalizeWarehouseStock } from "../../utils/warehouseUtils";
 import {
   addPurchaseLot,
@@ -19,17 +20,20 @@ export const getInventoryValidationError = ({
     };
   }
 
-  if (!editingProduct) {
-    const duplicateName = products.find(
-      (product) =>
-        product.name.trim().toLowerCase() === formData.name.trim().toLowerCase()
-    );
-    if (duplicateName) {
-      return {
-        title: "Sản phẩm đã tồn tại",
-        message: "Vui lòng chọn sản phẩm trong gợi ý để nhập thêm hàng.",
-      };
-    }
+  // Check trùng tên sản phẩm (không tính sản phẩm đang sửa)
+  const duplicateName = products.find(
+    (product) =>
+      normalizeString(product.name) === normalizeString(formData.name) &&
+      (!editingProduct || product.id !== editingProduct.id),
+  );
+
+  if (duplicateName) {
+    return {
+      title: "Sản phẩm đã tồn tại",
+      message: editingProduct
+        ? "Tên sản phẩm này đã được sử dụng bởi một sản phẩm khác."
+        : "Vui lòng chọn sản phẩm trong gợi ý để nhập thêm hàng.",
+    };
   }
 
   const costValue = Number(formData.cost) || 0;
@@ -46,7 +50,7 @@ export const getInventoryValidationError = ({
     const duplicateBarcode = products.find(
       (p) =>
         p.barcode === formData.barcode &&
-        p.id !== (editingProduct ? editingProduct.id : null)
+        p.id !== (editingProduct ? editingProduct.id : null),
     );
     if (duplicateBarcode) {
       return {
@@ -185,7 +189,7 @@ export const buildNextProductFromForm = ({
             [nextWarehouse]: (acc[nextWarehouse] || 0) + lotQty,
           };
         },
-        { daLat: 0, vinhPhuc: 0 }
+        { daLat: 0, vinhPhuc: 0 },
       );
       nextProduct = {
         ...nextProduct,

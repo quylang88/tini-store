@@ -1,10 +1,10 @@
-import React, { useRef } from "react";
-import { ScanBarcode, Upload, Camera } from "lucide-react";
+import React from "react";
 import { formatInputNumber, formatNumber } from "../../utils/helpers";
 import { getWarehouseLabel } from "../../utils/warehouseUtils";
 import SheetModal from "../../components/modals/SheetModal";
 import Button from "../../components/common/Button";
 import useModalCache from "../../hooks/useModalCache";
+import ProductIdentityForm from "./ProductIdentityForm";
 
 const ProductModal = ({
   isOpen,
@@ -25,9 +25,6 @@ const ProductModal = ({
   onShippingMethodChange,
   categories,
 }) => {
-  const uploadInputRef = useRef(null);
-  const cameraInputRef = useRef(null);
-
   // Tính toán lợi nhuận
   const shippingWeight = Number(formData.shippingWeightKg) || 0;
   const exchangeRateValue = Number(settings?.exchangeRate) || 0;
@@ -46,19 +43,18 @@ const ProductModal = ({
     shippingFeeVnd;
 
   const isEditingLot = Boolean(editingProduct && editingLotId);
+  // Nếu đang editingProduct mà không phải editingLot (edit history item) thì là Add Restock
+  const isAddRestockMode = Boolean(editingProduct && !editingLotId);
+
   // Cache tiêu đề để không bị đổi khi đang chạy animation đóng modal
   const modalTitle = useModalCache(
-    isEditingLot ? "Sửa Lần Nhập Hàng" : "Thêm Mới",
-    isOpen
+    isEditingLot
+      ? "Sửa Lần Nhập Hàng"
+      : isAddRestockMode
+        ? "Thêm Lần Nhập Hàng"
+        : "Thêm Mới",
+    isOpen,
   );
-
-  const handleImageChange = (event) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      onImageSelect(file);
-      event.target.value = "";
-    }
-  };
 
   // Footer chứa 2 nút hành động (Hủy / Lưu) theo yêu cầu modal dạng Action
   const footer = (
@@ -81,124 +77,29 @@ const ProductModal = ({
       footer={footer}
     >
       <div className="space-y-4">
-        {/* Khu vực ảnh: tách riêng nút tải ảnh và nút mở camera */}
-        <div className="flex flex-col gap-3">
-          <div className="w-full h-32 bg-gray-50 border-2 border-dashed border-gray-300 rounded-xl flex items-center justify-center text-rose-400 overflow-hidden relative">
-            {formData.image ? (
-              <img
-                src={formData.image}
-                className="w-full h-full object-contain absolute inset-0"
-                alt="Preview"
-              />
-            ) : (
-              <div className="flex flex-col items-center">
-                <Upload size={24} className="mb-2" />
-                <span className="text-xs">Chưa có ảnh sản phẩm</span>
-              </div>
-            )}
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <label
-              htmlFor="inventory-upload"
-              className="w-full border border-rose-200 rounded-lg py-2 text-xs font-semibold text-rose-700 flex items-center justify-center gap-2 active:border-rose-400 active:text-rose-600 cursor-pointer"
-            >
-              <Upload size={16} /> Tải ảnh
-            </label>
-            <label
-              htmlFor="inventory-camera"
-              className="w-full border border-rose-200 rounded-lg py-2 text-xs font-semibold text-rose-700 flex items-center justify-center gap-2 active:border-rose-400 active:text-rose-600 cursor-pointer"
-            >
-              <Camera size={16} /> Chụp ảnh
-            </label>
-          </div>
-          <input
-            type="file"
-            id="inventory-upload"
-            ref={uploadInputRef}
-            onChange={handleImageChange}
-            className="hidden"
-            accept="image/*"
-          />
-          <input
-            type="file"
-            id="inventory-camera"
-            ref={cameraInputRef}
-            onChange={handleImageChange}
-            className="hidden"
-            accept="image/*"
-            capture="environment"
-          />
-        </div>
-
-        {/* Barcode & Category */}
-        <div className="grid grid-cols-2 gap-4 items-end">
-          <div className="flex flex-col gap-1">
-            <label className="text-xs font-bold text-rose-700 uppercase flex justify-between">
-              Mã Vạch{" "}
-              <ScanBarcode
-                size={14}
-                className="text-rose-600 cursor-pointer"
-                onClick={onShowScanner}
-              />
-            </label>
-            <input
-              className="w-full border-b border-gray-200 py-2 focus:border-rose-400 outline-none text-rose-900 font-mono text-sm"
-              value={formData.barcode}
-              onChange={(e) =>
-                setFormData({ ...formData, barcode: e.target.value })
-              }
-              placeholder="Quét/Nhập..."
-            />
-          </div>
-          <div className="flex flex-col gap-1">
-            <label className="text-xs font-bold text-rose-700 uppercase">
-              Danh mục
-            </label>
-            <select
-              className="w-full border-b border-gray-200 py-2 focus:border-rose-400 outline-none text-rose-900 text-sm bg-transparent"
-              value={formData.category}
-              onChange={(e) =>
-                setFormData({ ...formData, category: e.target.value })
-              }
-            >
-              {categories.map((cat) => (
-                <option key={cat} value={cat}>
-                  {cat}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-
-        {/* Name */}
-        <div>
-          <label className="text-xs font-bold text-rose-700 uppercase">
-            Tên sản phẩm
-          </label>
-          <input
-            className="w-full border-b border-gray-200 py-2 focus:border-rose-400 outline-none text-rose-900 font-medium"
-            value={formData.name}
-            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-            placeholder="Nhập tên..."
-          />
-          {!editingProduct && nameSuggestions?.length > 0 && (
-            <div className="mt-2 bg-white border border-rose-100 rounded-lg shadow-sm overflow-hidden">
-              {nameSuggestions.map((product) => (
-                <button
-                  key={product.id}
-                  type="button"
-                  onClick={() => onSelectExistingProduct(product)}
-                  className="w-full text-left px-3 py-2 text-sm text-rose-900 active:bg-rose-50 flex items-center justify-between"
-                >
-                  <span className="font-medium">{product.name}</span>
-                  <span className="text-[10px] text-rose-500">
-                    {formatNumber(product.price)}đ
-                  </span>
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
+        {/* REFACTORED: Shared Product Identity Form */}
+        <ProductIdentityForm
+          // Data
+          image={formData.image}
+          barcode={formData.barcode}
+          category={formData.category}
+          name={formData.name}
+          // Handlers
+          onImageChange={onImageSelect} // ProductModal expects file object, ProductIdentityForm passes file object
+          onBarcodeChange={(val) => setFormData({ ...formData, barcode: val })}
+          onCategoryChange={(val) =>
+            setFormData({ ...formData, category: val })
+          }
+          onNameChange={(val) => setFormData({ ...formData, name: val })}
+          // Config
+          categories={categories}
+          onShowScanner={onShowScanner}
+          disabled={Boolean(editingProduct)} // Disable identity fields if editing existing product
+          allowImageUpload={!editingProduct} // Hide upload buttons if editing existing product
+          nameSuggestions={nameSuggestions}
+          onSelectExistingProduct={onSelectExistingProduct}
+          inputColorClass="text-gray-900"
+        />
 
         {/* Khu vực giá nhập: cho chọn Yên hoặc VNĐ */}
         <div className="bg-rose-50 p-3 rounded-lg border border-rose-100 space-y-2">
@@ -233,7 +134,7 @@ const ProductModal = ({
           </div>
 
           <div className="relative">
-            {/* Form JPY - Dùng absolute và opacity để toggle mà vẫn giữ DOM */}
+            {/* Form JPY */}
             <div
               className={`transition-all duration-300 ease-in-out ${
                 formData.costCurrency === "JPY"
@@ -252,7 +153,7 @@ const ProductModal = ({
                     </span>
                     <input
                       inputMode="numeric"
-                      className="w-full bg-transparent border-b border-rose-100 py-2 pl-4 focus:border-rose-400 outline-none text-rose-900 font-bold"
+                      className="w-full bg-transparent border-b border-rose-100 py-2 pl-4 focus:border-rose-400 outline-none text-gray-900 font-bold"
                       value={formatInputNumber(formData.costJPY)}
                       onChange={onMoneyChange("costJPY")}
                       placeholder="0"
@@ -266,7 +167,7 @@ const ProductModal = ({
                   </label>
                   <input
                     inputMode="numeric"
-                    className="w-full bg-transparent border-b border-rose-100 py-2 focus:border-rose-400 outline-none text-rose-900 text-right"
+                    className="w-full bg-transparent border-b border-rose-100 py-2 focus:border-rose-400 outline-none text-gray-900 text-right"
                     value={formatInputNumber(formData.exchangeRate)}
                     onChange={onMoneyChange("exchangeRate")}
                     placeholder="0"
@@ -279,7 +180,7 @@ const ProductModal = ({
               </div>
             </div>
 
-            {/* Form VND - Dùng absolute và opacity để toggle mà vẫn giữ DOM */}
+            {/* Form VND */}
             <div
               className={`transition-all duration-300 ease-in-out ${
                 formData.costCurrency === "VND"
@@ -291,7 +192,7 @@ const ProductModal = ({
                 <span className="absolute left-0 top-2 text-rose-500">đ</span>
                 <input
                   inputMode="numeric"
-                  className="w-full bg-transparent border-b border-rose-100 py-2 pl-4 focus:border-rose-400 outline-none text-rose-900 font-bold"
+                  className="w-full bg-transparent border-b border-rose-100 py-2 pl-4 focus:border-rose-400 outline-none text-gray-900 font-bold"
                   value={formatInputNumber(formData.costVNDInput)}
                   onChange={onMoneyChange("costVNDInput")}
                   placeholder="0"
@@ -302,7 +203,7 @@ const ProductModal = ({
           </div>
         </div>
 
-        {/* Phí gửi nằm ngay sau phần giá nhập */}
+        {/* Phí gửi */}
         <div className="bg-rose-50 border border-rose-100 rounded-lg p-3 space-y-3">
           <div className="flex items-center justify-between">
             <div className="text-[10px] font-bold text-rose-800 uppercase">
@@ -350,7 +251,7 @@ const ProductModal = ({
                 <input
                   inputMode="decimal"
                   lang="en"
-                  className="w-full bg-transparent border-b border-rose-100 py-2 focus:border-rose-400 outline-none text-rose-900 font-bold"
+                  className="w-full bg-transparent border-b border-rose-100 py-2 focus:border-rose-400 outline-none text-gray-900 font-bold"
                   value={formData.shippingWeightKg}
                   onChange={onDecimalChange("shippingWeightKg")}
                   placeholder="0"
@@ -382,7 +283,7 @@ const ProductModal = ({
                 </label>
                 <input
                   inputMode="numeric"
-                  className="w-full bg-transparent border-b border-rose-100 py-2 focus:border-rose-400 outline-none text-rose-900 font-bold"
+                  className="w-full bg-transparent border-b border-rose-100 py-2 focus:border-rose-400 outline-none text-gray-900 font-bold"
                   value={formatInputNumber(formData.shippingFeeVndInput)}
                   onChange={onMoneyChange("shippingFeeVndInput")}
                   placeholder="0"
@@ -428,7 +329,7 @@ const ProductModal = ({
               </label>
               <input
                 type="number"
-                className="w-full border-b border-rose-100 bg-transparent py-2 focus:border-rose-400 outline-none text-rose-900 font-bold text-lg"
+                className="w-full border-b border-rose-100 bg-transparent py-2 focus:border-rose-400 outline-none text-gray-900 font-bold text-lg"
                 value={formData.quantity}
                 onChange={(e) =>
                   setFormData({ ...formData, quantity: e.target.value })
@@ -440,7 +341,7 @@ const ProductModal = ({
           </div>
         </div>
 
-        {/* Giá bán + lợi nhuận */}
+        {/* Giá bán + Lợi nhuận - (Moved back to bottom as per request) */}
         <div className="grid grid-cols-2 gap-3 items-start">
           <div className="flex flex-col gap-1 min-w-0">
             <label className="text-xs font-bold text-rose-700 uppercase">
@@ -448,12 +349,14 @@ const ProductModal = ({
             </label>
             <input
               inputMode="numeric"
-              className="w-full border-b border-gray-200 py-2 focus:border-rose-400 outline-none text-rose-900 font-bold text-lg"
+              className="w-full border-b border-gray-200 py-2 focus:border-rose-400 outline-none text-gray-900 font-bold text-lg disabled:text-gray-500"
               value={formatInputNumber(formData.price)}
               onChange={onMoneyChange("price")}
               placeholder="0"
+              disabled={Boolean(editingProduct)}
             />
           </div>
+
           <div className="flex flex-col gap-1 min-w-0">
             <label className="text-xs font-bold text-emerald-700 uppercase">
               Lợi nhuận (VNĐ)
@@ -475,7 +378,7 @@ const ProductModal = ({
             {purchaseLots.map((lot) => (
               <div
                 key={lot.id}
-                className="flex items-center justify-between text-xs text-rose-800"
+                className="flex items-center justify-between text-xs text-gray-900"
               >
                 <div className="font-semibold">{formatNumber(lot.cost)}đ</div>
                 <div className="text-[10px] text-rose-600">

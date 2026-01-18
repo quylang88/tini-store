@@ -18,6 +18,8 @@ import SplashScreen from "./screens/login/SplashScreen";
 import OfflineAlert from "./screens/login/OfflineAlert";
 import useImagePreloader from "./hooks/useImagePreloader";
 import { exportDataToJSON } from "./utils/backupUtils";
+import { sendNotification } from "./utils/notificationUtils";
+import useDailyGreeting from "./hooks/useDailyGreeting";
 
 // Định nghĩa thứ tự tab để xác định hướng chuyển cảnh
 const TAB_ORDER = {
@@ -98,7 +100,7 @@ const App = () => {
 
   // --- 3b. KIỂM TRA SAO LƯU (AUTO REMINDER / DOWNLOAD) ---
   useEffect(() => {
-    if (!isAuthenticated || products.length === 0) return;
+    if (!isAuthenticated) return;
 
     const checkBackupStatus = () => {
       if (sessionStorage.getItem("hasCheckedBackup")) return;
@@ -114,15 +116,29 @@ const App = () => {
         settings.autoBackupInterval > 0 &&
         daysSinceBackup >= settings.autoBackupInterval
       ) {
-        handleBackupNow();
+        // Thay đổi: Không tự động download (vì sẽ bị chặn trên iOS/Mobile nếu không có user gesture)
+        // Thay vào đó, hiện modal nhắc nhở để user bấm "Sao lưu ngay" -> tạo gesture hợp lệ cho navigator.share
+        setBackupReminderOpen(true);
         sessionStorage.setItem("hasCheckedBackup", "true");
         return;
       }
 
       // Case B: Không bật tự động, nhưng quá hạn mặc định (7 ngày) -> Hiện nhắc nhở
+      // Chỉ nhắc nhở nếu có sản phẩm (tránh làm phiền người dùng mới cài app chưa có dữ liệu)
       const isAutoOff = !settings.autoBackupInterval;
-      if (isAutoOff && daysSinceBackup > 7) {
-        setBackupReminderOpen(true);
+      const hasData = products.length > 0;
+
+      if (isAutoOff && daysSinceBackup > 7 && hasData) {
+        // Kiểm tra permission notification
+        if ("Notification" in window && Notification.permission === "granted") {
+          sendNotification("Nhắc nhở sao lưu", {
+            body: "Bạn chưa sao lưu dữ liệu quá 7 ngày. Hãy mở app và sao lưu ngay để tránh mất dữ liệu!",
+            requireInteraction: true,
+          });
+        } else {
+          // Fallback: Modal cũ nếu không có quyền thông báo
+          setBackupReminderOpen(true);
+        }
         sessionStorage.setItem("hasCheckedBackup", "true");
       }
     };
@@ -170,6 +186,9 @@ const App = () => {
   } = useImagePreloader("/tiny-shop-transparent.png", isAuthenticated);
 
   const [offlineAcknowledged, setOfflineAcknowledged] = useState(false);
+
+  // --- 5c. DAILY GREETING NOTIFICATION ---
+  useDailyGreeting(isAuthenticated);
 
   const handleForceContinue = () => {
     if (showWarning) {
@@ -301,7 +320,7 @@ const App = () => {
       <ConfirmModal
         open={backupReminderOpen}
         title="Sao lưu dữ liệu?"
-        message="Bạn chưa sao lưu dữ liệu trong vài ngày qua. Hãy tải về máy để tránh mất mát khi xoá app."
+        message="Bạn chưa sao lưu dữ liệu trong vài ngày qua. Hãy tải về máy để tránh mất dữ liệu."
         confirmLabel="Sao lưu ngay"
         cancelLabel="Để sau"
         tone="info"

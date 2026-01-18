@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { normalizeString } from "../../utils/helpers";
 import { normalizeWarehouseStock } from "../../utils/warehouseUtils";
 
 // Tách riêng phần lọc + gợi ý để code chính dễ đọc hơn.
@@ -27,15 +28,15 @@ const useInventoryFilters = ({
 
         return matchSearch && matchCategory && matchWarehouse;
       }),
-    [products, searchTerm, activeCategory, warehouseFilter]
+    [products, searchTerm, activeCategory, warehouseFilter],
   );
 
   const nameSuggestions = useMemo(() => {
     if (editingProduct) return [];
-    const keyword = formDataName.trim().toLowerCase();
+    const keyword = normalizeString(formDataName);
     if (!keyword) return [];
     return products
-      .filter((product) => product.name.toLowerCase().includes(keyword))
+      .filter((product) => normalizeString(product.name).includes(keyword))
       .slice(0, 5);
   }, [products, formDataName, editingProduct]);
 

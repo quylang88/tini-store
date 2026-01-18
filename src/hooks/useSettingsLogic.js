@@ -1,7 +1,8 @@
 import { useState } from "react";
-import { formatNumber } from "../utils/helpers";
+import { formatNumber, normalizeString } from "../utils/helpers";
 import { normalizePurchaseLots } from "../utils/purchaseUtils";
 import { exportDataToJSON, parseBackupFile } from "../utils/backupUtils";
+import { requestNotificationPermission } from "../utils/notificationUtils";
 
 const useSettingsLogic = ({
   products,
@@ -29,12 +30,26 @@ const useSettingsLogic = ({
   // Thay đổi tần suất sao lưu tự động
   const handleAutoBackupChange = (value) => {
     if (value === 0) {
-      // Khi tắt tự động, hiện thông báo
-      setInfoModal({
-        title: "Đã tắt tự động sao lưu",
-        message:
-          "Bạn sẽ nhận được nhắc nhở sao lưu thủ công mỗi 7 ngày để đảm bảo an toàn dữ liệu.",
+      // Khi tắt tự động, xin quyền thông báo để nhắc nhở
+      requestNotificationPermission().then((permission) => {
+        if (permission === "granted") {
+          setInfoModal({
+            title: "Đã tắt tự động sao lưu",
+            message: "Hệ thống sẽ gửi thông báo nhắc bạn sao lưu mỗi 7 ngày.",
+          });
+        } else {
+          // Nếu từ chối hoặc không hỗ trợ, vẫn hiện thông báo fallback
+          setInfoModal({
+            title: "Đã tắt tự động sao lưu",
+            message:
+              "Bạn sẽ nhận được nhắc nhở sao lưu thủ công mỗi 7 ngày để đảm bảo an toàn dữ liệu.",
+          });
+        }
       });
+    } else {
+      // Khi bật tự động, xoá cờ hasCheckedBackup để hệ thống tự động kiểm tra và nhắc nhở ngay nếu cần
+      // Điều này giải quyết vấn đề: User bật toggle lên nhưng app không phản ứng ngay do đã check từ trước
+      sessionStorage.removeItem("hasCheckedBackup");
     }
     saveSettings({ ...settings, autoBackupInterval: value });
   };
@@ -50,17 +65,25 @@ const useSettingsLogic = ({
       });
       return;
     }
-    if (trimmedCategory && !settings.categories.includes(trimmedCategory)) {
+    // Chuẩn hóa tên mới
+    const normalizedNew = normalizeString(trimmedCategory);
+
+    // Kiểm tra trùng lặp (không phân biệt hoa thường, dấu)
+    const isDuplicate = settings.categories.some(
+      (cat) => normalizeString(cat) === normalizedNew,
+    );
+
+    if (!isDuplicate) {
       saveSettings({
         ...settings,
         categories: [...settings.categories, trimmedCategory],
       });
       setNewCategory("");
-    } else if (settings.categories.includes(trimmedCategory)) {
+    } else {
       // Thông báo khi danh mục đã tồn tại để tránh thêm trùng.
       setNoticeModal({
         title: "Danh mục đã tồn tại",
-        message: "Danh mục này đã có trong danh sách. Hãy chọn tên khác nhé.",
+        message: "Danh mục này đã có trong danh sách. Hãy kiểm tra lại nhé.",
       });
     }
   };
@@ -89,13 +112,13 @@ const useSettingsLogic = ({
     });
   };
 
-  // Lấy tỷ giá từ API miễn phí (Tham khảo)
+  // Lấy tỷ giá từ API miễn phí
   const fetchOnlineRate = async () => {
     setIsFetchingRate(true);
     try {
       // API tỷ giá JPY -> VND
       const res = await fetch(
-        "https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/jpy.json"
+        "https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/jpy.json",
       );
       const data = await res.json();
       const rate = data.jpy.vnd;
@@ -152,7 +175,7 @@ const useSettingsLogic = ({
         tone: "danger",
         onConfirm: () => {
           setProducts(
-            data.products.map((product) => normalizePurchaseLots(product))
+            data.products.map((product) => normalizePurchaseLots(product)),
           );
           setOrders(data.orders);
           if (data.settings) {

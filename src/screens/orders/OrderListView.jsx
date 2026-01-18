@@ -117,7 +117,7 @@ const OrderListView = ({
                 )}
               </div>
               {order.orderType === "delivery" && (
-                <div className="text-xs text-gray-400 mb-2">
+                <div className="text-xs text-gray-600 mb-2">
                   Phí gửi khách: {formatNumber(order.shippingFee || 0)}đ
                 </div>
               )}
