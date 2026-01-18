@@ -103,6 +103,13 @@ const App = () => {
     if (!isAuthenticated || products.length === 0) return;
 
     const checkBackupStatus = () => {
+      console.log("Checking backup status:", {
+        hasChecked: sessionStorage.getItem("hasCheckedBackup"),
+        lastBackupDate: settings.lastBackupDate,
+        productsLength: products.length,
+        autoBackupInterval: settings.autoBackupInterval,
+      });
+
       if (sessionStorage.getItem("hasCheckedBackup")) return;
 
       const lastBackup = settings.lastBackupDate
@@ -111,12 +118,16 @@ const App = () => {
       const now = Date.now();
       const daysSinceBackup = (now - lastBackup) / (1000 * 60 * 60 * 24);
 
+      console.log("Backup Math:", { lastBackup, now, daysSinceBackup });
+
       // Case A: Tự động sao lưu được bật và đã đến hạn
       if (
         settings.autoBackupInterval > 0 &&
         daysSinceBackup >= settings.autoBackupInterval
       ) {
-        handleBackupNow();
+        // Thay đổi: Không tự động download (vì sẽ bị chặn trên iOS/Mobile nếu không có user gesture)
+        // Thay vào đó, hiện modal nhắc nhở để user bấm "Sao lưu ngay" -> tạo gesture hợp lệ cho navigator.share
+        setBackupReminderOpen(true);
         sessionStorage.setItem("hasCheckedBackup", "true");
         return;
       }
@@ -315,7 +326,7 @@ const App = () => {
       <ConfirmModal
         open={backupReminderOpen}
         title="Sao lưu dữ liệu?"
-        message="Bạn chưa sao lưu dữ liệu trong vài ngày qua. Hãy tải về máy để tránh mất mát khi xoá app."
+        message="Bạn chưa sao lưu dữ liệu trong vài ngày qua. Hãy tải về máy để tránh mất dữ liệu."
         confirmLabel="Sao lưu ngay"
         cancelLabel="Để sau"
         tone="info"
