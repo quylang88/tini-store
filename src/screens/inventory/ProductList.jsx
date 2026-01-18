@@ -119,15 +119,16 @@ const ProductList = ({
           );
         })}
 
-        {/* Animated Empty State moved INSIDE AnimatePresence to prevent jumping */}
+        {/*
+          Animated Empty State removed to prevent double animation.
+          It still lives inside AnimatePresence to work with popLayout,
+          but with no 'animate' props, it will just appear statically
+          once it mounts (which happens when items are gone).
+        */}
         {products.length === 0 && (
           <motion.div
             layout
             key="empty-state"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            transition={{ duration: 0.2 }}
             className="text-center text-gray-400 mt-10 text-sm"
           >
             Không có sản phẩm nào
