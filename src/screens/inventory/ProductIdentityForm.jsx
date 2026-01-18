@@ -1,6 +1,6 @@
 import React, { useRef } from 'react';
 import { ScanBarcode, Upload, Camera } from 'lucide-react';
-import { formatInputNumber, formatNumber } from '../../utils/helpers';
+import { formatNumber } from '../../utils/helpers';
 
 const ProductIdentityForm = ({
   // Data props
@@ -8,14 +8,12 @@ const ProductIdentityForm = ({
   barcode,
   category,
   name,
-  price,
 
   // Handlers
   onImageChange, // callback(file)
   onBarcodeChange,
   onCategoryChange,
   onNameChange,
-  onPriceChange,
 
   // Config/Helpers
   categories = [],
@@ -160,7 +158,7 @@ const ProductIdentityForm = ({
                 key={prod.id}
                 type="button"
                 onClick={() => onSelectExistingProduct && onSelectExistingProduct(prod)}
-                className="w-full text-left px-3 py-2 text-sm text-rose-900 active:bg-rose-50 flex items-center justify-between"
+                className="w-full text-left px-3 py-2 text-sm text-gray-900 active:bg-rose-50 flex items-center justify-between"
               >
                 <span className="font-medium">{prod.name}</span>
                 <span className="text-[10px] text-rose-500">
@@ -170,21 +168,6 @@ const ProductIdentityForm = ({
             ))}
           </div>
         )}
-      </div>
-
-      {/* Selling Price */}
-      <div>
-        <label className="text-xs font-bold text-rose-700 uppercase">
-          Giá bán (VNĐ)
-        </label>
-        <input
-          inputMode="numeric"
-          className={`w-full border-b border-gray-200 py-2 focus:border-rose-400 outline-none font-bold text-lg disabled:text-gray-500 ${inputColorClass}`}
-          value={formatInputNumber(price)}
-          onChange={(e) => onPriceChange && onPriceChange(e)} // Pass event to let parent handle money logic or we can handle it here? Parent usually uses onMoneyChange helper
-          placeholder="0"
-          disabled={disabled}
-        />
       </div>
     </div>
   );

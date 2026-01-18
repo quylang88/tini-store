@@ -4,7 +4,7 @@ import { getWarehouseLabel } from "../../utils/warehouseUtils";
 import SheetModal from "../../components/modals/SheetModal";
 import Button from "../../components/common/Button";
 import useModalCache from "../../hooks/useModalCache";
-import ProductIdentityForm from "../../components/product/ProductIdentityForm";
+import ProductIdentityForm from "./ProductIdentityForm";
 
 const ProductModal = ({
   isOpen,
@@ -86,14 +86,12 @@ const ProductModal = ({
           barcode={formData.barcode}
           category={formData.category}
           name={formData.name}
-          price={formData.price}
 
           // Handlers
           onImageChange={onImageSelect} // ProductModal expects file object, ProductIdentityForm passes file object
           onBarcodeChange={(val) => setFormData({ ...formData, barcode: val })}
           onCategoryChange={(val) => setFormData({ ...formData, category: val })}
           onNameChange={(val) => setFormData({ ...formData, name: val })}
-          onPriceChange={onMoneyChange("price")}
 
           // Config
           categories={categories}
@@ -345,15 +343,31 @@ const ProductModal = ({
           </div>
         </div>
 
-        {/* Lợi nhuận (Chỉ hiển thị, không nhập liệu nên giữ nguyên màu hoặc tùy chỉnh) */}
-        <div className="flex flex-col gap-1 min-w-0">
-            <label className="text-xs font-bold text-emerald-700 uppercase">
-              Lợi nhuận (VNĐ)
-            </label>
-            <div className="bg-emerald-50 border border-emerald-100 rounded-lg px-3 py-2">
-              <div className="text-lg font-bold text-emerald-700">
-                {hasProfitData ? formatNumber(finalProfit) : "0"}
-              </div>
+        {/* Giá bán + Lợi nhuận - (Moved back to bottom as per request) */}
+        <div className="grid grid-cols-2 gap-3 items-start">
+            <div className="flex flex-col gap-1 min-w-0">
+                <label className="text-xs font-bold text-rose-700 uppercase">
+                  Giá bán (VNĐ)
+                </label>
+                <input
+                  inputMode="numeric"
+                  className="w-full border-b border-gray-200 py-2 focus:border-rose-400 outline-none text-gray-900 font-bold text-lg disabled:text-gray-500"
+                  value={formatInputNumber(formData.price)}
+                  onChange={onMoneyChange("price")}
+                  placeholder="0"
+                  disabled={Boolean(editingProduct)}
+                />
+            </div>
+
+            <div className="flex flex-col gap-1 min-w-0">
+                <label className="text-xs font-bold text-emerald-700 uppercase">
+                  Lợi nhuận (VNĐ)
+                </label>
+                <div className="bg-emerald-50 border border-emerald-100 rounded-lg px-3 py-2">
+                  <div className="text-lg font-bold text-emerald-700">
+                    {hasProfitData ? formatNumber(finalProfit) : "0"}
+                  </div>
+                </div>
             </div>
         </div>
 
@@ -366,7 +380,7 @@ const ProductModal = ({
             {purchaseLots.map((lot) => (
               <div
                 key={lot.id}
-                className="flex items-center justify-between text-xs text-rose-800"
+                className="flex items-center justify-between text-xs text-gray-900"
               >
                 <div className="font-semibold">{formatNumber(lot.cost)}đ</div>
                 <div className="text-[10px] text-rose-600">

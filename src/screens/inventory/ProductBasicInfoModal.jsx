@@ -1,7 +1,8 @@
 import React, { useState } from "react";
 import SheetModal from "../../components/modals/SheetModal";
 import Button from "../../components/common/Button";
-import ProductIdentityForm from "../../components/product/ProductIdentityForm";
+import ProductIdentityForm from "./ProductIdentityForm";
+import { formatInputNumber } from "../../utils/helpers";
 
 const ProductBasicInfoModal = ({
   isOpen,
@@ -63,28 +64,42 @@ const ProductBasicInfoModal = ({
       showCloseIcon={true}
       footer={footer}
     >
-      <ProductIdentityForm
-        // Data
-        image={formData.image}
-        barcode={formData.barcode}
-        category={formData.category}
-        name={formData.name}
-        price={formData.price}
+      <div className="space-y-4">
+        <ProductIdentityForm
+          // Data
+          image={formData.image}
+          barcode={formData.barcode}
+          category={formData.category}
+          name={formData.name}
 
-        // Handlers
-        onImageChange={handleImageFileChange}
-        onBarcodeChange={(val) => setFormData(prev => ({ ...prev, barcode: val }))}
-        onCategoryChange={(val) => setFormData(prev => ({ ...prev, category: val }))}
-        onNameChange={(val) => setFormData(prev => ({ ...prev, name: val }))}
-        onPriceChange={handleMoneyChange}
+          // Handlers
+          onImageChange={handleImageFileChange}
+          onBarcodeChange={(val) => setFormData(prev => ({ ...prev, barcode: val }))}
+          onCategoryChange={(val) => setFormData(prev => ({ ...prev, category: val }))}
+          onNameChange={(val) => setFormData(prev => ({ ...prev, name: val }))}
 
-        // Config
-        categories={categories}
-        onShowScanner={onShowScanner}
-        disabled={false}
-        allowImageUpload={true}
-        inputColorClass="text-gray-900" // Explicitly setting color as requested
-      />
+          // Config
+          categories={categories}
+          onShowScanner={onShowScanner}
+          disabled={false}
+          allowImageUpload={true}
+          inputColorClass="text-gray-900" // Explicitly setting color as requested
+        />
+
+        {/* Price Input - Manually added back */}
+        <div>
+          <label className="text-xs font-bold text-rose-700 uppercase">
+            Giá bán (VNĐ)
+          </label>
+          <input
+            inputMode="numeric"
+            className="w-full border-b border-gray-200 py-2 focus:border-rose-400 outline-none text-gray-900 font-bold text-lg"
+            value={formatInputNumber(formData.price)}
+            onChange={handleMoneyChange}
+            placeholder="0"
+          />
+        </div>
+      </div>
     </SheetModal>
   );
 };
