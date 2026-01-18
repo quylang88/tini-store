@@ -81,7 +81,7 @@ const TopSellingSection = ({
         <button
           type="button"
           onClick={() => onOpenModal("quantity")}
-          className="rounded-xl border border-amber-200 bg-amber-100/80 p-3 text-left transition active:bg-amber-50 focus:outline-none"
+          className="rounded-xl border border-amber-200 bg-amber-100 p-3 text-left transition active:bg-amber-200 focus:outline-none"
         >
           <div className="flex items-center justify-between mb-3">
             <h4 className="text-xs font-semibold uppercase text-amber-700">

@@ -26,10 +26,10 @@ const themeMap = {
     border: "border-violet-100",
   },
   out_of_stock: {
-    title: "text-teal-700",
-    badge: "bg-teal-50 text-teal-600 border-teal-100",
-    value: "text-teal-600",
-    border: "border-teal-100",
+    title: "text-slate-700",
+    badge: "bg-teal-50 text-slate-600 border-slate-100",
+    value: "text-slate-600",
+    border: "border-slate-100",
   },
 };
 
@@ -75,7 +75,7 @@ const StatListModal = ({
       "!bg-violet-100 !border-violet-300 !text-violet-900 active:!bg-violet-200";
   } else if (cachedType === "out_of_stock") {
     footerButtonClass =
-      "!bg-teal-100 !border-teal-300 !text-teal-900 active:!bg-teal-200";
+      "!bg-slate-100 !border-slate-300 !text-slate-900 active:!bg-slate-200";
   }
 
   const footer = (

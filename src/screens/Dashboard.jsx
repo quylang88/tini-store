@@ -114,7 +114,7 @@ const Dashboard = ({ products, orders, onOpenDetail }) => {
               icon={ArchiveX}
               label="Hết hàng"
               value={outOfStockProducts.length}
-              className="bg-teal-400 shadow-teal-200 cursor-pointer active:scale-95 transition-transform"
+              className="bg-slate-400 shadow-slate-200 cursor-pointer active:scale-95 transition-transform"
               onClick={() => setShowOutOfStockModal(true)}
             />
           )}
