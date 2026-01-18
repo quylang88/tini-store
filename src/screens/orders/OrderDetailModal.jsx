@@ -5,7 +5,7 @@ import { getWarehouseLabel } from "../../utils/warehouseUtils";
 import { getOrderDisplayName } from "../../utils/orderUtils";
 import useModalCache from "../../hooks/useModalCache";
 import Button from "../../components/common/Button";
-import { exportOrderToCSV } from "../../utils/csvExportUtils";
+import { exportOrderToCSV } from "../../utils/fileUtils";
 
 // OrderDetailModal: Xem chi tiết đơn hàng (View Only) -> showCloseIcon={false}
 const OrderDetailModal = ({ order, onClose, getOrderStatusInfo }) => {
