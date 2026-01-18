@@ -6,7 +6,7 @@ import useDashboardLogic from "../../hooks/useDashboardLogic";
 import { getLatestUnitCost } from "../../utils/purchaseUtils";
 import MetricCard from "../../components/stats/MetricCard";
 import TopSellingSection from "../../components/stats/TopSellingSection";
-import TopListModal from "./TopListModal";
+import StatListModal from "./StatListModal";
 import DateRangeFilter from "../../components/stats/DateRangeFilter";
 
 const StatsDetail = ({ products, orders, onBack }) => {
@@ -33,9 +33,9 @@ const StatsDetail = ({ products, orders, onBack }) => {
   const costMap = useMemo(
     () =>
       new Map(
-        products.map((product) => [product.id, getLatestUnitCost(product)])
+        products.map((product) => [product.id, getLatestUnitCost(product)]),
       ),
-    [products]
+    [products],
   );
 
   const comparisonStats = useMemo(() => {
@@ -93,8 +93,6 @@ const StatsDetail = ({ products, orders, onBack }) => {
   const openTopModal = (type) => setActiveModal(type);
   const closeTopModal = () => setActiveModal(null);
 
-  const modalTitle =
-    activeModal === "quantity" ? "Top số lượng" : "Top lợi nhuận";
   const modalItems = activeModal === "quantity" ? topByQuantity : topByProfit;
 
   return (
@@ -249,12 +247,11 @@ const StatsDetail = ({ products, orders, onBack }) => {
       </div>
 
       {/* Dùng modal chung để xem chi tiết top khi chạm vào từng bảng. */}
-      <TopListModal
+      <StatListModal
         open={Boolean(activeModal)}
         onClose={closeTopModal}
-        title={modalTitle}
         items={modalItems}
-        mode={activeModal === "quantity" ? "quantity" : "profit"}
+        type={activeModal === "quantity" ? "quantity" : "profit"}
       />
     </div>
   );

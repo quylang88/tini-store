@@ -12,9 +12,7 @@ import { formatNumber } from "../utils/helpers";
 import useDashboardLogic from "../hooks/useDashboardLogic";
 import MetricCard from "../components/stats/MetricCard";
 import TopSellingSection from "../components/stats/TopSellingSection";
-import TopListModal from "./dashboard/TopListModal";
-import OutOfStockModal from "./dashboard/OutOfStockModal";
-import InventoryWarningModal from "./dashboard/InventoryWarningModal";
+import StatListModal from "./dashboard/StatListModal";
 import FloatingActionButton from "../components/common/FloatingActionButton";
 import AppHeader from "../components/common/AppHeader";
 
@@ -42,8 +40,6 @@ const Dashboard = ({ products, orders, onOpenDetail }) => {
   const openTopModal = (type) => setActiveModal(type);
   const closeTopModal = () => setActiveModal(null);
 
-  const modalTitle =
-    activeModal === "quantity" ? "Top số lượng" : "Top lợi nhuận";
   const modalItems = activeModal === "quantity" ? topByQuantity : topByProfit;
 
   // Tính số lượng đơn hàng
@@ -54,7 +50,7 @@ const Dashboard = ({ products, orders, onOpenDetail }) => {
     if (!currentDate) return "Đang tải...";
     return `Tháng ${String(currentDate.getMonth() + 1).padStart(
       2,
-      "0"
+      "0",
     )}/${currentDate.getFullYear()}`;
   }, [currentDate]);
 
@@ -118,7 +114,7 @@ const Dashboard = ({ products, orders, onOpenDetail }) => {
               icon={ArchiveX}
               label="Hết hàng"
               value={outOfStockProducts.length}
-              className="bg-teal-400 shadow-teal-200 cursor-pointer active:scale-95 transition-transform"
+              className="bg-slate-400 shadow-slate-200 cursor-pointer active:scale-95 transition-transform"
               onClick={() => setShowOutOfStockModal(true)}
             />
           )}
@@ -146,24 +142,25 @@ const Dashboard = ({ products, orders, onOpenDetail }) => {
         />
 
         {/* Modal mở khi người dùng chạm vào từng nhóm top để xem chi tiết. */}
-        <TopListModal
+        <StatListModal
           open={Boolean(activeModal)}
           onClose={closeTopModal}
-          title={modalTitle}
           items={modalItems}
-          mode={activeModal === "quantity" ? "quantity" : "profit"}
+          type={activeModal === "quantity" ? "quantity" : "profit"}
         />
 
-        <OutOfStockModal
+        <StatListModal
           open={showOutOfStockModal}
           onClose={() => setShowOutOfStockModal(false)}
-          products={outOfStockProducts}
+          items={outOfStockProducts}
+          type="out_of_stock"
         />
 
-        <InventoryWarningModal
+        <StatListModal
           open={showInventoryWarningModal}
           onClose={() => setShowInventoryWarningModal(false)}
-          products={slowMovingProducts}
+          items={slowMovingProducts}
+          type="warning"
         />
       </div>
 

@@ -95,7 +95,7 @@ const Settings = ({
                   fetchOnlineRate();
                 }}
                 disabled={isFetchingRate}
-                className="bg-rose-100 text-rose-600 px-4 py-2 rounded-lg font-medium text-sm flex flex-col items-center justify-center min-w-[80px] active:bg-rose-100 border border-rose-300 transition"
+                className="bg-rose-100 text-rose-600 px-4 py-1 rounded-lg font-medium text-sm flex flex-col items-center justify-center min-w-[80px] active:bg-rose-100 active:scale-95 border border-rose-300 transition"
               >
                 {isFetchingRate ? (
                   <RefreshCw size={20} className="animate-spin" />
@@ -130,7 +130,7 @@ const Settings = ({
             />
             <button
               onClick={handleAddCategory}
-              className="bg-rose-500 text-white w-12 h-10 rounded-lg flex items-center justify-center active:bg-rose-600 active:scale-95 transition"
+              className="bg-rose-500 text-white w-12 h-10 rounded-lg flex items-center justify-center active:bg-rose-400 active:scale-95 transition"
             >
               <Plus size={24} />
             </button>
@@ -207,7 +207,7 @@ const Settings = ({
           <div className="space-y-2 pt-2">
             <button
               onClick={exportData}
-              className="w-full flex items-center justify-center gap-2 bg-rose-100 hover:bg-rose-200 text-rose-600 py-3.5 rounded-xl font-bold shadow-sm active:scale-95 border border-rose-300 transition-all"
+              className="w-full flex items-center justify-center gap-2 bg-rose-100 text-rose-600 py-3 rounded-xl font-bold shadow-sm active:bg-rose-200 active:scale-95 border border-rose-300 transition-all"
             >
               <Download size={20} /> Backup Dữ Liệu
             </button>
@@ -232,23 +232,21 @@ const Settings = ({
             </div>
           </div>
 
-          <div className="relative group">
+          <label className="w-full flex items-center justify-center gap-2 bg-white text-stone-600 py-3 rounded-xl font-bold shadow-sm active:bg-stone-100 active:scale-95 border border-stone-200 transition-all cursor-pointer">
             <input
               type="file"
               onChange={importData}
-              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+              className="hidden"
               accept=".json"
             />
-            <button className="w-full flex items-center justify-center gap-2 bg-white text-stone-600 py-3 rounded-xl font-bold active:bg-stone-50 transition border border-stone-200 shadow-sm hover:text-rose-600 hover:border-rose-200">
-              <Upload size={20} /> Khôi Phục Dữ Liệu
-            </button>
-          </div>
+            <Upload size={20} /> Khôi Phục Dữ Liệu
+          </label>
         </SettingsSection>
 
         {/* 4. Nút Đăng Xuất */}
         <button
           onClick={onLogout}
-          className="w-full flex items-center justify-center gap-2 mt-4 bg-rose-500 text-white py-3 rounded-xl font-bold active:bg-rose-400 transition"
+          className="w-full flex items-center justify-center gap-2 mt-4 bg-rose-500 text-white py-3 rounded-xl font-bold active:scale-95 active:bg-rose-400 transition-all"
         >
           <LogOut size={20} /> Đăng Xuất
         </button>

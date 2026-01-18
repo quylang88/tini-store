@@ -13,12 +13,15 @@ const ProductList = ({
   activeWarehouse,
 }) => {
   return (
-    <div className="flex-1 overflow-y-auto p-3 space-y-3 pb-24">
+    <div className="flex-1 overflow-y-auto p-3 flex flex-col gap-3 pb-24">
       {/* 
         Fixes:
-        1. mode="popLayout": Ensures exiting items are removed from the layout flow immediately (position: absolute),
-           preventing the "No products" text from jumping up after the exit animation finishes.
-        2. 'layout' prop added: Synchronizes smoothness with Order screen animations.
+        1. Used 'flex flex-col gap-3' instead of 'space-y-3' to avoid layout jumps caused by
+           'space-y' margin selectors interacting with absolute positioned (exiting) elements.
+        2. mode="popLayout": Ensures exiting items are removed from the layout flow immediately (position: absolute).
+        3. Empty State is rendered OUTSIDE AnimatePresence as a static div. 
+           Combined with 'popLayout', this ensures the text appears instantly in the correct position 
+           without being pushed around by exiting items or animating itself.
       */}
       <AnimatePresence mode="popLayout">
         {products.map((product) => {
@@ -35,10 +38,11 @@ const ProductList = ({
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
+              whileTap={{ scale: 0.96 }}
               transition={{ duration: 0.2 }}
               key={product.id}
               onClick={() => onOpenDetail(product)}
-              className="bg-amber-50 p-3 rounded-xl shadow-sm border border-amber-100 flex gap-3 items-start cursor-pointer hover:shadow-md transition"
+              className="bg-amber-50 p-3 rounded-xl shadow-sm border border-amber-100 flex gap-3 items-start cursor-pointer hover:shadow-md transition-shadow"
             >
               <div className="w-16 h-16 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0 border border-gray-200 relative">
                 {product.image ? (
@@ -118,18 +122,14 @@ const ProductList = ({
         })}
       </AnimatePresence>
 
-      {/* Animated Empty State to prevent jumping */}
+      {/* 
+        Completely static Empty State OUTSIDE AnimatePresence.
+        No animation props, no key needed.
+      */}
       {products.length === 0 && (
-        <motion.div
-          layout
-          key="empty-state"
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.2 }}
-          className="text-center text-gray-400 mt-10 text-sm"
-        >
+        <div className="text-center text-gray-400 mt-10 text-sm">
           Không có sản phẩm nào
-        </motion.div>
+        </div>
       )}
     </div>
   );
