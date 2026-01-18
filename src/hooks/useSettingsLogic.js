@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { formatNumber, normalizeString } from "../utils/helpers";
 import { normalizePurchaseLots } from "../utils/purchaseUtils";
-import { exportDataToJSON, parseBackupFile } from "../utils/backupUtils";
+import { exportDataToJSON, parseBackupFile } from "../utils/fileUtils";
 import { requestNotificationPermission } from "../utils/notificationUtils";
 
 const useSettingsLogic = ({

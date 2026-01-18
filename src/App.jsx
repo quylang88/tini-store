@@ -17,7 +17,7 @@ import ScreenTransition from "./components/common/ScreenTransition";
 import SplashScreen from "./screens/login/SplashScreen";
 import OfflineAlert from "./screens/login/OfflineAlert";
 import useImagePreloader from "./hooks/useImagePreloader";
-import { exportDataToJSON } from "./utils/backupUtils";
+import { exportDataToJSON } from "./utils/fileUtils";
 import { sendNotification } from "./utils/notificationUtils";
 import useDailyGreeting from "./hooks/useDailyGreeting";
 
