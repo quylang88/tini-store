@@ -5,6 +5,7 @@ import { getWarehouseLabel } from "../../utils/warehouseUtils";
 import { getOrderDisplayName } from "../../utils/orderUtils";
 import useModalCache from "../../hooks/useModalCache";
 import Button from "../../components/common/Button";
+import { exportOrderToCSV } from "../../utils/csvExportUtils";
 
 // OrderDetailModal: Xem chi tiết đơn hàng (View Only) -> showCloseIcon={false}
 const OrderDetailModal = ({ order, onClose, getOrderStatusInfo }) => {
@@ -28,9 +29,24 @@ const OrderDetailModal = ({ order, onClose, getOrderStatusInfo }) => {
     }, 0) - (cachedOrder.shippingFee || 0);
 
   const footer = (
-    <Button variant="sheetClose" size="sm" onClick={onClose}>
-      Đóng
-    </Button>
+    <div className="flex gap-3">
+      <Button
+        variant="secondary"
+        size="sm"
+        onClick={onClose}
+        className="flex-1"
+      >
+        Đóng
+      </Button>
+      <Button
+        variant="primary"
+        size="sm"
+        onClick={() => exportOrderToCSV(cachedOrder)}
+        className="flex-1"
+      >
+        Xuất CSV
+      </Button>
+    </div>
   );
 
   return (
