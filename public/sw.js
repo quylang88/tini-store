@@ -1,6 +1,5 @@
 // Service Worker for PWA
 /* eslint-env serviceworker */
-/* global self */
 
 const CACHE_NAME = 'tiny-shop-cache-v1';
 const ASSETS_TO_CACHE = [
@@ -36,7 +35,7 @@ self.addEventListener('push', function(event) {
   let data = {};
   try {
     data = event.data ? event.data.json() : {};
-  } catch (e) {
+  } catch {
     data = { body: event.data ? event.data.text() : 'Bạn có thông báo mới!' };
   }
 
