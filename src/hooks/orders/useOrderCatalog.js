@@ -87,7 +87,7 @@ const useOrderCatalog = ({
             cost: getLatestUnitCost(product),
           };
         })
-        .filter(Boolean),
+        .filter((item) => item && item.quantity > 0), // Lọc bỏ item null hoặc số lượng <= 0 (bao gồm cả chuỗi rỗng)
     [cart, productMap, priceOverrides]
   );
 

@@ -36,11 +36,18 @@ const useOrdersLogic = ({ products, setProducts, orders, setOrders }) => {
     Math.max(0, Math.min(availableStock, value));
 
   // Cập nhật giỏ hàng theo công thức tính số lượng tiếp theo để tránh lặp code.
-  const updateCartItem = (productId, computeNextQuantity) => {
+  // shouldRemoveIfZero: nếu true (mặc định cho +/-), số lượng về 0 sẽ xoá khỏi giỏ.
+  // nếu false (nhập tay), số lượng về 0/rỗng vẫn giữ key trong giỏ để input không bị mất focus.
+  const updateCartItem = (
+    productId,
+    computeNextQuantity,
+    shouldRemoveIfZero = true
+  ) => {
     setCart((prev) => {
       const current = prev[productId] || 0;
       const nextValue = computeNextQuantity(current);
-      if (!nextValue) {
+      // Chỉ xoá item nếu cờ shouldRemoveIfZero = true VÀ giá trị mới là falsy (0 hoặc rỗng)
+      if (shouldRemoveIfZero && !nextValue) {
         const { [productId]: _, ...rest } = prev;
         return rest;
       }
@@ -76,16 +83,25 @@ const useOrdersLogic = ({ products, setProducts, orders, setOrders }) => {
   };
 
   const handleQuantityChange = (productId, value, availableStock) => {
-    // Khi nhập trực tiếp, chỉ nhận số hợp lệ và không vượt tồn kho.
-    updateCartItem(productId, () =>
-      clampQuantity(Number(value) || 0, availableStock)
+    // Khi nhập trực tiếp, cho phép chuỗi rỗng để user xoá hết số (để gõ số mới).
+    // Không xoá item khỏi giỏ ngay để tránh mất UI input.
+    updateCartItem(
+      productId,
+      () => {
+        if (value === "") return "";
+        return clampQuantity(Number(value) || 0, availableStock);
+      },
+      false
     );
   };
 
   const adjustQuantity = (productId, delta, availableStock) => {
     // Khi bấm +/- thì cộng dồn rồi kẹp lại theo tồn kho.
-    updateCartItem(productId, (current) =>
-      clampQuantity(current + delta, availableStock)
+    // Nếu về 0 thì xoá khỏi giỏ (chuyển về nút Thêm).
+    updateCartItem(
+      productId,
+      (current) => clampQuantity(Number(current || 0) + delta, availableStock),
+      true
     );
   };
 

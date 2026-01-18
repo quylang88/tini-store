@@ -57,7 +57,13 @@ const OrderCreateProductList = ({
 
       <AnimatePresence mode="popLayout">
         {filteredProducts.map((p) => {
-          const qty = cart[p.id] || 0;
+          // Lấy trực tiếp từ cart để phân biệt undefined (chưa thêm) và 0/"" (đã thêm nhưng đang sửa)
+          const rawQty = cart[p.id];
+          const isAdded = rawQty !== undefined;
+          // Hiển thị value cho input: nếu undefined thì fallback về 0 (nhưng UI sẽ dùng isAdded để ẩn hiện)
+          // Nếu rawQty là "" thì giữ nguyên để input rỗng.
+          const displayQty = isAdded ? rawQty : 0;
+
           const warehouseStock =
             selectedWarehouse === "vinhPhuc"
               ? p.stockByWarehouse?.vinhPhuc ?? 0
@@ -118,14 +124,23 @@ const OrderCreateProductList = ({
                   >
                     {p.category}
                   </span>
-                  <div className="text-amber-600 text-[10px]">
+                  <div
+                    className="text-amber-600 text-[10px] cursor-pointer active:scale-95 transition-transform origin-right"
+                    onClick={() =>
+                      handleQuantityChange(
+                        p.id,
+                        availableStock,
+                        availableStock
+                      )
+                    }
+                  >
                     Kho {getWarehouseLabel(selectedWarehouse)}: {availableStock}
                   </div>
                 </div>
               </div>
 
               {/* Bộ điều khiển số lượng - giữ nguyên ở bên phải cùng */}
-              {qty > 0 ? (
+              {isAdded ? (
                 <div className="flex items-center bg-rose-50 rounded-lg h-9 border border-rose-100 overflow-hidden shadow-sm shrink-0">
                   <button
                     onClick={() => adjustQuantity(p.id, -1, availableStock)}
@@ -136,7 +151,7 @@ const OrderCreateProductList = ({
                   <input
                     type="number"
                     className="w-12 h-full text-center bg-transparent border-x border-rose-100 outline-none text-rose-900 font-bold text-sm m-0 p-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                    value={qty}
+                    value={displayQty}
                     onChange={(e) =>
                       handleQuantityChange(p.id, e.target.value, availableStock)
                     }
@@ -144,7 +159,7 @@ const OrderCreateProductList = ({
                   />
                   <button
                     onClick={() => adjustQuantity(p.id, 1, availableStock)}
-                    disabled={qty >= availableStock}
+                    disabled={displayQty >= availableStock}
                     className="w-9 h-full flex items-center justify-center text-rose-600 active:bg-rose-200 disabled:opacity-30 transition"
                   >
                     <Plus size={16} strokeWidth={2.5} />
