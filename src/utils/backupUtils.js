@@ -4,7 +4,9 @@ export const exportDataToJSON = (products, orders, settings) => {
     orders,
     settings,
   });
-  const blob = new Blob([data], { type: "application/json" });
+  // Sử dụng application/octet-stream để ép buộc trình duyệt (đặc biệt là iOS)
+  // hiểu đây là file cần tải xuống thay vì mở preview text/json.
+  const blob = new Blob([data], { type: "application/octet-stream" });
   const url = URL.createObjectURL(blob);
 
   const link = document.createElement("a");
