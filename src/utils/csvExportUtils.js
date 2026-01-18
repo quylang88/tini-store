@@ -25,13 +25,13 @@ export const generateOrderCSVContent = (order) => {
     item.name,
     item.quantity,
     // Use price or sellingPrice (fallback to 0)
-    formatNumber(item.price !== undefined ? item.price : item.sellingPrice || 0)
+    `${formatNumber(item.price !== undefined ? item.price : item.sellingPrice || 0)}đ`
   ]);
 
   const csvContent = [
     header.join(","),
     ...rows.map(row => row.map(escapeCSVValue).join(",")),
-    `,,,${escapeCSVValue(`Tổng đơn: ${formatNumber(order.total || 0)}`)}`
+    `,,,${escapeCSVValue(`Tổng đơn: ${formatNumber(order.total || 0)}đ`)}`
   ].join("\n");
 
   return csvContent;
