@@ -2,6 +2,7 @@ import { useState } from "react";
 import { formatNumber } from "../utils/helpers";
 import { normalizePurchaseLots } from "../utils/purchaseUtils";
 import { exportDataToJSON, parseBackupFile } from "../utils/backupUtils";
+import { requestNotificationPermission } from "../utils/notificationUtils";
 
 const useSettingsLogic = ({
   products,
@@ -29,11 +30,21 @@ const useSettingsLogic = ({
   // Thay đổi tần suất sao lưu tự động
   const handleAutoBackupChange = (value) => {
     if (value === 0) {
-      // Khi tắt tự động, hiện thông báo
-      setInfoModal({
-        title: "Đã tắt tự động sao lưu",
-        message:
-          "Bạn sẽ nhận được nhắc nhở sao lưu thủ công mỗi 7 ngày để đảm bảo an toàn dữ liệu.",
+      // Khi tắt tự động, xin quyền thông báo để nhắc nhở
+      requestNotificationPermission().then((permission) => {
+        if (permission === "granted") {
+          setInfoModal({
+            title: "Đã tắt tự động sao lưu",
+            message: "Hệ thống sẽ gửi thông báo nhắc bạn sao lưu mỗi 7 ngày.",
+          });
+        } else {
+          // Nếu từ chối hoặc không hỗ trợ, vẫn hiện thông báo fallback
+          setInfoModal({
+            title: "Đã tắt tự động sao lưu",
+            message:
+              "Bạn sẽ nhận được nhắc nhở sao lưu thủ công mỗi 7 ngày để đảm bảo an toàn dữ liệu.",
+          });
+        }
       });
     }
     saveSettings({ ...settings, autoBackupInterval: value });
@@ -95,7 +106,7 @@ const useSettingsLogic = ({
     try {
       // API tỷ giá JPY -> VND
       const res = await fetch(
-        "https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/jpy.json"
+        "https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/jpy.json",
       );
       const data = await res.json();
       const rate = data.jpy.vnd;
@@ -152,7 +163,7 @@ const useSettingsLogic = ({
         tone: "danger",
         onConfirm: () => {
           setProducts(
-            data.products.map((product) => normalizePurchaseLots(product))
+            data.products.map((product) => normalizePurchaseLots(product)),
           );
           setOrders(data.orders);
           if (data.settings) {

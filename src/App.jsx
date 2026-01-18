@@ -18,6 +18,7 @@ import SplashScreen from "./screens/login/SplashScreen";
 import OfflineAlert from "./screens/login/OfflineAlert";
 import useImagePreloader from "./hooks/useImagePreloader";
 import { exportDataToJSON } from "./utils/backupUtils";
+import { sendNotification } from "./utils/notificationUtils";
 
 // Định nghĩa thứ tự tab để xác định hướng chuyển cảnh
 const TAB_ORDER = {
@@ -122,7 +123,16 @@ const App = () => {
       // Case B: Không bật tự động, nhưng quá hạn mặc định (7 ngày) -> Hiện nhắc nhở
       const isAutoOff = !settings.autoBackupInterval;
       if (isAutoOff && daysSinceBackup > 7) {
-        setBackupReminderOpen(true);
+        // Kiểm tra permission notification
+        if ("Notification" in window && Notification.permission === "granted") {
+          sendNotification("Nhắc nhở sao lưu", {
+            body: "Bạn chưa sao lưu dữ liệu quá 7 ngày. Hãy mở app và sao lưu ngay để tránh mất dữ liệu!",
+            requireInteraction: true,
+          });
+        } else {
+          // Fallback: Modal cũ nếu không có quyền thông báo
+          setBackupReminderOpen(true);
+        }
         sessionStorage.setItem("hasCheckedBackup", "true");
       }
     };
