@@ -16,13 +16,13 @@ const useOrderCatalog = ({
 }) => {
   const productMap = useMemo(
     () => new Map(products.map((product) => [product.id, product])),
-    [products]
+    [products],
   );
 
   const orderItemsQuantityMap = useMemo(() => {
     if (!orderBeingEdited?.items) return new Map();
     return new Map(
-      orderBeingEdited.items.map((item) => [item.productId, item.quantity])
+      orderBeingEdited.items.map((item) => [item.productId, item.quantity]),
     );
   }, [orderBeingEdited]);
 
@@ -47,7 +47,7 @@ const useOrderCatalog = ({
       const previousQty = orderItemsQuantityMap.get(product.id) || 0;
       return baseStock + previousQty;
     },
-    [orderBeingEdited, orderItemsQuantityMap]
+    [orderBeingEdited, orderItemsQuantityMap],
   );
 
   const filteredProducts = useMemo(
@@ -61,7 +61,13 @@ const useOrderCatalog = ({
         const availableStock = getAvailableStock(product, selectedWarehouse);
         return matchSearch && matchCategory && availableStock > 0;
       }),
-    [products, searchTerm, activeCategory, selectedWarehouse, getAvailableStock]
+    [
+      products,
+      searchTerm,
+      activeCategory,
+      selectedWarehouse,
+      getAvailableStock,
+    ],
   );
 
   const reviewItems = useMemo(
@@ -87,14 +93,14 @@ const useOrderCatalog = ({
             cost: getLatestUnitCost(product),
           };
         })
-        .filter(Boolean),
-    [cart, productMap, priceOverrides]
+        .filter((item) => item && item.quantity > 0), // Lọc bỏ item null hoặc số lượng <= 0 (bao gồm cả chuỗi rỗng)
+    [cart, productMap, priceOverrides],
   );
 
   const totalAmount = useMemo(
     () =>
       reviewItems.reduce((sum, item) => sum + item.price * item.quantity, 0),
-    [reviewItems]
+    [reviewItems],
   );
 
   return {
