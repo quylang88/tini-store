@@ -1,4 +1,7 @@
 // Service Worker for PWA
+/* eslint-env serviceworker */
+/* global self */
+
 const CACHE_NAME = 'tiny-shop-cache-v1';
 const ASSETS_TO_CACHE = [
   '/',
@@ -11,7 +14,7 @@ const ASSETS_TO_CACHE = [
 self.addEventListener("install", (event) => {
   // Pre-cache critical assets
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
+    self.caches.open(CACHE_NAME).then((cache) => {
       return cache.addAll(ASSETS_TO_CACHE);
     })
   );
@@ -19,7 +22,7 @@ self.addEventListener("install", (event) => {
 });
 
 self.addEventListener("activate", (event) => {
-  event.waitUntil(clients.claim());
+  event.waitUntil(self.clients.claim());
 });
 
 self.addEventListener("fetch", () => {
@@ -57,7 +60,7 @@ self.addEventListener('notificationclick', function(event) {
 
   // Focus existing window or open new one
   event.waitUntil(
-    clients.matchAll({ type: 'window', includeUncontrolled: true }).then(function(clientList) {
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(function(clientList) {
       // If a window is already open, focus it
       for (let i = 0; i < clientList.length; i++) {
         const client = clientList[i];
@@ -66,8 +69,8 @@ self.addEventListener('notificationclick', function(event) {
         }
       }
       // Otherwise open a new window
-      if (clients.openWindow) {
-        return clients.openWindow('/');
+      if (self.clients.openWindow) {
+        return self.clients.openWindow('/');
       }
     })
   );
