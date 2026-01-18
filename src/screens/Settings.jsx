@@ -1,10 +1,6 @@
-import React, { useState, useEffect } from "react";
-import { Download, Upload, Plus, RefreshCw, X, LogOut, Bell } from "lucide-react";
+import React from "react";
+import { Download, Upload, Plus, RefreshCw, X, LogOut } from "lucide-react";
 import { formatInputNumber, sanitizeNumberInput } from "../utils/helpers";
-import {
-  checkNotificationSupport,
-  requestNotificationPermission,
-} from "../utils/notificationUtils";
 import ConfirmModalHost from "../components/modals/ConfirmModalHost";
 import ErrorModal from "../components/modals/ErrorModal";
 import InfoModal from "../components/modals/InfoModal";
@@ -52,32 +48,6 @@ const Settings = ({
   const isAutoBackupOn = settings.autoBackupInterval > 0;
 
   const [isScrolled, setIsScrolled] = React.useState(false);
-  const [notifPermission, setNotifPermission] = useState("default");
-
-  useEffect(() => {
-    if (checkNotificationSupport()) {
-      setNotifPermission(Notification.permission);
-    } else {
-      setNotifPermission("unsupported");
-    }
-  }, []);
-
-  const handleRequestPermission = async () => {
-    const result = await requestNotificationPermission();
-    setNotifPermission(result);
-    if (result === "granted") {
-      setInfoModal({
-        title: "Đã bật thông báo",
-        message: "Bạn sẽ nhận được nhắc nhở sao lưu khi quên backup.",
-      });
-    } else if (result === "denied") {
-      setNoticeModal({
-        title: "Đã từ chối",
-        message:
-          "Bạn đã chặn thông báo. Vui lòng bật lại trong cài đặt của điện thoại.",
-      });
-    }
-  };
 
   const handleScroll = (e) => {
     const currentScrollTop = e.target.scrollTop;
@@ -232,47 +202,6 @@ const Settings = ({
                 </motion.div>
               )}
             </AnimatePresence>
-          </div>
-
-          {/* Tùy chọn Nhắc nhở thông báo (Web App/PWA) */}
-          <div className="bg-white p-3 rounded-lg border border-gray-200 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div
-                className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                  notifPermission === "granted" ? "bg-teal-100" : "bg-gray-100"
-                }`}
-              >
-                <Bell
-                  size={16}
-                  className={
-                    notifPermission === "granted"
-                      ? "text-teal-600"
-                      : "text-gray-500"
-                  }
-                />
-              </div>
-              <div>
-                <span className="text-sm font-medium text-gray-900 block">
-                  Nhắc nhở thông báo
-                </span>
-                <span className="text-xs text-gray-500 block">
-                  {notifPermission === "granted"
-                    ? "Đã bật nhắc nhở"
-                    : notifPermission === "unsupported"
-                    ? "Không hỗ trợ"
-                    : "Chạm để bật"}
-                </span>
-              </div>
-            </div>
-            {notifPermission !== "granted" &&
-              notifPermission !== "unsupported" && (
-                <button
-                  onClick={handleRequestPermission}
-                  className="text-rose-600 text-sm font-bold active:opacity-70"
-                >
-                  Bật
-                </button>
-              )}
           </div>
 
           <div className="space-y-2 pt-2">
