@@ -19,7 +19,8 @@ const useDailyGreeting = (isAuthenticated) => {
     const scheduleNotificationTrigger = async () => {
       // Experimental: Notification Triggers API (Chrome/Android)
       // Allows scheduling a local notification even if the app is closed.
-      if ('serviceWorker' in navigator && 'showTrigger' in Notification.prototype) {
+      // We check if TimestampTrigger is defined on window to avoid ReferenceError
+      if ('serviceWorker' in navigator && 'showTrigger' in Notification.prototype && typeof TimestampTrigger !== 'undefined') {
         const registration = await navigator.serviceWorker.ready;
 
         // Calculate next 8:00 AM
@@ -38,7 +39,8 @@ const useDailyGreeting = (isAuthenticated) => {
             body: "Chúc bạn một ngày tốt lành! Đừng quên kiểm tra kho hàng và đơn hàng hôm nay nhé! 😄",
             icon: "/tiny-shop-icon-iphone.png",
             tag: "daily-greeting-scheduled",
-            showTrigger: new TimestampTrigger(timestamp) // This is the magic
+            // eslint-disable-next-line no-undef
+            showTrigger: new TimestampTrigger(timestamp)
           });
           console.log("Scheduled local notification for:", nextGreeting);
         } catch (e) {
