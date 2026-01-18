@@ -16,11 +16,11 @@ const TabBar = ({ activeTab, setActiveTab, isVisible = true }) => {
 
   return (
     <div
-      className={`fixed bottom-0 left-0 right-0 bg-amber-50/90 border-t border-amber-200 pb-safe-area pt-1.5 z-50 backdrop-blur transition-transform duration-300 ease-in-out ${
+      className={`fixed bottom-0 left-0 right-0 bg-amber-50/90 border-t border-amber-200 pt-1 pb-[calc(env(safe-area-inset-bottom)+4px)] z-50 backdrop-blur transition-transform duration-300 ease-in-out ${
         active ? "translate-y-0" : "translate-y-full"
       }`}
     >
-      <div className="flex justify-around items-center h-[52px]">
+      <div className="flex justify-around items-center h-12">
         {tabs.map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
@@ -28,7 +28,7 @@ const TabBar = ({ activeTab, setActiveTab, isVisible = true }) => {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex flex-col items-center justify-center w-full h-full space-y-1 ${
+              className={`flex flex-col items-center justify-center w-full h-full gap-0.5 ${
                 isActive ? "text-rose-600" : "text-amber-500"
               }`}
             >
