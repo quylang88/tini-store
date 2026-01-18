@@ -17,6 +17,8 @@ export const exportDataToJSON = async (products, orders, settings) => {
   const link = document.createElement("a");
   link.href = url;
   link.download = fileName;
+  // Fix: iOS PWA mở preview thay vì tải về nếu không có target="_blank"
+  link.target = "_blank";
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
