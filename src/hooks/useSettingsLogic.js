@@ -50,6 +50,17 @@ const useSettingsLogic = ({
     saveSettings({ ...settings, autoBackupInterval: value });
   };
 
+  // Hàm chuẩn hóa chuỗi để so sánh (bỏ dấu, chuyển thường)
+  const normalizeString = (str) => {
+    return str
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/đ/g, "d")
+      .replace(/Đ/g, "D")
+      .toLowerCase()
+      .trim();
+  };
+
   // Thêm danh mục mới
   const handleAddCategory = () => {
     const trimmedCategory = newCategory.trim();
@@ -61,17 +72,27 @@ const useSettingsLogic = ({
       });
       return;
     }
-    if (trimmedCategory && !settings.categories.includes(trimmedCategory)) {
+
+    // Chuẩn hóa tên mới
+    const normalizedNew = normalizeString(trimmedCategory);
+
+    // Kiểm tra trùng lặp (không phân biệt hoa thường, dấu)
+    const isDuplicate = settings.categories.some(
+      (cat) => normalizeString(cat) === normalizedNew,
+    );
+
+    if (!isDuplicate) {
       saveSettings({
         ...settings,
         categories: [...settings.categories, trimmedCategory],
       });
       setNewCategory("");
-    } else if (settings.categories.includes(trimmedCategory)) {
+    } else {
       // Thông báo khi danh mục đã tồn tại để tránh thêm trùng.
       setNoticeModal({
         title: "Danh mục đã tồn tại",
-        message: "Danh mục này đã có trong danh sách. Hãy chọn tên khác nhé.",
+        message:
+          "Danh mục này đã có trong danh sách (trùng tên hoặc khác dấu). Hãy kiểm tra lại nhé.",
       });
     }
   };
