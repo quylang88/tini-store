@@ -12,12 +12,14 @@ import { formatNumber } from "../utils/helpers";
 import useDashboardLogic from "../hooks/useDashboardLogic";
 import MetricCard from "../components/stats/MetricCard";
 import TopSellingSection from "../components/stats/TopSellingSection";
-import TopListModal from "./dashboard/TopListModal";
-import OutOfStockModal from "./dashboard/OutOfStockModal";
-import InventoryWarningModal from "./dashboard/InventoryWarningModal";
 import FloatingActionButton from "../components/common/FloatingActionButton";
 import AppHeader from "../components/common/AppHeader";
 import StatBlock from "../components/dashboard/StatBlock";
+import {
+  TopListModal,
+  OutOfStockModal,
+  InventoryWarningModal,
+} from "./dashboard/DashboardModals";
 
 const Dashboard = ({ products, orders, onOpenDetail }) => {
   const {

@@ -6,7 +6,7 @@ import useDashboardLogic from "../../hooks/useDashboardLogic";
 import { getLatestUnitCost } from "../../utils/purchaseUtils";
 import MetricCard from "../../components/stats/MetricCard";
 import TopSellingSection from "../../components/stats/TopSellingSection";
-import TopListModal from "./TopListModal";
+import { TopListModal } from "./DashboardModals";
 import DateRangeFilter from "../../components/stats/DateRangeFilter";
 
 const StatsDetail = ({ products, orders, onBack }) => {
