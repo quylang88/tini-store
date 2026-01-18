@@ -46,6 +46,10 @@ const useSettingsLogic = ({
           });
         }
       });
+    } else {
+      // Khi bật tự động, xoá cờ hasCheckedBackup để hệ thống tự động kiểm tra và nhắc nhở ngay nếu cần
+      // Điều này giải quyết vấn đề: User bật toggle lên nhưng app không phản ứng ngay do đã check từ trước
+      sessionStorage.removeItem("hasCheckedBackup");
     }
     saveSettings({ ...settings, autoBackupInterval: value });
   };
