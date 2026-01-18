@@ -116,7 +116,9 @@ const App = () => {
         settings.autoBackupInterval > 0 &&
         daysSinceBackup >= settings.autoBackupInterval
       ) {
-        handleBackupNow();
+        // Thay đổi: Không tự động download (vì sẽ bị chặn trên iOS/Mobile nếu không có user gesture)
+        // Thay vào đó, hiện modal nhắc nhở để user bấm "Sao lưu ngay" -> tạo gesture hợp lệ cho navigator.share
+        setBackupReminderOpen(true);
         sessionStorage.setItem("hasCheckedBackup", "true");
         return;
       }
