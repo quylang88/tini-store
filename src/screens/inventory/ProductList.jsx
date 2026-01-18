@@ -120,14 +120,12 @@ const ProductList = ({
         })}
 
         {/*
-          Animated Empty State removed to prevent double animation.
-          It still lives inside AnimatePresence to work with popLayout,
-          but with no 'animate' props, it will just appear statically
-          once it mounts (which happens when items are gone).
+          Completely static Empty State.
+          No animation props, no layout prop.
+          Just a keyed motion.div to participate in AnimatePresence (for mounting/unmounting).
         */}
         {products.length === 0 && (
           <motion.div
-            layout
             key="empty-state"
             className="text-center text-gray-400 mt-10 text-sm"
           >
