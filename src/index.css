@@ -39,7 +39,10 @@ input, textarea, [contenteditable] {
 }
 
 /* Utilities */
-.pb-safe-area { padding-bottom: env(safe-area-inset-bottom); }
+.pb-safe-area {
+  padding-bottom: constant(safe-area-inset-bottom); /* iOS 11.0 */
+  padding-bottom: env(safe-area-inset-bottom); /* iOS 11.2+ */
+}
 
 .no-scrollbar::-webkit-scrollbar { display: none; }
 .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }

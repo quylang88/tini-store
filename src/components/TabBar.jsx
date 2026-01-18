@@ -20,7 +20,7 @@ const TabBar = ({ activeTab, setActiveTab, isVisible = true }) => {
         active ? "translate-y-0" : "translate-y-full"
       }`}
     >
-      <div className="flex justify-around items-center h-[50px]">
+      <div className="flex justify-around items-center h-[54px] pb-1">
         {tabs.map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
