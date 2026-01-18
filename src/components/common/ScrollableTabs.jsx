@@ -7,9 +7,9 @@ const ScrollableTabs = ({
   onTabChange,
   layoutIdPrefix = "tabs",
   className = "",
-  activeTextColor = "text-rose-600",
-  inactiveTextColor = "text-rose-400",
-  underlineColor = "bg-rose-500",
+  activeTextColor = "text-rose-700",
+  inactiveTextColor = "text-rose-500",
+  underlineColor = "bg-rose-600",
 }) => {
   const containerRef = useRef(null);
   const activeTabRef = useRef(null);

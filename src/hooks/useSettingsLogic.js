@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { formatNumber } from "../utils/helpers";
+import { formatNumber, normalizeString } from "../utils/helpers";
 import { normalizePurchaseLots } from "../utils/purchaseUtils";
 import { exportDataToJSON, parseBackupFile } from "../utils/backupUtils";
 import { requestNotificationPermission } from "../utils/notificationUtils";
@@ -52,17 +52,6 @@ const useSettingsLogic = ({
       sessionStorage.removeItem("hasCheckedBackup");
     }
     saveSettings({ ...settings, autoBackupInterval: value });
-  };
-
-  // Hàm chuẩn hóa chuỗi để so sánh (bỏ dấu, chuyển thường)
-  const normalizeString = (str) => {
-    return str
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "")
-      .replace(/đ/g, "d")
-      .replace(/Đ/g, "D")
-      .toLowerCase()
-      .trim();
   };
 
   // Thêm danh mục mới

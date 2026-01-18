@@ -46,10 +46,18 @@ const ProductModal = ({
     shippingFeeVnd;
 
   const isEditingLot = Boolean(editingProduct && editingLotId);
+  // Nếu đang editingProduct mà không phải editingLot (edit history item) thì là Add Restock
+  const isAddRestockMode = Boolean(editingProduct && !editingLotId);
+
   // Cache tiêu đề để không bị đổi khi đang chạy animation đóng modal
+  // Nếu editingProduct có mà không phải là Sửa Lần Nhập Hàng (editingLotId null) thì là Thêm lần nhập hàng
   const modalTitle = useModalCache(
-    isEditingLot ? "Sửa Lần Nhập Hàng" : "Thêm Mới",
-    isOpen
+    isEditingLot
+      ? "Sửa Lần Nhập Hàng"
+      : isAddRestockMode
+        ? "Thêm Lần Nhập Hàng"
+        : "Thêm Mới",
+    isOpen,
   );
 
   const handleImageChange = (event) => {
@@ -97,20 +105,25 @@ const ProductModal = ({
               </div>
             )}
           </div>
-          <div className="grid grid-cols-2 gap-3">
-            <label
-              htmlFor="inventory-upload"
-              className="w-full border border-rose-200 rounded-lg py-2 text-xs font-semibold text-rose-700 flex items-center justify-center gap-2 active:border-rose-400 active:text-rose-600 cursor-pointer"
-            >
-              <Upload size={16} /> Tải ảnh
-            </label>
-            <label
-              htmlFor="inventory-camera"
-              className="w-full border border-rose-200 rounded-lg py-2 text-xs font-semibold text-rose-700 flex items-center justify-center gap-2 active:border-rose-400 active:text-rose-600 cursor-pointer"
-            >
-              <Camera size={16} /> Chụp ảnh
-            </label>
-          </div>
+
+          {/* Ẩn nút chụp ảnh khi đang ở chế độ thêm hàng cho sản phẩm cũ (không cho sửa ảnh) */}
+          {!isAddRestockMode && (
+            <div className="grid grid-cols-2 gap-3">
+              <label
+                htmlFor="inventory-upload"
+                className="w-full border border-rose-200 rounded-lg py-2 text-xs font-semibold text-rose-700 flex items-center justify-center gap-2 active:border-rose-400 active:text-rose-600 cursor-pointer"
+              >
+                <Upload size={16} /> Tải ảnh
+              </label>
+              <label
+                htmlFor="inventory-camera"
+                className="w-full border border-rose-200 rounded-lg py-2 text-xs font-semibold text-rose-700 flex items-center justify-center gap-2 active:border-rose-400 active:text-rose-600 cursor-pointer"
+              >
+                <Camera size={16} /> Chụp ảnh
+              </label>
+            </div>
+          )}
+
           <input
             type="file"
             id="inventory-upload"
@@ -118,6 +131,7 @@ const ProductModal = ({
             onChange={handleImageChange}
             className="hidden"
             accept="image/*"
+            disabled={isAddRestockMode}
           />
           <input
             type="file"
@@ -127,6 +141,7 @@ const ProductModal = ({
             className="hidden"
             accept="image/*"
             capture="environment"
+            disabled={isAddRestockMode}
           />
         </div>
 
@@ -148,6 +163,7 @@ const ProductModal = ({
                 setFormData({ ...formData, barcode: e.target.value })
               }
               placeholder="Quét/Nhập..."
+              disabled={isAddRestockMode}
             />
           </div>
           <div className="flex flex-col gap-1">
@@ -155,11 +171,12 @@ const ProductModal = ({
               Danh mục
             </label>
             <select
-              className="w-full border-b border-gray-200 py-2 focus:border-rose-400 outline-none text-rose-900 text-sm bg-transparent"
+              className="w-full border-b border-gray-200 py-2 focus:border-rose-400 outline-none text-rose-900 text-sm bg-transparent disabled:opacity-60"
               value={formData.category}
               onChange={(e) =>
                 setFormData({ ...formData, category: e.target.value })
               }
+              disabled={isAddRestockMode}
             >
               {categories.map((cat) => (
                 <option key={cat} value={cat}>
@@ -176,10 +193,11 @@ const ProductModal = ({
             Tên sản phẩm
           </label>
           <input
-            className="w-full border-b border-gray-200 py-2 focus:border-rose-400 outline-none text-rose-900 font-medium"
+            className="w-full border-b border-gray-200 py-2 focus:border-rose-400 outline-none text-rose-900 font-medium disabled:text-gray-500"
             value={formData.name}
             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
             placeholder="Nhập tên..."
+            disabled={isAddRestockMode}
           />
           {!editingProduct && nameSuggestions?.length > 0 && (
             <div className="mt-2 bg-white border border-rose-100 rounded-lg shadow-sm overflow-hidden">

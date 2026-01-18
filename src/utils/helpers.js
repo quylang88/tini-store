@@ -45,7 +45,7 @@ export const compressImage = async (file) => {
     } catch (error) {
       console.warn(
         "Image compression optimization failed, falling back to legacy method:",
-        error
+        error,
       );
       // Fall through to legacy method
     }
@@ -105,4 +105,16 @@ export const sanitizeDecimalInput = (value) => {
     return sanitized;
   }
   return `${whole}.${rest.join("")}`;
+};
+
+// Hàm chuẩn hóa chuỗi để so sánh (bỏ dấu, chuyển thường)
+export const normalizeString = (str) => {
+  if (!str) return "";
+  return str
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/đ/g, "d")
+    .replace(/Đ/g, "D")
+    .toLowerCase()
+    .trim();
 };

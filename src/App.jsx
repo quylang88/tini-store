@@ -100,16 +100,9 @@ const App = () => {
 
   // --- 3b. KIỂM TRA SAO LƯU (AUTO REMINDER / DOWNLOAD) ---
   useEffect(() => {
-    if (!isAuthenticated || products.length === 0) return;
+    if (!isAuthenticated) return;
 
     const checkBackupStatus = () => {
-      console.log("Checking backup status:", {
-        hasChecked: sessionStorage.getItem("hasCheckedBackup"),
-        lastBackupDate: settings.lastBackupDate,
-        productsLength: products.length,
-        autoBackupInterval: settings.autoBackupInterval,
-      });
-
       if (sessionStorage.getItem("hasCheckedBackup")) return;
 
       const lastBackup = settings.lastBackupDate
@@ -117,8 +110,6 @@ const App = () => {
         : 0;
       const now = Date.now();
       const daysSinceBackup = (now - lastBackup) / (1000 * 60 * 60 * 24);
-
-      console.log("Backup Math:", { lastBackup, now, daysSinceBackup });
 
       // Case A: Tự động sao lưu được bật và đã đến hạn
       if (
@@ -133,8 +124,11 @@ const App = () => {
       }
 
       // Case B: Không bật tự động, nhưng quá hạn mặc định (7 ngày) -> Hiện nhắc nhở
+      // Chỉ nhắc nhở nếu có sản phẩm (tránh làm phiền người dùng mới cài app chưa có dữ liệu)
       const isAutoOff = !settings.autoBackupInterval;
-      if (isAutoOff && daysSinceBackup > 7) {
+      const hasData = products.length > 0;
+
+      if (isAutoOff && daysSinceBackup > 7 && hasData) {
         // Kiểm tra permission notification
         if ("Notification" in window && Notification.permission === "granted") {
           sendNotification("Nhắc nhở sao lưu", {
