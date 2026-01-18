@@ -107,7 +107,7 @@ const ProductModal = ({
           </div>
 
           {/* Ẩn nút chụp ảnh khi đang ở chế độ thêm hàng cho sản phẩm cũ (không cho sửa ảnh) */}
-          {!isAddRestockMode && (
+          {!editingProduct && (
             <div className="grid grid-cols-2 gap-3">
               <label
                 htmlFor="inventory-upload"
@@ -131,7 +131,7 @@ const ProductModal = ({
             onChange={handleImageChange}
             className="hidden"
             accept="image/*"
-            disabled={isAddRestockMode}
+            disabled={Boolean(editingProduct)}
           />
           <input
             type="file"
@@ -141,7 +141,7 @@ const ProductModal = ({
             className="hidden"
             accept="image/*"
             capture="environment"
-            disabled={isAddRestockMode}
+            disabled={Boolean(editingProduct)}
           />
         </div>
 
@@ -163,7 +163,7 @@ const ProductModal = ({
                 setFormData({ ...formData, barcode: e.target.value })
               }
               placeholder="Quét/Nhập..."
-              disabled={isAddRestockMode}
+              disabled={Boolean(editingProduct)}
             />
           </div>
           <div className="flex flex-col gap-1">
@@ -176,7 +176,7 @@ const ProductModal = ({
               onChange={(e) =>
                 setFormData({ ...formData, category: e.target.value })
               }
-              disabled={isAddRestockMode}
+              disabled={Boolean(editingProduct)}
             >
               {categories.map((cat) => (
                 <option key={cat} value={cat}>
@@ -197,7 +197,7 @@ const ProductModal = ({
             value={formData.name}
             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
             placeholder="Nhập tên..."
-            disabled={isAddRestockMode}
+            disabled={Boolean(editingProduct)}
           />
           {!editingProduct && nameSuggestions?.length > 0 && (
             <div className="mt-2 bg-white border border-rose-100 rounded-lg shadow-sm overflow-hidden">
@@ -466,10 +466,11 @@ const ProductModal = ({
             </label>
             <input
               inputMode="numeric"
-              className="w-full border-b border-gray-200 py-2 focus:border-rose-400 outline-none text-rose-900 font-bold text-lg"
+              className="w-full border-b border-gray-200 py-2 focus:border-rose-400 outline-none text-rose-900 font-bold text-lg disabled:text-gray-500"
               value={formatInputNumber(formData.price)}
               onChange={onMoneyChange("price")}
               placeholder="0"
+              disabled={Boolean(editingProduct)}
             />
           </div>
           <div className="flex flex-col gap-1 min-w-0">

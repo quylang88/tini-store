@@ -7,6 +7,7 @@ import ProductFilterSection from "../components/common/ProductFilterSection";
 import ProductList from "./inventory/ProductList";
 import ProductDetailModal from "./inventory/ProductDetailModal";
 import ProductModal from "./inventory/ProductModal";
+import ProductBasicInfoModal from "./inventory/ProductBasicInfoModal";
 import ConfirmModalHost from "../components/modals/ConfirmModalHost";
 import ErrorModal from "../components/modals/ErrorModal";
 import FloatingActionButton from "../components/common/FloatingActionButton";
@@ -23,6 +24,7 @@ const Inventory = ({
   setTabBarVisible,
 }) => {
   const [detailProduct, setDetailProduct] = useState(null);
+  const [editingBasicInfoProduct, setEditingBasicInfoProduct] = useState(null);
 
   const { isSearchVisible, isAddButtonVisible, isScrolled, handleScroll } =
     useScrollHandling({
@@ -122,6 +124,7 @@ const Inventory = ({
             onOpenDetail={setDetailProduct}
             activeCategory={activeCategory}
             activeWarehouse={warehouseFilter}
+            onEditBasicInfo={setEditingBasicInfoProduct}
           />
         </div>
       </div>
@@ -147,6 +150,24 @@ const Inventory = ({
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Tách form modal và bổ sung nút chụp ảnh từ camera */}
+      {/* Modal sửa thông tin cơ bản */}
+      <ProductBasicInfoModal
+        isOpen={Boolean(editingBasicInfoProduct)}
+        product={editingBasicInfoProduct}
+        categories={settings.categories}
+        onClose={() => setEditingBasicInfoProduct(null)}
+        onShowScanner={() => setShowScanner(true)}
+        onSave={(updatedProduct) => {
+          const newProducts = products.map((p) =>
+            p.id === updatedProduct.id ? updatedProduct : p,
+          );
+          setProducts(newProducts);
+          // Cập nhật lại list đã filter nếu cần thiết (handle bởi useInventoryLogic qua prop products)
+          setEditingBasicInfoProduct(null);
+        }}
+      />
 
       {/* Tách form modal và bổ sung nút chụp ảnh từ camera */}
       <ProductModal

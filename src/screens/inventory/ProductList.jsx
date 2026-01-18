@@ -1,5 +1,5 @@
 import React from "react";
-import { Image as ImageIcon, Trash2 } from "lucide-react";
+import { Image as ImageIcon, Trash2, Edit } from "lucide-react";
 import { formatNumber } from "../../utils/helpers";
 import { getLatestCost, getLatestUnitCost } from "../../utils/purchaseUtils";
 import { normalizeWarehouseStock } from "../../utils/warehouseUtils";
@@ -11,6 +11,7 @@ const ProductList = ({
   onOpenDetail,
   activeCategory,
   activeWarehouse,
+  onEditBasicInfo,
 }) => {
   return (
     <div className="flex-1 overflow-y-auto p-3 flex flex-col gap-3 pb-24">
@@ -107,16 +108,28 @@ const ProductList = ({
                   </div>
                 </div>
               </div>
-              <button
-                onClick={(event) => {
-                  event.stopPropagation();
-                  onDelete(product.id);
-                }}
-                className="w-8 h-8 rounded-full bg-rose-50 text-rose-600 active:bg-rose-100 flex items-center justify-center shadow-sm self-center border border-rose-300"
-                aria-label={`Xoá ${product.name}`}
-              >
-                <Trash2 size={18} />
-              </button>
+              <div className="flex flex-col gap-2 self-center">
+                <button
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    onDelete(product.id);
+                  }}
+                  className="w-8 h-8 rounded-full bg-rose-50 text-rose-600 active:bg-rose-100 flex items-center justify-center shadow-sm border border-rose-300"
+                  aria-label={`Xoá ${product.name}`}
+                >
+                  <Trash2 size={18} />
+                </button>
+                <button
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    onEditBasicInfo(product);
+                  }}
+                  className="w-8 h-8 rounded-full bg-blue-50 text-blue-600 active:bg-blue-100 flex items-center justify-center shadow-sm border border-blue-200"
+                  aria-label={`Sửa ${product.name}`}
+                >
+                  <Edit size={16} />
+                </button>
+              </div>
             </motion.div>
           );
         })}
