@@ -1,6 +1,6 @@
 import React from "react";
 import ModalShell from "./ModalShell";
-import Button from "../common/Button";
+import Button from "../button/Button";
 
 // ConfirmModal: Modal xác nhận trung tâm (Center Modal).
 // Không có nút X, chỉ có title, message và 2 nút ở dưới.

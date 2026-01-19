@@ -4,7 +4,7 @@ import { formatNumber } from "../../utils/helpers";
 import { getWarehouseLabel } from "../../utils/warehouseUtils";
 import { getOrderDisplayName } from "../../utils/orderUtils";
 import useModalCache from "../../hooks/useModalCache";
-import Button from "../../components/common/Button";
+import Button from "../../components/button/Button";
 import { exportOrderToHTML } from "../../utils/fileUtils";
 import LoadingOverlay from "../../components/common/LoadingOverlay";
 

@@ -4,7 +4,7 @@ import { getLatestCost, getLatestLot } from "../../utils/purchaseUtils";
 import { getWarehouseLabel } from "../../utils/warehouseUtils";
 import SheetModal from "../../components/modals/SheetModal";
 import useModalCache from "../../hooks/useModalCache";
-import Button from "../../components/common/Button";
+import Button from "../../components/button/Button";
 
 // ProductDetailModal: Hiển thị lịch sử nhập hàng (View Only)
 const ProductDetailModal = ({ product, onClose, onEditLot }) => {
