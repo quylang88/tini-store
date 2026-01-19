@@ -5,7 +5,7 @@ import { getWarehouseLabel } from "../../utils/warehouseUtils";
 import { getOrderDisplayName } from "../../utils/orderUtils";
 import useModalCache from "../../hooks/useModalCache";
 import Button from "../../components/common/Button";
-import { exportOrderToCSV } from "../../utils/fileUtils";
+import { exportOrderToHTML } from "../../utils/fileUtils";
 
 // OrderDetailModal: Xem chi tiết đơn hàng (View Only) -> showCloseIcon={false}
 const OrderDetailModal = ({ order, onClose, getOrderStatusInfo }) => {
@@ -41,10 +41,10 @@ const OrderDetailModal = ({ order, onClose, getOrderStatusInfo }) => {
       <Button
         variant="primary"
         size="sm"
-        onClick={() => exportOrderToCSV(cachedOrder)}
+        onClick={() => exportOrderToHTML(cachedOrder)}
         className="flex-1"
       >
-        Xuất CSV
+        Xuất File
       </Button>
     </div>
   );
