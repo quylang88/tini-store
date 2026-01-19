@@ -10,7 +10,7 @@ import ProductModal from "./inventory/ProductModal";
 import ProductBasicInfoModal from "./inventory/ProductBasicInfoModal";
 import ConfirmModalHost from "../components/modals/ConfirmModalHost";
 import ErrorModal from "../components/modals/ErrorModal";
-import FloatingActionButton from "../components/common/FloatingActionButton";
+import FloatingActionButton from "../components/button/FloatingActionButton";
 import useInventoryLogic from "../hooks/useInventoryLogic";
 import useScrollHandling from "../hooks/useScrollHandling";
 import AppHeader from "../components/common/AppHeader";

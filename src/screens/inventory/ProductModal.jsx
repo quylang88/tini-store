@@ -2,7 +2,7 @@ import React from "react";
 import { formatInputNumber, formatNumber } from "../../utils/helpers";
 import { getWarehouseLabel } from "../../utils/warehouseUtils";
 import SheetModal from "../../components/modals/SheetModal";
-import Button from "../../components/common/Button";
+import Button from "../../components/button/Button";
 import useModalCache from "../../hooks/useModalCache";
 import ProductIdentityForm from "./ProductIdentityForm";
 
