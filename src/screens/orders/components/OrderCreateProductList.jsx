@@ -5,6 +5,7 @@ import { formatInputNumber } from "../../../utils/helpers";
 import { getWarehouseLabel } from "../../../utils/warehouseUtils";
 import ProductFilterSection from "../../../components/common/ProductFilterSection";
 import useLongPress from "../../../hooks/useLongPress";
+import ExpandableProductName from "../../../components/common/ExpandableProductName";
 
 const QuantityStepper = ({ qty, availableStock, adjustQuantity, handleQuantityChange, id }) => {
   // Long press for +
@@ -152,19 +153,21 @@ const OrderCreateProductList = ({
               <div className="flex-1 min-w-0 grid grid-cols-2 gap-2 text-[10px]">
                 {/* Cột 1: Tên + Giá bán */}
                 <div className="space-y-1">
-                  <div className="font-bold text-rose-800 text-sm truncate">
-                    {p.name}
-                  </div>
-                  <div className="flex items-center">
-                    <span className="font-bold text-rose-700 text-sm">
-                      {priceOverrides?.[p.id] !== undefined
-                        ? formatInputNumber(priceOverrides[p.id])
-                        : formatInputNumber(p.price)}
-                    </span>
-                    <span className="text-rose-700 font-bold text-sm ml-0.5">
-                      đ
-                    </span>
-                  </div>
+                  <ExpandableProductName
+                    name={p.name}
+                    className="font-bold text-rose-800 text-sm"
+                  >
+                    <div className="flex items-center">
+                      <span className="font-bold text-rose-700 text-sm">
+                        {priceOverrides?.[p.id] !== undefined
+                          ? formatInputNumber(priceOverrides[p.id])
+                          : formatInputNumber(p.price)}
+                      </span>
+                      <span className="text-rose-700 font-bold text-sm ml-0.5">
+                        đ
+                      </span>
+                    </div>
+                  </ExpandableProductName>
                 </div>
 
                 {/* Cột 2: Danh mục + Kho hàng */}
