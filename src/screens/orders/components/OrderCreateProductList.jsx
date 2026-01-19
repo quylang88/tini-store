@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { Plus, Minus, Search, Image as ImageIcon } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { formatInputNumber } from "../../../utils/helpers";
@@ -50,6 +50,135 @@ const QuantityStepper = ({ qty, availableStock, adjustQuantity, handleQuantityCh
         <Plus size={16} strokeWidth={2.5} />
       </button>
     </div>
+  );
+};
+
+const OrderCreateItem = ({
+  p,
+  isAdded,
+  displayQty,
+  availableStock,
+  isOutOfStock,
+  priceOverrides,
+  activeCategory,
+  selectedWarehouse,
+  adjustQuantity,
+  handleQuantityChange,
+}) => {
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  return (
+    <motion.div
+      layout
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      exit={{ opacity: 0, scale: 0.95 }}
+      transition={{ duration: 0.2 }}
+      className={`bg-amber-50 p-3 rounded-xl shadow-sm border border-amber-100 flex gap-3 items-center ${
+        isOutOfStock ? "opacity-50 grayscale" : ""
+      }`}
+    >
+      <div className="w-14 h-14 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0 relative border border-gray-200">
+        {p.image ? (
+          <img
+            src={p.image}
+            className="w-full h-full object-cover"
+            alt={p.name}
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center">
+            <ImageIcon size={16} className="text-gray-300" />
+          </div>
+        )}
+      </div>
+
+      <div className="flex-1 min-w-0">
+        <div
+          onClick={() => setIsExpanded(!isExpanded)}
+          className={`font-bold text-rose-800 text-sm cursor-pointer mb-1 ${
+            !isExpanded ? "truncate" : "whitespace-normal break-words"
+          }`}
+        >
+          {p.name}
+        </div>
+
+        <AnimatePresence>
+          {!isExpanded && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              className="grid grid-cols-2 gap-2 text-[10px]"
+            >
+              <div className="space-y-1">
+                <div className="flex items-center">
+                  <span className="font-bold text-rose-700 text-sm">
+                    {priceOverrides?.[p.id] !== undefined
+                      ? formatInputNumber(priceOverrides[p.id])
+                      : formatInputNumber(p.price)}
+                  </span>
+                  <span className="text-rose-700 font-bold text-sm ml-0.5">
+                    đ
+                  </span>
+                </div>
+              </div>
+
+              <div className="text-right space-y-1">
+                <span
+                  className={`text-[10px] text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded whitespace-nowrap inline-block ${
+                    activeCategory !== "Tất cả" ? "invisible" : ""
+                  }`}
+                >
+                  {p.category}
+                </span>
+                <div className="text-amber-600 text-[10px] origin-right">
+                  Kho {getWarehouseLabel(selectedWarehouse)}: {availableStock}
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+
+      <div className="flex-shrink-0">
+        <AnimatePresence mode="wait" initial={false}>
+          {isAdded ? (
+            <motion.div
+              key="stepper"
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.8 }}
+              transition={{ duration: 0.2 }}
+            >
+              <QuantityStepper
+                qty={displayQty}
+                availableStock={availableStock}
+                adjustQuantity={adjustQuantity}
+                handleQuantityChange={handleQuantityChange}
+                id={p.id}
+              />
+            </motion.div>
+          ) : (
+            <motion.button
+              key="plus"
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.8 }}
+              transition={{ duration: 0.2 }}
+              onClick={() => adjustQuantity(p.id, 1, availableStock)}
+              disabled={isOutOfStock}
+              className={`px-3 py-2 rounded-lg text-xs font-bold active:scale-95 transition flex items-center justify-center border ${
+                isOutOfStock
+                  ? "hidden"
+                  : "bg-amber-100 text-amber-700 border-amber-300 active:bg-amber-200"
+              }`}
+            >
+              <Plus size={20} />
+            </motion.button>
+          )}
+        </AnimatePresence>
+      </div>
+    </motion.div>
   );
 };
 
@@ -105,7 +234,6 @@ const OrderCreateProductList = ({
         sortConfig={sortConfig}
         onSortChange={onSortChange}
       />
-      {/* Re-adding -mx-3 to compensate for parent padding */}
 
       <AnimatePresence mode="popLayout">
         {filteredProducts.map((p) => {
@@ -113,7 +241,6 @@ const OrderCreateProductList = ({
           const rawQty = cart[p.id];
           const isAdded = rawQty !== undefined;
           // Hiển thị value cho input: nếu undefined thì fallback về 0 (nhưng UI sẽ dùng isAdded để ẩn hiện)
-          // Nếu rawQty là "" thì giữ nguyên để input rỗng.
           const displayQty = isAdded ? rawQty : 0;
 
           const warehouseStock =
@@ -124,87 +251,19 @@ const OrderCreateProductList = ({
           const isOutOfStock = availableStock <= 0;
 
           return (
-            <motion.div
-              layout
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              transition={{ duration: 0.2 }}
+            <OrderCreateItem
               key={p.id}
-              className={`bg-amber-50 p-3 rounded-xl shadow-sm border border-amber-100 flex gap-3 items-center ${
-                isOutOfStock ? "opacity-50 grayscale" : ""
-              }`}
-            >
-              <div className="w-14 h-14 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0 relative border border-gray-200">
-                {p.image ? (
-                  <img
-                    src={p.image}
-                    className="w-full h-full object-cover"
-                    alt={p.name}
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center">
-                    <ImageIcon size={16} className="text-gray-300" />
-                  </div>
-                )}
-              </div>
-
-              <div className="flex-1 min-w-0 grid grid-cols-2 gap-2 text-[10px]">
-                {/* Cột 1: Tên + Giá bán */}
-                <div className="space-y-1">
-                  <div className="font-bold text-rose-800 text-sm truncate">
-                    {p.name}
-                  </div>
-                  <div className="flex items-center">
-                    <span className="font-bold text-rose-700 text-sm">
-                      {priceOverrides?.[p.id] !== undefined
-                        ? formatInputNumber(priceOverrides[p.id])
-                        : formatInputNumber(p.price)}
-                    </span>
-                    <span className="text-rose-700 font-bold text-sm ml-0.5">
-                      đ
-                    </span>
-                  </div>
-                </div>
-
-                {/* Cột 2: Danh mục + Kho hàng */}
-                <div className="text-right space-y-1">
-                  <span
-                    className={`text-[10px] text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded whitespace-nowrap inline-block ${
-                      activeCategory !== "Tất cả" ? "invisible" : ""
-                    }`}
-                  >
-                    {p.category}
-                  </span>
-                  <div className="text-amber-600 text-[10px] origin-right">
-                    Kho {getWarehouseLabel(selectedWarehouse)}: {availableStock}
-                  </div>
-                </div>
-              </div>
-
-              {/* Bộ điều khiển số lượng - giữ nguyên ở bên phải cùng */}
-              {isAdded ? (
-                <QuantityStepper
-                  qty={displayQty}
-                  availableStock={availableStock}
-                  adjustQuantity={adjustQuantity}
-                  handleQuantityChange={handleQuantityChange}
-                  id={p.id}
-                />
-              ) : (
-                <button
-                  onClick={() => adjustQuantity(p.id, 1, availableStock)}
-                  disabled={isOutOfStock}
-                  className={`px-3 py-2 rounded-lg text-xs font-bold active:scale-95 transition shrink-0 border ${
-                    isOutOfStock
-                       ? "hidden"
-                       : "bg-amber-100 text-amber-700 border-amber-300 active:bg-amber-200"
-                  }`}
-                >
-                  <Plus size={20} />
-                </button>
-              )}
-            </motion.div>
+              p={p}
+              isAdded={isAdded}
+              displayQty={displayQty}
+              availableStock={availableStock}
+              isOutOfStock={isOutOfStock}
+              priceOverrides={priceOverrides}
+              activeCategory={activeCategory}
+              selectedWarehouse={selectedWarehouse}
+              adjustQuantity={adjustQuantity}
+              handleQuantityChange={handleQuantityChange}
+            />
           );
         })}
       </AnimatePresence>
