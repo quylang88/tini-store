@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import SheetModal from "../../components/modals/SheetModal";
-import { formatNumber, truncateText } from "../../utils/helpers";
+import { formatNumber } from "../../utils/helpers";
 import { getWarehouseLabel } from "../../utils/warehouseUtils";
 import { getOrderDisplayName } from "../../utils/orderUtils";
 import useModalCache from "../../hooks/useModalCache";
@@ -120,7 +120,7 @@ const OrderDetailModal = ({ order, products, onClose, getOrderStatusInfo }) => {
                 <div className="min-w-0">
                   <div className="flex items-center gap-2 text-rose-900">
                     <span className="font-semibold truncate">
-                      {truncateText(displayName, 30)}
+                      {displayName}
                     </span>
                     <span className="text-xs text-gray-400">
                       x{item.quantity}

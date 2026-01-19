@@ -107,13 +107,6 @@ export const sanitizeDecimalInput = (value) => {
   return `${whole}.${rest.join("")}`;
 };
 
-// Hàm cắt chuỗi nếu dài quá giới hạn và thêm "..."
-export const truncateText = (text, maxLength) => {
-  if (!text) return "";
-  if (text.length <= maxLength) return text;
-  return text.slice(0, maxLength) + "...";
-};
-
 // Hàm chuẩn hóa chuỗi để so sánh (bỏ dấu, chuyển thường)
 export const normalizeString = (str) => {
   if (!str) return "";

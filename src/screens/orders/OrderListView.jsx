@@ -1,7 +1,7 @@
 import React, { useEffect } from "react";
 import { ShoppingCart, Plus } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
-import { formatNumber, truncateText } from "../../utils/helpers";
+import { formatNumber } from "../../utils/helpers";
 import { getWarehouseLabel } from "../../utils/warehouseUtils";
 import { getOrderDisplayName } from "../../utils/orderUtils";
 import FloatingActionButton from "../../components/button/FloatingActionButton";
@@ -93,7 +93,7 @@ const OrderListView = ({
                       {orderLabel}
                     </span>
                     <span className="text-xs font-semibold text-amber-600 truncate">
-                      {truncateText(orderName, 25)}
+                      {orderName}
                     </span>
                   </div>
                 </div>

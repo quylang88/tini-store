@@ -1,6 +1,6 @@
 import React from "react";
 import { Image as ImageIcon, Trash2, Edit } from "lucide-react";
-import { formatNumber, truncateText } from "../../utils/helpers";
+import { formatNumber } from "../../utils/helpers";
 import { getLatestCost, getLatestUnitCost } from "../../utils/purchaseUtils";
 import { normalizeWarehouseStock } from "../../utils/warehouseUtils";
 import { motion, AnimatePresence } from "framer-motion";
@@ -62,7 +62,7 @@ const ProductList = ({
                 <div className="grid grid-cols-2 gap-2 text-[10px]">
                   <div className="space-y-1">
                     <div className="font-bold text-rose-800 text-sm truncate">
-                      {truncateText(product.name, 35)}
+                      {product.name}
                     </div>
                     <div className="text-gray-400 font-mono">
                       {product.barcode || "---"}

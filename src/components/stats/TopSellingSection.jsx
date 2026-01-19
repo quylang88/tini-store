@@ -1,7 +1,6 @@
 import React from "react";
 import { Trophy } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
-import { truncateText } from "../../utils/helpers";
 import AnimatedFilterTabs from "../common/AnimatedFilterTabs";
 import RankBadge from "./RankBadge";
 
@@ -66,7 +65,7 @@ const TopSellingSection = ({
                   <RankBadge rank={idx + 1} />
                   <div className="min-w-0 flex-1">
                     <div className="font-medium text-sm truncate">
-                      {truncateText(p.name, 20)}
+                      {p.name}
                     </div>
                   </div>
                 </motion.div>
@@ -103,8 +102,8 @@ const TopSellingSection = ({
                 >
                   <RankBadge rank={idx + 1} />
                   <div className="min-w-0 flex-1">
-                    <div className="font-medium text-sm">
-                      {truncateText(p.name, 20)}
+                    <div className="font-medium text-sm truncate">
+                      {p.name}
                     </div>
                   </div>
                 </motion.div>

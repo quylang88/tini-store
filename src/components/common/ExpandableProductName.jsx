@@ -27,11 +27,7 @@ const ExpandableProductName = ({
 
   // Sử dụng logic cắt chuỗi nội bộ nếu cần,
   // nhưng đối với chức năng "chạm để mở rộng", ta thường chuyển đổi giữa text đầy đủ và text rút gọn.
-  // Ta cũng có thể dùng CSS line-clamp để cắt gọn hiển thị, nhưng ở đây ta dùng logic cắt chuỗi
-  // theo yêu cầu của user là "ẩn bớt rồi thay bằng '...'".
-
-  const displayText =
-    !isExpanded && isLong ? name.slice(0, limit) + "..." : name;
+  // Ta dùng CSS class 'truncate' để cắt gọn hiển thị thay vì cắt chuỗi thủ công.
 
   const handleToggle = () => {
     if (isLong) {
@@ -47,9 +43,9 @@ const ExpandableProductName = ({
       <motion.div
         layout
         transition={{ type: "spring", stiffness: 300, damping: 30 }}
-        className={!isExpanded ? "truncate" : "break-words"}
+        className={!isExpanded ? "truncate" : "break-words whitespace-normal"}
       >
-        {displayText}
+        {name}
       </motion.div>
 
       {/* Khi mở rộng, ta có thể muốn ẩn các chi tiết phụ (được truyền qua children)
