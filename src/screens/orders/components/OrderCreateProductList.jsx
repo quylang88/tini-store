@@ -10,15 +10,17 @@ const QuantityStepper = ({ qty, availableStock, adjustQuantity, handleQuantityCh
   // Long press for +
   const addProps = useLongPress(() => adjustQuantity(id, 1, availableStock), {
     enabled: qty < availableStock,
-    speed: 100,
-    delay: 300
+    speed: 150,
+    delay: 500,
+    accelerate: true,
   });
 
   // Long press for -
   const subtractProps = useLongPress(() => adjustQuantity(id, -1, availableStock), {
     enabled: true,
-    speed: 100,
-    delay: 300
+    speed: 150,
+    delay: 500,
+    accelerate: true,
   });
 
   return (
