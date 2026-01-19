@@ -27,7 +27,6 @@ export const shareOrDownloadFile = async (
     if (navigator.canShare && navigator.canShare({ files: [file] })) {
       const shareData = {
         files: [file],
-        title: shareTitle || fileName,
       };
 
       // Chỉ thêm text nếu KHÔNG có file (điều này ít xảy ra ở hàm này)
