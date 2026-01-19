@@ -4,6 +4,52 @@ import { motion, AnimatePresence } from "framer-motion";
 import { formatInputNumber } from "../../../utils/helpers";
 import { getWarehouseLabel } from "../../../utils/warehouseUtils";
 import ProductFilterSection from "../../../components/common/ProductFilterSection";
+import useLongPress from "../../../hooks/useLongPress";
+
+const QuantityStepper = ({ qty, availableStock, adjustQuantity, handleQuantityChange, id }) => {
+  // Long press for +
+  const addProps = useLongPress(() => adjustQuantity(id, 1, availableStock), {
+    enabled: qty < availableStock,
+    speed: 100,
+    delay: 300
+  });
+
+  // Long press for -
+  const subtractProps = useLongPress(() => adjustQuantity(id, -1, availableStock), {
+    enabled: true,
+    speed: 100,
+    delay: 300
+  });
+
+  return (
+    <div className="flex items-center bg-rose-50 rounded-lg h-9 border border-rose-200 overflow-hidden shadow-sm shrink-0">
+      <button
+        onClick={() => adjustQuantity(id, -1, availableStock)}
+        {...subtractProps}
+        className="w-9 h-full flex items-center justify-center text-rose-600 active:bg-rose-200 transition select-none"
+      >
+        <Minus size={16} strokeWidth={2.5} />
+      </button>
+      <input
+        type="number"
+        className="w-12 h-full text-center bg-transparent border-x border-rose-200 outline-none text-gray-900 font-bold text-sm m-0 p-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+        value={qty}
+        onChange={(e) =>
+          handleQuantityChange(id, e.target.value, availableStock)
+        }
+        onFocus={(e) => e.target.select()}
+      />
+      <button
+        onClick={() => adjustQuantity(id, 1, availableStock)}
+        disabled={qty >= availableStock}
+        {...addProps}
+        className="w-9 h-full flex items-center justify-center text-rose-600 active:bg-rose-200 disabled:opacity-30 transition select-none"
+      >
+        <Plus size={16} strokeWidth={2.5} />
+      </button>
+    </div>
+  );
+};
 
 const OrderCreateProductList = ({
   filteredProducts,
@@ -124,12 +170,7 @@ const OrderCreateProductList = ({
                   >
                     {p.category}
                   </span>
-                  <div
-                    className="text-amber-600 text-[10px] cursor-pointer active:scale-95 transition-transform origin-right"
-                    onClick={() =>
-                      handleQuantityChange(p.id, availableStock, availableStock)
-                    }
-                  >
+                  <div className="text-amber-600 text-[10px] origin-right">
                     Kho {getWarehouseLabel(selectedWarehouse)}: {availableStock}
                   </div>
                 </div>
@@ -137,37 +178,24 @@ const OrderCreateProductList = ({
 
               {/* Bộ điều khiển số lượng - giữ nguyên ở bên phải cùng */}
               {isAdded ? (
-                <div className="flex items-center bg-rose-50 rounded-lg h-9 border border-rose-100 overflow-hidden shadow-sm shrink-0">
-                  <button
-                    onClick={() => adjustQuantity(p.id, -1, availableStock)}
-                    className="w-9 h-full flex items-center justify-center text-rose-600 active:bg-rose-200 transition"
-                  >
-                    <Minus size={16} strokeWidth={2.5} />
-                  </button>
-                  <input
-                    type="number"
-                    className="w-12 h-full text-center bg-transparent border-x border-rose-100 outline-none text-rose-900 font-bold text-sm m-0 p-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                    value={displayQty}
-                    onChange={(e) =>
-                      handleQuantityChange(p.id, e.target.value, availableStock)
-                    }
-                    onFocus={(e) => e.target.select()}
-                  />
-                  <button
-                    onClick={() => adjustQuantity(p.id, 1, availableStock)}
-                    disabled={displayQty >= availableStock}
-                    className="w-9 h-full flex items-center justify-center text-rose-600 active:bg-rose-200 disabled:opacity-30 transition"
-                  >
-                    <Plus size={16} strokeWidth={2.5} />
-                  </button>
-                </div>
+                <QuantityStepper
+                  qty={displayQty}
+                  availableStock={availableStock}
+                  adjustQuantity={adjustQuantity}
+                  handleQuantityChange={handleQuantityChange}
+                  id={p.id}
+                />
               ) : (
                 <button
                   onClick={() => adjustQuantity(p.id, 1, availableStock)}
                   disabled={isOutOfStock}
-                  className="bg-amber-100 text-amber-800 px-4 py-2 rounded-lg text-xs font-bold active:scale-95 transition shrink-0"
+                  className={`px-3 py-2 rounded-lg text-xs font-bold active:scale-95 transition shrink-0 border ${
+                    isOutOfStock
+                       ? "hidden"
+                       : "bg-amber-100 text-amber-700 border-amber-300 active:bg-amber-200"
+                  }`}
                 >
-                  {isOutOfStock ? "Hết" : "Thêm"}
+                  <Plus size={20} />
                 </button>
               )}
             </motion.div>
