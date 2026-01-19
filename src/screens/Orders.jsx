@@ -63,6 +63,8 @@ const Orders = ({
     handleCancelOrder,
     getOrderStatusInfo,
     isCreateView,
+    sortConfig,
+    setSortConfig,
   } = useOrdersLogic({ products, setProducts, orders, setOrders });
 
   const renderContent = () => {
@@ -103,6 +105,8 @@ const Orders = ({
           adjustQuantity={adjustQuantity}
           handleOpenReview={() => setIsReviewOpen(true)}
           handleCloseReview={() => setIsReviewOpen(false)}
+          sortConfig={sortConfig}
+          setSortConfig={setSortConfig}
           handleConfirmOrder={() => {
             let success = false;
             if (orderBeingEdited) {

@@ -71,6 +71,8 @@ const OrderCreateProductList = ({
   warehouseLabel,
   className = "",
   style = {},
+  sortConfig,
+  onSortChange,
 }) => {
   // Khi đang sửa đơn, cộng lại số lượng cũ để hiển thị tồn kho chính xác
   const getAvailableStock = (productId, stock) => {
@@ -100,6 +102,8 @@ const OrderCreateProductList = ({
         warehouseLabel={warehouseLabel}
         namespace="order-create"
         className="-mx-3 -mt-3 mb-0 pt-5 pb-0" // Not sticky, scrolls with list
+        sortConfig={sortConfig}
+        onSortChange={onSortChange}
       />
       {/* Re-adding -mx-3 to compensate for parent padding */}
 

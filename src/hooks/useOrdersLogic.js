@@ -23,6 +23,7 @@ const useOrdersLogic = ({ products, setProducts, orders, setOrders }) => {
   const [activeCategory, setActiveCategory] = useState("Tất cả");
   const [searchTerm, setSearchTerm] = useState("");
   const [orderBeingEdited, setOrderBeingEdited] = useState(null);
+  const [sortConfig, setSortConfig] = useState({ key: "date", direction: "desc" });
 
   // Sub-hooks
   const {
@@ -66,6 +67,7 @@ const useOrdersLogic = ({ products, setProducts, orders, setOrders }) => {
       selectedWarehouse,
       orderBeingEdited,
       priceOverrides,
+      sortConfig,
     });
 
   const clearDraft = () => {
@@ -76,6 +78,7 @@ const useOrdersLogic = ({ products, setProducts, orders, setOrders }) => {
     setActiveCategory("Tất cả");
     setIsReviewOpen(false);
     setSelectedWarehouse(DEFAULT_WAREHOUSE);
+    setSortConfig({ key: "date", direction: "desc" });
   };
 
   const { handleCreateOrder, handleUpdateOrder, finishCreateOrder } =
@@ -342,6 +345,8 @@ const useOrdersLogic = ({ products, setProducts, orders, setOrders }) => {
     setSelectedWarehouse,
     isCreateView,
     shouldShowDetailModal,
+    sortConfig,
+    setSortConfig,
   };
 };
 
