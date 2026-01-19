@@ -10,7 +10,7 @@ import ProductModal from "./inventory/ProductModal";
 import ProductBasicInfoModal from "./inventory/ProductBasicInfoModal";
 import ConfirmModalHost from "../components/modals/ConfirmModalHost";
 import ErrorModal from "../components/modals/ErrorModal";
-import FloatingActionButton from "../components/common/FloatingActionButton";
+import FloatingActionButton from "../components/button/FloatingActionButton";
 import useInventoryLogic from "../hooks/useInventoryLogic";
 import useScrollHandling from "../hooks/useScrollHandling";
 import AppHeader from "../components/common/AppHeader";
@@ -65,6 +65,8 @@ const Inventory = ({
     nameSuggestions,
     handleSelectExistingProduct,
     setWarehouseFilter,
+    sortConfig,
+    setSortConfig,
   } = useInventoryLogic({ products, setProducts, orders, setOrders, settings });
 
   // Đã loại bỏ useFilterTransition để tránh remount list gây khựng.
@@ -117,6 +119,8 @@ const Inventory = ({
             setActiveCategory={setActiveCategory}
             categories={settings.categories}
             namespace="inventory"
+            sortConfig={sortConfig}
+            onSortChange={setSortConfig}
           />
           <ProductList
             products={filteredProducts}

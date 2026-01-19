@@ -4,7 +4,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { formatNumber } from "../../utils/helpers";
 import { getWarehouseLabel } from "../../utils/warehouseUtils";
 import { getOrderDisplayName } from "../../utils/orderUtils";
-import FloatingActionButton from "../../components/common/FloatingActionButton";
+import FloatingActionButton from "../../components/button/FloatingActionButton";
 import AppHeader from "../../components/common/AppHeader";
 import useScrollHandling from "../../hooks/useScrollHandling";
 

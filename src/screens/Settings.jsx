@@ -76,7 +76,7 @@ const Settings = ({
               <div className="relative flex-1">
                 <input
                   inputMode="numeric"
-                  className="w-full border border-gray-200 rounded-lg pl-3 pr-12 py-3 outline-none focus:border-rose-400 font-medium text-lg text-rose-900"
+                  className="w-full border border-gray-200 rounded-lg pl-3 pr-12 py-3 outline-none focus:border-rose-400 font-medium text-lg text-gray-900"
                   value={formatInputNumber(settings.exchangeRate)}
                   onChange={(e) => {
                     const rawValue = sanitizeNumberInput(e.target.value);
@@ -122,7 +122,7 @@ const Settings = ({
         >
           <div className="flex gap-2">
             <input
-              className="flex-1 border border-gray-200 rounded-lg px-3 py-2 outline-none focus:border-rose-400 text-sm text-rose-900"
+              className="flex-1 border border-gray-200 rounded-lg px-3 py-2 outline-none focus:border-rose-400 text-sm text-gray-900"
               placeholder="Nhập tên danh mục mới..."
               value={newCategory}
               onChange={(e) => setNewCategory(e.target.value)}
@@ -140,7 +140,7 @@ const Settings = ({
             {settings.categories.map((cat) => (
               <div
                 key={cat}
-                className="bg-rose-50 text-rose-800 px-3 py-1.5 rounded-full text-sm flex items-center gap-2 border border-gray-200"
+                className="bg-rose-50 text-rose-800 px-3 py-1.5 rounded-full text-sm flex items-center gap-2 border border-rose-200"
               >
                 {cat}
                 {cat !== "Chung" && (

@@ -1,6 +1,6 @@
 import React from "react";
 import SheetModal from "../../../components/modals/SheetModal";
-import Button from "../../../components/common/Button";
+import Button from "../../../components/button/Button";
 import { formatNumber, formatInputNumber } from "../../../utils/helpers";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -68,7 +68,7 @@ const OrderCreateReviewModal = ({
                   </span>
                 </div>
               </div>
-              <div className="font-semibold text-rose-700">
+              <div className="font-semibold text-amber-600">
                 {formatNumber(item.price * item.quantity)}đ
               </div>
             </div>
@@ -128,14 +128,14 @@ const OrderCreateReviewModal = ({
                 value={customerName}
                 onChange={(e) => setCustomerName(e.target.value)}
                 placeholder="Tên khách hàng"
-                className="w-full border border-rose-200 rounded-xl px-3 py-2 text-sm text-rose-900 focus:outline-none focus:ring-2 focus:ring-rose-200"
+                className="w-full border border-rose-200 rounded-xl px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-rose-200"
               />
               <textarea
                 value={customerAddress}
                 onChange={(e) => setCustomerAddress(e.target.value)}
                 placeholder="Địa chỉ giao hàng"
                 rows={2}
-                className="w-full border border-rose-200 rounded-xl px-3 py-2 text-sm text-rose-900 focus:outline-none focus:ring-2 focus:ring-rose-200"
+                className="w-full border border-rose-200 rounded-xl px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-rose-200"
               />
               <div>
                 <label className="text-xs font-semibold text-rose-700">
@@ -147,7 +147,7 @@ const OrderCreateReviewModal = ({
                   value={formatInputNumber(shippingFee)}
                   onChange={(e) => setShippingFee(e.target.value)}
                   placeholder="Ví dụ: 25,000"
-                  className="mt-1 w-full border border-rose-200 rounded-xl px-3 py-2 text-sm text-rose-900 focus:outline-none focus:ring-2 focus:ring-rose-200"
+                  className="mt-1 w-full border border-rose-200 rounded-xl px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-rose-200"
                 />
               </div>
             </motion.div>
@@ -170,7 +170,7 @@ const OrderCreateReviewModal = ({
             onChange={(e) => setOrderComment(e.target.value)}
             placeholder="Ví dụ: khách hẹn lấy vào chiều nay..."
             rows={3}
-            className="w-full border border-rose-200 rounded-xl p-3 text-sm text-rose-900 focus:outline-none focus:ring-2 focus:ring-rose-200"
+            className="w-full border border-rose-200 rounded-xl p-3 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-rose-200"
           />
         </div>
       </div>

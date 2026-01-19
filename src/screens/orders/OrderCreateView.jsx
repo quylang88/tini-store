@@ -50,6 +50,8 @@ const OrderCreateView = ({
   handleCloseReview,
   handleConfirmOrder,
   setTabBarVisible,
+  sortConfig,
+  setSortConfig,
 }) => {
   // Bug 3: Hide TabBar immediately on mount
   useEffect(() => {
@@ -149,6 +151,8 @@ const OrderCreateView = ({
           categories={categories}
           warehouseTabs={warehouseTabs}
           warehouseLabel="Kho xuất: "
+          sortConfig={sortConfig}
+          onSortChange={setSortConfig}
         />
       </div>
 

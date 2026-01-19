@@ -1,14 +1,16 @@
-import React from "react";
+import React, { useState } from "react";
 import SheetModal from "../../components/modals/SheetModal";
 import { formatNumber } from "../../utils/helpers";
 import { getWarehouseLabel } from "../../utils/warehouseUtils";
 import { getOrderDisplayName } from "../../utils/orderUtils";
 import useModalCache from "../../hooks/useModalCache";
-import Button from "../../components/common/Button";
-import { exportOrderToCSV } from "../../utils/fileUtils";
+import Button from "../../components/button/Button";
+import { exportOrderToHTML } from "../../utils/fileUtils";
+import LoadingOverlay from "../../components/common/LoadingOverlay";
 
 // OrderDetailModal: Xem chi tiết đơn hàng (View Only) -> showCloseIcon={false}
 const OrderDetailModal = ({ order, onClose, getOrderStatusInfo }) => {
+  const [isExporting, setIsExporting] = useState(false);
   // Giữ lại dữ liệu cũ để animation đóng vẫn hiển thị nội dung
   const cachedOrder = useModalCache(order, Boolean(order));
 
@@ -28,6 +30,20 @@ const OrderDetailModal = ({ order, onClose, getOrderStatusInfo }) => {
       return sum + (item.price - cost) * item.quantity;
     }, 0) - (cachedOrder.shippingFee || 0);
 
+  const handleExport = async () => {
+    setIsExporting(true);
+    // Timeout nhỏ để đảm bảo UI loading kịp render trước khi hàm export nặng chạy
+    await new Promise((resolve) => setTimeout(resolve, 300));
+    try {
+      await exportOrderToHTML(cachedOrder);
+    } catch (error) {
+      console.error("Export error:", error);
+      alert("Có lỗi khi xuất file");
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   const footer = (
     <div className="flex gap-3">
       <Button
@@ -41,10 +57,10 @@ const OrderDetailModal = ({ order, onClose, getOrderStatusInfo }) => {
       <Button
         variant="primary"
         size="sm"
-        onClick={() => exportOrderToCSV(cachedOrder)}
+        onClick={handleExport}
         className="flex-1"
       >
-        Xuất CSV
+        Xuất hoá đơn
       </Button>
     </div>
   );
@@ -84,6 +100,9 @@ const OrderDetailModal = ({ order, onClose, getOrderStatusInfo }) => {
             </div>
           )}
         </div>
+
+        {/* Loading Overlay */}
+        {isExporting && <LoadingOverlay text="Đang tạo hoá đơn..." />}
 
         {/* List Items */}
         <div className="space-y-3">

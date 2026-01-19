@@ -1,8 +1,8 @@
-import { useMemo } from "react";
+import { useMemo, useCallback } from "react";
 import { normalizeString } from "../../utils/helpers";
 import { normalizeWarehouseStock } from "../../utils/warehouseUtils";
+import useProductFilterSort from "../useProductFilterSort";
 
-// Tách riêng phần lọc + gợi ý để code chính dễ đọc hơn.
 const useInventoryFilters = ({
   products,
   searchTerm,
@@ -10,26 +10,25 @@ const useInventoryFilters = ({
   warehouseFilter,
   editingProduct,
   formDataName,
+  sortConfig = { key: "date", direction: "desc" },
 }) => {
-  // LỌC SẢN PHẨM: Theo Tìm kiếm + Theo Danh mục
-  const filteredProducts = useMemo(
-    () =>
-      products.filter((p) => {
-        const matchSearch =
-          p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          (p.barcode && p.barcode.includes(searchTerm));
-        const matchCategory =
-          activeCategory === "Tất cả" || p.category === activeCategory;
-        const stockByWarehouse = normalizeWarehouseStock(p);
-        const matchWarehouse =
-          warehouseFilter === "all" ||
-          (warehouseFilter === "daLat" && stockByWarehouse.daLat > 0) ||
-          (warehouseFilter === "vinhPhuc" && stockByWarehouse.vinhPhuc > 0);
+  // Define custom filter function for Warehouse availability
+  const checkWarehouseStock = useCallback((product) => {
+    const stockByWarehouse = normalizeWarehouseStock(product);
+    return (
+      warehouseFilter === "all" ||
+      (warehouseFilter === "daLat" && stockByWarehouse.daLat > 0) ||
+      (warehouseFilter === "vinhPhuc" && stockByWarehouse.vinhPhuc > 0)
+    );
+  }, [warehouseFilter]);
 
-        return matchSearch && matchCategory && matchWarehouse;
-      }),
-    [products, searchTerm, activeCategory, warehouseFilter],
-  );
+  // Use shared hook for logic
+  const filteredProducts = useProductFilterSort({
+    products,
+    filterConfig: { searchTerm, activeCategory },
+    sortConfig,
+    customFilterFn: checkWarehouseStock,
+  });
 
   const nameSuggestions = useMemo(() => {
     if (editingProduct) return [];
