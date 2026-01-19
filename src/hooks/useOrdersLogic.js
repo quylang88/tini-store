@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { sanitizeNumberInput } from "../utils/helpers";
 import { syncProductsStock } from "../utils/orderStock";
 import useOrderCatalog from "./orders/useOrderCatalog";
 import { buildCartFromItems } from "./orders/orderDraftUtils";
@@ -30,8 +29,6 @@ const useOrdersLogic = ({ products, setProducts, orders, setOrders }) => {
     cart,
     setCart,
     priceOverrides,
-    setPriceOverrides,
-    updateCartItem,
     handleQuantityChange,
     adjustQuantity,
     handlePriceChange,

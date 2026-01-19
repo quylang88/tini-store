@@ -175,7 +175,7 @@ const ProductModal = ({
                   />
                 </div>
               </div>
-              <div className="text-right text-xs text-rose-600 font-medium">
+              <div className="flex items-center justify-between text-xs text-slate-500 font-medium">
                 = {formatNumber(formData.cost)} VNĐ (Vốn)
               </div>
             </div>
@@ -257,12 +257,12 @@ const ProductModal = ({
                   placeholder="0"
                   tabIndex={formData.shippingMethod === "jp" ? 0 : -1}
                 />
-                <div className="flex items-center justify-between text-xs font-semibold text-rose-700">
+                <div className="flex items-center justify-between text-xs font-semibold text-slate-500">
                   <span>
                     Phí gửi: {formatNumber(shippingFeeJpy)}¥ (~
                     {formatNumber(shippingFeeVnd)}đ)
                   </span>
-                  <span className="text-[10px] text-rose-500">
+                  <span className="text-[10px] text-slate-500">
                     900 yên / 1kg
                   </span>
                 </div>

@@ -9,7 +9,7 @@ import { exportOrderToHTML } from "../../utils/fileUtils";
 import LoadingOverlay from "../../components/common/LoadingOverlay";
 
 // OrderDetailModal: Xem chi tiết đơn hàng (View Only) -> showCloseIcon={false}
-const OrderDetailModal = ({ order, onClose, getOrderStatusInfo }) => {
+const OrderDetailModal = ({ order, products, onClose, getOrderStatusInfo }) => {
   const [isExporting, setIsExporting] = useState(false);
   // Giữ lại dữ liệu cũ để animation đóng vẫn hiển thị nội dung
   const cachedOrder = useModalCache(order, Boolean(order));
@@ -106,24 +106,33 @@ const OrderDetailModal = ({ order, onClose, getOrderStatusInfo }) => {
 
         {/* List Items */}
         <div className="space-y-3">
-          {cachedOrder.items.map((item, index) => (
-            <div
-              key={`${item.productId}-${index}`}
-              className="flex justify-between text-sm text-gray-600"
-            >
-              <div className="min-w-0">
-                <div className="flex items-center gap-2 text-rose-900">
-                  <span className="font-semibold truncate">{item.name}</span>
-                  <span className="text-xs text-gray-400">
-                    x{item.quantity}
-                  </span>
+          {cachedOrder.items.map((item, index) => {
+            const product = products?.find(
+              (p) => p.id === item.productId || p.id === item.id,
+            );
+            const displayName = product ? product.name : item.name;
+
+            return (
+              <div
+                key={`${item.productId}-${index}`}
+                className="flex justify-between text-sm text-gray-600"
+              >
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2 text-rose-900">
+                    <span className="font-semibold truncate">
+                      {displayName}
+                    </span>
+                    <span className="text-xs text-gray-400">
+                      x{item.quantity}
+                    </span>
+                  </div>
+                </div>
+                <div className="font-semibold text-rose-700">
+                  {formatNumber(item.price * item.quantity)}đ
                 </div>
               </div>
-              <div className="font-semibold text-rose-700">
-                {formatNumber(item.price * item.quantity)}đ
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
         {/* Summary */}
