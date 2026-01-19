@@ -22,37 +22,34 @@ const useInventoryFormState = ({ settings, activeCategory }) => {
     };
   });
 
-  // Tự động tính giá nhập VNĐ khi chọn nhập theo Yên.
-  useEffect(() => {
-    if (formData.costCurrency !== "JPY") {
-      return;
-    }
-    const costJPYValue = Number(formData.costJPY || 0);
-    const exchangeRateValue = Number(formData.exchangeRate || 0);
-    const calculatedCost =
-      costJPYValue > 0 && exchangeRateValue > 0
-        ? Math.round(costJPYValue * exchangeRateValue)
-        : "";
-    // Khi chưa có dữ liệu hợp lệ, để trống để tránh hiển thị "0" khi đổi qua lại giữa VNĐ/Yên.
-    setFormData((prev) => ({ ...prev, cost: calculatedCost }));
-  }, [formData.costCurrency, formData.costJPY, formData.exchangeRate]);
+  // Hàm helper tính toán các trường dẫn xuất (cost, shippingFeeVnd)
+  // để gọi synchronous bên trong setFormData.
+  const calculateDerivedFields = (nextState) => {
+    const updated = { ...nextState };
 
-  // Tự động cập nhật giá nhập chính thức khi nhập trực tiếp VNĐ
-  useEffect(() => {
-    if (formData.costCurrency === "VND") {
-      setFormData((prev) => ({ ...prev, cost: prev.costVNDInput }));
+    // 1. Tính giá nhập (cost)
+    if (updated.costCurrency === "JPY") {
+      const costJPYValue = Number(updated.costJPY || 0);
+      const exchangeRateValue = Number(updated.exchangeRate || 0);
+      const calculatedCost =
+        costJPYValue > 0 && exchangeRateValue > 0
+          ? Math.round(costJPYValue * exchangeRateValue)
+          : "";
+      updated.cost = calculatedCost;
+    } else {
+      // costCurrency === "VND"
+      updated.cost = updated.costVNDInput;
     }
-  }, [formData.costCurrency, formData.costVNDInput]);
 
-  // Tự động cập nhật phí vận chuyển khi nhập trực tiếp VNĐ
-  useEffect(() => {
-    if (formData.shippingMethod === "vn") {
-      setFormData((prev) => ({
-        ...prev,
-        shippingFeeVnd: prev.shippingFeeVndInput,
-      }));
+    // 2. Tính phí vận chuyển (shippingFeeVnd)
+    // Lưu ý: Nếu shippingMethod là 'jp', ta chưa có logic tính tự động ra VNĐ ở đây
+    // nên giữ nguyên giá trị cũ hoặc logic cũ (đã có input shippingFeeVndInput cho VN).
+    // Ở logic cũ: if (formData.shippingMethod === "vn") shippingFeeVnd = shippingFeeVndInput.
+    if (updated.shippingMethod === "vn") {
+      updated.shippingFeeVnd = updated.shippingFeeVndInput;
     }
-  }, [formData.shippingMethod, formData.shippingFeeVndInput]);
+    return updated;
+  };
 
   const handleMoneyChange = (field) => (event) => {
     const input = event.target;
@@ -63,7 +60,9 @@ const useInventoryFormState = ({ settings, activeCategory }) => {
       .replace(/[^\d]/g, "").length;
     const sanitizedValue = sanitizeNumberInput(rawValue);
 
-    setFormData((prev) => ({ ...prev, [field]: sanitizedValue }));
+    setFormData((prev) =>
+      calculateDerivedFields({ ...prev, [field]: sanitizedValue }),
+    );
 
     // Giữ con trỏ ở đúng vị trí sau khi format lại số tiền có dấu phẩy.
     if (typeof requestAnimationFrame === "function") {
@@ -95,29 +94,35 @@ const useInventoryFormState = ({ settings, activeCategory }) => {
   };
 
   const handleCurrencyChange = (nextCurrency) => {
-    setFormData((prev) => ({
-      ...prev,
-      costCurrency: nextCurrency,
-      // KHÔNG xoá giá trị cũ (costJPY, costVNDInput) khi chuyển tab để giữ lại dữ liệu user nhập dở
-      exchangeRate: String(settings.exchangeRate),
-      // Đồng bộ phí gửi theo loại tiền nhập.
-      shippingMethod: nextCurrency === "JPY" ? "jp" : "vn",
-      // KHÔNG xoá shippingWeightKg / shippingFeeVndInput
-    }));
+    setFormData((prev) =>
+      calculateDerivedFields({
+        ...prev,
+        costCurrency: nextCurrency,
+        // KHÔNG xoá giá trị cũ (costJPY, costVNDInput) khi chuyển tab để giữ lại dữ liệu user nhập dở
+        exchangeRate: String(settings.exchangeRate),
+        // Đồng bộ phí gửi theo loại tiền nhập.
+        shippingMethod: nextCurrency === "JPY" ? "jp" : "vn",
+        // KHÔNG xoá shippingWeightKg / shippingFeeVndInput
+      }),
+    );
   };
 
   const handleShippingMethodChange = (nextMethod) => {
-    setFormData((prev) => ({
-      ...prev,
-      // Đồng bộ loại tiền nhập theo phương thức gửi.
-      shippingMethod: nextMethod,
-      costCurrency: nextMethod === "jp" ? "JPY" : "VND",
-    }));
+    setFormData((prev) =>
+      calculateDerivedFields({
+        ...prev,
+        // Đồng bộ loại tiền nhập theo phương thức gửi.
+        shippingMethod: nextMethod,
+        costCurrency: nextMethod === "jp" ? "JPY" : "VND",
+      }),
+    );
   };
 
   const handleDecimalChange = (field) => (event) => {
     const rawValue = sanitizeDecimalInput(event.target.value);
-    setFormData((prev) => ({ ...prev, [field]: rawValue }));
+    setFormData((prev) =>
+      calculateDerivedFields({ ...prev, [field]: rawValue }),
+    );
   };
 
   const handleImageSelect = async (file) => {
