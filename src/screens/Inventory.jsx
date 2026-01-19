@@ -65,6 +65,8 @@ const Inventory = ({
     nameSuggestions,
     handleSelectExistingProduct,
     setWarehouseFilter,
+    sortConfig,
+    setSortConfig,
   } = useInventoryLogic({ products, setProducts, orders, setOrders, settings });
 
   // Đã loại bỏ useFilterTransition để tránh remount list gây khựng.
@@ -117,6 +119,8 @@ const Inventory = ({
             setActiveCategory={setActiveCategory}
             categories={settings.categories}
             namespace="inventory"
+            sortConfig={sortConfig}
+            onSortChange={setSortConfig}
           />
           <ProductList
             products={filteredProducts}

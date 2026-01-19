@@ -34,6 +34,9 @@ const useInventoryLogic = ({
   const [activeCategory, setActiveCategory] = useState("Tất cả");
   const [warehouseFilter, setWarehouseFilter] = useState("all");
 
+  // State quản lý sắp xếp (Mặc định: nhập mới nhất trước)
+  const [sortConfig, setSortConfig] = useState({ key: "date", direction: "desc" });
+
   // Form data phục vụ nhập kho: nhập giá, tồn kho, phí gửi theo từng kho.
   const {
     formData,
@@ -214,6 +217,7 @@ const useInventoryLogic = ({
     warehouseFilter,
     editingProduct,
     formDataName: formData.name,
+    sortConfig,
   });
 
   const handleSelectExistingProduct = (product) => {
@@ -255,6 +259,8 @@ const useInventoryLogic = ({
     filteredProducts,
     nameSuggestions,
     handleSelectExistingProduct,
+    sortConfig,
+    setSortConfig,
   };
 };
 
