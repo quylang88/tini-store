@@ -1,6 +1,7 @@
 import { useCallback, useMemo } from "react";
 import { normalizeWarehouseStock } from "../../utils/warehouseUtils";
 import { getLatestUnitCost } from "../../utils/purchaseUtils";
+import useProductFilterSort from "../useProductFilterSort";
 
 const DEFAULT_WAREHOUSE = "all";
 
@@ -13,6 +14,7 @@ const useOrderCatalog = ({
   selectedWarehouse,
   orderBeingEdited,
   priceOverrides = {},
+  sortConfig = { key: "date", direction: "desc" },
 }) => {
   const productMap = useMemo(
     () => new Map(products.map((product) => [product.id, product])),
@@ -50,25 +52,19 @@ const useOrderCatalog = ({
     [orderBeingEdited, orderItemsQuantityMap],
   );
 
-  const filteredProducts = useMemo(
-    () =>
-      products.filter((product) => {
-        const matchSearch =
-          product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          (product.barcode && product.barcode.includes(searchTerm));
-        const matchCategory =
-          activeCategory === "Tất cả" || product.category === activeCategory;
-        const availableStock = getAvailableStock(product, selectedWarehouse);
-        return matchSearch && matchCategory && availableStock > 0;
-      }),
-    [
-      products,
-      searchTerm,
-      activeCategory,
-      selectedWarehouse,
-      getAvailableStock,
-    ],
-  );
+  // Define custom filter for availability
+  const checkAvailability = useCallback((product) => {
+      const availableStock = getAvailableStock(product, selectedWarehouse);
+      return availableStock > 0;
+  }, [getAvailableStock, selectedWarehouse]);
+
+  // Use shared hook for logic
+  const filteredProducts = useProductFilterSort({
+    products,
+    filterConfig: { searchTerm, activeCategory },
+    sortConfig,
+    customFilterFn: checkAvailability
+  });
 
   const reviewItems = useMemo(
     () =>
