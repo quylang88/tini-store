@@ -6,6 +6,7 @@ import { getOrderDisplayName } from "../../utils/orderUtils";
 import useModalCache from "../../hooks/useModalCache";
 import Button from "../../components/common/Button";
 import { exportOrderToHTML } from "../../utils/fileUtils";
+import ExpandableProductName from "../../components/common/ExpandableProductName";
 
 // OrderDetailModal: Xem chi tiết đơn hàng (View Only) -> showCloseIcon={false}
 const OrderDetailModal = ({ order, onClose, getOrderStatusInfo }) => {
@@ -90,17 +91,20 @@ const OrderDetailModal = ({ order, onClose, getOrderStatusInfo }) => {
           {cachedOrder.items.map((item, index) => (
             <div
               key={`${item.productId}-${index}`}
-              className="flex justify-between text-sm text-gray-600"
+              className="flex justify-between items-start text-sm text-gray-600"
             >
-              <div className="min-w-0">
-                <div className="flex items-center gap-2 text-rose-900">
-                  <span className="font-semibold truncate">{item.name}</span>
-                  <span className="text-xs text-gray-400">
+              <div className="min-w-0 flex-1 mr-2">
+                <ExpandableProductName
+                  name={item.name}
+                  textClassName="font-semibold text-rose-900"
+                  // Here we don't hide siblings (price), we just allow name expansion.
+                  // So we pass no children.
+                />
+                <div className="text-xs text-gray-400 mt-0.5">
                     x{item.quantity}
-                  </span>
                 </div>
               </div>
-              <div className="font-semibold text-rose-700">
+              <div className="font-semibold text-rose-700 whitespace-nowrap">
                 {formatNumber(item.price * item.quantity)}đ
               </div>
             </div>

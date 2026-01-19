@@ -1,10 +1,11 @@
-import React, { useState } from "react";
+import React from "react";
 import { Plus, Minus, Search, Image as ImageIcon } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { formatInputNumber } from "../../../utils/helpers";
 import { getWarehouseLabel } from "../../../utils/warehouseUtils";
 import ProductFilterSection from "../../../components/common/ProductFilterSection";
 import useLongPress from "../../../hooks/useLongPress";
+import ExpandableProductName from "../../../components/common/ExpandableProductName";
 
 const QuantityStepper = ({ qty, availableStock, adjustQuantity, handleQuantityChange, id }) => {
   // Long press for +
@@ -65,8 +66,6 @@ const OrderCreateItem = ({
   adjustQuantity,
   handleQuantityChange,
 }) => {
-  const [isExpanded, setIsExpanded] = useState(false);
-
   return (
     <motion.div
       layout
@@ -93,51 +92,35 @@ const OrderCreateItem = ({
       </div>
 
       <div className="flex-1 min-w-0">
-        <div
-          onClick={() => setIsExpanded(!isExpanded)}
-          className={`font-bold text-rose-800 text-sm cursor-pointer mb-1 ${
-            !isExpanded ? "truncate" : "whitespace-normal break-words"
-          }`}
-        >
-          {p.name}
-        </div>
-
-        <AnimatePresence>
-          {!isExpanded && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: "auto" }}
-              exit={{ opacity: 0, height: 0 }}
-              className="grid grid-cols-2 gap-2 text-[10px]"
-            >
-              <div className="space-y-1">
-                <div className="flex items-center">
-                  <span className="font-bold text-rose-700 text-sm">
-                    {priceOverrides?.[p.id] !== undefined
-                      ? formatInputNumber(priceOverrides[p.id])
-                      : formatInputNumber(p.price)}
-                  </span>
-                  <span className="text-rose-700 font-bold text-sm ml-0.5">
-                    đ
-                  </span>
-                </div>
-              </div>
-
-              <div className="text-right space-y-1">
-                <span
-                  className={`text-[10px] text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded whitespace-nowrap inline-block ${
-                    activeCategory !== "Tất cả" ? "invisible" : ""
-                  }`}
-                >
-                  {p.category}
+        <ExpandableProductName name={p.name}>
+          <div className="grid grid-cols-2 gap-2 text-[10px]">
+            <div className="space-y-1">
+              <div className="flex items-center">
+                <span className="font-bold text-rose-700 text-sm">
+                  {priceOverrides?.[p.id] !== undefined
+                    ? formatInputNumber(priceOverrides[p.id])
+                    : formatInputNumber(p.price)}
                 </span>
-                <div className="text-amber-600 text-[10px] origin-right">
-                  Kho {getWarehouseLabel(selectedWarehouse)}: {availableStock}
-                </div>
+                <span className="text-rose-700 font-bold text-sm ml-0.5">
+                  đ
+                </span>
               </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+            </div>
+
+            <div className="text-right space-y-1">
+              <span
+                className={`text-[10px] text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded whitespace-nowrap inline-block ${
+                  activeCategory !== "Tất cả" ? "invisible" : ""
+                }`}
+              >
+                {p.category}
+              </span>
+              <div className="text-amber-600 text-[10px] origin-right">
+                Kho {getWarehouseLabel(selectedWarehouse)}: {availableStock}
+              </div>
+            </div>
+          </div>
+        </ExpandableProductName>
       </div>
 
       <div className="flex-shrink-0">
