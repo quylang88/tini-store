@@ -2,34 +2,60 @@ import { useRef, useEffect, useCallback } from "react";
 
 const useLongPress = (
   callback,
-  { speed = 100, delay = 500, enabled = true } = {}
+  {
+    speed = 100, // Base speed (ms between calls)
+    delay = 500, // Initial delay before repeating starts
+    enabled = true,
+    accelerate = false, // Enable acceleration
+    maxSpeed = 30, // Fastest speed (min ms)
+    accelerationStep = 0.8, // Multiply interval by this factor
+  } = {}
 ) => {
   const timeoutRef = useRef(null);
-  const intervalRef = useRef(null);
   const isPressingRef = useRef(false);
+  const currentSpeedRef = useRef(speed);
 
-  const start = useCallback(() => {
-    if (!enabled) return;
-    if (isPressingRef.current) return;
-    isPressingRef.current = true;
-    callback(); // Fire immediately
+  // Helper to run the loop with dynamic speed
+  const loop = useCallback(() => {
+    if (!isPressingRef.current || !enabled) return;
 
-    timeoutRef.current = setTimeout(() => {
-      intervalRef.current = setInterval(() => {
-        callback();
-      }, speed);
-    }, delay);
-  }, [callback, delay, enabled, speed]);
+    callback();
+
+    if (accelerate) {
+      currentSpeedRef.current = Math.max(
+        currentSpeedRef.current * accelerationStep,
+        maxSpeed
+      );
+    }
+
+    timeoutRef.current = setTimeout(loop, currentSpeedRef.current);
+  }, [callback, enabled, accelerate, maxSpeed, accelerationStep]);
+
+  const start = useCallback(
+    (e) => {
+      // Note: We don't preventDefault here to allow click events if needed,
+      // but users of this hook might want to if it conflicts with scrolling.
+      if (!enabled) return;
+      if (isPressingRef.current) return;
+
+      isPressingRef.current = true;
+      currentSpeedRef.current = speed; // Reset speed
+
+      callback(); // Fire immediately
+
+      timeoutRef.current = setTimeout(() => {
+        // Start the loop
+        loop();
+      }, delay);
+    },
+    [callback, delay, enabled, speed, loop]
+  );
 
   const stop = useCallback(() => {
     isPressingRef.current = false;
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
       timeoutRef.current = null;
-    }
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current);
-      intervalRef.current = null;
     }
   }, []);
 

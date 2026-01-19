@@ -140,7 +140,7 @@ const Settings = ({
             {settings.categories.map((cat) => (
               <div
                 key={cat}
-                className="bg-rose-50 text-rose-800 px-3 py-1.5 rounded-full text-sm flex items-center gap-2 border border-gray-200"
+                className="bg-rose-50 text-rose-800 px-3 py-1.5 rounded-full text-sm flex items-center gap-2 border border-rose-200"
               >
                 {cat}
                 {cat !== "Chung" && (
