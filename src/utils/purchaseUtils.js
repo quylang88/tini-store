@@ -143,12 +143,9 @@ export const consumePurchaseLots = (product, warehouseKey, quantity) => {
     remaining -= used;
   }
 
-  // Lọc bỏ các lot đã hết hàng (quantity <= 0)
-  const filteredLots = lots.filter((lot) => (Number(lot.quantity) || 0) > 0);
-
   return {
     ...product,
-    purchaseLots: filteredLots,
+    purchaseLots: lots,
   };
 };
 
