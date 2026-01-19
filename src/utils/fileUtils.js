@@ -156,9 +156,9 @@ export const generateOrderHTMLContent = async (order) => {
   let customerName = escapeHtml(order.customerName || "Khách lẻ");
   if (order.orderType === 'warehouse') {
     if (order.warehouse === 'vinhPhuc') {
-      customerName = "Kho Vĩnh Phúc : Mẹ Hương";
+      customerName = "Mẹ Hương";
     } else if (order.warehouse === 'daLat') {
-       customerName = "Kho Lâm Đồng : Mẹ Nguyệt";
+       customerName = "Mẹ Nguyệt";
     }
   }
 
@@ -167,7 +167,7 @@ export const generateOrderHTMLContent = async (order) => {
 
   const logoBase64 = await fetchLogoBase64();
   const logoHtml = logoBase64
-    ? `<img src="${logoBase64}" alt="Tiny Shop Logo" style="height: 60px; margin-bottom: 5px;">`
+    ? `<img src="${logoBase64}" alt="Tiny Shop Logo" style="height: 100px; margin-bottom: 5px;">`
     : `<h1 class="shop-name">Tiny Shop</h1>`;
 
   // Inline CSS for receipt styling

@@ -41,7 +41,8 @@ const useLongPress = (
       isPressingRef.current = true;
       currentSpeedRef.current = speed; // Reset speed
 
-      callback(); // Fire immediately
+      // Remove immediate callback to prevent conflict with onClick (double tap issue)
+      // callback(); // Fire immediately
 
       timeoutRef.current = setTimeout(() => {
         // Start the loop
