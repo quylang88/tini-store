@@ -128,17 +128,47 @@ const escapeHtml = (unsafe) => {
     .replace(/'/g, "&#039;");
 };
 
-export const generateOrderHTMLContent = (order) => {
+const fetchLogoBase64 = async () => {
+  try {
+    const response = await fetch("/tiny-shop-transparent.png");
+    const blob = await response.blob();
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result);
+      reader.onerror = () => resolve(null);
+      reader.readAsDataURL(blob);
+    });
+  } catch (error) {
+    console.error("Failed to load logo", error);
+    return null;
+  }
+};
+
+export const generateOrderHTMLContent = async (order) => {
   const items = order.items || order.products || [];
   const orderId = order.orderNumber
     ? `#${order.orderNumber}`
     : `#${order.id.slice(-4)}`;
   const orderDate = new Date(order.date).toLocaleString("vi-VN");
   const total = formatNumber(order.total || 0);
-  const shipping = order.shippingFee ? formatNumber(order.shippingFee) : "0";
-  const customerName = escapeHtml(order.customerName || "Khách lẻ");
+
+  // Custom Customer Name logic for warehouse orders
+  let customerName = escapeHtml(order.customerName || "Khách lẻ");
+  if (order.orderType === 'warehouse') {
+    if (order.warehouse === 'vinhPhuc') {
+      customerName = "Kho Vĩnh Phúc : Mẹ Hương";
+    } else if (order.warehouse === 'daLat') {
+       customerName = "Kho Lâm Đồng : Mẹ Nguyệt";
+    }
+  }
+
   const customerAddress = escapeHtml(order.customerAddress || "");
   const orderComment = escapeHtml(order.comment || "");
+
+  const logoBase64 = await fetchLogoBase64();
+  const logoHtml = logoBase64
+    ? `<img src="${logoBase64}" alt="Tiny Shop Logo" style="height: 60px; margin-bottom: 5px;">`
+    : `<h1 class="shop-name">Tiny Shop</h1>`;
 
   // Inline CSS for receipt styling
   const style = `
@@ -152,6 +182,7 @@ export const generateOrderHTMLContent = (order) => {
       th { text-align: left; border-bottom: 2px solid #e11d48; padding: 8px 4px; color: #9f1239; font-weight: 600; }
       td { padding: 8px 4px; border-bottom: 1px solid #eee; vertical-align: top; }
       .right { text-align: right; }
+      .center { text-align: center; }
       .total-section { border-top: 2px dashed #e11d48; padding-top: 15px; }
       .row { display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 14px; }
       .final-total { font-size: 20px; font-weight: bold; color: #e11d48; margin-top: 10px; }
@@ -161,16 +192,20 @@ export const generateOrderHTMLContent = (order) => {
 
   const itemsRows = items
     .map(
-      (item, index) => `
+      (item, index) => {
+        const unitPrice = item.price !== undefined ? item.price : item.sellingPrice || 0;
+        return `
     <tr>
       <td style="width: 5%; color: #999;">${index + 1}</td>
       <td>
         <div style="font-weight: 500;">${escapeHtml(item.name)}</div>
       </td>
-      <td class="right" style="width: 15%;">x${item.quantity}</td>
-      <td class="right" style="width: 25%; font-weight: 500;">${formatNumber(item.price !== undefined ? item.price : item.sellingPrice || 0)}đ</td>
+      <td class="right" style="width: 20%;">${formatNumber(unitPrice)}đ</td>
+      <td class="center" style="width: 10%;">${item.quantity}</td>
+      <td class="right" style="width: 25%; font-weight: 500;">${formatNumber(unitPrice * item.quantity)}đ</td>
     </tr>
-  `,
+  `;
+      }
     )
     .join("");
 
@@ -185,7 +220,7 @@ export const generateOrderHTMLContent = (order) => {
 </head>
 <body>
   <div class="header">
-    <h1 class="shop-name">Tiny Shop</h1>
+    ${logoHtml}
     <div class="meta">Phiếu xuất kho / Hóa đơn bán hàng</div>
     <div class="meta">${orderId} - ${orderDate}</div>
   </div>
@@ -201,7 +236,8 @@ export const generateOrderHTMLContent = (order) => {
       <tr>
         <th>#</th>
         <th>Sản phẩm</th>
-        <th class="right">SL</th>
+        <th class="right">Đơn giá</th>
+        <th class="center">SL</th>
         <th class="right">Thành tiền</th>
       </tr>
     </thead>
@@ -211,16 +247,6 @@ export const generateOrderHTMLContent = (order) => {
   </table>
 
   <div class="total-section">
-    ${
-      order.shippingFee
-        ? `
-    <div class="row">
-      <span>Phí vận chuyển:</span>
-      <span>${shipping}đ</span>
-    </div>
-    `
-        : ""
-    }
     <div class="row final-total">
       <span>Tổng cộng:</span>
       <span>${total}đ</span>
@@ -228,8 +254,7 @@ export const generateOrderHTMLContent = (order) => {
   </div>
 
   <div class="footer">
-    Cảm ơn quý khách đã mua hàng!<br>
-    Powered by Tiny Shop
+    Cảm ơn quý khách đã mua hàng!
   </div>
 </body>
 </html>
@@ -239,7 +264,7 @@ export const generateOrderHTMLContent = (order) => {
 export const exportOrderToHTML = async (order) => {
   if (!order) return;
 
-  const htmlContent = generateOrderHTMLContent(order);
+  const htmlContent = await generateOrderHTMLContent(order);
 
   // Create filename: Don_hang_ID.html
   const orderId = order.orderNumber ? order.orderNumber : order.id.slice(-4);
@@ -249,7 +274,7 @@ export const exportOrderToHTML = async (order) => {
     htmlContent,
     fileName,
     "text/html",
-    "Xuất đơn hàng",
+    "Xuất hóa đơn",
     `Đơn hàng ${orderId}`,
   );
 };

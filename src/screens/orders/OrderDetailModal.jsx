@@ -44,7 +44,7 @@ const OrderDetailModal = ({ order, onClose, getOrderStatusInfo }) => {
         onClick={() => exportOrderToHTML(cachedOrder)}
         className="flex-1"
       >
-        Xuất File
+        Xuất hoá đơn
       </Button>
     </div>
   );
