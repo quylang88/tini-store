@@ -14,9 +14,13 @@ export const getInventoryValidationError = ({
   editingLotId,
 }) => {
   if (!formData.name || !formData.price) {
+    const missing = [];
+    if (!formData.name) missing.push("name");
+    if (!formData.price) missing.push("price");
     return {
       title: "Thiếu thông tin",
       message: "Vui lòng nhập Tên sản phẩm và Giá bán trước khi lưu.",
+      missingFields: missing,
     };
   }
 
@@ -65,6 +69,7 @@ export const getInventoryValidationError = ({
     return {
       title: "Thiếu số lượng nhập",
       message: "Sản phẩm mới cần có số lượng nhập kho ban đầu.",
+      missingFields: ["quantity"],
     };
   }
 
@@ -72,6 +77,7 @@ export const getInventoryValidationError = ({
     return {
       title: "Thiếu số lượng",
       message: "Vui lòng nhập số lượng cho lần nhập hàng này.",
+      missingFields: ["quantity"],
     };
   }
 
@@ -79,6 +85,7 @@ export const getInventoryValidationError = ({
     return {
       title: "Thiếu giá nhập",
       message: "Vui lòng nhập giá nhập khi có số lượng nhập kho.",
+      missingFields: ["costJPY", "costVNDInput"],
     };
   }
 
@@ -91,6 +98,7 @@ export const getInventoryValidationError = ({
     return {
       title: "Thiếu cân nặng",
       message: "Vui lòng nhập cân nặng nếu mua tại Nhật.",
+      missingFields: ["shippingWeightKg"],
     };
   }
 

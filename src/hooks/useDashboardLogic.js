@@ -30,36 +30,36 @@ const useDashboardLogic = ({ products, orders, rangeMode = "dashboard" }) => {
   const [currentDate] = useState(() => new Date());
 
   const [activeRange, setActiveRange] = useState(
-    rangeMode === "detail" ? "custom" : "month"
+    rangeMode === "detail" ? "custom" : "month",
   );
   const [topLimit, setTopLimit] = useState(3);
   const [customRange, setCustomRange] = useState({ start: null, end: null });
 
   const rangeOptions = useMemo(
     () => buildRangeOptions(rangeMode, currentDate),
-    [rangeMode, currentDate]
+    [rangeMode, currentDate],
   );
 
   // Map giá vốn theo sản phẩm để tính lợi nhuận ổn định
   const costMap = useMemo(
     () =>
       new Map(
-        products.map((product) => [product.id, getLatestUnitCost(product)])
+        products.map((product) => [product.id, getLatestUnitCost(product)]),
       ),
-    [products]
+    [products],
   );
 
   // Chỉ lấy đơn đã thanh toán để tránh lệch doanh thu/lợi nhuận
   const paidOrders = useMemo(
     () => orders.filter((order) => order.status === "paid"),
-    [orders]
+    [orders],
   );
 
   const activeOption = useMemo(
     () =>
       rangeOptions.find((option) => option.id === activeRange) ||
       rangeOptions[0] || { days: null },
-    [activeRange, rangeOptions]
+    [activeRange, rangeOptions],
   );
 
   const rangeStart = useMemo(() => {
@@ -101,7 +101,7 @@ const useDashboardLogic = ({ products, orders, rangeMode = "dashboard" }) => {
 
   const totalRevenue = useMemo(
     () => filteredPaidOrders.reduce((sum, order) => sum + order.total, 0),
-    [filteredPaidOrders]
+    [filteredPaidOrders],
   );
 
   const totalProfit = useMemo(
@@ -118,7 +118,7 @@ const useDashboardLogic = ({ products, orders, rangeMode = "dashboard" }) => {
         const shippingFee = order.shippingFee || 0;
         return sum + orderProfit - shippingFee;
       }, 0),
-    [filteredPaidOrders, costMap]
+    [filteredPaidOrders, costMap],
   );
 
   // --- Logic mới cho Vốn & Hàng tồn lâu ---
@@ -162,12 +162,12 @@ const useDashboardLogic = ({ products, orders, rangeMode = "dashboard" }) => {
         if (p.purchaseLots && p.purchaseLots.length > 0) {
           // Lọc các lô còn hàng
           const activeLots = p.purchaseLots.filter(
-            (l) => (Number(l.quantity) || 0) > 0
+            (l) => (Number(l.quantity) || 0) > 0,
           );
           if (activeLots.length > 0) {
             // Sắp xếp theo ngày tạo (cũ nhất đầu tiên)
             activeLots.sort(
-              (a, b) => new Date(a.createdAt) - new Date(b.createdAt)
+              (a, b) => new Date(a.createdAt) - new Date(b.createdAt),
             );
             const oldestLot = activeLots[0];
             if (oldestLot.createdAt) {
@@ -198,7 +198,7 @@ const useDashboardLogic = ({ products, orders, rangeMode = "dashboard" }) => {
 
   const productMeta = useMemo(
     () => new Map(products.map((product) => [product.id, product])),
-    [products]
+    [products],
   );
 
   const productStats = useMemo(() => {
@@ -210,7 +210,7 @@ const useDashboardLogic = ({ products, orders, rangeMode = "dashboard" }) => {
         if (!stats.has(key)) {
           stats.set(key, {
             id: item.productId,
-            name: item.name || product?.name || "Sản phẩm khác",
+            name: product?.name || item.name || "Sản phẩm khác",
             image: product?.image || "",
             quantity: 0,
             profit: 0,
@@ -233,7 +233,7 @@ const useDashboardLogic = ({ products, orders, rangeMode = "dashboard" }) => {
         .filter((item) => item.profit > 0 || item.quantity > 0)
         .sort((a, b) => b.profit - a.profit)
         .slice(0, topLimit),
-    [productStats, topLimit]
+    [productStats, topLimit],
   );
 
   const topByQuantity = useMemo(
@@ -242,7 +242,7 @@ const useDashboardLogic = ({ products, orders, rangeMode = "dashboard" }) => {
         .filter((item) => item.quantity > 0)
         .sort((a, b) => b.quantity - a.quantity)
         .slice(0, topLimit),
-    [productStats, topLimit]
+    [productStats, topLimit],
   );
 
   return {
@@ -266,7 +266,7 @@ const useDashboardLogic = ({ products, orders, rangeMode = "dashboard" }) => {
             endDay.setHours(0, 0, 0, 0);
             return Math.max(1, Math.round((endDay - startDay) / 86400000) + 1);
           })()
-        : activeOption?.days ?? null,
+        : (activeOption?.days ?? null),
     paidOrders,
     filteredPaidOrders,
     totalRevenue,

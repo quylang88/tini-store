@@ -10,14 +10,9 @@ import {
   buildNextProductFromForm,
   getInventoryValidationError,
 } from "./inventory/inventorySaveUtils";
+import useHighlightFields from "./useHighlightFields";
 
-const useInventoryLogic = ({
-  products,
-  setProducts,
-  orders,
-  setOrders,
-  settings,
-}) => {
+const useInventoryLogic = ({ products, setProducts, settings }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [showScanner, setShowScanner] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
@@ -35,7 +30,10 @@ const useInventoryLogic = ({
   const [warehouseFilter, setWarehouseFilter] = useState("all");
 
   // State quản lý sắp xếp (Mặc định: nhập mới nhất trước)
-  const [sortConfig, setSortConfig] = useState({ key: "date", direction: "desc" });
+  const [sortConfig, setSortConfig] = useState({
+    key: "date",
+    direction: "desc",
+  });
 
   // Form data phục vụ nhập kho: nhập giá, tồn kho, phí gửi theo từng kho.
   const {
@@ -47,6 +45,8 @@ const useInventoryLogic = ({
     handleDecimalChange,
     handleImageSelect,
   } = useInventoryFormState({ settings, activeCategory });
+
+  const highlightOps = useHighlightFields();
 
   const handleScanSuccess = (decodedText) => {
     setShowScanner(false);
@@ -66,7 +66,7 @@ const useInventoryLogic = ({
         openModal();
         setTimeout(
           () => setFormData((prev) => ({ ...prev, barcode: decodedText })),
-          100
+          100,
         );
       }
     }
@@ -81,6 +81,9 @@ const useInventoryLogic = ({
     });
     if (validationError) {
       setErrorModal(validationError);
+      if (validationError.missingFields) {
+        highlightOps.triggerHighlights(validationError.missingFields);
+      }
       return false;
     }
 
@@ -93,23 +96,8 @@ const useInventoryLogic = ({
 
     if (editingProduct) {
       setProducts(
-        products.map((p) => (p.id === editingProduct.id ? nextProduct : p))
+        products.map((p) => (p.id === editingProduct.id ? nextProduct : p)),
       );
-
-      // Cập nhật tên sản phẩm trong các đơn hàng cũ (nếu có thay đổi tên)
-      if (orders && setOrders && editingProduct.name !== nextProduct.name) {
-        setOrders(
-          orders.map((order) => ({
-            ...order,
-            items: order.items.map((item) => {
-              if (item.productId === editingProduct.id) {
-                return { ...item, name: nextProduct.name };
-              }
-              return item;
-            }),
-          }))
-        );
-      }
     } else {
       setProducts([...products, nextProduct]);
     }
@@ -137,7 +125,7 @@ const useInventoryLogic = ({
   const hasFormChanges = () => {
     if (!initialFormDataRef.current) return false;
     const initialSnapshot = JSON.stringify(
-      buildComparableFormData(initialFormDataRef.current)
+      buildComparableFormData(initialFormDataRef.current),
     );
     const currentSnapshot = JSON.stringify(buildComparableFormData(formData));
     return initialSnapshot !== currentSnapshot;
@@ -261,6 +249,7 @@ const useInventoryLogic = ({
     handleSelectExistingProduct,
     sortConfig,
     setSortConfig,
+    highlightOps,
   };
 };
 

@@ -31,6 +31,7 @@ const Inventory = ({
       mode: "staged",
       setTabBarVisible,
       searchHideThreshold: 140,
+      showTabBarOnlyAtTop: true,
     });
 
   const {
@@ -67,6 +68,7 @@ const Inventory = ({
     setWarehouseFilter,
     sortConfig,
     setSortConfig,
+    highlightOps,
   } = useInventoryLogic({ products, setProducts, orders, setOrders, settings });
 
   // Đã loại bỏ useFilterTransition để tránh remount list gây khựng.
@@ -158,12 +160,12 @@ const Inventory = ({
       {/* Tách form modal và bổ sung nút chụp ảnh từ camera */}
       {/* Modal sửa thông tin cơ bản */}
       <ProductBasicInfoModal
-        key={editingBasicInfoProduct?.id}
         isOpen={Boolean(editingBasicInfoProduct)}
         product={editingBasicInfoProduct}
         categories={settings.categories}
         onClose={() => setEditingBasicInfoProduct(null)}
         onShowScanner={() => setShowScanner(true)}
+        onError={setErrorModal}
         onSave={(updatedProduct) => {
           const newProducts = products.map((p) =>
             p.id === updatedProduct.id ? updatedProduct : p,
@@ -197,6 +199,7 @@ const Inventory = ({
         onDecimalChange={handleDecimalChange}
         onCurrencyChange={handleCurrencyChange}
         onShippingMethodChange={handleShippingMethodChange}
+        highlightOps={highlightOps}
       />
 
       {/* Modal chi tiết sản phẩm khi chạm vào item */}

@@ -1,4 +1,4 @@
-import { useState } from "react";
+// Hook xử lý logic tạo/cập nhật đơn hàng
 import { syncProductsStock } from "../../utils/orderStock";
 
 const DEFAULT_STATUS = "shipping";
@@ -6,11 +6,9 @@ const DEFAULT_WAREHOUSE = "vinhPhuc";
 const DEFAULT_ORDER_TYPE = "delivery";
 
 const useOrderSubmitLogic = ({
-  products,
   setProducts,
   orders,
   setOrders,
-  cart,
   orderType,
   customerName,
   customerAddress,
@@ -22,14 +20,12 @@ const useOrderSubmitLogic = ({
   orderBeingEdited,
   clearDraft,
   setView,
-  setConfirmModal,
   setErrorModal,
 }) => {
-
   const getNextOrderNumber = () => {
     // Tạo số đơn 4 chữ số ngẫu nhiên để thay thế STT tuần tự.
     const usedNumbers = new Set(
-      orders.map((order) => String(order.orderNumber)).filter(Boolean)
+      orders.map((order) => String(order.orderNumber)).filter(Boolean),
     );
     const generateNumber = () =>
       String(Math.floor(1000 + Math.random() * 9000));
@@ -103,16 +99,17 @@ const useOrderSubmitLogic = ({
     const payload = buildOrderPayload();
     const { items, warehouse } = payload;
 
-    // Cập nhật giá sản phẩm toàn cục nếu có thay đổi trong đơn hàng
-    setProducts((prevProducts) => {
-      const productsWithUpdatedPrices = prevProducts.map((p) => {
-        const item = items.find((i) => i.productId === p.id);
-        if (item && item.price !== p.price) {
-          return { ...p, price: item.price };
-        }
-        return p;
-      });
+    // Logic tên khách mặc định cho đơn bán tại kho nếu bỏ trống
+    if (payload.orderType === "warehouse" && !payload.customerName) {
+      if (payload.warehouse === "vinhPhuc") {
+        payload.customerName = "Mẹ Hương";
+      } else if (payload.warehouse === "daLat") {
+        payload.customerName = "Mẹ Nguyệt";
+      }
+    }
 
+    // Giờ chỉ sync stock, không sync price.
+    setProducts((prevProducts) => {
       // Lấy danh sách sản phẩm cũ nếu đang sửa đơn để sync stock
       const previousItems = isUpdate ? orderBeingEdited.items : [];
       const previousWarehouse = isUpdate
@@ -120,7 +117,7 @@ const useOrderSubmitLogic = ({
         : null;
 
       return syncProductsStock(
-        productsWithUpdatedPrices,
+        prevProducts,
         items,
         previousItems,
         warehouse,
@@ -129,6 +126,8 @@ const useOrderSubmitLogic = ({
     });
 
     if (isUpdate) {
+      // Khi update, giữ status cũ. Nếu muốn reset status theo loại đơn thì logic phức tạp hơn
+      // nhưng thường update chỉ đổi nội dung.
       const updatedOrder = {
         ...orderBeingEdited,
         ...payload,
@@ -137,13 +136,17 @@ const useOrderSubmitLogic = ({
       setOrders(
         orders.map((order) =>
           order.id === orderBeingEdited.id ? updatedOrder : order,
-        )
+        ),
       );
     } else {
+      // Xác định trạng thái ban đầu: Tại kho -> Chờ thanh toán, Gửi hàng -> Đang giao
+      const initialStatus =
+        payload.orderType === "warehouse" ? "pending" : DEFAULT_STATUS;
+
       const newOrder = {
         id: Date.now().toString(),
         orderNumber: getNextOrderNumber(),
-        status: DEFAULT_STATUS,
+        status: initialStatus,
         date: new Date().toISOString(),
         ...payload,
         comment: orderComment.trim(),

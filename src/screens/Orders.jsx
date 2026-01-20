@@ -142,6 +142,7 @@ const Orders = ({
         />
         <OrderDetailModal
           order={selectedOrder}
+          products={products}
           onClose={() => setSelectedOrder(null)}
           getOrderStatusInfo={getOrderStatusInfo}
         />

@@ -39,8 +39,6 @@ const OrderCreateView = ({
   hideBackButton,
   orderComment,
   setOrderComment,
-  priceOverrides,
-  handlePriceChange,
   handleExitCreate,
   handleCancelDraft,
   handleScanForSale,
@@ -82,7 +80,7 @@ const OrderCreateView = ({
   // When editing, Title Header is taller (~74px) due to extra status text
   // Search Header: ~56px
   // We calculate dynamic top/padding based on orderBeingEdited
-  
+
   const headerHeight = orderBeingEdited ? 68 : 53;
   const searchBarHeight = 60; // Slightly more than 56 to avoid overlap
   const listPaddingTop = headerHeight + searchBarHeight;
@@ -140,8 +138,6 @@ const OrderCreateView = ({
           cart={cart}
           selectedWarehouse={selectedWarehouse}
           orderBeingEdited={orderBeingEdited}
-          priceOverrides={priceOverrides}
-          handlePriceChange={handlePriceChange}
           adjustQuantity={adjustQuantity}
           handleQuantityChange={handleQuantityChange}
           activeCategory={activeCategory}

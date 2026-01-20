@@ -64,7 +64,7 @@ const TopSellingSection = ({
                 >
                   <RankBadge rank={idx + 1} />
                   <div className="min-w-0 flex-1">
-                    <div className="truncate">{p.name}</div>
+                    <div className="font-medium text-sm truncate">{p.name}</div>
                   </div>
                 </motion.div>
               ))}
@@ -100,7 +100,7 @@ const TopSellingSection = ({
                 >
                   <RankBadge rank={idx + 1} />
                   <div className="min-w-0 flex-1">
-                    <div className="truncate">{p.name}</div>
+                    <div className="font-medium text-sm truncate">{p.name}</div>
                   </div>
                 </motion.div>
               ))}

@@ -9,7 +9,7 @@ import { exportOrderToHTML } from "../../utils/fileUtils";
 import LoadingOverlay from "../../components/common/LoadingOverlay";
 
 // OrderDetailModal: Xem chi tiết đơn hàng (View Only) -> showCloseIcon={false}
-const OrderDetailModal = ({ order, onClose, getOrderStatusInfo }) => {
+const OrderDetailModal = ({ order, products, onClose, getOrderStatusInfo }) => {
   const [isExporting, setIsExporting] = useState(false);
   // Giữ lại dữ liệu cũ để animation đóng vẫn hiển thị nội dung
   const cachedOrder = useModalCache(order, Boolean(order));
@@ -35,7 +35,7 @@ const OrderDetailModal = ({ order, onClose, getOrderStatusInfo }) => {
     // Timeout nhỏ để đảm bảo UI loading kịp render trước khi hàm export nặng chạy
     await new Promise((resolve) => setTimeout(resolve, 300));
     try {
-      await exportOrderToHTML(cachedOrder);
+      await exportOrderToHTML(cachedOrder, products);
     } catch (error) {
       console.error("Export error:", error);
       alert("Có lỗi khi xuất file");
@@ -106,24 +106,33 @@ const OrderDetailModal = ({ order, onClose, getOrderStatusInfo }) => {
 
         {/* List Items */}
         <div className="space-y-3">
-          {cachedOrder.items.map((item, index) => (
-            <div
-              key={`${item.productId}-${index}`}
-              className="flex justify-between text-sm text-gray-600"
-            >
-              <div className="min-w-0">
-                <div className="flex items-center gap-2 text-rose-900">
-                  <span className="font-semibold truncate">{item.name}</span>
-                  <span className="text-xs text-gray-400">
-                    x{item.quantity}
-                  </span>
+          {cachedOrder.items.map((item, index) => {
+            const product = products?.find(
+              (p) => p.id === item.productId || p.id === item.id,
+            );
+            const displayName = product ? product.name : item.name;
+
+            return (
+              <div
+                key={`${item.productId}-${index}`}
+                className="flex justify-between text-sm text-gray-600"
+              >
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2 text-rose-900">
+                    <span className="font-semibold truncate">
+                      {displayName}
+                    </span>
+                    <span className="text-xs text-gray-400">
+                      x{item.quantity}
+                    </span>
+                  </div>
+                </div>
+                <div className="font-semibold text-amber-600 pl-4">
+                  {formatNumber(item.price * item.quantity)}đ
                 </div>
               </div>
-              <div className="font-semibold text-rose-700">
-                {formatNumber(item.price * item.quantity)}đ
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
         {/* Summary */}
@@ -136,14 +145,17 @@ const OrderDetailModal = ({ order, onClose, getOrderStatusInfo }) => {
               </span>
             </div>
           )}
+          {/* Hiển thị Tên Khách Hàng nếu có, bất kể loại đơn */}
+          {cachedOrder.customerName && (
+            <div className="flex justify-between text-sm text-gray-500">
+              <span>Khách hàng</span>
+              <span className="font-semibold text-rose-700">
+                {cachedOrder.customerName}
+              </span>
+            </div>
+          )}
           {cachedOrder.orderType === "delivery" && (
             <>
-              <div className="flex justify-between text-sm text-gray-500">
-                <span>Khách hàng</span>
-                <span className="font-semibold text-rose-700">
-                  {cachedOrder.customerName || "-"}
-                </span>
-              </div>
               <div className="flex justify-between text-sm text-gray-500">
                 <span>Địa chỉ</span>
                 <span className="font-semibold text-rose-700 text-right">
@@ -158,13 +170,7 @@ const OrderDetailModal = ({ order, onClose, getOrderStatusInfo }) => {
               </div>
             </>
           )}
-          <div
-            className={`flex justify-between text-sm text-gray-500 ${
-              cachedOrder.orderType === "warehouse"
-                ? ""
-                : "mt-2 pt-2 border-t border-rose-200/50"
-            }`}
-          >
+          <div className="flex justify-between text-sm text-gray-500 mt-2 pt-2 border-t border-rose-200/50">
             <span className="font-medium text-rose-900">Tổng đơn</span>
             <span className="text-lg font-bold text-rose-600">
               {formatNumber(cachedOrder.total)}đ

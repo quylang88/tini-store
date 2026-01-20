@@ -8,17 +8,9 @@ import { formatNumber } from "./helpers.js";
  * @param {string} fileName - The name of the file to save.
  * @param {string} mimeType - The MIME type for the Web Share API (e.g., "application/json", "text/csv", "text/html").
  *                            Note: Fallback download uses "application/octet-stream" to force download.
- * @param {string} [shareTitle] - Optional title for the share dialog.
- * @param {string} [shareText] - Optional text description for the share dialog.
  * @returns {Promise<boolean>} - Returns true if shared/downloaded successfully.
  */
-export const shareOrDownloadFile = async (
-  content,
-  fileName,
-  mimeType,
-  shareTitle = "",
-  shareText = "",
-) => {
+export const shareOrDownloadFile = async (content, fileName, mimeType) => {
   // 1. Ưu tiên sử dụng Web Share API (dành cho Mobile/Tablet/PWA)
   // Cách này giúp mở trực tiếp Share Sheet của OS (Save to Files, AirDrop, etc.)
   // Tránh việc mở file preview text trên iOS Safari
@@ -28,13 +20,6 @@ export const shareOrDownloadFile = async (
       const shareData = {
         files: [file],
       };
-
-      // Chỉ thêm text nếu KHÔNG có file (điều này ít xảy ra ở hàm này)
-      // hoặc nếu thực sự muốn share text kèm file.
-      // Tuy nhiên, iOS có thể tách thành 2 item nếu có cả text và file.
-      // Fix: Nếu share file, ta bỏ qua text để tránh tạo file text dư thừa.
-      // Nếu muốn giữ text, có thể append vào title, nhưng title thường ngắn.
-      // Ở đây ta ưu tiên file.
 
       await navigator.share(shareData);
       return true; // Đã chia sẻ thành công
@@ -77,13 +62,7 @@ export const exportDataToJSON = async (products, orders, settings) => {
 
   const fileName = `tiny_shop_${new Date().toISOString().slice(0, 10)}.json`;
 
-  return await shareOrDownloadFile(
-    data,
-    fileName,
-    "application/json",
-    "Backup Tiny Shop",
-    "File sao lưu dữ liệu Tiny Shop",
-  );
+  return await shareOrDownloadFile(data, fileName, "application/json");
 };
 
 export const parseBackupFile = (file) => {
@@ -143,7 +122,7 @@ const fetchLogoBase64 = async () => {
   }
 };
 
-export const generateOrderHTMLContent = async (order) => {
+export const generateOrderHTMLContent = async (order, products = []) => {
   const items = order.items || order.products || [];
   const orderId = order.orderNumber
     ? `#${order.orderNumber}`
@@ -151,15 +130,9 @@ export const generateOrderHTMLContent = async (order) => {
   const orderDate = new Date(order.date).toLocaleString("vi-VN");
   const total = formatNumber(order.total || 0);
 
-  // Custom Customer Name logic for warehouse orders
-  let customerName = escapeHtml(order.customerName || "Khách lẻ");
-  if (order.orderType === 'warehouse') {
-    if (order.warehouse === 'vinhPhuc') {
-      customerName = "Mẹ Hương";
-    } else if (order.warehouse === 'daLat') {
-       customerName = "Mẹ Nguyệt";
-    }
-  }
+  // Tên khách hàng đã được xử lý default logic khi tạo đơn (saveOrder)
+  // nên ở đây chỉ cần lấy từ order.customerName hoặc fallback "Khách lẻ"
+  const customerName = escapeHtml(order.customerName || "Khách lẻ");
 
   const customerAddress = escapeHtml(order.customerAddress || "");
   const orderComment = escapeHtml(order.comment || "");
@@ -190,22 +163,25 @@ export const generateOrderHTMLContent = async (order) => {
   `;
 
   const itemsRows = items
-    .map(
-      (item, index) => {
-        const unitPrice = item.price !== undefined ? item.price : item.sellingPrice || 0;
-        return `
+    .map((item, index) => {
+      const product = products.find(
+        (p) => p.id === item.productId || p.id === item.id,
+      );
+      const displayName = product ? product.name : item.name;
+      const unitPrice =
+        item.price !== undefined ? item.price : item.sellingPrice || 0;
+      return `
     <tr>
       <td style="width: 5%; color: #999;">${index + 1}</td>
       <td>
-        <div style="font-weight: 500;">${escapeHtml(item.name)}</div>
+        <div style="font-weight: 500;">${escapeHtml(displayName)}</div>
       </td>
       <td class="right" style="width: 20%;">${formatNumber(unitPrice)}đ</td>
       <td class="center" style="width: 10%;">${item.quantity}</td>
       <td class="right" style="width: 25%; font-weight: 500;">${formatNumber(unitPrice * item.quantity)}đ</td>
     </tr>
   `;
-      }
-    )
+    })
     .join("");
 
   return `
@@ -260,20 +236,14 @@ export const generateOrderHTMLContent = async (order) => {
   `;
 };
 
-export const exportOrderToHTML = async (order) => {
+export const exportOrderToHTML = async (order, products = []) => {
   if (!order) return;
 
-  const htmlContent = await generateOrderHTMLContent(order);
+  const htmlContent = await generateOrderHTMLContent(order, products);
 
   // Create filename: Don_hang_ID.html
   const orderId = order.orderNumber ? order.orderNumber : order.id.slice(-4);
   const fileName = `Don_hang_${orderId}.html`;
 
-  await shareOrDownloadFile(
-    htmlContent,
-    fileName,
-    "text/html",
-    "Xuất hóa đơn",
-    `Đơn hàng ${orderId}`,
-  );
+  await shareOrDownloadFile(htmlContent, fileName, "text/html");
 };

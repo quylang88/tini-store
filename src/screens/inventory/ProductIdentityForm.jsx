@@ -26,7 +26,8 @@ const ProductIdentityForm = ({
   onSelectExistingProduct,
 
   // Style override
-  inputColorClass = "text-gray-900", // Default to dark/black as requested
+  inputColorClass = "text-gray-900", // Mặc định màu tối theo yêu cầu
+  highlightOps, // Prop mới để xử lý highlight
 }) => {
   const uploadInputRef = useRef(null);
   const cameraInputRef = useRef(null);
@@ -38,6 +39,11 @@ const ProductIdentityForm = ({
       event.target.value = ""; // Reset input
     }
   };
+
+  // Lấy logic highlight một cách an toàn
+  const getHighlightProps = highlightOps?.getHighlightProps || (() => ({}));
+  const isHighlighted = highlightOps?.isHighlighted || (() => false);
+  const highlightClass = highlightOps?.highlightClass || "";
 
   return (
     <div className="space-y-4">
@@ -146,11 +152,14 @@ const ProductIdentityForm = ({
           Tên sản phẩm
         </label>
         <input
-          className={`w-full border-b border-gray-200 py-2 focus:border-rose-400 outline-none font-medium disabled:text-gray-500 ${inputColorClass}`}
+          className={`w-full border-b border-gray-200 py-2 focus:border-rose-400 outline-none font-medium disabled:text-gray-500 ${inputColorClass} ${
+            isHighlighted("name") ? highlightClass : ""
+          }`}
           value={name || ""}
           onChange={(e) => onNameChange && onNameChange(e.target.value)}
           placeholder="Nhập tên..."
           disabled={disabled}
+          {...getHighlightProps("name", name)}
         />
         {/* Name Suggestions (Only relevant when editing is allowed, e.g. creating new product) */}
         {!disabled && nameSuggestions?.length > 0 && (
