@@ -8,6 +8,7 @@ import { useState, useRef } from "react";
  * @param {'staged' | 'simple'} config.mode - 'staged' (Header ẩn sau khi cuộn một đoạn) hoặc 'simple' (chỉ ẩn TabBar/AddButton).
  * @param {Function} config.setTabBarVisible - Callback tùy chọn để điều khiển TabBar toàn cục.
  * @param {number} config.searchHideThreshold - Ngưỡng tùy chỉnh để ẩn thanh tìm kiếm (mặc định 60).
+ * @param {number} config.tabBarHideThreshold - Ngưỡng cuộn tối thiểu trước khi ẩn TabBar (mặc định 100).
  * @param {boolean} config.showTabBarOnlyAtTop - Nếu true, chỉ hiện lại TabBar khi cuộn lên đến đỉnh trang (mặc định false).
  * @returns {Object} { isSearchVisible, isAddButtonVisible, handleScroll, isScrolled }
  */
@@ -15,6 +16,7 @@ const useScrollHandling = ({
   mode = "staged",
   setTabBarVisible,
   searchHideThreshold = 60,
+  tabBarHideThreshold = 100,
   showTabBarOnlyAtTop = false,
 } = {}) => {
   const [isSearchVisible, setSearchVisible] = useState(true); // Cho Header/Search
@@ -45,24 +47,31 @@ const useScrollHandling = ({
     // Kiểm tra ngưỡng/debounce
     if (Math.abs(diff) < scrollThreshold) return;
 
+    // Logic kiểm tra xem có nên ẩn TabBar không (chỉ ẩn khi cuộn xuống qua ngưỡng)
+    const shouldHideTabBar =
+      direction === "down" && currentScrollTop > tabBarHideThreshold;
+
     if (mode === "simple") {
       // Chế độ Simple: Chỉ bật/tắt TabBar/FAB
-      if (direction === "down") {
+      if (shouldHideTabBar) {
         setAddButtonVisible(false);
         if (setTabBarVisible) setTabBarVisible(false);
-      } else if (!isNearBottom) {
+      } else if (direction === "up" && !isNearBottom) {
+        // Chỉ hiện lại khi cuộn lên (và không ở đáy)
         setAddButtonVisible(true);
         if (setTabBarVisible) setTabBarVisible(true);
       }
     } else if (mode === "staged") {
       // Chế độ Staged:
-      // Xuống -> TabBar ẩn ngay lập tức. Search ẩn sau ngưỡng.
+      // Xuống -> TabBar ẩn ngay lập tức (nếu qua ngưỡng). Search ẩn sau ngưỡng riêng.
       // Lên -> Hiện lại tất cả.
 
       if (direction === "down") {
-        // Ẩn TabBar ngay lập tức
-        setAddButtonVisible(false);
-        if (setTabBarVisible) setTabBarVisible(false);
+        // Ẩn TabBar nếu qua ngưỡng
+        if (shouldHideTabBar) {
+          setAddButtonVisible(false);
+          if (setTabBarVisible) setTabBarVisible(false);
+        }
 
         // Ẩn Search nếu cuộn xuống đủ sâu (qua ngưỡng)
         if (currentScrollTop > searchHideThreshold) {
