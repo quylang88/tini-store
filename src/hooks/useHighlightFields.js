@@ -35,13 +35,15 @@ const useHighlightFields = () => {
     };
   }, [clearHighlight]);
 
+  // Updated style: Red border + Light pink background.
+  // Removed ring to avoid "square" look and potential layout shifts/clipping.
   return {
     highlightedFields,
     triggerHighlights,
     clearHighlight,
     isHighlighted,
     getHighlightProps,
-    highlightClass: " !border-rose-500 !bg-rose-50 transition-colors duration-200 "
+    highlightClass: " !border-rose-600 !bg-rose-50 transition-colors duration-200 "
   };
 };
 
