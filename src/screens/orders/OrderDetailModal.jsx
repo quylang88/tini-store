@@ -170,13 +170,7 @@ const OrderDetailModal = ({ order, products, onClose, getOrderStatusInfo }) => {
               </div>
             </>
           )}
-          <div
-            className={`flex justify-between text-sm text-gray-500 ${
-              cachedOrder.orderType === "warehouse"
-                ? ""
-                : "mt-2 pt-2 border-t border-rose-200/50"
-            }`}
-          >
+          <div className="flex justify-between text-sm text-gray-500 mt-2 pt-2 border-t border-rose-200/50">
             <span className="font-medium text-rose-900">Tổng đơn</span>
             <span className="text-lg font-bold text-rose-600">
               {formatNumber(cachedOrder.total)}đ
