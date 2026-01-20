@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { Plus, Minus, Search, Image as ImageIcon } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { formatInputNumber } from "../../../utils/helpers";
@@ -63,6 +63,193 @@ const QuantityStepper = ({
   );
 };
 
+const ProductItem = ({
+  p,
+  cart,
+  selectedWarehouse,
+  orderBeingEdited,
+  priceOverrides,
+  adjustQuantity,
+  handleQuantityChange,
+  activeCategory,
+}) => {
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  // Khi đang sửa đơn, cộng lại số lượng cũ để hiển thị tồn kho chính xác
+  const getAvailableStock = (productId, stock) => {
+    if (!orderBeingEdited) return stock;
+    const orderWarehouse = orderBeingEdited.warehouse || "daLat";
+    if (orderWarehouse !== selectedWarehouse) return stock;
+    const previousQty =
+      orderBeingEdited.items.find((item) => item.productId === productId)
+        ?.quantity || 0;
+    return stock + previousQty;
+  };
+
+  const rawQty = cart[p.id];
+  const isAdded = rawQty !== undefined;
+  // Hiển thị value cho input: nếu undefined thì fallback về 0 (nhưng UI sẽ dùng isAdded để ẩn hiện)
+  // Nếu rawQty là "" thì giữ nguyên để input rỗng.
+  const displayQty = isAdded ? rawQty : 0;
+
+  const warehouseStock =
+    selectedWarehouse === "vinhPhuc"
+      ? (p.stockByWarehouse?.vinhPhuc ?? 0)
+      : (p.stockByWarehouse?.daLat ?? p.stock ?? 0);
+  const availableStock = getAvailableStock(p.id, warehouseStock);
+  const isOutOfStock = availableStock <= 0;
+
+  // Determine text label based on state
+  // "Kho Vĩnh Phúc" -> "VP:" if active
+  const warehouseLabel = getWarehouseLabel(selectedWarehouse);
+  const shortLabel = selectedWarehouse === "vinhPhuc" ? "VP:" : "LĐ:";
+
+  // Logic:
+  // 1. If in cart (stepper active) -> show short label ("VP:" or "LĐ:")
+  // 2. If not in cart -> show long label ("Kho Vĩnh Phúc:")
+
+  // Also, hiding logic:
+  // "Trong TH đang mở thanh tăng giảm số lượng (isAdded) mà tên dài quá user chạm expand name (isExpanded)
+  // thì danh mục và số lượng kho hàng sẽ có animaation biến mất"
+  const shouldHideInfo = isAdded && isExpanded;
+
+  // New Logic:
+  // When expanded, we ALWAYS use short label to save space for the name
+  // If not expanded and not added, we use long label
+  const useShortLabel = isAdded || isExpanded;
+
+  return (
+    <motion.div
+      layout
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      exit={{ opacity: 0, scale: 0.95 }}
+      transition={{ duration: 0.2 }}
+      className={`bg-amber-50 p-3 rounded-xl shadow-sm border border-amber-100 flex gap-3 items-center ${
+        isOutOfStock ? "opacity-50 grayscale" : ""
+      }`}
+    >
+      <div className="w-14 h-14 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0 relative border border-gray-200">
+        {p.image ? (
+          <img
+            src={p.image}
+            className="w-full h-full object-cover"
+            alt={p.name}
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center">
+            <ImageIcon size={16} className="text-gray-300" />
+          </div>
+        )}
+      </div>
+
+      <motion.div layout className="flex-1 min-w-0 flex gap-2 text-[10px]">
+        {/* Cột 1: Tên + Giá bán - Use Flex grow to take space */}
+        <motion.div layout className="space-y-1 flex-1 min-w-0">
+          <ExpandableProductName
+            name={p.name}
+            className="font-bold text-rose-800 text-sm"
+            onExpandChange={setIsExpanded}
+          >
+            <div className="flex items-center">
+              <span className="font-bold text-rose-700 text-sm">
+                {priceOverrides?.[p.id] !== undefined
+                  ? formatInputNumber(priceOverrides[p.id])
+                  : formatInputNumber(p.price)}
+              </span>
+              <span className="text-rose-700 font-bold text-sm ml-0.5">đ</span>
+            </div>
+          </ExpandableProductName>
+        </motion.div>
+
+        {/* Cột 2: Danh mục + Kho hàng - Hide completely when needed */}
+        <AnimatePresence>
+          {!shouldHideInfo && (
+            <motion.div
+              layout
+              initial={{ opacity: 1, width: "auto" }}
+              animate={{ opacity: 1, width: "auto" }}
+              exit={{ opacity: 0, width: 0 }}
+              transition={{ duration: 0.2 }}
+              className="text-right space-y-1 overflow-hidden shrink-0"
+            >
+              <span
+                className={`text-[10px] text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded whitespace-nowrap inline-block ${
+                  activeCategory !== "Tất cả" ? "invisible" : ""
+                }`}
+              >
+                {p.category}
+              </span>
+              <div className="text-amber-600 text-[10px] origin-right whitespace-nowrap">
+                <AnimatePresence mode="wait" initial={false}>
+                  {useShortLabel ? (
+                    <motion.span
+                      key="short"
+                      initial={{ opacity: 0, y: 5 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -5 }}
+                    >
+                      {shortLabel}
+                    </motion.span>
+                  ) : (
+                    <motion.span
+                      key="long"
+                      initial={{ opacity: 0, y: 5 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -5 }}
+                    >
+                      Kho {warehouseLabel}:
+                    </motion.span>
+                  )}
+                </AnimatePresence>{" "}
+                {availableStock}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </motion.div>
+
+      {/* Bộ điều khiển số lượng - giữ nguyên ở bên phải cùng */}
+      <AnimatePresence mode="wait">
+        {isAdded ? (
+          <motion.div
+            key="stepper"
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.8 }}
+            transition={{ duration: 0.15 }}
+          >
+            <QuantityStepper
+              qty={displayQty}
+              availableStock={availableStock}
+              adjustQuantity={adjustQuantity}
+              handleQuantityChange={handleQuantityChange}
+              id={p.id}
+            />
+          </motion.div>
+        ) : (
+          <motion.button
+            key="add-btn"
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.8 }}
+            transition={{ duration: 0.15 }}
+            onClick={() => adjustQuantity(p.id, 1, availableStock)}
+            disabled={isOutOfStock}
+            className={`px-3 py-2 rounded-lg text-xs font-bold active:scale-95 transition shrink-0 border ${
+              isOutOfStock
+                ? "hidden"
+                : "bg-amber-100 text-amber-700 border-amber-300 active:bg-amber-200"
+            }`}
+          >
+            <Plus size={20} />
+          </motion.button>
+        )}
+      </AnimatePresence>
+    </motion.div>
+  );
+};
+
 const OrderCreateProductList = ({
   filteredProducts,
   handleScroll,
@@ -84,17 +271,6 @@ const OrderCreateProductList = ({
   sortConfig,
   onSortChange,
 }) => {
-  // Khi đang sửa đơn, cộng lại số lượng cũ để hiển thị tồn kho chính xác
-  const getAvailableStock = (productId, stock) => {
-    if (!orderBeingEdited) return stock;
-    const orderWarehouse = orderBeingEdited.warehouse || "daLat";
-    if (orderWarehouse !== selectedWarehouse) return stock;
-    const previousQty =
-      orderBeingEdited.items.find((item) => item.productId === productId)
-        ?.quantity || 0;
-    return stock + previousQty;
-  };
-
   return (
     <div
       className={`flex-1 overflow-y-auto p-3 space-y-3 pb-40 min-h-0 ${className}`}
@@ -118,107 +294,19 @@ const OrderCreateProductList = ({
       {/* Re-adding -mx-3 to compensate for parent padding */}
 
       <AnimatePresence mode="popLayout">
-        {filteredProducts.map((p) => {
-          // Lấy trực tiếp từ cart để phân biệt undefined (chưa thêm) và 0/"" (đã thêm nhưng đang sửa)
-          const rawQty = cart[p.id];
-          const isAdded = rawQty !== undefined;
-          // Hiển thị value cho input: nếu undefined thì fallback về 0 (nhưng UI sẽ dùng isAdded để ẩn hiện)
-          // Nếu rawQty là "" thì giữ nguyên để input rỗng.
-          const displayQty = isAdded ? rawQty : 0;
-
-          const warehouseStock =
-            selectedWarehouse === "vinhPhuc"
-              ? (p.stockByWarehouse?.vinhPhuc ?? 0)
-              : (p.stockByWarehouse?.daLat ?? p.stock ?? 0);
-          const availableStock = getAvailableStock(p.id, warehouseStock);
-          const isOutOfStock = availableStock <= 0;
-
-          return (
-            <motion.div
-              layout
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              transition={{ duration: 0.2 }}
-              key={p.id}
-              className={`bg-amber-50 p-3 rounded-xl shadow-sm border border-amber-100 flex gap-3 items-center ${
-                isOutOfStock ? "opacity-50 grayscale" : ""
-              }`}
-            >
-              <div className="w-14 h-14 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0 relative border border-gray-200">
-                {p.image ? (
-                  <img
-                    src={p.image}
-                    className="w-full h-full object-cover"
-                    alt={p.name}
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center">
-                    <ImageIcon size={16} className="text-gray-300" />
-                  </div>
-                )}
-              </div>
-
-              <div className="flex-1 min-w-0 grid grid-cols-2 gap-2 text-[10px]">
-                {/* Cột 1: Tên + Giá bán */}
-                <div className="space-y-1">
-                  <ExpandableProductName
-                    name={p.name}
-                    className="font-bold text-rose-800 text-sm"
-                  >
-                    <div className="flex items-center">
-                      <span className="font-bold text-rose-700 text-sm">
-                        {priceOverrides?.[p.id] !== undefined
-                          ? formatInputNumber(priceOverrides[p.id])
-                          : formatInputNumber(p.price)}
-                      </span>
-                      <span className="text-rose-700 font-bold text-sm ml-0.5">
-                        đ
-                      </span>
-                    </div>
-                  </ExpandableProductName>
-                </div>
-
-                {/* Cột 2: Danh mục + Kho hàng */}
-                <div className="text-right space-y-1">
-                  <span
-                    className={`text-[10px] text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded whitespace-nowrap inline-block ${
-                      activeCategory !== "Tất cả" ? "invisible" : ""
-                    }`}
-                  >
-                    {p.category}
-                  </span>
-                  <div className="text-amber-600 text-[10px] origin-right">
-                    Kho {getWarehouseLabel(selectedWarehouse)}: {availableStock}
-                  </div>
-                </div>
-              </div>
-
-              {/* Bộ điều khiển số lượng - giữ nguyên ở bên phải cùng */}
-              {isAdded ? (
-                <QuantityStepper
-                  qty={displayQty}
-                  availableStock={availableStock}
-                  adjustQuantity={adjustQuantity}
-                  handleQuantityChange={handleQuantityChange}
-                  id={p.id}
-                />
-              ) : (
-                <button
-                  onClick={() => adjustQuantity(p.id, 1, availableStock)}
-                  disabled={isOutOfStock}
-                  className={`px-3 py-2 rounded-lg text-xs font-bold active:scale-95 transition shrink-0 border ${
-                    isOutOfStock
-                      ? "hidden"
-                      : "bg-amber-100 text-amber-700 border-amber-300 active:bg-amber-200"
-                  }`}
-                >
-                  <Plus size={20} />
-                </button>
-              )}
-            </motion.div>
-          );
-        })}
+        {filteredProducts.map((p) => (
+          <ProductItem
+            key={p.id}
+            p={p}
+            cart={cart}
+            selectedWarehouse={selectedWarehouse}
+            orderBeingEdited={orderBeingEdited}
+            priceOverrides={priceOverrides}
+            adjustQuantity={adjustQuantity}
+            handleQuantityChange={handleQuantityChange}
+            activeCategory={activeCategory}
+          />
+        ))}
       </AnimatePresence>
 
       {filteredProducts.length === 0 && (

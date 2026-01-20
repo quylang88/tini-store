@@ -15,12 +15,14 @@ import { motion, AnimatePresence } from "framer-motion";
  * - limit: number (Giới hạn ký tự để cắt gọn, mặc định: 25)
  * - className: string (Các class CSS bổ sung)
  * - children: ReactNode (Nội dung phụ cần ẩn khi mở rộng, ví dụ: giá/tồn kho)
+ * - onExpandChange: function (Callback khi trạng thái mở rộng thay đổi)
  */
 const ExpandableProductName = ({
   name,
   limit = 25,
   className = "",
   children,
+  onExpandChange,
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const isLong = name.length > limit;
@@ -31,7 +33,11 @@ const ExpandableProductName = ({
 
   const handleToggle = () => {
     if (isLong) {
-      setIsExpanded(!isExpanded);
+      const newState = !isExpanded;
+      setIsExpanded(newState);
+      if (onExpandChange) {
+        onExpandChange(newState);
+      }
     }
   };
 
