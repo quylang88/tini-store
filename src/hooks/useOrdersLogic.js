@@ -22,18 +22,14 @@ const useOrdersLogic = ({ products, setProducts, orders, setOrders }) => {
   const [activeCategory, setActiveCategory] = useState("Tất cả");
   const [searchTerm, setSearchTerm] = useState("");
   const [orderBeingEdited, setOrderBeingEdited] = useState(null);
-  const [sortConfig, setSortConfig] = useState({ key: "date", direction: "desc" });
+  const [sortConfig, setSortConfig] = useState({
+    key: "date",
+    direction: "desc",
+  });
 
   // Sub-hooks
-  const {
-    cart,
-    setCart,
-    priceOverrides,
-    handleQuantityChange,
-    adjustQuantity,
-    handlePriceChange,
-    clearCart,
-  } = useCartLogic();
+  const { cart, setCart, handleQuantityChange, adjustQuantity, clearCart } =
+    useCartLogic();
 
   const {
     orderType,
@@ -63,7 +59,6 @@ const useOrdersLogic = ({ products, setProducts, orders, setOrders }) => {
       activeCategory,
       selectedWarehouse,
       orderBeingEdited,
-      priceOverrides,
       sortConfig,
     });
 
@@ -244,7 +239,12 @@ const useOrdersLogic = ({ products, setProducts, orders, setOrders }) => {
         setOrders((prev) =>
           prev.map((item) => {
             if (item.id !== orderId) return item;
-            const nextStatus = item.status === "paid" ? DEFAULT_STATUS : "paid";
+            let nextStatus = "paid";
+            if (item.status === "paid") {
+              // Khi huỷ thanh toán, trả về trạng thái ban đầu dựa trên loại đơn
+              nextStatus =
+                item.orderType === "warehouse" ? "pending" : DEFAULT_STATUS;
+            }
             return { ...item, status: nextStatus };
           }),
         );
@@ -281,8 +281,15 @@ const useOrdersLogic = ({ products, setProducts, orders, setOrders }) => {
     if (order.status === "paid") {
       return {
         label: "Đã thanh toán",
-        badgeClass: "border-emerald-200 bg-emerald-50 text-emerald-600",
+        badgeClass: "border-emerald-300 bg-emerald-50 text-emerald-600",
         dotClass: "bg-emerald-500",
+      };
+    }
+    if (order.status === "pending") {
+      return {
+        label: "Đang chờ thanh toán",
+        badgeClass: "border-orange-300 bg-orange-50 text-orange-600",
+        dotClass: "bg-orange-500",
       };
     }
     return {
@@ -323,8 +330,6 @@ const useOrdersLogic = ({ products, setProducts, orders, setOrders }) => {
     totalAmount,
     reviewItems,
     filteredProducts,
-    priceOverrides,
-    handlePriceChange,
     handleQuantityChange,
     adjustQuantity,
     handleScanForSale,

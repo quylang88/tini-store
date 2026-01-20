@@ -145,14 +145,17 @@ const OrderDetailModal = ({ order, products, onClose, getOrderStatusInfo }) => {
               </span>
             </div>
           )}
+          {/* Hiển thị Tên Khách Hàng nếu có, bất kể loại đơn */}
+          {cachedOrder.customerName && (
+            <div className="flex justify-between text-sm text-gray-500">
+              <span>Khách hàng</span>
+              <span className="font-semibold text-rose-700">
+                {cachedOrder.customerName}
+              </span>
+            </div>
+          )}
           {cachedOrder.orderType === "delivery" && (
             <>
-              <div className="flex justify-between text-sm text-gray-500">
-                <span>Khách hàng</span>
-                <span className="font-semibold text-rose-700">
-                  {cachedOrder.customerName || "-"}
-                </span>
-              </div>
               <div className="flex justify-between text-sm text-gray-500">
                 <span>Địa chỉ</span>
                 <span className="font-semibold text-rose-700 text-right">

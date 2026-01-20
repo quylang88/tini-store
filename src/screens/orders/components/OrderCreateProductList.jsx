@@ -68,7 +68,6 @@ const ProductItem = ({
   cart,
   selectedWarehouse,
   orderBeingEdited,
-  priceOverrides,
   adjustQuantity,
   handleQuantityChange,
   activeCategory,
@@ -167,9 +166,7 @@ const ProductItem = ({
           >
             <div className="flex items-center">
               <span className="font-bold text-rose-700 text-sm">
-                {priceOverrides?.[p.id] !== undefined
-                  ? formatInputNumber(priceOverrides[p.id])
-                  : formatInputNumber(p.price)}
+                {formatInputNumber(p.price)}
               </span>
               <span className="text-rose-700 font-bold text-sm ml-0.5">đ</span>
             </div>
@@ -270,7 +267,6 @@ const OrderCreateProductList = ({
   cart,
   selectedWarehouse,
   orderBeingEdited,
-  priceOverrides,
   adjustQuantity,
   handleQuantityChange,
   activeCategory,
@@ -315,7 +311,6 @@ const OrderCreateProductList = ({
             cart={cart}
             selectedWarehouse={selectedWarehouse}
             orderBeingEdited={orderBeingEdited}
-            priceOverrides={priceOverrides}
             adjustQuantity={adjustQuantity}
             handleQuantityChange={handleQuantityChange}
             activeCategory={activeCategory}

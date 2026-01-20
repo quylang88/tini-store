@@ -130,15 +130,9 @@ export const generateOrderHTMLContent = async (order, products = []) => {
   const orderDate = new Date(order.date).toLocaleString("vi-VN");
   const total = formatNumber(order.total || 0);
 
-  // Custom Customer Name logic for warehouse orders
-  let customerName = escapeHtml(order.customerName || "Khách lẻ");
-  if (order.orderType === "warehouse") {
-    if (order.warehouse === "vinhPhuc") {
-      customerName = "Mẹ Hương";
-    } else if (order.warehouse === "daLat") {
-      customerName = "Mẹ Nguyệt";
-    }
-  }
+  // Tên khách hàng đã được xử lý default logic khi tạo đơn (saveOrder)
+  // nên ở đây chỉ cần lấy từ order.customerName hoặc fallback "Khách lẻ"
+  const customerName = escapeHtml(order.customerName || "Khách lẻ");
 
   const customerAddress = escapeHtml(order.customerAddress || "");
   const orderComment = escapeHtml(order.comment || "");
