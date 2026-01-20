@@ -95,21 +95,6 @@ const useInventoryLogic = ({
       setProducts(
         products.map((p) => (p.id === editingProduct.id ? nextProduct : p))
       );
-
-      // Cập nhật tên sản phẩm trong các đơn hàng cũ (nếu có thay đổi tên)
-      if (orders && setOrders && editingProduct.name !== nextProduct.name) {
-        setOrders(
-          orders.map((order) => ({
-            ...order,
-            items: order.items.map((item) => {
-              if (item.productId === editingProduct.id) {
-                return { ...item, name: nextProduct.name };
-              }
-              return item;
-            }),
-          }))
-        );
-      }
     } else {
       setProducts([...products, nextProduct]);
     }

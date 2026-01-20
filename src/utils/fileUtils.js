@@ -16,8 +16,6 @@ export const shareOrDownloadFile = async (
   content,
   fileName,
   mimeType,
-  shareTitle = "",
-  shareText = "",
 ) => {
   // 1. Ưu tiên sử dụng Web Share API (dành cho Mobile/Tablet/PWA)
   // Cách này giúp mở trực tiếp Share Sheet của OS (Save to Files, AirDrop, etc.)
@@ -81,8 +79,6 @@ export const exportDataToJSON = async (products, orders, settings) => {
     data,
     fileName,
     "application/json",
-    "Backup Tiny Shop",
-    "File sao lưu dữ liệu Tiny Shop",
   );
 };
 
@@ -143,7 +139,7 @@ const fetchLogoBase64 = async () => {
   }
 };
 
-export const generateOrderHTMLContent = async (order) => {
+export const generateOrderHTMLContent = async (order, products = []) => {
   const items = order.items || order.products || [];
   const orderId = order.orderNumber
     ? `#${order.orderNumber}`
@@ -192,12 +188,14 @@ export const generateOrderHTMLContent = async (order) => {
   const itemsRows = items
     .map(
       (item, index) => {
+        const product = products.find(p => p.id === item.productId || p.id === item.id);
+        const displayName = product ? product.name : item.name;
         const unitPrice = item.price !== undefined ? item.price : item.sellingPrice || 0;
         return `
     <tr>
       <td style="width: 5%; color: #999;">${index + 1}</td>
       <td>
-        <div style="font-weight: 500;">${escapeHtml(item.name)}</div>
+        <div style="font-weight: 500;">${escapeHtml(displayName)}</div>
       </td>
       <td class="right" style="width: 20%;">${formatNumber(unitPrice)}đ</td>
       <td class="center" style="width: 10%;">${item.quantity}</td>
@@ -260,10 +258,10 @@ export const generateOrderHTMLContent = async (order) => {
   `;
 };
 
-export const exportOrderToHTML = async (order) => {
+export const exportOrderToHTML = async (order, products = []) => {
   if (!order) return;
 
-  const htmlContent = await generateOrderHTMLContent(order);
+  const htmlContent = await generateOrderHTMLContent(order, products);
 
   // Create filename: Don_hang_ID.html
   const orderId = order.orderNumber ? order.orderNumber : order.id.slice(-4);
@@ -273,7 +271,5 @@ export const exportOrderToHTML = async (order) => {
     htmlContent,
     fileName,
     "text/html",
-    "Xuất hóa đơn",
-    `Đơn hàng ${orderId}`,
   );
 };

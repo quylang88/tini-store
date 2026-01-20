@@ -210,7 +210,7 @@ const useDashboardLogic = ({ products, orders, rangeMode = "dashboard" }) => {
         if (!stats.has(key)) {
           stats.set(key, {
             id: item.productId,
-            name: item.name || product?.name || "Sản phẩm khác",
+            name: product?.name || item.name || "Sản phẩm khác",
             image: product?.image || "",
             quantity: 0,
             profit: 0,
