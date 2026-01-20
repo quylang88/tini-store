@@ -19,7 +19,7 @@ const OrderListView = ({
   onSelectOrder,
   setTabBarVisible,
 }) => {
-  // Ensure TabBar is visible when mounting this view (e.g. returning from Create View)
+  // Đảm bảo TabBar hiển thị khi mount view này (ví dụ: quay lại từ màn hình Tạo đơn)
   useEffect(() => {
     if (setTabBarVisible) {
       setTabBarVisible(true);

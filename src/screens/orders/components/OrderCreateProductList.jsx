@@ -5,8 +5,15 @@ import { formatInputNumber } from "../../../utils/helpers";
 import { getWarehouseLabel } from "../../../utils/warehouseUtils";
 import ProductFilterSection from "../../../components/common/ProductFilterSection";
 import useLongPress from "../../../hooks/useLongPress";
+import ExpandableProductName from "../../../components/common/ExpandableProductName";
 
-const QuantityStepper = ({ qty, availableStock, adjustQuantity, handleQuantityChange, id }) => {
+const QuantityStepper = ({
+  qty,
+  availableStock,
+  adjustQuantity,
+  handleQuantityChange,
+  id,
+}) => {
   // Long press for +
   const addProps = useLongPress(() => adjustQuantity(id, 1, availableStock), {
     enabled: qty < availableStock,
@@ -16,12 +23,15 @@ const QuantityStepper = ({ qty, availableStock, adjustQuantity, handleQuantityCh
   });
 
   // Long press for -
-  const subtractProps = useLongPress(() => adjustQuantity(id, -1, availableStock), {
-    enabled: true,
-    speed: 150,
-    delay: 500,
-    accelerate: true,
-  });
+  const subtractProps = useLongPress(
+    () => adjustQuantity(id, -1, availableStock),
+    {
+      enabled: true,
+      speed: 150,
+      delay: 500,
+      accelerate: true,
+    },
+  );
 
   return (
     <div className="flex items-center bg-rose-50 rounded-lg h-9 border border-rose-200 overflow-hidden shadow-sm shrink-0">
@@ -152,19 +162,21 @@ const OrderCreateProductList = ({
               <div className="flex-1 min-w-0 grid grid-cols-2 gap-2 text-[10px]">
                 {/* Cột 1: Tên + Giá bán */}
                 <div className="space-y-1">
-                  <div className="font-bold text-rose-800 text-sm truncate">
-                    {p.name}
-                  </div>
-                  <div className="flex items-center">
-                    <span className="font-bold text-rose-700 text-sm">
-                      {priceOverrides?.[p.id] !== undefined
-                        ? formatInputNumber(priceOverrides[p.id])
-                        : formatInputNumber(p.price)}
-                    </span>
-                    <span className="text-rose-700 font-bold text-sm ml-0.5">
-                      đ
-                    </span>
-                  </div>
+                  <ExpandableProductName
+                    name={p.name}
+                    className="font-bold text-rose-800 text-sm"
+                  >
+                    <div className="flex items-center">
+                      <span className="font-bold text-rose-700 text-sm">
+                        {priceOverrides?.[p.id] !== undefined
+                          ? formatInputNumber(priceOverrides[p.id])
+                          : formatInputNumber(p.price)}
+                      </span>
+                      <span className="text-rose-700 font-bold text-sm ml-0.5">
+                        đ
+                      </span>
+                    </div>
+                  </ExpandableProductName>
                 </div>
 
                 {/* Cột 2: Danh mục + Kho hàng */}
@@ -197,8 +209,8 @@ const OrderCreateProductList = ({
                   disabled={isOutOfStock}
                   className={`px-3 py-2 rounded-lg text-xs font-bold active:scale-95 transition shrink-0 border ${
                     isOutOfStock
-                       ? "hidden"
-                       : "bg-amber-100 text-amber-700 border-amber-300 active:bg-amber-200"
+                      ? "hidden"
+                      : "bg-amber-100 text-amber-700 border-amber-300 active:bg-amber-200"
                   }`}
                 >
                   <Plus size={20} />
