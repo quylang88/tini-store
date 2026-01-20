@@ -5,17 +5,19 @@ import { motion, AnimatePresence } from "framer-motion";
  * ExpandableProductName
  *
  * Component hiển thị tên sản phẩm có thể quá dài.
- * Mặc định sẽ hiển thị dạng cắt gọn (hoặc dùng line-clamp),
+ * Mặc định sẽ hiển thị dạng line-clamp (1 dòng),
  * và mở rộng để hiện toàn bộ tên khi chạm vào.
  *
- * Sử dụng AnimatePresence để chuyển đổi mượt mà khi thay đổi kích thước nội dung.
+ * FIX: Sử dụng style line-clamp thay vì class 'truncate' để tránh hiện tượng khựng
+ * do thay đổi thuộc tính white-space (nowrap -> normal).
  *
  * Props:
  * - name: string (Tên đầy đủ của sản phẩm)
- * - limit: number (Giới hạn ký tự để cắt gọn, mặc định: 25)
+ * - limit: number (Giới hạn ký tự - dùng để tính toán sơ bộ, logic chính dựa vào css)
  * - className: string (Các class CSS bổ sung)
  * - children: ReactNode (Nội dung phụ cần ẩn khi mở rộng, ví dụ: giá/tồn kho)
  * - onExpandChange: function (Callback khi trạng thái mở rộng thay đổi)
+ * - isExpanded: boolean (Controlled state)
  */
 const ExpandableProductName = ({
   name,
@@ -32,10 +34,6 @@ const ExpandableProductName = ({
       : internalIsExpanded;
 
   const isLong = name.length > limit;
-
-  // Sử dụng logic cắt chuỗi nội bộ nếu cần,
-  // nhưng đối với chức năng "chạm để mở rộng", ta thường chuyển đổi giữa text đầy đủ và text rút gọn.
-  // Ta dùng CSS class 'truncate' để cắt gọn hiển thị thay vì cắt chuỗi thủ công.
 
   const handleToggle = () => {
     if (isLong) {
@@ -55,19 +53,29 @@ const ExpandableProductName = ({
       className={`relative cursor-pointer transition-colors ${className}`}
     >
       <motion.div
-        layout="position"
+        layout
         transition={{ type: "spring", stiffness: 300, damping: 30 }}
-        className={!isExpanded ? "truncate" : "break-words whitespace-normal"}
+        className="break-words" // Luôn cho phép xuống dòng để tránh layout thrashing
+        style={
+          !isExpanded
+            ? {
+                display: "-webkit-box",
+                WebkitLineClamp: 1,
+                WebkitBoxOrient: "vertical",
+                overflow: "hidden",
+              }
+            : {
+                display: "block",
+              }
+        }
       >
         {name}
       </motion.div>
 
-      {/* Khi mở rộng, ta có thể muốn ẩn các chi tiết phụ (được truyền qua children)
-          để dành chỗ, hoặc giữ nguyên chúng. Memory có nhắc đến "tùy chọn ẩn chi tiết phụ".
-          Ta sẽ triển khai hành vi đó: ẩn children khi expanded. */}
       <AnimatePresence>
         {!isExpanded && (
           <motion.div
+            layout // Thêm layout prop để đồng bộ với cha
             initial={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
