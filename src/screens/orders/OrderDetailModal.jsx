@@ -127,7 +127,7 @@ const OrderDetailModal = ({ order, products, onClose, getOrderStatusInfo }) => {
                     </span>
                   </div>
                 </div>
-                <div className="font-semibold text-rose-700">
+                <div className="font-semibold text-amber-600 pl-4">
                   {formatNumber(item.price * item.quantity)}đ
                 </div>
               </div>

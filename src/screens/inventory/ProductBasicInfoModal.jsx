@@ -12,7 +12,8 @@ const ProductBasicInfoModal = ({
   onSave,
   onShowScanner,
 }) => {
-  // Directly initialize state from props.
+  // Store prevProduct to track changes for derived state update
+  const [prevProduct, setPrevProduct] = useState(product);
   const [formData, setFormData] = useState({
     name: product?.name || "",
     category: product?.category || categories[0] || "",
@@ -20,6 +21,20 @@ const ProductBasicInfoModal = ({
     price: product?.price || "",
     image: product?.image || null,
   });
+
+  // Derived state: Update formData when product changes
+  if (product !== prevProduct) {
+    setPrevProduct(product);
+    if (product) {
+      setFormData({
+        name: product.name || "",
+        category: product.category || categories[0] || "",
+        barcode: product.barcode || "",
+        price: product.price || "",
+        image: product.image || null,
+      });
+    }
+  }
 
   const handleImageFileChange = (file) => {
     if (file) {

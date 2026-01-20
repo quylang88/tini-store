@@ -161,7 +161,7 @@ const ProductItem = ({
         <div className="space-y-1 flex-1 min-w-0">
           <ExpandableProductName
             name={p.name}
-            className="font-bold text-rose-800 text-sm"
+            className="font-bold text-amber-900 text-sm"
             onExpandChange={handleExpandToggle}
             isExpanded={isNameExpanded}
           >

@@ -61,7 +61,7 @@ const ProductList = ({
               <div className="flex-1 min-w-0">
                 <div className="grid grid-cols-2 gap-2 text-[10px]">
                   <div className="space-y-1">
-                    <div className="font-bold text-rose-800 text-sm truncate">
+                    <div className="font-bold text-amber-900 text-sm truncate">
                       {product.name}
                     </div>
                     <div className="text-gray-400 font-mono">
