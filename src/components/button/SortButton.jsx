@@ -9,28 +9,28 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
+// Helper function defined outside the component to prevent "creating component during render" issues
+const getDirectionIcon = (sortType, direction) => {
+  if (sortType === 'price') {
+    // Price Asc: Cheap -> Expensive (Bars growing)
+    if (direction === 'asc') return ArrowUpNarrowWide;
+    // Price Desc: Expensive -> Cheap (Bars shrinking)
+    return ArrowDownWideNarrow;
+  }
+  if (sortType === 'date') {
+    // Date Asc: Oldest (Ascending time) -> CalendarArrowUp
+    if (direction === 'asc') return CalendarArrowUp;
+    // Newest (Descending time) -> CalendarArrowDown
+    return CalendarArrowDown;
+  }
+
+  // Default fallback
+  if (direction === 'asc') return ArrowUp;
+  return ArrowDown;
+};
+
 const SortButton = ({ active, onClick, icon: Icon, direction, label, sortType }) => {
-  // Determine the icon to show inside the motion div based on sort type and direction
-  const getDirectionIcon = () => {
-    if (sortType === 'price') {
-      // Price Asc: Cheap -> Expensive (Bars growing)
-      if (direction === 'asc') return ArrowUpNarrowWide;
-      // Price Desc: Expensive -> Cheap (Bars shrinking)
-      return ArrowDownWideNarrow;
-    }
-    if (sortType === 'date') {
-      // Date Asc: Oldest (Ascending time) -> CalendarArrowUp
-      if (direction === 'asc') return CalendarArrowUp;
-      // Newest (Descending time) -> CalendarArrowDown
-      return CalendarArrowDown;
-    }
-
-    // Default fallback
-    if (direction === 'asc') return ArrowUp;
-    return ArrowDown;
-  };
-
-  const DirectionIcon = getDirectionIcon();
+  const DirectionIcon = getDirectionIcon(sortType, direction);
 
   return (
     <button
