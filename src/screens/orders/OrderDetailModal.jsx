@@ -35,7 +35,7 @@ const OrderDetailModal = ({ order, products, onClose, getOrderStatusInfo }) => {
     // Timeout nhỏ để đảm bảo UI loading kịp render trước khi hàm export nặng chạy
     await new Promise((resolve) => setTimeout(resolve, 300));
     try {
-      await exportOrderToHTML(cachedOrder);
+      await exportOrderToHTML(cachedOrder, products);
     } catch (error) {
       console.error("Export error:", error);
       alert("Có lỗi khi xuất file");
