@@ -88,6 +88,7 @@ const ProductFilterSection = ({
               onClick={handleDateSort}
               icon={Calendar}
               label="Sort by Date"
+              sortType="date"
             />
             <SortButton
               active={sortConfig?.key === "price"}
@@ -95,6 +96,7 @@ const ProductFilterSection = ({
               onClick={handlePriceSort}
               icon={DollarSign}
               label="Sort by Price"
+              sortType="price"
             />
           </div>
         )}
