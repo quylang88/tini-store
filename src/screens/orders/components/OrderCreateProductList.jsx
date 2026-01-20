@@ -78,8 +78,10 @@ const ProductItem = ({
   const handleExpandToggle = (targetState) => {
     if (targetState) {
       // Opening: Hide info first -> then expand text
+      // FIX: Bỏ setTimeout để hiệu ứng mượt hơn (concurrent animations)
+      // ExpandableProductName đã được tối ưu với layout prop và line-clamp
       setIsInfoHidden(true);
-      setTimeout(() => setIsNameExpanded(true), 200); // 200ms matches transition duration
+      setIsNameExpanded(true);
     } else {
       // Closing: Collapse text first -> then show info
       setIsNameExpanded(false);
