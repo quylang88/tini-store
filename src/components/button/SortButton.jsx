@@ -9,28 +9,25 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
-// Helper function defined outside the component to prevent "creating component during render" issues
-const getDirectionIcon = (sortType, direction) => {
-  if (sortType === 'price') {
-    // Price Asc: Cheap -> Expensive (Bars growing)
-    if (direction === 'asc') return ArrowUpNarrowWide;
-    // Price Desc: Expensive -> Cheap (Bars shrinking)
-    return ArrowDownWideNarrow;
+// Use a static map to avoid any ambiguity about component creation
+const ICON_MAP = {
+  price: {
+    asc: ArrowUpNarrowWide,
+    desc: ArrowDownWideNarrow
+  },
+  date: {
+    asc: CalendarArrowUp,
+    desc: CalendarArrowDown
+  },
+  default: {
+    asc: ArrowUp,
+    desc: ArrowDown
   }
-  if (sortType === 'date') {
-    // Date Asc: Oldest (Ascending time) -> CalendarArrowUp
-    if (direction === 'asc') return CalendarArrowUp;
-    // Newest (Descending time) -> CalendarArrowDown
-    return CalendarArrowDown;
-  }
-
-  // Default fallback
-  if (direction === 'asc') return ArrowUp;
-  return ArrowDown;
 };
 
 const SortButton = ({ active, onClick, icon: Icon, direction, label, sortType }) => {
-  const DirectionIcon = getDirectionIcon(sortType, direction);
+  // Select the correct icon component
+  const ActiveIcon = ICON_MAP[sortType]?.[direction] || ICON_MAP.default[direction] || ArrowDown;
 
   return (
     <button
@@ -51,7 +48,7 @@ const SortButton = ({ active, onClick, icon: Icon, direction, label, sortType })
             exit={{ opacity: 0, scale: 0.5, rotate: 20 }}
             transition={{ duration: 0.2 }}
           >
-            <DirectionIcon size={20} strokeWidth={2} />
+            <ActiveIcon size={20} strokeWidth={2} />
           </motion.div>
         ) : (
           <motion.div
