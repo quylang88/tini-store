@@ -16,7 +16,10 @@ const ProductDetailModal = ({ product, onClose, onEditLot }) => {
 
   const latestLot = getLatestLot(cachedProduct);
   const latestCost = getLatestCost(cachedProduct);
-  const lots = cachedProduct.purchaseLots || [];
+  // Sort lots by newest date first
+  const lots = [...(cachedProduct.purchaseLots || [])].sort(
+    (a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0),
+  );
 
   const footer = (
     <Button variant="sheetClose" size="sm" onClick={onClose}>

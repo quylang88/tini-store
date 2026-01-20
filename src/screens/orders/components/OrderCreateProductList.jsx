@@ -112,23 +112,18 @@ const ProductItem = ({
   const isOutOfStock = availableStock <= 0;
 
   // Determine text label based on state
-  // "Kho Vĩnh Phúc" -> "VP:" if active
-  const warehouseLabel = getWarehouseLabel(selectedWarehouse);
-  const shortLabel = selectedWarehouse === "vinhPhuc" ? "VP:" : "LĐ:";
+  // Custom logic: use short labels for list items only
+  const getShortWarehouseLabel = (key) => {
+    if (key === "vinhPhuc") return "Kho VP";
+    if (key === "daLat") return "Kho LĐ";
+    return getWarehouseLabel(key);
+  };
+  const warehouseLabel = getShortWarehouseLabel(selectedWarehouse);
 
   // Logic:
-  // 1. If in cart (stepper active) -> show short label ("VP:" or "LĐ:")
-  // 2. If not in cart -> show long label ("Kho Vĩnh Phúc:")
-
-  // Also, hiding logic:
   // "Trong TH đang mở thanh tăng giảm số lượng (isAdded) mà tên dài quá user chạm expand name (isExpanded)
   // thì danh mục và số lượng kho hàng sẽ có animaation biến mất"
   const shouldHideInfo = isInfoHidden;
-
-  // New Logic:
-  // When expanded, we ALWAYS use short label to save space for the name
-  // If not expanded and not added, we use long label
-  const useShortLabel = isAdded;
 
   return (
     <motion.div
@@ -155,7 +150,7 @@ const ProductItem = ({
         )}
       </div>
 
-      <div className="flex-1 min-w-0 flex gap-2 text-[10px]">
+      <motion.div layout className="flex-1 min-w-0 flex gap-2 text-[10px]">
         {/* Cột 1: Tên + Giá bán - Use Flex grow to take space */}
         <div className="space-y-1 flex-1 min-w-0">
           <ExpandableProductName
@@ -164,12 +159,16 @@ const ProductItem = ({
             onExpandChange={handleExpandToggle}
             isExpanded={isNameExpanded}
           >
-            <div className="flex items-center">
+            {/* 
+              Use layout="position" to prevent squashing/stretching during parent width change,
+              but allows it to move vertically when name expands.
+            */}
+            <motion.div layout="position" className="flex items-center">
               <span className="font-bold text-rose-700 text-sm">
                 {formatInputNumber(p.price)}
               </span>
               <span className="text-rose-700 font-bold text-sm ml-0.5">đ</span>
-            </div>
+            </motion.div>
           </ExpandableProductName>
         </div>
 
@@ -192,43 +191,24 @@ const ProductItem = ({
                 {p.category}
               </span>
               <div className="text-amber-600 text-[10px] origin-right whitespace-nowrap">
-                <AnimatePresence mode="wait" initial={false}>
-                  {useShortLabel ? (
-                    <motion.span
-                      key="short"
-                      initial={{ opacity: 0, y: 5 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -5 }}
-                    >
-                      {shortLabel}
-                    </motion.span>
-                  ) : (
-                    <motion.span
-                      key="long"
-                      initial={{ opacity: 0, y: 5 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -5 }}
-                    >
-                      Kho {warehouseLabel}:
-                    </motion.span>
-                  )}
-                </AnimatePresence>{" "}
-                {availableStock}
+                {warehouseLabel}: {availableStock}
               </div>
             </motion.div>
           )}
         </AnimatePresence>
-      </div>
+      </motion.div>
 
       {/* Bộ điều khiển số lượng - giữ nguyên ở bên phải cùng */}
-      <AnimatePresence mode="wait">
+      <AnimatePresence mode="popLayout" initial={false}>
         {isAdded ? (
           <motion.div
+            layout
             key="stepper"
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.8 }}
-            transition={{ duration: 0.15 }}
+            transition={{ type: "spring", bounce: 0, duration: 0.3 }}
+            className="flex-shrink-0"
           >
             <QuantityStepper
               qty={displayQty}
@@ -240,11 +220,12 @@ const ProductItem = ({
           </motion.div>
         ) : (
           <motion.button
+            layout
             key="add-btn"
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.8 }}
-            transition={{ duration: 0.15 }}
+            transition={{ type: "spring", bounce: 0, duration: 0.3 }}
             onClick={() => adjustQuantity(p.id, 1, availableStock)}
             disabled={isOutOfStock}
             className={`px-3 py-2 rounded-lg text-xs font-bold active:scale-95 transition shrink-0 border ${

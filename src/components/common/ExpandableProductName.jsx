@@ -55,7 +55,7 @@ const ExpandableProductName = ({
       className={`relative cursor-pointer transition-colors ${className}`}
     >
       <motion.div
-        layout
+        layout="position"
         transition={{ type: "spring", stiffness: 300, damping: 30 }}
         className={!isExpanded ? "truncate" : "break-words whitespace-normal"}
       >

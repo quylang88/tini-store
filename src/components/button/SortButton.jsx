@@ -42,8 +42,8 @@ const SortButton = ({
       onClick={onClick}
       className={`relative flex items-center justify-center p-2 rounded-lg border transition-all active:scale-95 w-10 h-10 ${
         active
-          ? "bg-rose-100 border-rose-300 text-rose-700 shadow-sm"
-          : "bg-rose-50 border-rose-200 text-rose-400 hover:bg-rose-100 hover:text-rose-500 hover:border-rose-300"
+          ? "bg-rose-200 border-rose-300 text-rose-700 shadow-sm"
+          : "bg-rose-100/80 border-rose-200 text-rose-400 hover:text-rose-500 hover:border-rose-300"
       }`}
       aria-label={label}
     >
