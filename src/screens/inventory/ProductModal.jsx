@@ -24,7 +24,13 @@ const ProductModal = ({
   onDecimalChange,
   onShippingMethodChange,
   categories,
+  highlightOps,
 }) => {
+  // Lấy logic highlight một cách an toàn
+  const getHighlightProps = highlightOps?.getHighlightProps || (() => ({}));
+  const isHighlighted = highlightOps?.isHighlighted || (() => false);
+  const highlightClass = highlightOps?.highlightClass || "";
+
   // Tính toán lợi nhuận
   const shippingWeight = Number(formData.shippingWeightKg) || 0;
   const exchangeRateValue = Number(settings?.exchangeRate) || 0;
@@ -99,6 +105,7 @@ const ProductModal = ({
           nameSuggestions={nameSuggestions}
           onSelectExistingProduct={onSelectExistingProduct}
           inputColorClass="text-gray-900"
+          highlightOps={highlightOps}
         />
 
         {/* Khu vực giá nhập: cho chọn Yên hoặc VNĐ */}
@@ -153,11 +160,14 @@ const ProductModal = ({
                     </span>
                     <input
                       inputMode="numeric"
-                      className="w-full bg-transparent border-b border-rose-100 py-2 pl-4 focus:border-rose-400 outline-none text-gray-900 font-bold"
+                      className={`w-full bg-transparent border-b border-rose-100 py-2 pl-4 focus:border-rose-400 outline-none text-gray-900 font-bold ${
+                        isHighlighted("costJPY") ? highlightClass : ""
+                      }`}
                       value={formatInputNumber(formData.costJPY)}
                       onChange={onMoneyChange("costJPY")}
                       placeholder="0"
                       tabIndex={formData.costCurrency === "JPY" ? 0 : -1}
+                      {...getHighlightProps("costJPY", formData.costJPY)}
                     />
                   </div>
                 </div>
@@ -192,11 +202,17 @@ const ProductModal = ({
                 <span className="absolute left-0 top-2 text-rose-500">đ</span>
                 <input
                   inputMode="numeric"
-                  className="w-full bg-transparent border-b border-rose-100 py-2 pl-4 focus:border-rose-400 outline-none text-gray-900 font-bold"
+                  className={`w-full bg-transparent border-b border-rose-100 py-2 pl-4 focus:border-rose-400 outline-none text-gray-900 font-bold ${
+                    isHighlighted("costVNDInput") ? highlightClass : ""
+                  }`}
                   value={formatInputNumber(formData.costVNDInput)}
                   onChange={onMoneyChange("costVNDInput")}
                   placeholder="0"
                   tabIndex={formData.costCurrency === "VND" ? 0 : -1}
+                  {...getHighlightProps(
+                    "costVNDInput",
+                    formData.costVNDInput,
+                  )}
                 />
               </div>
             </div>
@@ -251,11 +267,17 @@ const ProductModal = ({
                 <input
                   inputMode="decimal"
                   lang="en"
-                  className="w-full bg-transparent border-b border-rose-100 py-2 focus:border-rose-400 outline-none text-gray-900 font-bold"
+                  className={`w-full bg-transparent border-b border-rose-100 py-2 focus:border-rose-400 outline-none text-gray-900 font-bold ${
+                    isHighlighted("shippingWeightKg") ? highlightClass : ""
+                  }`}
                   value={formData.shippingWeightKg}
                   onChange={onDecimalChange("shippingWeightKg")}
                   placeholder="0"
                   tabIndex={formData.shippingMethod === "jp" ? 0 : -1}
+                  {...getHighlightProps(
+                    "shippingWeightKg",
+                    formData.shippingWeightKg,
+                  )}
                 />
                 <div className="flex items-center justify-between text-xs font-semibold text-slate-500">
                   <span>
@@ -329,12 +351,15 @@ const ProductModal = ({
               </label>
               <input
                 type="number"
-                className="w-full border-b border-rose-100 bg-transparent py-2 focus:border-rose-400 outline-none text-gray-900 font-bold text-lg"
+                className={`w-full border-b border-rose-100 bg-transparent py-2 focus:border-rose-400 outline-none text-gray-900 font-bold text-lg ${
+                  isHighlighted("quantity") ? highlightClass : ""
+                }`}
                 value={formData.quantity}
                 onChange={(e) =>
                   setFormData({ ...formData, quantity: e.target.value })
                 }
                 placeholder="0"
+                {...getHighlightProps("quantity", formData.quantity)}
               />
             </div>
             <div />
@@ -349,11 +374,14 @@ const ProductModal = ({
             </label>
             <input
               inputMode="numeric"
-              className="w-full border-b border-gray-200 py-2 focus:border-rose-400 outline-none text-gray-900 font-bold text-lg disabled:text-gray-500"
+              className={`w-full border-b border-gray-200 py-2 focus:border-rose-400 outline-none text-gray-900 font-bold text-lg disabled:text-gray-500 ${
+                isHighlighted("price") ? highlightClass : ""
+              }`}
               value={formatInputNumber(formData.price)}
               onChange={onMoneyChange("price")}
               placeholder="0"
               disabled={isEditingLot}
+              {...getHighlightProps("price", formData.price)}
             />
           </div>
 

@@ -10,6 +10,7 @@ import {
   buildNextProductFromForm,
   getInventoryValidationError,
 } from "./inventory/inventorySaveUtils";
+import useHighlightFields from "./useHighlightFields";
 
 const useInventoryLogic = ({
   products,
@@ -49,6 +50,8 @@ const useInventoryLogic = ({
     handleImageSelect,
   } = useInventoryFormState({ settings, activeCategory });
 
+  const highlightOps = useHighlightFields();
+
   const handleScanSuccess = (decodedText) => {
     setShowScanner(false);
     const existingProduct = products.find((p) => p.barcode === decodedText);
@@ -82,6 +85,9 @@ const useInventoryLogic = ({
     });
     if (validationError) {
       setErrorModal(validationError);
+      if (validationError.missingFields) {
+        highlightOps.triggerHighlights(validationError.missingFields);
+      }
       return false;
     }
 
@@ -247,6 +253,7 @@ const useInventoryLogic = ({
     handleSelectExistingProduct,
     sortConfig,
     setSortConfig,
+    highlightOps,
   };
 };
 
