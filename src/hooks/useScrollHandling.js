@@ -2,25 +2,27 @@ import { useState, useRef } from "react";
 
 /**
  * useScrollHandling
- * Manages visibility of UI elements based on scroll direction and position.
+ * Quản lý hiển thị các thành phần UI dựa trên hướng và vị trí cuộn.
  *
  * @param {Object} config
- * @param {'staged' | 'simple'} config.mode - 'staged' (Header hides after short scroll) or 'simple' (only TabBar/AddButton hide).
- * @param {Function} config.setTabBarVisible - Optional callback to control global TabBar.
- * @param {number} config.searchHideThreshold - Custom threshold for hiding search bar (default 60).
+ * @param {'staged' | 'simple'} config.mode - 'staged' (Header ẩn sau khi cuộn một đoạn) hoặc 'simple' (chỉ ẩn TabBar/AddButton).
+ * @param {Function} config.setTabBarVisible - Callback tùy chọn để điều khiển TabBar toàn cục.
+ * @param {number} config.searchHideThreshold - Ngưỡng tùy chỉnh để ẩn thanh tìm kiếm (mặc định 60).
+ * @param {boolean} config.showTabBarOnlyAtTop - Nếu true, chỉ hiện lại TabBar khi cuộn lên đến đỉnh trang (mặc định false).
  * @returns {Object} { isSearchVisible, isAddButtonVisible, handleScroll, isScrolled }
  */
 const useScrollHandling = ({
   mode = "staged",
   setTabBarVisible,
   searchHideThreshold = 60,
+  showTabBarOnlyAtTop = false,
 } = {}) => {
-  const [isSearchVisible, setSearchVisible] = useState(true); // For Header/Search
-  const [isAddButtonVisible, setAddButtonVisible] = useState(true); // For FAB
-  const [isScrolled, setIsScrolled] = useState(false); // For Header shadow
+  const [isSearchVisible, setSearchVisible] = useState(true); // Cho Header/Search
+  const [isAddButtonVisible, setAddButtonVisible] = useState(true); // Cho FAB
+  const [isScrolled, setIsScrolled] = useState(false); // Cho hiệu ứng bóng đổ Header
 
   const lastScrollTop = useRef(0);
-  const scrollThreshold = 10; // Minimum delta to trigger change
+  const scrollThreshold = 10; // Delta tối thiểu để kích hoạt thay đổi
 
   const handleScroll = (e) => {
     const target = e.target;
@@ -31,20 +33,20 @@ const useScrollHandling = ({
     const diff = currentScrollTop - lastScrollTop.current;
     const direction = diff > 0 ? "down" : "up";
 
-    // Update 'isScrolled' (shadow effect)
+    // Cập nhật 'isScrolled' (hiệu ứng shadow)
     setIsScrolled(currentScrollTop > 10);
 
-    // Ignore rubber-band effect (negative scroll)
+    // Bỏ qua hiệu ứng rubber-band (cuộn âm)
     if (currentScrollTop < 0) return;
 
-    // Ignore bouncing at the bottom
+    // Bỏ qua khi nảy ở đáy trang
     const isNearBottom = currentScrollTop + clientHeight > scrollHeight - 50;
 
-    // Debounce/Threshold check
+    // Kiểm tra ngưỡng/debounce
     if (Math.abs(diff) < scrollThreshold) return;
 
     if (mode === "simple") {
-      // Simple Mode: Only toggle TabBar/FAB
+      // Chế độ Simple: Chỉ bật/tắt TabBar/FAB
       if (direction === "down") {
         setAddButtonVisible(false);
         if (setTabBarVisible) setTabBarVisible(false);
@@ -53,27 +55,38 @@ const useScrollHandling = ({
         if (setTabBarVisible) setTabBarVisible(true);
       }
     } else if (mode === "staged") {
-      // Staged Mode:
-      // Down -> TabBar hides immediately. Search hides after threshold.
-      // Up -> All show immediately.
+      // Chế độ Staged:
+      // Xuống -> TabBar ẩn ngay lập tức. Search ẩn sau ngưỡng.
+      // Lên -> Hiện lại tất cả.
 
       if (direction === "down") {
-        // Hide TabBar immediately
+        // Ẩn TabBar ngay lập tức
         setAddButtonVisible(false);
         if (setTabBarVisible) setTabBarVisible(false);
 
-        // Hide Search if scrolled down enough (past the threshold)
-        // OR if we are deep in the list.
+        // Ẩn Search nếu cuộn xuống đủ sâu (qua ngưỡng)
         if (currentScrollTop > searchHideThreshold) {
           setSearchVisible(false);
         }
       } else {
-        // Scrolling Up
+        // Cuộn lên (Scrolling Up)
         if (!isNearBottom) {
-          // Show everything
+          // Hiện lại FAB và Search
           setAddButtonVisible(true);
           setSearchVisible(true);
-          if (setTabBarVisible) setTabBarVisible(true);
+
+          // Xử lý logic hiện TabBar
+          if (setTabBarVisible) {
+            if (showTabBarOnlyAtTop) {
+              // Chỉ hiện TabBar khi gần sát đỉnh trang (scrollTop < 20)
+              if (currentScrollTop < 20) {
+                setTabBarVisible(true);
+              }
+            } else {
+              // Mặc định: hiện ngay khi cuộn lên
+              setTabBarVisible(true);
+            }
+          }
         }
       }
     }
@@ -81,7 +94,7 @@ const useScrollHandling = ({
     lastScrollTop.current = currentScrollTop;
   };
 
-  // Helper to force reset (e.g., when changing tabs)
+  // Helper để buộc reset (ví dụ: khi chuyển tab)
   const resetScrollState = () => {
     setSearchVisible(true);
     setAddButtonVisible(true);

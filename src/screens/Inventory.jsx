@@ -31,6 +31,7 @@ const Inventory = ({
       mode: "staged",
       setTabBarVisible,
       searchHideThreshold: 140,
+      showTabBarOnlyAtTop: true,
     });
 
   const {
