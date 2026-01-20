@@ -39,8 +39,6 @@ const OrderCreateView = ({
   hideBackButton,
   orderComment,
   setOrderComment,
-  priceOverrides,
-  handlePriceChange,
   handleExitCreate,
   handleCancelDraft,
   handleScanForSale,
@@ -140,8 +138,6 @@ const OrderCreateView = ({
           cart={cart}
           selectedWarehouse={selectedWarehouse}
           orderBeingEdited={orderBeingEdited}
-          priceOverrides={priceOverrides}
-          handlePriceChange={handlePriceChange}
           adjustQuantity={adjustQuantity}
           handleQuantityChange={handleQuantityChange}
           activeCategory={activeCategory}

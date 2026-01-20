@@ -3,7 +3,6 @@ import { sanitizeNumberInput } from "../../utils/helpers";
 
 const useCartLogic = () => {
   const [cart, setCart] = useState({});
-  const [priceOverrides, setPriceOverrides] = useState({});
 
   // Hàm kẹp số lượng trong khoảng hợp lệ để không vượt tồn kho.
   const clampQuantity = (value, availableStock) =>
@@ -58,25 +57,16 @@ const useCartLogic = () => {
     [updateCartItem]
   );
 
-  const handlePriceChange = useCallback((productId, value) => {
-    const sanitized = sanitizeNumberInput(value);
-    setPriceOverrides((prev) => ({ ...prev, [productId]: sanitized }));
-  }, []);
-
   const clearCart = useCallback(() => {
     setCart({});
-    setPriceOverrides({});
   }, []);
 
   return {
     cart,
     setCart,
-    priceOverrides,
-    setPriceOverrides,
     updateCartItem,
     handleQuantityChange,
     adjustQuantity,
-    handlePriceChange,
     clearCart,
   };
 };

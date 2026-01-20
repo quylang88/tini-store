@@ -158,8 +158,19 @@ const OrderCreateReviewModal = ({
               animate={{ opacity: 1, height: "auto" }}
               exit={{ opacity: 0, height: 0 }}
               transition={{ duration: 0.2 }}
-              className="overflow-hidden"
-            ></motion.div>
+              className="space-y-2 overflow-hidden"
+            >
+              <label className="text-xs font-semibold text-rose-700">
+                Thông tin khách hàng (Tuỳ chọn)
+              </label>
+              <input
+                type="text"
+                value={customerName}
+                onChange={(e) => setCustomerName(e.target.value)}
+                placeholder="Tên khách hàng"
+                className="w-full border border-rose-200 rounded-xl px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-rose-200"
+              />
+            </motion.div>
           )}
         </AnimatePresence>
 

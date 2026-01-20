@@ -103,16 +103,18 @@ const useOrderSubmitLogic = ({
     const payload = buildOrderPayload();
     const { items, warehouse } = payload;
 
-    // Cập nhật giá sản phẩm toàn cục nếu có thay đổi trong đơn hàng
-    setProducts((prevProducts) => {
-      const productsWithUpdatedPrices = prevProducts.map((p) => {
-        const item = items.find((i) => i.productId === p.id);
-        if (item && item.price !== p.price) {
-          return { ...p, price: item.price };
-        }
-        return p;
-      });
+    // Logic tên khách mặc định cho đơn bán tại kho nếu bỏ trống
+    if (payload.orderType === "warehouse" && !payload.customerName) {
+      if (payload.warehouse === "vinhPhuc") {
+        payload.customerName = "Mẹ Hương";
+      } else if (payload.warehouse === "daLat") {
+        payload.customerName = "Mẹ Nguyệt";
+      }
+    }
 
+    // Cập nhật giá sản phẩm toàn cục nếu có thay đổi trong đơn hàng -> ĐÃ BỎ theo yêu cầu.
+    // Giờ chỉ sync stock, không sync price.
+    setProducts((prevProducts) => {
       // Lấy danh sách sản phẩm cũ nếu đang sửa đơn để sync stock
       const previousItems = isUpdate ? orderBeingEdited.items : [];
       const previousWarehouse = isUpdate
@@ -120,7 +122,7 @@ const useOrderSubmitLogic = ({
         : null;
 
       return syncProductsStock(
-        productsWithUpdatedPrices,
+        prevProducts,
         items,
         previousItems,
         warehouse,
@@ -129,6 +131,8 @@ const useOrderSubmitLogic = ({
     });
 
     if (isUpdate) {
+      // Khi update, giữ status cũ. Nếu muốn reset status theo loại đơn thì logic phức tạp hơn
+      // nhưng thường update chỉ đổi nội dung.
       const updatedOrder = {
         ...orderBeingEdited,
         ...payload,
@@ -137,13 +141,17 @@ const useOrderSubmitLogic = ({
       setOrders(
         orders.map((order) =>
           order.id === orderBeingEdited.id ? updatedOrder : order,
-        )
+        ),
       );
     } else {
+      // Xác định trạng thái ban đầu: Tại kho -> Chờ thanh toán, Gửi hàng -> Đang giao
+      const initialStatus =
+        payload.orderType === "warehouse" ? "pending" : DEFAULT_STATUS;
+
       const newOrder = {
         id: Date.now().toString(),
         orderNumber: getNextOrderNumber(),
-        status: DEFAULT_STATUS,
+        status: initialStatus,
         date: new Date().toISOString(),
         ...payload,
         comment: orderComment.trim(),

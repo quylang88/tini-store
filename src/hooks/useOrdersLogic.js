@@ -28,10 +28,8 @@ const useOrdersLogic = ({ products, setProducts, orders, setOrders }) => {
   const {
     cart,
     setCart,
-    priceOverrides,
     handleQuantityChange,
     adjustQuantity,
-    handlePriceChange,
     clearCart,
   } = useCartLogic();
 
@@ -63,7 +61,6 @@ const useOrdersLogic = ({ products, setProducts, orders, setOrders }) => {
       activeCategory,
       selectedWarehouse,
       orderBeingEdited,
-      priceOverrides,
       sortConfig,
     });
 
@@ -244,7 +241,12 @@ const useOrdersLogic = ({ products, setProducts, orders, setOrders }) => {
         setOrders((prev) =>
           prev.map((item) => {
             if (item.id !== orderId) return item;
-            const nextStatus = item.status === "paid" ? DEFAULT_STATUS : "paid";
+            let nextStatus = "paid";
+            if (item.status === "paid") {
+              // Khi huỷ thanh toán, trả về trạng thái ban đầu dựa trên loại đơn
+              nextStatus =
+                item.orderType === "warehouse" ? "pending" : DEFAULT_STATUS;
+            }
             return { ...item, status: nextStatus };
           }),
         );
@@ -285,6 +287,13 @@ const useOrdersLogic = ({ products, setProducts, orders, setOrders }) => {
         dotClass: "bg-emerald-500",
       };
     }
+    if (order.status === "pending") {
+      return {
+        label: "Đang chờ thanh toán",
+        badgeClass: "border-amber-200 bg-amber-50 text-amber-600",
+        dotClass: "bg-amber-500",
+      };
+    }
     return {
       // Trạng thái mặc định là đang giao hàng theo yêu cầu mới.
       label: "Đang giao hàng",
@@ -323,8 +332,6 @@ const useOrdersLogic = ({ products, setProducts, orders, setOrders }) => {
     totalAmount,
     reviewItems,
     filteredProducts,
-    priceOverrides,
-    handlePriceChange,
     handleQuantityChange,
     adjustQuantity,
     handleScanForSale,

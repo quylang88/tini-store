@@ -13,7 +13,6 @@ const useOrderCatalog = ({
   activeCategory,
   selectedWarehouse,
   orderBeingEdited,
-  priceOverrides = {},
   sortConfig = { key: "date", direction: "desc" },
 }) => {
   const productMap = useMemo(
@@ -72,25 +71,19 @@ const useOrderCatalog = ({
         .map(([productId, quantity]) => {
           const product = productMap.get(productId);
           if (!product) return null;
-          // Ưu tiên giá override nếu user đã chỉnh sửa, nếu không thì dùng giá gốc.
-          const overridePrice = priceOverrides[product.id];
-          const effectivePrice =
-            overridePrice !== undefined && overridePrice !== ""
-              ? Number(overridePrice)
-              : product.price;
 
           return {
             id: product.id,
             productId: product.id,
             name: product.name,
-            price: effectivePrice,
+            price: product.price,
             quantity,
             // Giá vốn dùng cho đơn hàng cần gồm cả phí gửi/đơn vị.
             cost: getLatestUnitCost(product),
           };
         })
         .filter((item) => item && item.quantity > 0), // Lọc bỏ item null hoặc số lượng <= 0 (bao gồm cả chuỗi rỗng)
-    [cart, productMap, priceOverrides],
+    [cart, productMap],
   );
 
   const totalAmount = useMemo(
