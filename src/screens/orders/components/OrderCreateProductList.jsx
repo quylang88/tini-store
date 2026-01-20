@@ -155,7 +155,7 @@ const ProductItem = ({
         )}
       </div>
 
-      <div className="flex-1 min-w-0 flex gap-2 text-[10px]">
+      <motion.div layout className="flex-1 min-w-0 flex gap-2 text-[10px]">
         {/* Cột 1: Tên + Giá bán - Use Flex grow to take space */}
         <div className="space-y-1 flex-1 min-w-0">
           <ExpandableProductName
@@ -218,17 +218,19 @@ const ProductItem = ({
             </motion.div>
           )}
         </AnimatePresence>
-      </div>
+      </motion.div>
 
       {/* Bộ điều khiển số lượng - giữ nguyên ở bên phải cùng */}
-      <AnimatePresence mode="wait">
+      <AnimatePresence mode="popLayout" initial={false}>
         {isAdded ? (
           <motion.div
+            layout
             key="stepper"
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.8 }}
-            transition={{ duration: 0.15 }}
+            transition={{ type: "spring", bounce: 0, duration: 0.3 }}
+            className="flex-shrink-0"
           >
             <QuantityStepper
               qty={displayQty}
@@ -240,11 +242,12 @@ const ProductItem = ({
           </motion.div>
         ) : (
           <motion.button
+            layout
             key="add-btn"
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.8 }}
-            transition={{ duration: 0.15 }}
+            transition={{ type: "spring", bounce: 0, duration: 0.3 }}
             onClick={() => adjustQuantity(p.id, 1, availableStock)}
             disabled={isOutOfStock}
             className={`px-3 py-2 rounded-lg text-xs font-bold active:scale-95 transition shrink-0 border ${
