@@ -29,7 +29,6 @@ const Inventory = ({
   const { isSearchVisible, isAddButtonVisible, isScrolled, handleScroll } =
     useScrollHandling({
       mode: "staged",
-      setTabBarVisible,
       searchHideThreshold: 140,
     });
 
