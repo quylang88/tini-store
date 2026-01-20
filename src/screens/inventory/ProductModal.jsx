@@ -353,7 +353,7 @@ const ProductModal = ({
               value={formatInputNumber(formData.price)}
               onChange={onMoneyChange("price")}
               placeholder="0"
-              disabled={Boolean(editingProduct)}
+              disabled={isEditingLot}
             />
           </div>
 
