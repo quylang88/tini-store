@@ -14,6 +14,7 @@ const useLongPress = (
   const timeoutRef = useRef(null);
   const isPressingRef = useRef(false);
   const currentSpeedRef = useRef(speed);
+  const loopRef = useRef(null);
 
   // Helper to run the loop with dynamic speed
   const loop = useCallback(() => {
@@ -28,11 +29,19 @@ const useLongPress = (
       );
     }
 
-    timeoutRef.current = setTimeout(loop, currentSpeedRef.current);
+    // Call loop via ref to avoid "access before declaration" errors
+    timeoutRef.current = setTimeout(() => {
+      if (loopRef.current) loopRef.current();
+    }, currentSpeedRef.current);
   }, [callback, enabled, accelerate, maxSpeed, accelerationStep]);
 
+  // Keep the loop ref up to date
+  useEffect(() => {
+    loopRef.current = loop;
+  }, [loop]);
+
   const start = useCallback(
-    (e) => {
+    () => {
       // Note: We don't preventDefault here to allow click events if needed,
       // but users of this hook might want to if it conflicts with scrolling.
       if (!enabled) return;
@@ -49,7 +58,7 @@ const useLongPress = (
         loop();
       }, delay);
     },
-    [callback, delay, enabled, speed, loop]
+    [delay, enabled, speed, loop]
   );
 
   const stop = useCallback(() => {
