@@ -33,7 +33,7 @@ const OrderListView = ({
   });
 
   return (
-    <div className="relative h-full bg-transparent pb-20">
+    <div className="relative h-full bg-transparent">
       <AppHeader isScrolled={isScrolled} />
 
       {/* Nút tạo đơn mới nổi để tái sử dụng layout và tránh lặp code. */}
@@ -59,7 +59,7 @@ const OrderListView = ({
       </AnimatePresence>
 
       <div
-        className="h-full overflow-y-auto p-3 pt-[80px] space-y-3 min-h-0"
+        className="h-full overflow-y-auto p-3 pt-[80px] pb-24 space-y-3 min-h-0"
         onScroll={handleScroll}
       >
         {orders.map((order) => {

@@ -1,33 +1,72 @@
 import React from "react";
-import { ArrowUp, ArrowDown } from "lucide-react";
+import {
+  ArrowUp,
+  ArrowDown,
+  ArrowDownWideNarrow,
+  ArrowUpNarrowWide,
+  CalendarArrowDown,
+  CalendarArrowUp,
+} from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
-const SortButton = ({ active, onClick, icon: Icon, direction, label }) => {
+// Use a static map to avoid any ambiguity about component creation
+const ICON_MAP = {
+  price: {
+    asc: ArrowUpNarrowWide,
+    desc: ArrowDownWideNarrow,
+  },
+  date: {
+    asc: CalendarArrowUp,
+    desc: CalendarArrowDown,
+  },
+  default: {
+    asc: ArrowUp,
+    desc: ArrowDown,
+  },
+};
+
+const SortButton = ({
+  active,
+  onClick,
+  icon: Icon,
+  direction,
+  label,
+  sortType,
+}) => {
+  // Select the correct icon component
+  const ActiveIcon =
+    ICON_MAP[sortType]?.[direction] || ICON_MAP.default[direction] || ArrowDown;
+
   return (
     <button
       onClick={onClick}
-      className={`relative flex items-center justify-center gap-1 p-2 rounded-lg border transition-all active:scale-95 ${
+      className={`relative flex items-center justify-center p-2 rounded-lg border transition-all active:scale-95 w-10 h-10 ${
         active
           ? "bg-rose-100 border-rose-300 text-rose-700 shadow-sm"
           : "bg-rose-50 border-rose-200 text-rose-400 hover:bg-rose-100 hover:text-rose-500 hover:border-rose-300"
       }`}
       aria-label={label}
     >
-      <Icon size={20} strokeWidth={2} />
       <AnimatePresence mode="wait">
-        {active && (
+        {active ? (
           <motion.div
-            key={direction} // Key changes trigger animation
-            initial={{ opacity: 0, height: 0, width: 0, scale: 0 }}
-            animate={{ opacity: 1, height: "auto", width: "auto", scale: 1 }}
-            exit={{ opacity: 0, height: 0, width: 0, scale: 0 }}
+            key={`active-${direction}`}
+            initial={{ opacity: 0, scale: 0.5, rotate: -20 }}
+            animate={{ opacity: 1, scale: 1, rotate: 0 }}
+            exit={{ opacity: 0, scale: 0.5, rotate: 20 }}
             transition={{ duration: 0.2 }}
           >
-            {direction === "asc" ? (
-              <ArrowUp size={14} strokeWidth={3} />
-            ) : (
-              <ArrowDown size={14} strokeWidth={3} />
-            )}
+            <ActiveIcon size={20} strokeWidth={2} />
+          </motion.div>
+        ) : (
+          <motion.div
+            key="inactive"
+            initial={{ opacity: 0, scale: 0.5 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.5 }}
+            transition={{ duration: 0.2 }}
+          >
+            <Icon size={20} strokeWidth={2} />
           </motion.div>
         )}
       </AnimatePresence>
