@@ -62,9 +62,13 @@ const OrderListView = ({
         className="h-full overflow-y-auto p-3 pt-[80px] pb-24 space-y-3 min-h-0"
         onScroll={handleScroll}
       >
-        {orders.map((order) => {
-          const statusInfo = getOrderStatusInfo(order);
-          const isPaid = order.status === "paid";
+        {[...orders]
+          .sort(
+            (a, b) => new Date(b.date || 0) - new Date(a.date || 0),
+          ) // Newest first
+          .map((order) => {
+            const statusInfo = getOrderStatusInfo(order);
+            const isPaid = order.status === "paid";
           const orderLabel = order.orderNumber
             ? `#${order.orderNumber}`
             : `#${order.id.slice(-4)}`;
