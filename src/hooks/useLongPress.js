@@ -3,19 +3,20 @@ import { useRef, useEffect, useCallback } from "react";
 const useLongPress = (
   callback,
   {
-    speed = 100, // Base speed (ms between calls)
-    delay = 500, // Initial delay before repeating starts
+    speed = 100, // Tốc độ cơ bản (ms giữa các lần gọi)
+    delay = 500, // Độ trễ ban đầu trước khi bắt đầu lặp lại
     enabled = true,
-    accelerate = false, // Enable acceleration
-    maxSpeed = 30, // Fastest speed (min ms)
-    accelerationStep = 0.8, // Multiply interval by this factor
-  } = {}
+    accelerate = false, // Bật chế độ tăng tốc
+    maxSpeed = 30, // Tốc độ nhanh nhất (ms tối thiểu)
+    accelerationStep = 0.8, // Nhân khoảng thời gian với hệ số này
+  } = {},
 ) => {
   const timeoutRef = useRef(null);
   const isPressingRef = useRef(false);
   const currentSpeedRef = useRef(speed);
+  const loopRef = useRef(null);
 
-  // Helper to run the loop with dynamic speed
+  // Hàm hỗ trợ chạy vòng lặp với tốc độ động
   const loop = useCallback(() => {
     if (!isPressingRef.current || !enabled) return;
 
@@ -24,33 +25,35 @@ const useLongPress = (
     if (accelerate) {
       currentSpeedRef.current = Math.max(
         currentSpeedRef.current * accelerationStep,
-        maxSpeed
+        maxSpeed,
       );
     }
 
-    timeoutRef.current = setTimeout(loop, currentSpeedRef.current);
+    // Gọi loop qua ref để tránh lỗi "truy cập trước khi khai báo"
+    timeoutRef.current = setTimeout(() => {
+      if (loopRef.current) loopRef.current();
+    }, currentSpeedRef.current);
   }, [callback, enabled, accelerate, maxSpeed, accelerationStep]);
 
-  const start = useCallback(
-    (e) => {
-      // Note: We don't preventDefault here to allow click events if needed,
-      // but users of this hook might want to if it conflicts with scrolling.
-      if (!enabled) return;
-      if (isPressingRef.current) return;
+  // Cập nhật loop ref mới nhất
+  useEffect(() => {
+    loopRef.current = loop;
+  }, [loop]);
 
-      isPressingRef.current = true;
-      currentSpeedRef.current = speed; // Reset speed
+  const start = useCallback(() => {
+    // Lưu ý: Chúng ta không preventDefault ở đây để cho phép sự kiện click nếu cần,
+    // nhưng người dùng hook này có thể muốn chặn nếu xung đột với cuộn trang.
+    if (!enabled) return;
+    if (isPressingRef.current) return;
 
-      // Remove immediate callback to prevent conflict with onClick (double tap issue)
-      // callback(); // Fire immediately
+    isPressingRef.current = true;
+    currentSpeedRef.current = speed; // Đặt lại tốc độ
 
-      timeoutRef.current = setTimeout(() => {
-        // Start the loop
-        loop();
-      }, delay);
-    },
-    [callback, delay, enabled, speed, loop]
-  );
+    timeoutRef.current = setTimeout(() => {
+      // Bắt đầu vòng lặp
+      loop();
+    }, delay);
+  }, [delay, enabled, speed, loop]);
 
   const stop = useCallback(() => {
     isPressingRef.current = false;
@@ -61,7 +64,7 @@ const useLongPress = (
   }, []);
 
   useEffect(() => {
-    return stop; // Cleanup
+    return stop; // Dọn dẹp
   }, [stop]);
 
   return {

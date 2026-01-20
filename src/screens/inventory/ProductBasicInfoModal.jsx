@@ -3,6 +3,7 @@ import SheetModal from "../../components/modals/SheetModal";
 import Button from "../../components/button/Button";
 import ProductIdentityForm from "./ProductIdentityForm";
 import { formatInputNumber } from "../../utils/helpers";
+import useHighlightFields from "../../hooks/useHighlightFields";
 
 const ProductBasicInfoModal = ({
   isOpen,
@@ -11,8 +12,9 @@ const ProductBasicInfoModal = ({
   onClose,
   onSave,
   onShowScanner,
+  onError,
 }) => {
-  // Store prevProduct to track changes for derived state update
+  // Lưu prevProduct để theo dõi thay đổi cho cập nhật state dẫn xuất
   const [prevProduct, setPrevProduct] = useState(product);
   const [formData, setFormData] = useState({
     name: product?.name || "",
@@ -22,7 +24,9 @@ const ProductBasicInfoModal = ({
     image: product?.image || null,
   });
 
-  // Derived state: Update formData when product changes
+  const highlightOps = useHighlightFields();
+
+  // State dẫn xuất: Cập nhật formData khi product thay đổi
   if (product !== prevProduct) {
     setPrevProduct(product);
     if (product) {
@@ -52,8 +56,25 @@ const ProductBasicInfoModal = ({
   };
 
   const handleSave = () => {
+    const missing = [];
+    if (!formData.name || String(formData.name).trim() === "")
+      missing.push("name");
+    if (!formData.price || String(formData.price).trim() === "")
+      missing.push("price");
+
+    if (missing.length > 0) {
+      highlightOps.triggerHighlights(missing);
+      if (onError) {
+        onError({
+          title: "Thiếu thông tin",
+          message: "Vui lòng nhập đầy đủ Tên sản phẩm và Giá bán.",
+        });
+      }
+      return;
+    }
+
     onSave({
-      ...product, // Keep original ID and other fields
+      ...product, // Giữ nguyên ID và các trường khác
       ...formData,
       price: Number(formData.price),
     });
@@ -103,6 +124,7 @@ const ProductBasicInfoModal = ({
           disabled={false}
           allowImageUpload={true}
           inputColorClass="text-gray-900" // Explicitly setting color as requested
+          highlightOps={highlightOps}
         />
 
         {/* Price Input - Manually added back */}
@@ -112,10 +134,15 @@ const ProductBasicInfoModal = ({
           </label>
           <input
             inputMode="numeric"
-            className="w-full border-b border-gray-200 py-2 focus:border-rose-400 outline-none text-gray-900 font-bold text-lg"
+            className={`w-full border-b border-gray-200 py-2 focus:border-rose-400 outline-none text-gray-900 font-bold text-lg ${
+              highlightOps.isHighlighted("price")
+                ? highlightOps.highlightClass
+                : ""
+            }`}
             value={formatInputNumber(formData.price)}
             onChange={handleMoneyChange}
             placeholder="0"
+            {...highlightOps.getHighlightProps("price", formData.price)}
           />
         </div>
       </div>
