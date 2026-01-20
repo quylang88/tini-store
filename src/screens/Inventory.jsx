@@ -158,7 +158,6 @@ const Inventory = ({
       {/* Tách form modal và bổ sung nút chụp ảnh từ camera */}
       {/* Modal sửa thông tin cơ bản */}
       <ProductBasicInfoModal
-        key={editingBasicInfoProduct?.id}
         isOpen={Boolean(editingBasicInfoProduct)}
         product={editingBasicInfoProduct}
         categories={settings.categories}
