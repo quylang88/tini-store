@@ -23,8 +23,14 @@ const ExpandableProductName = ({
   className = "",
   children,
   onExpandChange,
+  isExpanded: controlledIsExpanded,
 }) => {
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [internalIsExpanded, setInternalIsExpanded] = useState(false);
+  const isExpanded =
+    controlledIsExpanded !== undefined
+      ? controlledIsExpanded
+      : internalIsExpanded;
+
   const isLong = name.length > limit;
 
   // Sử dụng logic cắt chuỗi nội bộ nếu cần,
@@ -34,7 +40,9 @@ const ExpandableProductName = ({
   const handleToggle = () => {
     if (isLong) {
       const newState = !isExpanded;
-      setIsExpanded(newState);
+      if (controlledIsExpanded === undefined) {
+        setInternalIsExpanded(newState);
+      }
       if (onExpandChange) {
         onExpandChange(newState);
       }

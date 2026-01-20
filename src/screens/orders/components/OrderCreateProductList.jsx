@@ -73,7 +73,20 @@ const ProductItem = ({
   handleQuantityChange,
   activeCategory,
 }) => {
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [isInfoHidden, setIsInfoHidden] = useState(false);
+  const [isNameExpanded, setIsNameExpanded] = useState(false);
+
+  const handleExpandToggle = (targetState) => {
+    if (targetState) {
+      // Opening: Hide info first -> then expand text
+      setIsInfoHidden(true);
+      setTimeout(() => setIsNameExpanded(true), 200); // 200ms matches transition duration
+    } else {
+      // Closing: Collapse text first -> then show info
+      setIsNameExpanded(false);
+      setIsInfoHidden(false);
+    }
+  };
 
   // Khi đang sửa đơn, cộng lại số lượng cũ để hiển thị tồn kho chính xác
   const getAvailableStock = (productId, stock) => {
@@ -111,12 +124,12 @@ const ProductItem = ({
   // Also, hiding logic:
   // "Trong TH đang mở thanh tăng giảm số lượng (isAdded) mà tên dài quá user chạm expand name (isExpanded)
   // thì danh mục và số lượng kho hàng sẽ có animaation biến mất"
-  const shouldHideInfo = isAdded && isExpanded;
+  const shouldHideInfo = isInfoHidden;
 
   // New Logic:
   // When expanded, we ALWAYS use short label to save space for the name
   // If not expanded and not added, we use long label
-  const useShortLabel = isAdded || isExpanded;
+  const useShortLabel = isAdded;
 
   return (
     <motion.div
@@ -143,13 +156,14 @@ const ProductItem = ({
         )}
       </div>
 
-      <motion.div layout className="flex-1 min-w-0 flex gap-2 text-[10px]">
+      <div className="flex-1 min-w-0 flex gap-2 text-[10px]">
         {/* Cột 1: Tên + Giá bán - Use Flex grow to take space */}
-        <motion.div layout className="space-y-1 flex-1 min-w-0">
+        <div className="space-y-1 flex-1 min-w-0">
           <ExpandableProductName
             name={p.name}
             className="font-bold text-rose-800 text-sm"
-            onExpandChange={setIsExpanded}
+            onExpandChange={handleExpandToggle}
+            isExpanded={isNameExpanded}
           >
             <div className="flex items-center">
               <span className="font-bold text-rose-700 text-sm">
@@ -160,7 +174,7 @@ const ProductItem = ({
               <span className="text-rose-700 font-bold text-sm ml-0.5">đ</span>
             </div>
           </ExpandableProductName>
-        </motion.div>
+        </div>
 
         {/* Cột 2: Danh mục + Kho hàng - Hide completely when needed */}
         <AnimatePresence>
@@ -207,7 +221,7 @@ const ProductItem = ({
             </motion.div>
           )}
         </AnimatePresence>
-      </motion.div>
+      </div>
 
       {/* Bộ điều khiển số lượng - giữ nguyên ở bên phải cùng */}
       <AnimatePresence mode="wait">
