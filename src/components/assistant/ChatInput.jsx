@@ -15,7 +15,7 @@ const ChatInput = ({ onSend, disabled }) => {
   const suggestions = [
     "Doanh thu hôm nay",
     "Sản phẩm sắp hết",
-    "Tìm ",
+    "Danh sách đơn hàng chưa xử lý",
     "Bán chạy nhất",
   ];
 
