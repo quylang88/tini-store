@@ -182,7 +182,6 @@ const useDashboardLogic = ({ products, orders, rangeMode = "dashboard" }) => {
         return {
           ...p,
           daysNoSale: diffDays,
-          lastImportDate: dateToCheck, // Dùng để debug hoặc hiển thị
         };
       })
       .filter((p) => p.daysNoSale > warningDays)
