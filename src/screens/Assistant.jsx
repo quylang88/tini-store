@@ -1,8 +1,9 @@
-import React, { useRef, useEffect } from "react";
+import React, { useRef, useEffect, useState } from "react";
 import { Bot } from "lucide-react";
 import { motion } from "framer-motion";
 import ChatBubble from "../components/assistant/ChatBubble";
 import ChatInput from "../components/assistant/ChatInput";
+import ModelSelector from "../components/assistant/ModelSelector";
 import { processQuery } from "../services/aiAssistantService";
 
 const Assistant = ({
@@ -15,8 +16,11 @@ const Assistant = ({
   setIsTyping,
 }) => {
   const messagesEndRef = useRef(null);
-  // Lưu câu hỏi cuối cùng để thử lại sau khi có quyền truy cập vị trí
   const lastQueryRef = useRef("");
+
+  // State cho Model Selection
+  const [modelMode, setModelMode] = useState("PRO"); // PRO | FLASH | LOCAL
+  const [isModelSelectorOpen, setIsModelSelectorOpen] = useState(false);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -35,9 +39,6 @@ const Assistant = ({
       localStorage.setItem("ai_location_permission", "denied");
       executeLocationQuery(false); // Thử lại không có vị trí
     }
-
-    // Cập nhật UI: Đơn giản là giữ lại bong bóng chat nhưng user đã bấm.
-    // Lý tưởng là thay thế bằng text "Đã cho phép" nhưng việc append câu trả lời mới là ổn.
   };
 
   const executeLocationQuery = (isGranted) => {
@@ -47,17 +48,15 @@ const Assistant = ({
         navigator.geolocation.getCurrentPosition(
           async (position) => {
             const { latitude, longitude } = position.coords;
-            // Context rất rõ ràng để tránh AI hỏi lại
             const locationContext = `[Thông tin hệ thống - TỌA ĐỘ VỊ TRÍ]: Latitude ${latitude}, Longitude ${longitude}. (Hãy dùng Google Search với tọa độ này để biết địa điểm cụ thể và trả lời câu hỏi). Câu hỏi gốc: "${lastQueryRef.current}"`;
 
             try {
-              const response = await processQuery(locationContext, {
-                products,
-                orders,
-                settings,
-              });
+              const response = await processQuery(
+                locationContext,
+                { products, orders, settings },
+                modelMode // Truyền mode vào service
+              );
 
-              // Nếu AI vẫn cứng đầu trả về location_request dù đã có tọa độ -> Hiển thị lỗi thay vì loop
               if (response.type === "location_request") {
                 setMessages((prev) => [
                   ...prev,
@@ -81,9 +80,8 @@ const Assistant = ({
           },
           (error) => {
             console.error("Location Error:", error);
-            // Fallback nếu lấy vị trí thất bại dù đã cấp quyền
             handleAutoResponse(
-              "Không thể lấy vị trí chính xác (Lỗi thiết bị hoặc tín hiệu yếu). Vui lòng thử lại.",
+              "Không thể lấy vị trí chính xác (Lỗi thiết bị hoặc tín hiệu yếu). Vui lòng thử lại."
             );
             setIsTyping(false);
           },
@@ -91,16 +89,15 @@ const Assistant = ({
             enableHighAccuracy: true,
             timeout: 10000,
             maximumAge: 0,
-          },
+          }
         );
       } else {
         handleAutoResponse("Thiết bị không hỗ trợ định vị.");
         setIsTyping(false);
       }
     } else {
-      // Người dùng từ chối
       handleAutoResponse(
-        "Người dùng từ chối chia sẻ vị trí. Hãy trả lời câu hỏi dựa trên thông tin chung.",
+        "Người dùng từ chối chia sẻ vị trí. Hãy trả lời câu hỏi dựa trên thông tin chung."
       );
     }
   };
@@ -108,11 +105,11 @@ const Assistant = ({
   const handleAutoResponse = async (systemNote) => {
     try {
       const query = `[Thông tin hệ thống]: ${systemNote}. Câu hỏi gốc: "${lastQueryRef.current}"`;
-      const response = await processQuery(query, {
-        products,
-        orders,
-        settings,
-      });
+      const response = await processQuery(
+        query,
+        { products, orders, settings },
+        modelMode
+      );
       setMessages((prev) => [...prev, response]);
     } catch (e) {
       console.error(e);
@@ -122,9 +119,8 @@ const Assistant = ({
   };
 
   const handleSendMessage = async (text) => {
-    lastQueryRef.current = text; // Lưu để thử lại nếu cần
+    lastQueryRef.current = text;
 
-    // Thêm tin nhắn người dùng
     const userMsg = {
       id: Date.now().toString(),
       type: "text",
@@ -136,29 +132,25 @@ const Assistant = ({
     setIsTyping(true);
 
     try {
-      const response = await processQuery(text, {
-        products,
-        orders,
-        settings,
-      });
+      const response = await processQuery(
+        text,
+        { products, orders, settings },
+        modelMode
+      );
 
       // CHẶN REQUEST LOCATION
       if (response.type === "location_request") {
         const permission = localStorage.getItem("ai_location_permission");
 
         if (permission === "granted") {
-          // Tự động thực thi
           executeLocationQuery(true);
-          return; // Bỏ qua việc hiển thị bong bóng yêu cầu
+          return;
         }
 
         if (permission === "denied") {
-          // Tự động từ chối
           executeLocationQuery(false);
-          return; // Bỏ qua việc hiển thị bong bóng yêu cầu
+          return;
         }
-
-        // Nếu permission là null/unknown -> Hiển thị bong bóng
       }
 
       setMessages((prev) => [...prev, response]);
@@ -183,7 +175,7 @@ const Assistant = ({
     <motion.div
       className="flex flex-col h-full relative"
       animate={{
-        backgroundColor: ["#fff1f2", "#fff7ed", "#fffbeb", "#fff1f2"], // rose-50 -> orange-50 -> amber-50 -> rose-50
+        backgroundColor: ["#fff1f2", "#fff7ed", "#fffbeb", "#fff1f2"],
       }}
       transition={{
         duration: 10,
@@ -207,13 +199,15 @@ const Assistant = ({
           </div>
           <p className="text-xs text-gray-600 flex items-center gap-1">
             <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
-            Đang hoạt động
+            {modelMode === "PRO" && "Chế độ Pro"}
+            {modelMode === "FLASH" && "Chế độ Flash"}
+            {modelMode === "LOCAL" && "Chế độ Local"}
           </p>
         </div>
       </div>
 
       {/* Message List */}
-      <div className="flex-1 overflow-y-auto p-4 bg-transparent">
+      <div className="flex-1 overflow-y-auto p-4 bg-transparent relative">
         {messages.map((msg) => (
           <ChatBubble
             key={msg.id}
@@ -243,10 +237,21 @@ const Assistant = ({
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Input Area */}
-      <ChatInput onSend={handleSendMessage} disabled={isTyping} />
+      <ModelSelector
+            selectedModel={modelMode}
+            onSelect={setModelMode}
+            isOpen={isModelSelectorOpen}
+            onClose={() => setIsModelSelectorOpen(false)}
+      />
 
-      {/* Safe Area Spacer for TabBar overlap if needed, usually handled by parent container padding */}
+      {/* Input Area */}
+      <ChatInput
+        onSend={handleSendMessage}
+        disabled={isTyping}
+        onOpenModelSelector={() => setIsModelSelectorOpen(true)}
+      />
+
+      {/* Safe Area Spacer */}
       <div className="h-14"></div>
     </motion.div>
   );
