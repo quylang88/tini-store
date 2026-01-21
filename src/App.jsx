@@ -6,6 +6,7 @@ import Login from "./screens/Login";
 import Dashboard from "./screens/Dashboard";
 import Inventory from "./screens/Inventory";
 import Orders from "./screens/Orders";
+import Assistant from "./screens/Assistant";
 import Settings from "./screens/Settings";
 import StatsDetail from "./screens/dashboard/StatsDetail";
 import { normalizePurchaseLots } from "./utils/inventory/purchaseUtils";
@@ -25,8 +26,9 @@ import useDailyGreeting from "./hooks/core/useDailyGreeting";
 const TAB_ORDER = {
   dashboard: 0,
   products: 1,
-  orders: 2,
-  settings: 3,
+  assistant: 2,
+  orders: 3,
+  settings: 4,
   "stats-detail": 10, // Coi như màn hình con của dashboard
 };
 
@@ -255,6 +257,19 @@ const App = () => {
                 setOrders={setOrders}
                 settings={settings}
                 setTabBarVisible={setIsTabBarVisible}
+              />
+            </ScreenTransition>
+          )}
+
+          {activeTab === "assistant" && (
+            <ScreenTransition
+              key="assistant"
+              custom={direction}
+              className="h-full"
+            >
+              <Assistant
+                products={products}
+                orders={orders}
               />
             </ScreenTransition>
           )}
