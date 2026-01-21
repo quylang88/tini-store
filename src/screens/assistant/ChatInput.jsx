@@ -21,9 +21,9 @@ const ChatInput = ({ onSend, disabled }) => {
   const [currentPlaceholderIndex, setCurrentPlaceholderIndex] = useState(() =>
     Math.floor(Math.random() * PLACEHOLDERS.length)
   );
-  const typingSpeed = 50;
-  const deletingSpeed = 30;
-  const pauseTime = 2000;
+  const typingSpeed = 30;
+  const deletingSpeed = 15;
+  const pauseTime = 1500;
 
   useEffect(() => {
     if (isFocused || text) return; // Pause animation if focused or typing
@@ -94,7 +94,6 @@ const ChatInput = ({ onSend, disabled }) => {
             <div className="absolute inset-0 flex items-center pl-10 pointer-events-none overflow-hidden">
               <span className="text-sm text-gray-400 truncate w-full">
                 {isFocused ? "Hỏi Misa về bất kỳ điều gì..." : displayedText}
-                {!isFocused && <span className="animate-pulse">|</span>}
               </span>
             </div>
           )}
