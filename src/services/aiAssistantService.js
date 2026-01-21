@@ -16,19 +16,17 @@ import { format } from "date-fns";
 const MODEL_CONFIGS = {
   PRO: {
     models: [
-      import.meta.env.VITE_GEMINI_MODEL_NAME_3 || "gemini-1.5-pro",
-      import.meta.env.VITE_GEMINI_MODEL_NAME_2 || "gemini-1.5-flash",
+      import.meta.env.VITE_GEMINI_MODEL_NAME_3,
+      import.meta.env.VITE_GEMINI_MODEL_NAME_2,
     ],
     enableTools: true,
   },
   FLASH: {
-    models: [
-      import.meta.env.VITE_GEMINI_MODEL_NAME_2_LITE || "gemini-1.5-flash-8b",
-    ],
+    models: [import.meta.env.VITE_GEMINI_MODEL_NAME_2_LITE],
     enableTools: true,
   },
   LOCAL: {
-    models: [import.meta.env.VITE_GEMMA_MODEL_NAME || "gemma-2-27b-it"],
+    models: [import.meta.env.VITE_GEMMA_MODEL_NAME],
     enableTools: false,
   },
 };
