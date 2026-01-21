@@ -2,40 +2,32 @@
  * aiAssistantService.js
  *
  * Service này đóng vai trò là "Bộ não" cho Trợ lý ảo.
- * Đã được cấu hình để sử dụng API Key bảo mật từ biến môi trường (.env).
+ * Đã được cấu hình để sử dụng API Key bảo mật từ biến môi trường (.env) hoặc từ Cài đặt.
  */
 
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { formatCurrency } from "../utils/formatters/formatUtils";
 
-// 1. CẤU HÌNH API KEY TỪ BIẾN MÔI TRƯỜNG (AN TOÀN)
-// Vite sử dụng import.meta.env để truy cập biến bắt đầu bằng VITE_
-const API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
-
-// Khởi tạo SDK (chỉ khởi tạo nếu có key)
-let model = null;
-
-if (API_KEY) {
-  const genAI = new GoogleGenerativeAI(API_KEY);
-  model = genAI.getGenerativeModel({
-    model: "gemini-1.5-flash",
-    // Kích hoạt công cụ Google Search để tìm giá/thông tin trên mạng
-    tools: [{ googleSearch: {} }],
-  });
-} else {
-  console.warn(
-    "⚠️ Chưa tìm thấy VITE_GEMINI_API_KEY trong file .env. Trợ lý sẽ chạy ở chế độ Offline (Rule-based).",
-  );
-}
+// Biến lưu trữ instance để tái sử dụng nếu key không đổi
+let genAIInstance = null;
+let currentModel = null;
+let currentKey = null;
 
 /**
- * Chuẩn hóa văn bản để so sánh (chữ thường, bỏ dấu).
+ * Lấy model Gemini, khởi tạo nếu cần thiết.
+ * @param {string} apiKey
  */
-const normalizeText = (text) => {
-  return text
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "");
+const getModel = (apiKey) => {
+  if (!currentModel || currentKey !== apiKey) {
+    const genAI = new GoogleGenerativeAI(apiKey);
+    currentModel = genAI.getGenerativeModel({
+      model: "gemini-1.5-flash",
+      // Kích hoạt công cụ Google Search để tìm giá/thông tin trên mạng
+      tools: [{ googleSearch: {} }],
+    });
+    currentKey = apiKey;
+  }
+  return currentModel;
 };
 
 /**
@@ -45,118 +37,40 @@ const normalizeText = (text) => {
  * @param {object} context { products, orders, settings }
  */
 export const processQuery = async (query, context) => {
-  // Ưu tiên dùng Key trong .env.
-  // Nếu không có, fallback về settings của user (nếu bạn vẫn muốn giữ tính năng nhập key thủ công),
-  // hoặc chạy local.
-  const hasEnvKey = !!API_KEY;
-
-  if (hasEnvKey) {
-    return await processQueryWithGemini(query, context);
-  }
-
-  // Nếu không có Key -> Chạy logic cục bộ
-  return processQueryLocal(query, context);
-};
-
-/**
- * LOGIC CỤC BỘ (Rule-based / Offline)
- * Chạy khi không có API Key hoặc mất mạng.
- */
-const processQueryLocal = (query, context) => {
-  const { products, orders } = context;
-  const cleanQuery = normalizeText(query);
-
-  // 1. CHÀO HỎI
-  if (cleanQuery.match(/^(xin chao|hi|hello|chao|lo|alo)/)) {
+  // 1. KIỂM TRA MẠNG
+  if (!navigator.onLine) {
     return createResponse(
       "text",
-      'Xin chào! Hiện tại mình đang chạy ở chế độ Offline. Mình chỉ có thể giúp tra cứu nhanh như: "Doanh thu hôm nay", "Tìm [tên sản phẩm]".',
+      "Trợ lý ảo hiện không khả dụng, vui lòng kết nối mạng ...."
     );
   }
 
-  // 2. DOANH THU
-  if (cleanQuery.includes("doanh thu") || cleanQuery.includes("tien ban")) {
-    if (cleanQuery.includes("hom nay") || cleanQuery.includes("nay")) {
-      const today = new Date().toLocaleDateString("en-CA");
-      const todayOrders = orders.filter(
-        (o) => o.date.startsWith(today) && o.status !== "cancelled",
-      );
-      const total = todayOrders.reduce((sum, o) => sum + o.total, 0);
-      const count = todayOrders.length;
+  // 2. LẤY API KEY
+  // Ưu tiên key từ biến môi trường, sau đó đến key từ settings
+  const envKey = import.meta.env.VITE_GEMINI_API_KEY;
+  const settingsKey = context.settings?.aiApiKey;
+  const apiKey = envKey || settingsKey;
 
-      return createResponse(
-        "stats",
-        `Doanh thu hôm nay là ${formatCurrency(total)} từ ${count} đơn hàng.`,
-        {
-          label: "Doanh thu hôm nay",
-          value: total,
-          subtext: `${count} đơn hàng`,
-        },
-      );
-    }
-
-    const total = orders
-      .filter((o) => o.status !== "cancelled")
-      .reduce((sum, o) => sum + o.total, 0);
+  if (!apiKey) {
     return createResponse(
-      "stats",
-      `Tổng doanh thu toàn thời gian là ${formatCurrency(total)}.`,
-      {
-        label: "Tổng doanh thu",
-        value: total,
-        subtext: "Toàn thời gian",
-      },
+      "text",
+      "Chưa có cấu hình API Key. Vui lòng cập nhật trong phần Cài đặt."
     );
   }
 
-  // 3. TÌM KIẾM SẢN PHẨM
-  if (
-    cleanQuery.includes("tim") ||
-    cleanQuery.includes("gia") ||
-    cleanQuery.includes("xem")
-  ) {
-    const keyword = cleanQuery
-      .replace(/(tim|gia cua|gia|xem|san pham|con bao nhieu|kiem tra)/g, "")
-      .trim();
-
-    if (keyword.length < 2) {
-      return createResponse("text", "Bạn muốn tìm sản phẩm gì?");
-    }
-
-    const results = products.filter((p) =>
-      normalizeText(p.name).includes(keyword),
-    );
-
-    if (results.length === 0) {
-      return createResponse(
-        "text",
-        `Không tìm thấy sản phẩm nào khớp với "${keyword}".`,
-      );
-    } else {
-      return createResponse(
-        "product_list",
-        `Tìm thấy ${results.length} sản phẩm:`,
-        results,
-      );
-    }
-  }
-
-  // FALLBACK
-  return createResponse(
-    "text",
-    "Chế độ Offline: Vui lòng kết nối mạng để mình có thể trả lời thông minh hơn và tra cứu giá trên mạng!",
-  );
+  // 3. GỌI GEMINI (ONLINE)
+  return await processQueryWithGemini(query, context, apiKey);
 };
 
 /**
  * XỬ LÝ VỚI GEMINI AI (ONLINE)
  * Sử dụng SDK Google Generative AI
  */
-const processQueryWithGemini = async (query, context) => {
+const processQueryWithGemini = async (query, context, apiKey) => {
   const { products, orders } = context;
 
   // 1. Chuẩn bị ngữ cảnh (Context Injection)
-  // Lấy tối đa 100 sản phẩm để tiết kiệm token, ưu tiên sản phẩm mới hoặc bán chạy nếu có logic sort
+  // Lấy tối đa 100 sản phẩm để tiết kiệm token
   const productContext = products
     .slice(0, 100)
     .map(
@@ -197,13 +111,12 @@ const processQueryWithGemini = async (query, context) => {
     `;
 
   try {
+    const model = getModel(apiKey);
+
     // Gọi Gemini qua SDK
     const result = await model.generateContent(systemPrompt);
     const response = await result.response;
     const textResponse = response.text();
-
-    // Kiểm tra xem có Grounding Metadata (nguồn search) không để hiển thị (tuỳ chọn)
-    // const groundingMetadata = response.candidates[0].groundingMetadata;
 
     return createResponse("text", textResponse);
   } catch (error) {
