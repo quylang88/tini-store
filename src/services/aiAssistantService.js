@@ -138,10 +138,10 @@ const processQueryWithGemini = async (query, context) => {
       YÊU CẦU CỦA NGƯỜI DÙNG: "${query}"
 
       HƯỚNG DẪN TRẢ LỜI:
-      - Nếu người dùng hỏi về doanh thu, hãy dùng số liệu ở trên.
-      - Nếu hỏi về sản phẩm, hãy tra cứu trong danh sách và báo giá/tồn kho.
-      - Nếu sản phẩm không có trong danh sách, hãy nói là không tìm thấy.
-      - Đừng bịa ra thông tin không có trong dữ liệu.
+      - Nếu người dùng hỏi về thông tin nội bộ (doanh thu, tồn kho, giá bán tại shop), hãy ƯU TIÊN dùng dữ liệu ở trên.
+      - Nếu người dùng hỏi về GIÁ THỊ TRƯỜNG, XU HƯỚNG, ĐỐI THỦ, hoặc thông tin sản phẩm bên ngoài: HÃY SỬ DỤNG GOOGLE SEARCH để tìm câu trả lời mới nhất.
+      - Nếu sản phẩm không có trong danh sách shop, hãy nói là không tìm thấy trong kho, nhưng có thể tìm thông tin bên ngoài nếu cần.
+      - Luôn dẫn nguồn nếu lấy thông tin từ internet.
     `;
 
     try {
@@ -151,7 +151,17 @@ const processQueryWithGemini = async (query, context) => {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                contents: [{ parts: [{ text: systemPrompt }] }]
+                contents: [{ parts: [{ text: systemPrompt }] }],
+                tools: [
+                  {
+                    googleSearchRetrieval: {
+                      dynamicRetrievalConfig: {
+                        mode: "MODE_DYNAMIC",
+                        dynamicThreshold: 0.6
+                      }
+                    }
+                  }
+                ]
             })
         });
 
