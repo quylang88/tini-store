@@ -1,6 +1,6 @@
 import React from "react";
 import { LayoutDashboard, ShoppingCart, Package, Settings } from "lucide-react";
-import useMountTransition from "../hooks/useMountTransition";
+import useMountTransition from "../hooks/ui/useMountTransition";
 
 const TabBar = ({ activeTab, setActiveTab, isVisible = true }) => {
   const tabs = [

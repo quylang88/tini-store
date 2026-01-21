@@ -1,8 +1,8 @@
 import { useState } from "react";
-import { formatNumber, normalizeString } from "../utils/helpers";
-import { normalizePurchaseLots } from "../utils/purchaseUtils";
-import { exportDataToJSON, parseBackupFile } from "../utils/fileUtils";
-import { requestNotificationPermission } from "../utils/notificationUtils";
+import { formatNumber, normalizeString } from "../../utils/formatters/formatters";
+import { normalizePurchaseLots } from "../../utils/inventory/purchaseUtils";
+import { exportDataToJSON, parseBackupFile } from "../../utils/file/fileUtils";
+import { requestNotificationPermission } from "../../utils/common/notificationUtils";
 
 const useSettingsLogic = ({
   products,

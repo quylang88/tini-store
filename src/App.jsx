@@ -8,7 +8,7 @@ import Inventory from "./screens/Inventory";
 import Orders from "./screens/Orders";
 import Settings from "./screens/Settings";
 import StatsDetail from "./screens/dashboard/StatsDetail";
-import { normalizePurchaseLots } from "./utils/purchaseUtils";
+import { normalizePurchaseLots } from "./utils/inventory/purchaseUtils";
 
 // --- IMPORT COMPONENT CHUNG ---
 import TabBar from "./components/TabBar";
@@ -16,10 +16,10 @@ import ConfirmModal from "./components/modals/ConfirmModal";
 import ScreenTransition from "./components/common/ScreenTransition";
 import SplashScreen from "./screens/login/SplashScreen";
 import OfflineAlert from "./screens/login/OfflineAlert";
-import useImagePreloader from "./hooks/useImagePreloader";
-import { exportDataToJSON } from "./utils/fileUtils";
-import { sendNotification } from "./utils/notificationUtils";
-import useDailyGreeting from "./hooks/useDailyGreeting";
+import useImagePreloader from "./hooks/ui/useImagePreloader";
+import { exportDataToJSON } from "./utils/file/fileUtils";
+import { sendNotification } from "./utils/common/notificationUtils";
+import useDailyGreeting from "./hooks/core/useDailyGreeting";
 
 // Định nghĩa thứ tự tab để xác định hướng chuyển cảnh
 const TAB_ORDER = {

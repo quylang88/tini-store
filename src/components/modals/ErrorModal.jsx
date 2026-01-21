@@ -1,6 +1,6 @@
 import React, { useMemo } from "react";
 import ModalShell from "./ModalShell";
-import useModalCache from "../../hooks/useModalCache";
+import useModalCache from "../../hooks/ui/useModalCache";
 
 // Modal báo lỗi riêng cho các trường hợp nhập sai hoặc thiếu dữ liệu
 const ErrorModal = ({ open, title, message, onClose }) => {

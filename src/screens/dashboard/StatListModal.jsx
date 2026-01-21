@@ -2,9 +2,9 @@ import React, { useMemo } from "react";
 import { Package, ArchiveX, Image as ImageIcon } from "lucide-react";
 import SheetModal from "../../components/modals/SheetModal";
 import Button from "../../components/button/Button";
-import { formatNumber } from "../../utils/helpers";
+import { formatNumber } from "../../utils/formatters/formatters";
 import RankBadge from "../../components/stats/RankBadge";
-import useModalCache from "../../hooks/useModalCache";
+import useModalCache from "../../hooks/ui/useModalCache";
 
 const themeMap = {
   profit: {

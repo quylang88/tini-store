@@ -11,8 +11,8 @@ import ProductBasicInfoModal from "./inventory/ProductBasicInfoModal";
 import ConfirmModalHost from "../components/modals/ConfirmModalHost";
 import ErrorModal from "../components/modals/ErrorModal";
 import FloatingActionButton from "../components/button/FloatingActionButton";
-import useInventoryLogic from "../hooks/useInventoryLogic";
-import useScrollHandling from "../hooks/useScrollHandling";
+import useInventoryLogic from "../hooks/inventory/useInventoryLogic";
+import useScrollHandling from "../hooks/ui/useScrollHandling";
 import AppHeader from "../components/common/AppHeader";
 
 const Inventory = ({

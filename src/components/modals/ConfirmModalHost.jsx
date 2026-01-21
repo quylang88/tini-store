@@ -1,6 +1,6 @@
 import React from "react";
 import ConfirmModal from "./ConfirmModal";
-import useModalCache from "../../hooks/useModalCache";
+import useModalCache from "../../hooks/ui/useModalCache";
 
 const ConfirmModalHost = ({ modal, onClose }) => {
   // Giữ lại nội dung modal cũ để hiển thị trong lúc đang đóng (animation fade-out)

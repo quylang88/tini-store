@@ -1,8 +1,8 @@
 import React from "react";
 import { Lock, User, ArrowRight, CheckSquare } from "lucide-react";
-import useLoginLogic from "../hooks/useLoginLogic";
+import useLoginLogic from "../hooks/auth/useLoginLogic";
 import SplashScreen from "./login/SplashScreen";
-import useImagePreloader from "../hooks/useImagePreloader";
+import useImagePreloader from "../hooks/ui/useImagePreloader";
 
 const AuthField = ({
   label,

@@ -1,9 +1,9 @@
-import { normalizeWarehouseStock } from "./warehouseUtils";
+import { normalizeWarehouseStock } from "../inventory/warehouseUtils";
 import {
   consumePurchaseLots,
   normalizePurchaseLots,
   restockPurchaseLots,
-} from "./purchaseUtils";
+} from "../inventory/purchaseUtils";
 
 const updateWarehouseStock = (product, warehouseKey, delta, restockCost) => {
   const current = normalizeWarehouseStock(product);
@@ -23,7 +23,7 @@ const updateWarehouseStock = (product, warehouseKey, delta, restockCost) => {
     return consumePurchaseLots(
       normalizePurchaseLots(nextProduct),
       warehouseKey,
-      Math.abs(delta)
+      Math.abs(delta),
     );
   }
   if (delta > 0) {
@@ -31,7 +31,7 @@ const updateWarehouseStock = (product, warehouseKey, delta, restockCost) => {
       normalizePurchaseLots(nextProduct),
       warehouseKey,
       delta,
-      restockCost
+      restockCost,
     );
   }
   return nextProduct;
@@ -42,13 +42,13 @@ export const syncProductsStock = (
   orderItems,
   previousItems = [],
   nextWarehouseKey,
-  previousWarehouseKey = nextWarehouseKey
+  previousWarehouseKey = nextWarehouseKey,
 ) => {
   const nextMap = new Map(
-    orderItems.map((item) => [item.productId, item.quantity])
+    orderItems.map((item) => [item.productId, item.quantity]),
   );
   const previousItemMap = new Map(
-    previousItems.map((item) => [item.productId, item])
+    previousItems.map((item) => [item.productId, item]),
   );
 
   return products.map((product) => {
@@ -65,7 +65,7 @@ export const syncProductsStock = (
         product,
         nextWarehouseKey,
         delta,
-        previousCost
+        previousCost,
       );
     }
 
@@ -76,14 +76,14 @@ export const syncProductsStock = (
         nextProduct,
         previousWarehouseKey,
         previousQty,
-        previousCost
+        previousCost,
       );
     }
     if (nextQty) {
       nextProduct = updateWarehouseStock(
         nextProduct,
         nextWarehouseKey,
-        -nextQty
+        -nextQty,
       );
     }
     return nextProduct;

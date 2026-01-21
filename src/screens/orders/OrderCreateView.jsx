@@ -2,13 +2,13 @@
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import BarcodeScanner from "../../components/BarcodeScanner";
-import { WAREHOUSES } from "../../utils/warehouseUtils";
+import { WAREHOUSES } from "../../utils/inventory/warehouseUtils";
 
-import OrderCreateHeader from "./components/OrderCreateHeader";
-import OrderCreateProductList from "./components/OrderCreateProductList";
-import OrderCreateFooter from "./components/OrderCreateFooter";
-import OrderCreateReviewModal from "./components/OrderCreateReviewModal";
-import useScrollHandling from "../../hooks/useScrollHandling";
+import OrderCreateHeader from "./OrderCreateHeader";
+import OrderCreateProductList from "./OrderCreateProductList";
+import OrderCreateFooter from "./OrderCreateFooter";
+import OrderCreateReviewModal from "./OrderCreateReviewModal";
+import useScrollHandling from "../../hooks/ui/useScrollHandling";
 import ProductFilterHeader from "../../components/common/ProductFilterHeader";
 
 // Giao diện tạo/sửa đơn được tách riêng để Orders.jsx gọn hơn

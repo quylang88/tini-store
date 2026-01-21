@@ -1,9 +1,9 @@
 /* eslint-disable no-unused-vars */
 import React, { useMemo, useState } from "react";
 import { BarChart3, DollarSign, TrendingUp } from "lucide-react";
-import { formatNumber } from "../../utils/helpers";
-import useDashboardLogic from "../../hooks/useDashboardLogic";
-import { getLatestUnitCost } from "../../utils/purchaseUtils";
+import { formatNumber } from "../../utils/formatters/formatters";
+import useDashboardLogic from "../../hooks/dashboard/useDashboardLogic";
+import { getLatestUnitCost } from "../../utils/inventory/purchaseUtils";
 import MetricCard from "../../components/stats/MetricCard";
 import TopSellingSection from "../../components/stats/TopSellingSection";
 import StatListModal from "./StatListModal";

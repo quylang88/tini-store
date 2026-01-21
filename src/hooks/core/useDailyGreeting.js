@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { sendNotification } from "../utils/notificationUtils";
+import { sendNotification } from "../../utils/common/notificationUtils";
 
 const STORAGE_KEY = "last_daily_greeting_date";
 

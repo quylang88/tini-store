@@ -1,11 +1,11 @@
 import React, { useState } from "react";
 import { Plus, Minus, Search, Image as ImageIcon } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { formatInputNumber } from "../../../utils/helpers";
-import { getWarehouseLabel } from "../../../utils/warehouseUtils";
-import ProductFilterSection from "../../../components/common/ProductFilterSection";
-import useLongPress from "../../../hooks/useLongPress";
-import ExpandableProductName from "../../../components/common/ExpandableProductName";
+import { formatInputNumber } from "../../utils/formatters/formatters";
+import { getWarehouseLabel } from "../../utils/inventory/warehouseUtils";
+import ProductFilterSection from "../../components/common/ProductFilterSection";
+import useLongPress from "../../hooks/ui/useLongPress";
+import ExpandableProductName from "../../components/common/ExpandableProductName";
 
 const QuantityStepper = ({
   qty,

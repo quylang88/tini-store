@@ -1,11 +1,11 @@
 import { useState } from "react";
+import { compressImage } from "../../utils/file/imageUtils";
 import {
-  compressImage,
   formatInputNumber,
   sanitizeDecimalInput,
   sanitizeNumberInput,
-} from "../../utils/helpers";
-import { createFormDataForNewProduct } from "../../utils/inventoryForm";
+} from "../../utils/formatters/formatters";
+import { createFormDataForNewProduct } from "../../utils/inventory/inventoryForm";
 
 // Tách riêng state + handler của form để hook chính gọn hơn, dễ review.
 const useInventoryFormState = ({ settings, activeCategory }) => {

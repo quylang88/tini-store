@@ -1,9 +1,9 @@
 import React from "react";
-import { formatInputNumber, formatNumber } from "../../utils/helpers";
-import { getWarehouseLabel } from "../../utils/warehouseUtils";
+import { formatInputNumber, formatNumber } from "../../utils/formatters/formatters";
+import { getWarehouseLabel } from "../../utils/inventory/warehouseUtils";
 import SheetModal from "../../components/modals/SheetModal";
 import Button from "../../components/button/Button";
-import useModalCache from "../../hooks/useModalCache";
+import useModalCache from "../../hooks/ui/useModalCache";
 import ProductIdentityForm from "./ProductIdentityForm";
 
 const ProductModal = ({

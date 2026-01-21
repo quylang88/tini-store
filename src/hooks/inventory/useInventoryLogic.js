@@ -3,14 +3,14 @@ import {
   createFormDataForLot,
   createFormDataForNewProduct,
   createFormDataForProduct,
-} from "../utils/inventoryForm";
-import useInventoryFormState from "./inventory/useInventoryFormState";
-import useInventoryFilters from "./inventory/useInventoryFilters";
+} from "../../utils/inventory/inventoryForm";
+import useInventoryFormState from "./useInventoryFormState";
+import useInventoryFilters from "./useInventoryFilters";
 import {
   buildNextProductFromForm,
   getInventoryValidationError,
-} from "./inventory/inventorySaveUtils";
-import useHighlightFields from "./useHighlightFields";
+} from "./inventorySaveUtils";
+import useHighlightFields from "../ui/useHighlightFields";
 
 const useInventoryLogic = ({ products, setProducts, settings }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);

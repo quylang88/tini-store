@@ -1,5 +1,5 @@
 // Hook xử lý logic tạo/cập nhật đơn hàng
-import { syncProductsStock } from "../../utils/orderStock";
+import { syncProductsStock } from "../../utils/orders/orderStock";
 
 const DEFAULT_STATUS = "shipping";
 const DEFAULT_WAREHOUSE = "vinhPhuc";

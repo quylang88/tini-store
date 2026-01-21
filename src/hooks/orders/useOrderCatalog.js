@@ -1,7 +1,7 @@
 import { useCallback, useMemo } from "react";
-import { normalizeWarehouseStock } from "../../utils/warehouseUtils";
-import { getLatestUnitCost } from "../../utils/purchaseUtils";
-import useProductFilterSort from "../useProductFilterSort";
+import { normalizeWarehouseStock } from "../../utils/inventory/warehouseUtils";
+import { getLatestUnitCost } from "../../utils/inventory/purchaseUtils";
+import useProductFilterSort from "../core/useProductFilterSort";
 
 const DEFAULT_WAREHOUSE = "all";
 

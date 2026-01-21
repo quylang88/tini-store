@@ -1,7 +1,7 @@
 import { useMemo, useCallback } from "react";
-import { normalizeString } from "../../utils/helpers";
-import { normalizeWarehouseStock } from "../../utils/warehouseUtils";
-import useProductFilterSort from "../useProductFilterSort";
+import { normalizeString } from "../../utils/formatters/formatters";
+import { normalizeWarehouseStock } from "../../utils/inventory/warehouseUtils";
+import useProductFilterSort from "../core/useProductFilterSort";
 
 const useInventoryFilters = ({
   products,
@@ -13,14 +13,17 @@ const useInventoryFilters = ({
   sortConfig = { key: "date", direction: "desc" },
 }) => {
   // Define custom filter function for Warehouse availability
-  const checkWarehouseStock = useCallback((product) => {
-    const stockByWarehouse = normalizeWarehouseStock(product);
-    return (
-      warehouseFilter === "all" ||
-      (warehouseFilter === "daLat" && stockByWarehouse.daLat > 0) ||
-      (warehouseFilter === "vinhPhuc" && stockByWarehouse.vinhPhuc > 0)
-    );
-  }, [warehouseFilter]);
+  const checkWarehouseStock = useCallback(
+    (product) => {
+      const stockByWarehouse = normalizeWarehouseStock(product);
+      return (
+        warehouseFilter === "all" ||
+        (warehouseFilter === "daLat" && stockByWarehouse.daLat > 0) ||
+        (warehouseFilter === "vinhPhuc" && stockByWarehouse.vinhPhuc > 0)
+      );
+    },
+    [warehouseFilter],
+  );
 
   // Use shared hook for logic
   const filteredProducts = useProductFilterSort({
