@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Send, Settings2 } from "lucide-react";
 import AssistantIcon from "./AssistantIcon";
+import FlashIcon from "./FlashIcon";
+import LocalIcon from "./LocalIcon";
 
 const PLACEHOLDERS = [
   "Hôm nay cửa hàng thế nào...",
@@ -20,7 +22,12 @@ const shuffleArray = (array) => {
   return newArray;
 };
 
-const ChatInput = ({ onSend, disabled, onOpenModelSelector }) => {
+const ChatInput = ({
+  onSend,
+  disabled,
+  onOpenModelSelector,
+  selectedModel = "PRO",
+}) => {
   const [text, setText] = useState("");
   const [isFocused, setIsFocused] = useState(false);
 
@@ -122,14 +129,22 @@ const ChatInput = ({ onSend, disabled, onOpenModelSelector }) => {
           type="button"
           onClick={onOpenModelSelector}
           disabled={disabled}
-          className="p-3 bg-gray-100 text-gray-500 rounded-full hover:bg-gray-200 active:scale-90 transition-all flex items-center justify-center"
+          className="p-3 bg-rose-50 text-rose-500 rounded-full hover:bg-rose-100 active:scale-90 transition-all flex items-center justify-center"
         >
           <Settings2 size={20} />
         </button>
 
         <div className="relative flex-1">
           <div className="absolute left-3 top-1/2 -translate-y-1/2 text-rose-400 z-10">
-            <AssistantIcon isActive={isFocused} size={18} />
+            {selectedModel === "PRO" && (
+              <AssistantIcon isActive={isFocused} size={18} />
+            )}
+            {selectedModel === "FLASH" && (
+              <FlashIcon isActive={isFocused} size={18} />
+            )}
+            {selectedModel === "LOCAL" && (
+              <LocalIcon isActive={isFocused} size={18} />
+            )}
           </div>
 
           {/* Placeholder có hiệu ứng */}
