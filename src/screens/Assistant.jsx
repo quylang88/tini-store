@@ -11,7 +11,7 @@ const Assistant = ({ products, orders, settings }) => {
       type: "text",
       sender: "assistant",
       content:
-        "Chào bạn! Mình là trợ lý ảo Tiny. Mình có thể giúp gì cho bạn hôm nay?",
+        "Chào bạn! Mình là trợ lý ảo Misa. Mình có thể giúp gì cho bạn hôm nay?",
       timestamp: new Date(),
     },
   ]);
@@ -38,65 +38,27 @@ const Assistant = ({ products, orders, settings }) => {
     setMessages((prev) => [...prev, userMsg]);
     setIsTyping(true);
 
-    // Nếu có API Key, dùng API. Nếu không, giả lập độ trễ cho AI cục bộ.
-    const hasApiKey = settings?.aiApiKey && settings.aiApiKey.length > 10;
-
-    if (hasApiKey) {
-      try {
-        const response = await processQuery(text, {
-          products,
-          orders,
-          settings,
-        });
-        setMessages((prev) => [...prev, response]);
-      } catch (error) {
-        console.error("AI Error:", error);
-        setMessages((prev) => [
-          ...prev,
-          {
-            id: Date.now().toString(),
-            type: "text",
-            sender: "assistant",
-            content:
-              "Xin lỗi, kết nối đến AI bị gián đoạn. Vui lòng kiểm tra lại API Key.",
-            timestamp: new Date(),
-          },
-        ]);
-      } finally {
-        setIsTyping(false);
-      }
-    } else {
-      // AI Cục bộ (có độ trễ giả lập)
-      setTimeout(
-        () => {
-          try {
-            // Lưu ý: processQuery cục bộ hiện tại là đồng bộ, nhưng ta sẽ update nó trả về Promise hoặc handle cả hai
-            // Để an toàn, service nên trả về Promise luôn.
-            // Tuy nhiên service hiện tại là đồng bộ. Ta sẽ sửa service sau.
-            // Ở đây ta gọi hàm và wrap vào Promise resolve.
-            const response = processQuery(text, { products, orders, settings });
-            // Handle response if it is a Promise (in case we updated service to be async always)
-            Promise.resolve(response).then((res) => {
-              setMessages((prev) => [...prev, res]);
-            });
-          } catch (error) {
-            console.error("AI Error:", error);
-            setMessages((prev) => [
-              ...prev,
-              {
-                id: Date.now().toString(),
-                type: "text",
-                sender: "assistant",
-                content: "Xin lỗi, mình gặp chút sự cố khi xử lý yêu cầu này.",
-                timestamp: new Date(),
-              },
-            ]);
-          } finally {
-            setIsTyping(false);
-          }
+    try {
+      const response = await processQuery(text, {
+        products,
+        orders,
+        settings,
+      });
+      setMessages((prev) => [...prev, response]);
+    } catch (error) {
+      console.error("AI Error:", error);
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: Date.now().toString(),
+          type: "text",
+          sender: "assistant",
+          content: "Xin lỗi, có lỗi xảy ra khi xử lý yêu cầu.",
+          timestamp: new Date(),
         },
-        600 + Math.random() * 400,
-      );
+      ]);
+    } finally {
+      setIsTyping(false);
     }
   };
 

@@ -2,40 +2,76 @@
  * aiAssistantService.js
  *
  * Service này đóng vai trò là "Bộ não" cho Trợ lý ảo.
- * Đã được cấu hình để sử dụng API Key bảo mật từ biến môi trường (.env).
  */
 
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import {
+  GoogleGenerativeAI,
+  HarmCategory,
+  HarmBlockThreshold,
+} from "@google/generative-ai";
 import { formatCurrency } from "../utils/formatters/formatUtils";
 
-// 1. CẤU HÌNH API KEY TỪ BIẾN MÔI TRƯỜNG (AN TOÀN)
-// Vite sử dụng import.meta.env để truy cập biến bắt đầu bằng VITE_
-const API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
+// --- BIẾN CACHE (Singleton) ---
+// Lưu trữ instance để tái sử dụng, tránh khởi tạo lại nhiều lần
+let cachedKey = null;
+let cachedModelWithSearch = null; // Model có Google Search
+let cachedModelBasic = null; // Model thường (Fallback)
 
-// Khởi tạo SDK (chỉ khởi tạo nếu có key)
-let model = null;
-
-if (API_KEY) {
-  const genAI = new GoogleGenerativeAI(API_KEY);
-  model = genAI.getGenerativeModel({
-    model: "gemini-1.5-flash",
-    // Kích hoạt công cụ Google Search để tìm giá/thông tin trên mạng
-    tools: [{ googleSearch: {} }],
-  });
-} else {
-  console.warn(
-    "⚠️ Chưa tìm thấy VITE_GEMINI_API_KEY trong file .env. Trợ lý sẽ chạy ở chế độ Offline (Rule-based).",
-  );
-}
+// Cấu hình an toàn (Block None để tránh bị chặn nhầm)
+const safetySettings = [
+  {
+    category: HarmCategory.HARM_CATEGORY_HARASSMENT,
+    threshold: HarmBlockThreshold.BLOCK_NONE,
+  },
+  {
+    category: HarmCategory.HARM_CATEGORY_HATE_SPEECH,
+    threshold: HarmBlockThreshold.BLOCK_NONE,
+  },
+  {
+    category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
+    threshold: HarmBlockThreshold.BLOCK_NONE,
+  },
+  {
+    category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
+    threshold: HarmBlockThreshold.BLOCK_NONE,
+  },
+];
 
 /**
- * Chuẩn hóa văn bản để so sánh (chữ thường, bỏ dấu).
+ * Hàm lấy Model thông minh (có Cache)
+ * @param {string} apiKey
+ * @param {boolean} useSearch
  */
-const normalizeText = (text) => {
-  return text
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "");
+const getModel = (apiKey, useSearch = true) => {
+  // 1. Nếu Key thay đổi (hoặc lần đầu chạy), reset toàn bộ cache
+  if (apiKey !== cachedKey) {
+    cachedKey = apiKey;
+    cachedModelWithSearch = null;
+    cachedModelBasic = null;
+  }
+
+  // 2. Trả về model từ cache nếu đã có
+  if (useSearch && cachedModelWithSearch) return cachedModelWithSearch;
+  if (!useSearch && cachedModelBasic) return cachedModelBasic;
+
+  // 3. Nếu chưa có trong cache, khởi tạo mới
+  const genAI = new GoogleGenerativeAI(apiKey);
+
+  const modelConfig = {
+    model: "gemini-2.5-flash",
+    safetySettings: safetySettings,
+  };
+
+  if (useSearch) {
+    modelConfig.tools = [{ googleSearch: {} }];
+    // Lưu vào cache search
+    cachedModelWithSearch = genAI.getGenerativeModel(modelConfig);
+    return cachedModelWithSearch;
+  } else {
+    // Lưu vào cache thường
+    cachedModelBasic = genAI.getGenerativeModel(modelConfig);
+    return cachedModelBasic;
+  }
 };
 
 /**
@@ -45,118 +81,38 @@ const normalizeText = (text) => {
  * @param {object} context { products, orders, settings }
  */
 export const processQuery = async (query, context) => {
-  // Ưu tiên dùng Key trong .env.
-  // Nếu không có, fallback về settings của user (nếu bạn vẫn muốn giữ tính năng nhập key thủ công),
-  // hoặc chạy local.
-  const hasEnvKey = !!API_KEY;
-
-  if (hasEnvKey) {
-    return await processQueryWithGemini(query, context);
-  }
-
-  // Nếu không có Key -> Chạy logic cục bộ
-  return processQueryLocal(query, context);
-};
-
-/**
- * LOGIC CỤC BỘ (Rule-based / Offline)
- * Chạy khi không có API Key hoặc mất mạng.
- */
-const processQueryLocal = (query, context) => {
-  const { products, orders } = context;
-  const cleanQuery = normalizeText(query);
-
-  // 1. CHÀO HỎI
-  if (cleanQuery.match(/^(xin chao|hi|hello|chao|lo|alo)/)) {
-    return createResponse(
-      "text",
-      'Xin chào! Hiện tại mình đang chạy ở chế độ Offline. Mình chỉ có thể giúp tra cứu nhanh như: "Doanh thu hôm nay", "Tìm [tên sản phẩm]".',
-    );
-  }
-
-  // 2. DOANH THU
-  if (cleanQuery.includes("doanh thu") || cleanQuery.includes("tien ban")) {
-    if (cleanQuery.includes("hom nay") || cleanQuery.includes("nay")) {
-      const today = new Date().toLocaleDateString("en-CA");
-      const todayOrders = orders.filter(
-        (o) => o.date.startsWith(today) && o.status !== "cancelled",
-      );
-      const total = todayOrders.reduce((sum, o) => sum + o.total, 0);
-      const count = todayOrders.length;
-
-      return createResponse(
-        "stats",
-        `Doanh thu hôm nay là ${formatCurrency(total)} từ ${count} đơn hàng.`,
-        {
-          label: "Doanh thu hôm nay",
-          value: total,
-          subtext: `${count} đơn hàng`,
-        },
-      );
-    }
-
-    const total = orders
-      .filter((o) => o.status !== "cancelled")
-      .reduce((sum, o) => sum + o.total, 0);
-    return createResponse(
-      "stats",
-      `Tổng doanh thu toàn thời gian là ${formatCurrency(total)}.`,
-      {
-        label: "Tổng doanh thu",
-        value: total,
-        subtext: "Toàn thời gian",
-      },
-    );
-  }
-
-  // 3. TÌM KIẾM SẢN PHẨM
-  if (
-    cleanQuery.includes("tim") ||
-    cleanQuery.includes("gia") ||
-    cleanQuery.includes("xem")
-  ) {
-    const keyword = cleanQuery
-      .replace(/(tim|gia cua|gia|xem|san pham|con bao nhieu|kiem tra)/g, "")
-      .trim();
-
-    if (keyword.length < 2) {
-      return createResponse("text", "Bạn muốn tìm sản phẩm gì?");
-    }
-
-    const results = products.filter((p) =>
-      normalizeText(p.name).includes(keyword),
-    );
-
-    if (results.length === 0) {
+  // 1. KIỂM TRA MẠNG
+  if (!navigator.onLine) {
+    if (!navigator.onLine) {
       return createResponse(
         "text",
-        `Không tìm thấy sản phẩm nào khớp với "${keyword}".`,
-      );
-    } else {
-      return createResponse(
-        "product_list",
-        `Tìm thấy ${results.length} sản phẩm:`,
-        results,
+        "Bạn đang Offline. Vui lòng kiểm tra kết nối mạng.",
       );
     }
   }
 
-  // FALLBACK
-  return createResponse(
-    "text",
-    "Chế độ Offline: Vui lòng kết nối mạng để mình có thể trả lời thông minh hơn và tra cứu giá trên mạng!",
-  );
+  // 2. LẤY API KEY
+  const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+
+  if (!apiKey) {
+    return createResponse(
+      "text",
+      "Chưa có cấu hình API Key. Vui lòng cập nhật lại.",
+    );
+  }
+
+  // 3. GỌI GEMINI (ONLINE)
+  return await processQueryWithGemini(query, context, apiKey);
 };
 
 /**
  * XỬ LÝ VỚI GEMINI AI (ONLINE)
  * Sử dụng SDK Google Generative AI
  */
-const processQueryWithGemini = async (query, context) => {
+const processQueryWithGemini = async (query, context, apiKey) => {
   const { products, orders } = context;
 
-  // 1. Chuẩn bị ngữ cảnh (Context Injection)
-  // Lấy tối đa 100 sản phẩm để tiết kiệm token, ưu tiên sản phẩm mới hoặc bán chạy nếu có logic sort
+  // --- CHUẨN BỊ DATA ---
   const productContext = products
     .slice(0, 100)
     .map(
@@ -176,12 +132,11 @@ const processQueryWithGemini = async (query, context) => {
     - Tổng số đơn hàng trong lịch sử: ${orders.length}
     `;
 
-  // 2. Tạo System Prompt
   const systemPrompt = `
-      Bạn là Trợ lý ảo quản lý bán hàng của "Tiny Shop".
+      Bạn là Trợ lý ảo, tên là Misa. Quản lý bán hàng của "Tiny Shop".
       Nhiệm vụ: Trả lời ngắn gọn, chính xác, giọng điệu thân thiện.
 
-      DỮ LIỆU CỬA HÀNG (NỘI BỘ):
+      DỮ LIỆU SHOP (NỘI BỘ):
       ${statsContext}
 
       DANH SÁCH SẢN PHẨM (Top 100):
@@ -196,22 +151,52 @@ const processQueryWithGemini = async (query, context) => {
       4. Định dạng tiền tệ dạng Việt Nam (ví dụ: 150.000đ).
     `;
 
+  // LOGIC GỌI API ĐÃ NÂNG CẤP ĐỂ BÁO LỖI CHÍNH XÁC:
   try {
-    // Gọi Gemini qua SDK
+    // LẦN 1: Thử gọi có Search
+    const model = getModel(apiKey, true);
     const result = await model.generateContent(systemPrompt);
     const response = await result.response;
-    const textResponse = response.text();
+    return createResponse("text", response.text());
+  } catch (error1) {
+    console.warn("Lần 1 (Search) thất bại:", error1.message);
 
-    // Kiểm tra xem có Grounding Metadata (nguồn search) không để hiển thị (tuỳ chọn)
-    // const groundingMetadata = response.candidates[0].groundingMetadata;
+    // LẦN 2: Thử gọi không Search
+    try {
+      const modelBasic = getModel(apiKey, false);
+      const retryPrompt =
+        systemPrompt + "\n(Trả lời dựa trên kiến thức có sẵn)";
+      const result = await modelBasic.generateContent(retryPrompt);
+      const response = await result.response;
 
-    return createResponse("text", textResponse);
-  } catch (error) {
-    console.error("Gemini API Error:", error);
-    return createResponse(
-      "text",
-      "Xin lỗi, kết nối với AI đang gặp sự cố. Vui lòng thử lại sau.",
-    );
+      return createResponse(
+        "text",
+        response.text() + "\n\n(⚠️ Lưu ý: Không thể tìm kiếm Google lúc này)",
+      );
+    } catch (error2) {
+      console.error("Lần 2 (Basic) cũng thất bại:", error2);
+
+      // --- PHÂN TÍCH LỖI ĐỂ BÁO CHO USER ---
+      let errorMsg = "Lỗi không xác định.";
+
+      if (error2.message.includes("400")) {
+        errorMsg =
+          "Lỗi 400: API Key không hợp lệ. Hãy kiểm tra xem Key có bị thừa dấu cách hoặc copy thiếu không.";
+      } else if (error2.message.includes("403")) {
+        errorMsg =
+          "Lỗi 403: API Key đúng nhưng bị chặn. (Có thể do hết hạn ngạch Free hoặc IP bị chặn).";
+      } else if (error2.message.includes("Failed to fetch")) {
+        errorMsg =
+          "Lỗi mạng: Không thể kết nối đến Google. (Kiểm tra Wifi hoặc tắt VPN/Adblock).";
+      } else {
+        errorMsg = `Chi tiết lỗi: ${error2.message}`;
+      }
+
+      return createResponse(
+        "text",
+        `🚫 KHÔNG THỂ KẾT NỐI AI:\n${errorMsg}\n\n👉 Hãy thử Restart lại server (npm run dev) nếu vừa đổi Key.`,
+      );
+    }
   }
 };
 
