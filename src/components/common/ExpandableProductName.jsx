@@ -8,7 +8,7 @@ import { motion, AnimatePresence } from "framer-motion";
  * Mặc định sẽ hiển thị dạng line-clamp (1 dòng),
  * và mở rộng để hiện toàn bộ tên khi chạm vào.
  *
- * FIX: Sử dụng style line-clamp thay vì class 'truncate' để tránh hiện tượng khựng
+ * Note: Sử dụng style line-clamp thay vì class 'truncate' để tránh hiện tượng khựng
  * do thay đổi thuộc tính white-space (nowrap -> normal).
  *
  * Props:
