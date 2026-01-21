@@ -188,8 +188,10 @@ const processQueryWithGemini = async (query, context) => {
     `;
 
   try {
-    // Sử dụng gemini-1.5-flash (bản miễn phí/ổn định) với Google Search Grounding
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+    // Lấy model từ env hoặc dùng mặc định gemini-1.5-flash
+    const modelName =
+      import.meta.env.VITE_GEMINI_MODEL_NAME || "gemini-1.5-flash";
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
 
     const response = await fetch(url, {
       method: "POST",
@@ -198,7 +200,12 @@ const processQueryWithGemini = async (query, context) => {
         contents: [{ parts: [{ text: systemPrompt }] }],
         tools: [
           {
-            google_search: {},
+            googleSearchRetrieval: {
+              dynamicRetrievalConfig: {
+                mode: "MODE_DYNAMIC",
+                dynamicThreshold: 0.6,
+              },
+            },
           },
         ],
       }),
