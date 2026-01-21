@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Bot } from "lucide-react";
+import { motion } from "framer-motion";
 import ChatBubble from "../components/assistant/ChatBubble";
 import ChatInput from "../components/assistant/ChatInput";
 import { processQuery } from "../services/aiAssistantService";
@@ -63,15 +64,25 @@ const Assistant = ({ products, orders, settings }) => {
   };
 
   return (
-    <div className="flex flex-col h-full bg-white relative">
+    <motion.div
+      className="flex flex-col h-full relative"
+      animate={{
+        backgroundColor: ["#fff1f2", "#fff7ed", "#fffbeb", "#fff1f2"], // rose-50 -> orange-50 -> amber-50 -> rose-50
+      }}
+      transition={{
+        duration: 10,
+        repeat: Infinity,
+        ease: "linear",
+      }}
+    >
       {/* Header */}
-      <div className="flex items-center gap-3 px-4 py-3 border-b border-gray-100 bg-white sticky top-0 z-10">
-        <div className="w-10 h-10 rounded-full bg-rose-100 flex items-center justify-center text-rose-600">
+      <div className="flex items-center gap-3 px-4 py-3 border-b border-white/50 bg-white/60 backdrop-blur-sm sticky top-0 z-10 shadow-sm">
+        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-rose-400 to-orange-400 text-white flex items-center justify-center shadow-md">
           <Bot size={24} />
         </div>
         <div>
           <h1 className="font-bold text-gray-900 text-lg">Trợ lý ảo</h1>
-          <p className="text-xs text-gray-500 flex items-center gap-1">
+          <p className="text-xs text-gray-600 flex items-center gap-1">
             <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
             Đang hoạt động
           </p>
@@ -79,7 +90,7 @@ const Assistant = ({ products, orders, settings }) => {
       </div>
 
       {/* Message List */}
-      <div className="flex-1 overflow-y-auto p-4 bg-gray-50/50">
+      <div className="flex-1 overflow-y-auto p-4 bg-transparent">
         {messages.map((msg) => (
           <ChatBubble key={msg.id} message={msg} />
         ))}
@@ -110,7 +121,7 @@ const Assistant = ({ products, orders, settings }) => {
 
       {/* Safe Area Spacer for TabBar overlap if needed, usually handled by parent container padding */}
       <div className="h-14"></div>
-    </div>
+    </motion.div>
   );
 };
 
