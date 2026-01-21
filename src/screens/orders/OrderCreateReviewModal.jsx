@@ -1,7 +1,10 @@
 import React, { useState } from "react";
 import SheetModal from "../../components/modals/SheetModal";
 import Button from "../../components/button/Button";
-import { formatNumber, formatInputNumber } from "../../utils/formatters/formatters";
+import {
+  formatNumber,
+  formatInputNumber,
+} from "../../utils/formatters/formatUtils";
 import { motion, AnimatePresence } from "framer-motion";
 import useHighlightFields from "../../hooks/ui/useHighlightFields";
 import ErrorModal from "../../components/modals/ErrorModal";

@@ -4,7 +4,7 @@ import {
   formatInputNumber,
   sanitizeDecimalInput,
   sanitizeNumberInput,
-} from "../../utils/formatters/formatters";
+} from "../../utils/formatters/formatUtils";
 import { createFormDataForNewProduct } from "../../utils/inventory/inventoryForm";
 
 // Tách riêng state + handler của form để hook chính gọn hơn, dễ review.

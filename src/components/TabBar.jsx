@@ -1,11 +1,19 @@
 import React from "react";
-import { LayoutDashboard, ShoppingCart, Package, Settings } from "lucide-react";
+import {
+  LayoutDashboard,
+  ShoppingCart,
+  Package,
+  Settings,
+  Sparkles,
+} from "lucide-react";
 import useMountTransition from "../hooks/ui/useMountTransition";
+import AssistantIcon from "./assistant/AssistantIcon";
 
 const TabBar = ({ activeTab, setActiveTab, isVisible = true }) => {
   const tabs = [
     { id: "dashboard", icon: LayoutDashboard, label: "Tổng quan" },
     { id: "products", icon: Package, label: "Nhập kho" },
+    { id: "assistant", icon: Sparkles, label: "Trợ lý" },
     { id: "orders", icon: ShoppingCart, label: "Xuất kho" },
     { id: "settings", icon: Settings, label: "Cài đặt" },
   ];
@@ -28,11 +36,15 @@ const TabBar = ({ activeTab, setActiveTab, isVisible = true }) => {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex flex-col items-center justify-center w-full h-full gap-0.5 ${
-                isActive ? "text-rose-600" : "text-amber-500"
+              className={`relative flex flex-col items-center justify-center w-full h-full gap-0.5 ${
+                isActive ? "text-rose-600 z-10" : "text-amber-500 z-0"
               }`}
             >
-              <Icon size={24} strokeWidth={isActive ? 2.5 : 2} />
+              {tab.id === "assistant" ? (
+                <AssistantIcon isActive={isActive} size={24} />
+              ) : (
+                <Icon size={24} strokeWidth={isActive ? 2.5 : 2} />
+              )}
               <span className="text-[10px] font-medium uppercase">
                 {tab.label}
               </span>

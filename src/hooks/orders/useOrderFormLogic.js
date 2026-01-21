@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react";
-import { sanitizeNumberInput } from "../../utils/formatters/formatters";
+import { sanitizeNumberInput } from "../../utils/formatters/formatUtils";
 
 const DEFAULT_ORDER_TYPE = "delivery";
 

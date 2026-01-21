@@ -1,6 +1,9 @@
 import React from "react";
-import { formatNumber } from "../../utils/formatters/formatters";
-import { getLatestCost, getLatestLot } from "../../utils/inventory/purchaseUtils";
+import { formatNumber } from "../../utils/formatters/formatUtils";
+import {
+  getLatestCost,
+  getLatestLot,
+} from "../../utils/inventory/purchaseUtils";
 import { getWarehouseLabel } from "../../utils/inventory/warehouseUtils";
 import SheetModal from "../../components/modals/SheetModal";
 import useModalCache from "../../hooks/ui/useModalCache";

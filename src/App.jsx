@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from "react";
-import { AnimatePresence } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 
 // --- IMPORT CÁC MÀN HÌNH TỪ THƯ MỤC RIÊNG ---
 import Login from "./screens/Login";
 import Dashboard from "./screens/Dashboard";
 import Inventory from "./screens/Inventory";
 import Orders from "./screens/Orders";
+import Assistant from "./screens/Assistant";
 import Settings from "./screens/Settings";
 import StatsDetail from "./screens/dashboard/StatsDetail";
 import { normalizePurchaseLots } from "./utils/inventory/purchaseUtils";
@@ -25,8 +26,9 @@ import useDailyGreeting from "./hooks/core/useDailyGreeting";
 const TAB_ORDER = {
   dashboard: 0,
   products: 1,
-  orders: 2,
-  settings: 3,
+  assistant: 2,
+  orders: 3,
+  settings: 4,
   "stats-detail": 10, // Coi như màn hình con của dashboard
 };
 
@@ -40,6 +42,19 @@ const App = () => {
   const [direction, setDirection] = useState(0); // 1: phải sang trái (push), -1: trái sang phải (pop)
   const [logoutModalOpen, setLogoutModalOpen] = useState(false);
   const [backupReminderOpen, setBackupReminderOpen] = useState(false);
+
+  // --- 1b. TRẠNG THÁI CHAT ASSISTANT ---
+  const [chatMessages, setChatMessages] = useState([
+    {
+      id: "welcome",
+      type: "text",
+      sender: "assistant",
+      content:
+        "Chào bạn! Mình là trợ lý ảo Misa. Mình có thể giúp gì cho bạn hôm nay?",
+      timestamp: new Date(),
+    },
+  ]);
+  const [isChatTyping, setIsChatTyping] = useState(false);
 
   // --- 2. KHỞI TẠO DỮ LIỆU TỪ LOCALSTORAGE ---
   const [products, setProducts] = useState(() => {
@@ -257,6 +272,33 @@ const App = () => {
                 setTabBarVisible={setIsTabBarVisible}
               />
             </ScreenTransition>
+          )}
+
+          {activeTab === "assistant" && (
+            <motion.div
+              key="assistant"
+              className="absolute top-0 left-0 w-full h-full z-20"
+              initial={{
+                clipPath: "circle(0px at 50% calc(100% - 25px))",
+              }}
+              animate={{
+                clipPath: "circle(150% at 50% calc(100% - 25px))",
+              }}
+              transition={{
+                duration: 1.2,
+                ease: [0.22, 1, 0.36, 1], // Custom easing for "spread" feel
+              }}
+            >
+              <Assistant
+                products={products}
+                orders={orders}
+                settings={settings}
+                messages={chatMessages}
+                setMessages={setChatMessages}
+                isTyping={isChatTyping}
+                setIsTyping={setIsChatTyping}
+              />
+            </motion.div>
           )}
 
           {activeTab === "orders" && (

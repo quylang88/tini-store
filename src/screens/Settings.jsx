@@ -1,6 +1,17 @@
 import React from "react";
-import { Download, Upload, Plus, RefreshCw, X, LogOut } from "lucide-react";
-import { formatInputNumber, sanitizeNumberInput } from "../utils/formatters/formatters";
+import {
+  Download,
+  Upload,
+  Plus,
+  RefreshCw,
+  X,
+  LogOut,
+  Sparkles,
+} from "lucide-react";
+import {
+  formatInputNumber,
+  sanitizeNumberInput,
+} from "../utils/formatters/formatUtils";
 import ConfirmModalHost from "../components/modals/ConfirmModalHost";
 import ErrorModal from "../components/modals/ErrorModal";
 import InfoModal from "../components/modals/InfoModal";
@@ -253,7 +264,7 @@ const Settings = ({
 
         {/* Footer info */}
         <div className="text-center text-xs text-rose-400 pb-4">
-          Phiên bản 26.2 - Tiny Shop
+          Phiên bản 15.6 - Tiny Shop
           <br />
           Được phát triển bởi Quý Lăng &copy; 2026
         </div>

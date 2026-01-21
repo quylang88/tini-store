@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import SheetModal from "../../components/modals/SheetModal";
-import { formatNumber } from "../../utils/formatters/formatters";
+import { formatNumber } from "../../utils/formatters/formatUtils";
 import { getWarehouseLabel } from "../../utils/inventory/warehouseUtils";
 import { getOrderDisplayName } from "../../utils/orders/orderUtils";
 import useModalCache from "../../hooks/ui/useModalCache";

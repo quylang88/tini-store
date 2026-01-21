@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import SheetModal from "../../components/modals/SheetModal";
 import Button from "../../components/button/Button";
 import ProductIdentityForm from "./ProductIdentityForm";
-import { formatInputNumber } from "../../utils/formatters/formatters";
+import { formatInputNumber } from "../../utils/formatters/formatUtils";
 import useHighlightFields from "../../hooks/ui/useHighlightFields";
 
 const ProductBasicInfoModal = ({

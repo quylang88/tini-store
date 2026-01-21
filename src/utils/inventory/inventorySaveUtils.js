@@ -1,4 +1,4 @@
-import { normalizeString } from "../formatters/formatters";
+import { normalizeString } from "../formatters/formatUtils";
 import { normalizeWarehouseStock } from "./warehouseUtils";
 import {
   addPurchaseLot,
