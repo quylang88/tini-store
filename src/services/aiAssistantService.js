@@ -188,7 +188,8 @@ const processQueryWithGemini = async (query, context) => {
     `;
 
   try {
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+    // Sử dụng gemini-2.0-flash-exp để hỗ trợ tốt nhất cho Google Search Grounding mới
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${apiKey}`;
 
     const response = await fetch(url, {
       method: "POST",
@@ -197,12 +198,7 @@ const processQueryWithGemini = async (query, context) => {
         contents: [{ parts: [{ text: systemPrompt }] }],
         tools: [
           {
-            googleSearchRetrieval: {
-              dynamicRetrievalConfig: {
-                mode: "MODE_DYNAMIC",
-                dynamicThreshold: 0.6,
-              },
-            },
+            google_search: {},
           },
         ],
       }),
