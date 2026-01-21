@@ -1,6 +1,8 @@
 import React from "react";
-import { Sparkles, Zap, Server } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import AssistantIcon from "./AssistantIcon";
+import FlashIcon from "./FlashIcon";
+import LocalIcon from "./LocalIcon";
 
 const ModelSelector = ({ selectedModel, onSelect, isOpen, onClose }) => {
   const models = [
@@ -8,7 +10,7 @@ const ModelSelector = ({ selectedModel, onSelect, isOpen, onClose }) => {
       id: "PRO",
       name: "Misa Pro",
       description: "Thông minh nhất, dùng cho tác vụ phức tạp.",
-      icon: Sparkles,
+      icon: AssistantIcon,
       color: "text-rose-500",
       bg: "bg-rose-50",
     },
@@ -16,7 +18,7 @@ const ModelSelector = ({ selectedModel, onSelect, isOpen, onClose }) => {
       id: "FLASH",
       name: "Misa Flash",
       description: "Phản hồi nhanh, dùng cho câu hỏi đơn giản.",
-      icon: Zap,
+      icon: FlashIcon,
       color: "text-amber-500",
       bg: "bg-amber-50",
     },
@@ -24,7 +26,7 @@ const ModelSelector = ({ selectedModel, onSelect, isOpen, onClose }) => {
       id: "LOCAL",
       name: "Misa Local",
       description: "Chạy cục bộ, bảo mật cao, không Internet.",
-      icon: Server,
+      icon: LocalIcon,
       color: "text-blue-500",
       bg: "bg-blue-50",
     },
@@ -68,14 +70,14 @@ const ModelSelector = ({ selectedModel, onSelect, isOpen, onClose }) => {
                     }}
                     className={`w-full flex items-center gap-3 p-3 rounded-xl text-left transition-all ${
                       isSelected
-                        ? "bg-gray-100 ring-1 ring-gray-200"
+                        ? "bg-rose-50 ring-1 ring-rose-200"
                         : "hover:bg-gray-50"
                     }`}
                   >
                     <div
                       className={`w-10 h-10 rounded-full flex items-center justify-center ${model.bg} ${model.color}`}
                     >
-                      <Icon size={20} />
+                      <Icon size={20} isActive={false} />
                     </div>
                     <div className="flex-1">
                       <div className="flex items-center gap-2">
@@ -83,7 +85,7 @@ const ModelSelector = ({ selectedModel, onSelect, isOpen, onClose }) => {
                           {model.name}
                         </span>
                         {isSelected && (
-                          <span className="text-[10px] font-bold px-1.5 py-0.5 bg-gray-800 text-white rounded-full">
+                          <span className="text-[10px] font-bold px-1.5 py-0.5 bg-rose-500 text-white rounded-full">
                             ĐANG DÙNG
                           </span>
                         )}

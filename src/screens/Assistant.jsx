@@ -249,6 +249,7 @@ const Assistant = ({
         onSend={handleSendMessage}
         disabled={isTyping}
         onOpenModelSelector={() => setIsModelSelectorOpen(true)}
+        selectedModel={modelMode}
       />
 
       {/* Safe Area Spacer */}
