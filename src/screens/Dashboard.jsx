@@ -8,7 +8,7 @@ import {
   ShoppingCart,
   ArchiveX,
 } from "lucide-react";
-import { formatNumber } from "../utils/formatters/formatters";
+import { formatNumber } from "../utils/formatters/formatUtils";
 import useDashboardLogic from "../hooks/dashboard/useDashboardLogic";
 import MetricCard from "../components/stats/MetricCard";
 import TopSellingSection from "../components/stats/TopSellingSection";

@@ -1,5 +1,8 @@
 import { useState } from "react";
-import { formatNumber, normalizeString } from "../../utils/formatters/formatters";
+import {
+  formatNumber,
+  normalizeString,
+} from "../../utils/formatters/formatUtils";
 import { normalizePurchaseLots } from "../../utils/inventory/purchaseUtils";
 import { exportDataToJSON, parseBackupFile } from "../../utils/file/fileUtils";
 import { requestNotificationPermission } from "../../utils/common/notificationUtils";

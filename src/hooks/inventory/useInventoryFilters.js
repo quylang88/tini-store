@@ -1,5 +1,5 @@
 import { useMemo, useCallback } from "react";
-import { normalizeString } from "../../utils/formatters/formatters";
+import { normalizeString } from "../../utils/formatters/formatUtils";
 import { normalizeWarehouseStock } from "../../utils/inventory/warehouseUtils";
 import useProductFilterSort from "../core/useProductFilterSort";
 

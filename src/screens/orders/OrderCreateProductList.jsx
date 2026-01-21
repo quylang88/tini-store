@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Plus, Minus, Search, Image as ImageIcon } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { formatInputNumber } from "../../utils/formatters/formatters";
+import { formatInputNumber } from "../../utils/formatters/formatUtils";
 import { getWarehouseLabel } from "../../utils/inventory/warehouseUtils";
 import ProductFilterSection from "../../components/common/ProductFilterSection";
 import useLongPress from "../../hooks/ui/useLongPress";

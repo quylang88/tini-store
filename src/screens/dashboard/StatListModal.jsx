@@ -2,7 +2,7 @@ import React, { useMemo } from "react";
 import { Package, ArchiveX, Image as ImageIcon } from "lucide-react";
 import SheetModal from "../../components/modals/SheetModal";
 import Button from "../../components/button/Button";
-import { formatNumber } from "../../utils/formatters/formatters";
+import { formatNumber } from "../../utils/formatters/formatUtils";
 import RankBadge from "../../components/stats/RankBadge";
 import useModalCache from "../../hooks/ui/useModalCache";
 

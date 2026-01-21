@@ -1,5 +1,5 @@
 import React from "react";
-import { formatNumber } from "../../utils/formatters/formatters";
+import { formatNumber } from "../../utils/formatters/formatUtils";
 import { motion, AnimatePresence } from "framer-motion";
 import { ShoppingCart } from "lucide-react";
 

@@ -1,4 +1,4 @@
-import { formatNumber } from "../formatters/formatters";
+import { formatNumber } from "../formatters/formatUtils";
 
 /**
  * Handles file export by prioritizing Web Share API (for Mobile/PWA)

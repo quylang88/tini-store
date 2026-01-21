@@ -1,5 +1,8 @@
 import React from "react";
-import { formatInputNumber, formatNumber } from "../../utils/formatters/formatters";
+import {
+  formatInputNumber,
+  formatNumber,
+} from "../../utils/formatters/formatUtils";
 import { getWarehouseLabel } from "../../utils/inventory/warehouseUtils";
 import SheetModal from "../../components/modals/SheetModal";
 import Button from "../../components/button/Button";

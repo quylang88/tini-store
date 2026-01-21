@@ -1,11 +1,18 @@
 import React from "react";
-import { LayoutDashboard, ShoppingCart, Package, Settings } from "lucide-react";
+import {
+  LayoutDashboard,
+  ShoppingCart,
+  Package,
+  Settings,
+  Sparkles,
+} from "lucide-react";
 import useMountTransition from "../hooks/ui/useMountTransition";
 
 const TabBar = ({ activeTab, setActiveTab, isVisible = true }) => {
   const tabs = [
     { id: "dashboard", icon: LayoutDashboard, label: "Tổng quan" },
     { id: "products", icon: Package, label: "Nhập kho" },
+    { id: "assistant", icon: Sparkles, label: "Trợ lý" },
     { id: "orders", icon: ShoppingCart, label: "Xuất kho" },
     { id: "settings", icon: Settings, label: "Cài đặt" },
   ];

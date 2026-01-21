@@ -1,7 +1,10 @@
 import React from "react";
 import { Image as ImageIcon, Trash2, Edit } from "lucide-react";
-import { formatNumber } from "../../utils/formatters/formatters";
-import { getLatestCost, getLatestUnitCost } from "../../utils/inventory/purchaseUtils";
+import { formatNumber } from "../../utils/formatters/formatUtils";
+import {
+  getLatestCost,
+  getLatestUnitCost,
+} from "../../utils/inventory/purchaseUtils";
 import { normalizeWarehouseStock } from "../../utils/inventory/warehouseUtils";
 import { motion, AnimatePresence } from "framer-motion";
 

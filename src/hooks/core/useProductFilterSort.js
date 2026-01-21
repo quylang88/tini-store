@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { normalizeString } from "../../utils/formatters/formatters";
+import { normalizeString } from "../../utils/formatters/formatUtils";
 import { getProductDate } from "../../utils/common/sortingUtils";
 
 const useProductFilterSort = ({
