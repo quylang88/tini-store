@@ -41,19 +41,6 @@ const tools = [
   {
     googleSearch: {},
   },
-  {
-    functionDeclarations: [
-      {
-        name: "getUserLocation",
-        description:
-          "Lấy tọa độ vị trí hiện tại của người dùng (latitude, longitude). Dùng khi người dùng hỏi về thời tiết, chỉ đường, hoặc các câu hỏi liên quan đến vị trí địa lý của họ.",
-        parameters: {
-          type: "OBJECT",
-          properties: {},
-        },
-      },
-    ],
-  },
 ];
 
 /**
@@ -159,7 +146,7 @@ const processQueryWithGemini = async (query, context, apiKey) => {
 
       QUY TẮC:
       1. Ưu tiên dùng dữ liệu shop (sản phẩm, đơn hàng) để trả lời.
-      2. Nếu người dùng hỏi về vị trí của họ, thời tiết nơi họ đang đứng... hãy GỌI TOOL "getUserLocation".
+      2. Nếu người dùng hỏi về vị trí của họ, thời tiết nơi họ đang đứng... hãy trả lời bằng đúng thẻ sau: [[REQUEST_LOCATION]]
       3. Nếu người dùng hỏi thông tin bên ngoài khác, HÃY DÙNG GOOGLE SEARCH.
       4. Định dạng tiền tệ: Luôn dùng VNĐ (ví dụ: "1.000.000₫").
       5. Nếu không tìm thấy thông tin, trả lời: "Xin lỗi, mình không tìm thấy thông tin bạn cần."
@@ -169,17 +156,14 @@ const processQueryWithGemini = async (query, context, apiKey) => {
     const model = getModel(apiKey);
     const result = await model.generateContent(systemPrompt);
     const response = await result.response;
+    const text = response.text();
 
-    // Kiểm tra gọi hàm (Function Call)
-    const functionCalls = response.functionCalls();
-    if (functionCalls && functionCalls.length > 0) {
-      const call = functionCalls[0];
-      if (call.name === "getUserLocation") {
-        return createResponse("location_request", "Mình cần biết vị trí của bạn để trả lời câu hỏi này.");
-      }
+    // Kiểm tra yêu cầu vị trí qua thẻ
+    if (text.includes("[[REQUEST_LOCATION]]")) {
+      return createResponse("location_request", "Mình cần biết vị trí của bạn để trả lời câu hỏi này.");
     }
 
-    return createResponse("text", response.text());
+    return createResponse("text", text);
   } catch (error) {
     console.error("Gemini Error:", error);
 
