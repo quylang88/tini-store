@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { AnimatePresence } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 
 // --- IMPORT CÁC MÀN HÌNH TỪ THƯ MỤC RIÊNG ---
 import Login from "./screens/Login";
@@ -262,17 +262,32 @@ const App = () => {
           )}
 
           {activeTab === "assistant" && (
-            <ScreenTransition
+            <motion.div
               key="assistant"
-              custom={direction}
-              className="h-full"
+              className="absolute top-0 left-0 w-full h-full z-20"
+              initial={{
+                clipPath: "circle(0% at 50% 100%)",
+                opacity: 0,
+              }}
+              animate={{
+                clipPath: "circle(150% at 50% 100%)",
+                opacity: 1,
+              }}
+              exit={{
+                clipPath: "circle(0% at 50% 100%)",
+                opacity: 0,
+              }}
+              transition={{
+                duration: 0.5,
+                ease: "easeInOut",
+              }}
             >
               <Assistant
                 products={products}
                 orders={orders}
                 settings={settings}
               />
-            </ScreenTransition>
+            </motion.div>
           )}
 
           {activeTab === "orders" && (
