@@ -1,10 +1,8 @@
 /**
  * aiAssistantService.js
  *
- * Service này đóng vai trò là "Bộ não" cho Trợ lý ảo cục bộ.
- * Nó phân tích các truy vấn ngôn ngữ tự nhiên của người dùng bằng Regex và logic suy đoán
- * để truy vấn trạng thái ứng dụng cục bộ (sản phẩm, đơn hàng) và trả về
- * các phản hồi có cấu trúc.
+ * Service này đóng vai trò là "Bộ não" cho Trợ lý ảo cục bộ và tích hợp Gemini AI.
+ * Nó phân tích các truy vấn ngôn ngữ tự nhiên của người dùng bằng Regex (local) hoặc gọi API Gemini (cloud).
  */
 
 import { formatCurrency } from '../utils/formatUtils';
@@ -20,24 +18,35 @@ const normalizeText = (text) => {
 };
 
 /**
- * Xử lý truy vấn của người dùng và trả về đối tượng phản hồi.
+ * Xử lý truy vấn của người dùng.
+ * Hàm này giờ đây là async để hỗ trợ gọi API.
  *
- * Định dạng phản hồi:
- * {
- *   id: string (unique id),
- *   type: 'text' | 'product_list' | 'stats' | 'order_list',
- *   content: string (nội dung văn bản),
- *   data: any (dữ liệu có cấu trúc tùy chọn để render UI)
- * }
+ * @param {string} query Câu hỏi của user
+ * @param {object} context { products, orders, settings }
  */
-export const processQuery = (query, context) => {
+export const processQuery = async (query, context) => {
+  const { settings } = context;
+
+  // Kiểm tra nếu có API Key hợp lệ thì gọi Gemini
+  if (settings && settings.aiApiKey && settings.aiApiKey.length > 10) {
+      return await processQueryWithGemini(query, context);
+  }
+
+  // Nếu không, fallback về logic cục bộ (local rule-based)
+  return processQueryLocal(query, context);
+};
+
+/**
+ * LOGIC CỤC BỘ (Rule-based)
+ * Chạy khi không có API Key.
+ */
+const processQueryLocal = (query, context) => {
   const { products, orders } = context;
-  const rawQuery = query.toLowerCase();
   const cleanQuery = normalizeText(query);
 
   // 1. CHÀO HỎI (Greetings)
   if (cleanQuery.match(/^(xin chao|hi|hello|chao|lo|alo)/)) {
-    return createResponse('text', 'Xin chào! Mình là trợ lý ảo của bạn. Mình có thể giúp gì cho việc quản lý cửa hàng hôm nay? (Ví dụ: "Doanh thu hôm nay", "Tìm bánh tráng", "Sản phẩm sắp hết")');
+    return createResponse('text', 'Xin chào! Mình là trợ lý ảo Tiny (Offline). Mình có thể giúp gì cho bạn? (Ví dụ: "Doanh thu hôm nay", "Tìm sản phẩm")');
   }
 
   // 2. DOANH THU / THỐNG KÊ (Revenue / Stats)
@@ -55,20 +64,6 @@ export const processQuery = (query, context) => {
       });
     }
 
-    if (cleanQuery.includes('thang nay') || cleanQuery.includes('thang')) {
-        const now = new Date();
-        const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-        const monthOrders = orders.filter(o => o.date.startsWith(currentMonth) && o.status !== 'cancelled');
-        const total = monthOrders.reduce((sum, o) => sum + o.total, 0);
-        const count = monthOrders.length;
-
-        return createResponse('stats', `Doanh thu tháng này là ${formatCurrency(total)} từ ${count} đơn hàng.`, {
-          label: 'Doanh thu tháng này',
-          value: total,
-          subtext: `${count} đơn hàng`
-        });
-    }
-
     // Mặc định là tổng doanh thu
     const total = orders.filter(o => o.status !== 'cancelled').reduce((sum, o) => sum + o.total, 0);
     return createResponse('stats', `Tổng doanh thu toàn thời gian là ${formatCurrency(total)}.`, {
@@ -79,8 +74,7 @@ export const processQuery = (query, context) => {
   }
 
   // 3. TÌM KIẾM SẢN PHẨM (Product Search)
-  if (cleanQuery.includes('tim') || cleanQuery.includes('gia') || cleanQuery.includes('xem') || cleanQuery.includes('con bao nhieu')) {
-    // Trích xuất từ khóa: loại bỏ "tim", "gia cua", "san pham"
+  if (cleanQuery.includes('tim') || cleanQuery.includes('gia') || cleanQuery.includes('xem')) {
     const keyword = cleanQuery
       .replace(/(tim|gia cua|gia|xem|san pham|con bao nhieu|kiem tra)/g, '')
       .trim();
@@ -95,48 +89,88 @@ export const processQuery = (query, context) => {
       return createResponse('text', `Không tìm thấy sản phẩm nào khớp với từ khóa "${keyword}".`);
     } else if (results.length === 1) {
         const p = results[0];
-        return createResponse('product_list', `Tìm thấy 1 sản phẩm: ${p.name}. Giá: ${formatCurrency(p.price)}. Tồn: ${p.stock}.`, [p]);
+        return createResponse('product_list', `Tìm thấy: ${p.name}. Giá: ${formatCurrency(p.price)}. Tồn: ${p.stock}.`, [p]);
     } else {
-        return createResponse('product_list', `Tìm thấy ${results.length} sản phẩm khớp với "${keyword}":`, results);
+        return createResponse('product_list', `Tìm thấy ${results.length} sản phẩm:`, results);
     }
-  }
-
-  // 4. SẮP HẾT HÀNG (Low Stock)
-  if (cleanQuery.includes('sap het') || cleanQuery.includes('het hang')) {
-    const lowStock = products.filter(p => p.stock <= 5).sort((a, b) => a.stock - b.stock);
-    if (lowStock.length === 0) {
-      return createResponse('text', 'Tuyệt vời! Hiện tại không có sản phẩm nào sắp hết hàng (dưới 5).');
-    }
-    return createResponse('product_list', `Có ${lowStock.length} sản phẩm sắp hết hàng cần nhập thêm:`, lowStock);
-  }
-
-  // 5. BÁN CHẠY (Top Selling) - Logic đơn giản
-  if (cleanQuery.includes('ban chay') || cleanQuery.includes('hot')) {
-     // Heuristic đơn giản: Đếm số lần xuất hiện trong đơn hàng
-     const productCounts = {};
-     orders.forEach(order => {
-        if(order.status === 'cancelled') return;
-        order.items.forEach(item => {
-            productCounts[item.id] = (productCounts[item.id] || 0) + (item.quantity || 1);
-        });
-     });
-
-     const sortedIds = Object.keys(productCounts).sort((a, b) => productCounts[b] - productCounts[a]).slice(0, 5);
-     const topProducts = sortedIds.map(id => products.find(p => String(p.id) === String(id))).filter(Boolean);
-
-     if(topProducts.length === 0) return createResponse('text', 'Chưa có đủ dữ liệu đơn hàng để xác định sản phẩm bán chạy.');
-
-     return createResponse('product_list', 'Đây là top 5 sản phẩm bán chạy nhất dựa trên lịch sử đơn hàng:', topProducts);
-  }
-
-  // 6. KIỂM TRA ĐƠN HÀNG (Order Check)
-  if(cleanQuery.includes('don hang') || cleanQuery.includes('don moi')) {
-      const recentOrders = [...orders].reverse().slice(0, 5);
-      return createResponse('order_list', 'Đây là 5 đơn hàng gần nhất:', recentOrders);
   }
 
   // FALLBACK (Dự phòng)
-  return createResponse('text', 'Xin lỗi, mình chưa hiểu ý bạn. Bạn có thể hỏi về "Doanh thu", "Tìm sản phẩm", hoặc "Hàng sắp hết".');
+  return createResponse('text', 'Chế độ Offline: Mình chỉ hiểu các lệnh đơn giản như "Doanh thu", "Tìm [tên sản phẩm]". Hãy nhập API Key trong Cài đặt để mình thông minh hơn nhé!');
+};
+
+/**
+ * LOGIC GỌI GEMINI API (Cloud AI)
+ */
+const processQueryWithGemini = async (query, context) => {
+    const { products, orders, settings } = context;
+    const apiKey = settings.aiApiKey;
+
+    // 1. Chuẩn bị ngữ cảnh (Context Injection)
+    // Giới hạn số lượng sản phẩm để tránh quá token limit (chọn 50 sản phẩm mới nhất hoặc quan trọng nhất)
+    // Ở đây ta lấy hết nhưng chỉ lấy tên, giá, tồn để tiết kiệm.
+    const productContext = products.slice(0, 100).map(p =>
+        `- ${p.name} (Giá: ${p.price}đ, Tồn: ${p.stock})`
+    ).join('\n');
+
+    // Thống kê sơ bộ để AI nắm bắt
+    const totalRevenue = orders.filter(o => o.status !== 'cancelled').reduce((sum, o) => sum + o.total, 0);
+    const today = new Date().toLocaleDateString('en-CA');
+    const todayRevenue = orders.filter(o => o.date.startsWith(today) && o.status !== 'cancelled').reduce((sum, o) => sum + o.total, 0);
+
+    const statsContext = `
+    - Tổng doanh thu toàn thời gian: ${totalRevenue}đ
+    - Doanh thu hôm nay (${today}): ${todayRevenue}đ
+    - Tổng số đơn hàng: ${orders.length}
+    `;
+
+    // 2. Tạo Prompt (Lời nhắc hệ thống)
+    const systemPrompt = `
+      Bạn là Trợ lý ảo thông minh của ứng dụng quản lý bán hàng "Tiny Shop".
+      Hãy trả lời người dùng ngắn gọn, thân thiện, hữu ích bằng tiếng Việt.
+
+      DỮ LIỆU CỬA HÀNG HIỆN TẠI:
+      ${statsContext}
+
+      DANH SÁCH SẢN PHẨM (Top 100):
+      ${productContext}
+
+      YÊU CẦU CỦA NGƯỜI DÙNG: "${query}"
+
+      HƯỚNG DẪN TRẢ LỜI:
+      - Nếu người dùng hỏi về doanh thu, hãy dùng số liệu ở trên.
+      - Nếu hỏi về sản phẩm, hãy tra cứu trong danh sách và báo giá/tồn kho.
+      - Nếu sản phẩm không có trong danh sách, hãy nói là không tìm thấy.
+      - Đừng bịa ra thông tin không có trong dữ liệu.
+    `;
+
+    try {
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                contents: [{ parts: [{ text: systemPrompt }] }]
+            })
+        });
+
+        if (!response.ok) {
+            const errData = await response.json();
+            throw new Error(errData.error?.message || 'API Error');
+        }
+
+        const data = await response.json();
+        const textResponse = data.candidates?.[0]?.content?.parts?.[0]?.text;
+
+        if (!textResponse) throw new Error("No response from AI");
+
+        return createResponse('text', textResponse);
+
+    } catch (error) {
+        console.error("Gemini API Error:", error);
+        return createResponse('text', `Lỗi kết nối AI: ${error.message}. (Đang chuyển về chế độ offline...)`);
+    }
 };
 
 /**
@@ -152,51 +186,3 @@ const createResponse = (type, content, data = null) => {
     data
   };
 };
-
-// ------------------------------------------------------------------------------------------------
-// HƯỚNG DẪN TÍCH HỢP GEMINI API (Hoặc AI khác)
-// ------------------------------------------------------------------------------------------------
-// Nếu bạn có API Key của Gemini (Google AI Studio) hoặc OpenAI, bạn có thể thay thế logic ở trên
-// bằng hàm gọi API thực tế. Dưới đây là ví dụ mẫu để gọi Gemini 1.5 Flash:
-//
-// 1. Cài đặt Google Generative AI SDK (hoặc dùng fetch): npm install @google/generative-ai
-// 2. Lấy API Key từ https://aistudio.google.com/
-//
-/*
-export const processQueryWithGemini = async (query, context) => {
-    // Lấy ngữ cảnh dữ liệu (lưu ý: đừng gửi quá nhiều dữ liệu cá nhân)
-    const productList = context.products.map(p => `${p.name} (Giá: ${p.price}, Tồn: ${p.stock})`).join('\n');
-
-    // Prompt (Lời nhắc)
-    const prompt = `
-      Bạn là trợ lý ảo của cửa hàng tạp hóa. Dưới đây là danh sách sản phẩm hiện có:
-      ${productList}
-
-      Người dùng hỏi: "${query}"
-
-      Hãy trả lời ngắn gọn, thân thiện bằng tiếng Việt. Nếu họ hỏi về sản phẩm, hãy cung cấp giá và tồn kho.
-    `;
-
-    try {
-        // Gọi API (Ví dụ dùng fetch trực tiếp để không cần cài SDK)
-        const apiKey = "YOUR_GEMINI_API_KEY_HERE";
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
-
-        const response = await fetch(url, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                contents: [{ parts: [{ text: prompt }] }]
-            })
-        });
-
-        const data = await response.json();
-        const textResponse = data.candidates[0].content.parts[0].text;
-
-        return createResponse('text', textResponse);
-    } catch (error) {
-        console.error("Gemini API Error:", error);
-        return createResponse('text', "Xin lỗi, kết nối đến AI bị gián đoạn.");
-    }
-};
-*/

@@ -270,6 +270,7 @@ const App = () => {
               <Assistant
                 products={products}
                 orders={orders}
+                settings={settings}
               />
             </ScreenTransition>
           )}
