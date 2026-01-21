@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Send } from "lucide-react";
-import AssistantIcon from "../../screens/assistant/AssistantIcon";
+import AssistantIcon from "./AssistantIcon";
 
 const PLACEHOLDERS = [
   "Hôm nay cửa hàng thế nào...",

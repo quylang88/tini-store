@@ -7,7 +7,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import useMountTransition from "../hooks/ui/useMountTransition";
-import AssistantIcon from "../screens/assistant/AssistantIcon";
+import AssistantIcon from "./assistant/AssistantIcon";
 
 const TabBar = ({ activeTab, setActiveTab, isVisible = true }) => {
   const tabs = [

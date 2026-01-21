@@ -2,12 +2,13 @@ import React, { useRef, useEffect } from "react";
 import { formatCurrency } from "../../utils/formatters/formatUtils";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
+import { MapPin, Check, X } from "lucide-react";
 
-const ChatBubble = ({ message }) => {
+const ChatBubble = ({ message, onAction }) => {
   const isUser = message.sender === "user";
   const scrollRef = useRef(null);
 
-  // Scroll into view when new message appears
+  // Cuộn xuống cuối khi có tin nhắn mới
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollIntoView({ behavior: "smooth", block: "end" });
@@ -26,12 +27,40 @@ const ChatBubble = ({ message }) => {
             : "bg-white text-gray-800 border border-gray-100 rounded-bl-none"
         }`}
       >
-        {/* Text Content */}
+        {/* Nội dung văn bản */}
         <p className="whitespace-pre-wrap text-sm leading-relaxed">
           {message.content}
         </p>
 
-        {/* Specialized Content Types */}
+        {/* --- Giao diện yêu cầu vị trí --- */}
+        {!isUser && message.type === "location_request" && (
+          <div className="mt-3 bg-blue-50 p-3 rounded-xl border border-blue-100">
+            <div className="flex items-center gap-2 mb-2 text-blue-700 font-medium text-sm">
+              <MapPin size={16} />
+              <span>Yêu cầu truy cập vị trí</span>
+            </div>
+            <p className="text-xs text-gray-600 mb-3">
+              Cho phép Misa truy cập vị trí hiện tại để hỗ trợ thông tin thời
+              tiết, chỉ đường... chính xác hơn?
+            </p>
+            <div className="flex gap-2">
+              <button
+                onClick={() => onAction && onAction(message, "allow")}
+                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold py-2 px-3 rounded-lg flex items-center justify-center gap-1 transition-colors"
+              >
+                <Check size={14} /> Cho phép
+              </button>
+              <button
+                onClick={() => onAction && onAction(message, "deny")}
+                className="flex-1 bg-white hover:bg-gray-50 text-gray-600 border border-gray-200 text-xs font-bold py-2 px-3 rounded-lg flex items-center justify-center gap-1 transition-colors"
+              >
+                <X size={14} /> Từ chối
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Các loại nội dung đặc biệt */}
         {!isUser && message.type === "stats" && message.data && (
           <div className="mt-3 bg-rose-50 rounded-xl p-3 border border-rose-100">
             <div className="text-xs text-rose-500 uppercase font-bold tracking-wider mb-1">
@@ -116,7 +145,7 @@ const ChatBubble = ({ message }) => {
             </div>
           )}
 
-        {/* Timestamp */}
+        {/* Thời gian */}
         <div
           className={`text-[10px] mt-1 text-right ${isUser ? "text-rose-100" : "text-gray-400"}`}
         >
