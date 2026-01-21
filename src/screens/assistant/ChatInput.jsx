@@ -11,6 +11,15 @@ const PLACEHOLDERS = [
   "Phân tích khách hàng tiềm năng...",
 ];
 
+const shuffleArray = (array) => {
+  const newArray = [...array];
+  for (let i = newArray.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
+  }
+  return newArray;
+};
+
 const ChatInput = ({ onSend, disabled }) => {
   const [text, setText] = useState("");
   const [isFocused, setIsFocused] = useState(false);
@@ -18,9 +27,21 @@ const ChatInput = ({ onSend, disabled }) => {
   // Typewriter state
   const [displayedText, setDisplayedText] = useState("");
   const [isDeleting, setIsDeleting] = useState(false);
-  const [currentPlaceholderIndex, setCurrentPlaceholderIndex] = useState(() =>
-    Math.floor(Math.random() * PLACEHOLDERS.length)
-  );
+
+  // Use a ref to store the shuffled queue to maintain order across renders
+  const remainingIndicesRef = useRef([]);
+
+  const getNextIndex = () => {
+    if (remainingIndicesRef.current.length === 0) {
+      // Create a new shuffled list of indices [0, 1, ..., N-1]
+      const indices = PLACEHOLDERS.map((_, i) => i);
+      remainingIndicesRef.current = shuffleArray(indices);
+    }
+    return remainingIndicesRef.current.pop();
+  };
+
+  const [currentPlaceholderIndex, setCurrentPlaceholderIndex] = useState(() => getNextIndex());
+
   const typingSpeed = 30;
   const deletingSpeed = 15;
   const pauseTime = 1500;
@@ -37,15 +58,9 @@ const ChatInput = ({ onSend, disabled }) => {
           if (current.length > 0) {
             return current.slice(0, -1);
           } else {
-            // Finished deleting, switch to next phrase
+            // Finished deleting, switch to next phrase from the shuffled queue
             setIsDeleting(false);
-            setCurrentPlaceholderIndex((prev) => {
-              let next;
-              do {
-                next = Math.floor(Math.random() * PLACEHOLDERS.length);
-              } while (next === prev && PLACEHOLDERS.length > 1);
-              return next;
-            });
+            setCurrentPlaceholderIndex(getNextIndex());
             return "";
           }
         } else {
