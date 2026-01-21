@@ -8,6 +8,7 @@ import {
   GoogleGenerativeAI,
   HarmCategory,
   HarmBlockThreshold,
+  DynamicRetrievalMode,
 } from "@google/generative-ai";
 import { formatCurrency } from "../utils/formatters/formatUtils";
 
@@ -59,7 +60,7 @@ const getModel = (apiKey) => {
       {
         googleSearchRetrieval: {
           dynamicRetrievalConfig: {
-            mode: "dynamic",
+            mode: DynamicRetrievalMode.MODE_DYNAMIC,
             dynamicThreshold: 0.7,
           },
         },
@@ -84,9 +85,6 @@ export const processQuery = async (query, context) => {
 
   // 2. LẤY API KEY
   // Ưu tiên key từ biến môi trường, sau đó đến settings (nếu có logic settings)
-  // Ở đây logic cũ lấy từ import.meta.env.VITE_GEMINI_API_KEY
-  // Nếu user muốn lấy từ settings thì cần pass vào hoặc sửa lại logic này.
-  // Giữ nguyên logic cũ là lấy từ ENV cho đơn giản, hoặc lấy từ context.settings nếu được truyền.
   let apiKey = import.meta.env.VITE_GEMINI_API_KEY;
   if (!apiKey && context.settings?.aiApiKey) {
       apiKey = context.settings.aiApiKey;
