@@ -210,5 +210,6 @@ const createResponse = (type, content, data = null) => {
     type, // 'text', 'stats', 'product_list'
     content,
     data,
+    timestamp: new Date(),
   };
 };

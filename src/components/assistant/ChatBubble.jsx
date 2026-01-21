@@ -120,7 +120,7 @@ const ChatBubble = ({ message }) => {
         <div
           className={`text-[10px] mt-1 text-right ${isUser ? "text-rose-100" : "text-gray-400"}`}
         >
-          {format(new Date(message.timestamp || Date.now()), "HH:mm")}
+          {message.timestamp && format(new Date(message.timestamp), "HH:mm")}
         </div>
       </div>
     </div>
