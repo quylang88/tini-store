@@ -10,8 +10,23 @@ const DEFAULT_STATUS = "shipping";
 const DEFAULT_WAREHOUSE = "vinhPhuc";
 const DEFAULT_ORDER_TYPE = "delivery";
 
-const useOrdersLogic = ({ products, setProducts, orders, setOrders }) => {
+const useOrdersLogic = ({
+  products,
+  setProducts,
+  orders,
+  setOrders,
+  setTabBarVisible,
+}) => {
   const [view, setView] = useState("list");
+
+  // Helper to sync TabBar visibility with View state
+  const updateView = (newView) => {
+    setView(newView);
+    if (setTabBarVisible) {
+      setTabBarVisible(newView === "list");
+    }
+  };
+
   const [showScanner, setShowScanner] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [isReviewOpen, setIsReviewOpen] = useState(false);
@@ -90,7 +105,7 @@ const useOrdersLogic = ({ products, setProducts, orders, setOrders }) => {
       totalAmount,
       orderBeingEdited,
       clearDraft,
-      setView,
+      setView: updateView,
       setConfirmModal,
       setErrorModal,
     });
@@ -125,7 +140,7 @@ const useOrdersLogic = ({ products, setProducts, orders, setOrders }) => {
   const handleStartCreate = () => {
     clearDraft();
     setSelectedOrder(null);
-    setView("create");
+    updateView("create");
   };
 
   // So sánh giỏ hiện tại với đơn gốc để biết user đã chỉnh sửa gì chưa.
@@ -174,13 +189,13 @@ const useOrdersLogic = ({ products, setProducts, orders, setOrders }) => {
         tone: "danger",
         onConfirm: () => {
           clearDraft();
-          setView("list");
+          updateView("list");
         },
       });
       return;
     }
     clearDraft();
-    setView("list");
+    updateView("list");
   };
 
   const handleCancelDraft = () => {
@@ -195,7 +210,7 @@ const useOrdersLogic = ({ products, setProducts, orders, setOrders }) => {
       tone: "danger",
       onConfirm: () => {
         clearDraft();
-        setView("list");
+        updateView("list");
       },
     });
   };
@@ -219,7 +234,7 @@ const useOrdersLogic = ({ products, setProducts, orders, setOrders }) => {
     setSearchTerm("");
     setActiveCategory("Tất cả");
     setIsReviewOpen(false);
-    setView("create");
+    updateView("create");
   };
 
   const handleTogglePaid = (orderId) => {

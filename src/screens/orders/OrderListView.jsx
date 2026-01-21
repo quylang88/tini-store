@@ -19,13 +19,6 @@ const OrderListView = ({
   onSelectOrder,
   setTabBarVisible,
 }) => {
-  // Đảm bảo TabBar hiển thị khi mount view này (ví dụ: quay lại từ màn hình Tạo đơn)
-  useEffect(() => {
-    if (setTabBarVisible) {
-      setTabBarVisible(true);
-    }
-  }, [setTabBarVisible]);
-
   // Logic scroll ẩn/hiện UI sử dụng hook mới
   const { isAddButtonVisible, isScrolled, handleScroll } = useScrollHandling({
     mode: "simple",

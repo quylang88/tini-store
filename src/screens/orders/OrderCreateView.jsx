@@ -51,13 +51,6 @@ const OrderCreateView = ({
   sortConfig,
   setSortConfig,
 }) => {
-  // Bug 3: Hide TabBar immediately on mount
-  useEffect(() => {
-    if (setTabBarVisible) {
-      setTabBarVisible(false);
-    }
-  }, [setTabBarVisible]);
-
   // State scroll animation
   const { isSearchVisible, handleScroll } = useScrollHandling({
     mode: "staged",
