@@ -1,8 +1,10 @@
 import React, { useState } from "react";
-import { Send, Sparkles } from "lucide-react";
+import { Send } from "lucide-react";
+import AssistantIcon from "../../screens/assistant/AssistantIcon";
 
 const ChatInput = ({ onSend, disabled }) => {
   const [text, setText] = useState("");
+  const [isFocused, setIsFocused] = useState(false);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -37,12 +39,14 @@ const ChatInput = ({ onSend, disabled }) => {
       <form onSubmit={handleSubmit} className="flex gap-2 items-center">
         <div className="relative flex-1">
           <div className="absolute left-3 top-1/2 -translate-y-1/2 text-rose-400">
-            <Sparkles size={18} />
+            <AssistantIcon isActive={isFocused} size={18} />
           </div>
           <input
             type="text"
             value={text}
             onChange={(e) => setText(e.target.value)}
+            onFocus={() => setIsFocused(true)}
+            onBlur={() => setIsFocused(false)}
             placeholder="Hỏi trợ lý ảo..."
             disabled={disabled}
             className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-full text-sm focus:outline-none focus:border-rose-500 focus:ring-1 focus:ring-rose-500 transition-all placeholder:text-gray-400"
