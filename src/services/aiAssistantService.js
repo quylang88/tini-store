@@ -188,8 +188,8 @@ const processQueryWithGemini = async (query, context) => {
     `;
 
   try {
-    // Sử dụng gemini-2.0-flash-exp để hỗ trợ tốt nhất cho Google Search Grounding mới
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${apiKey}`;
+    // Sử dụng gemini-1.5-flash (bản miễn phí/ổn định) với Google Search Grounding
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
 
     const response = await fetch(url, {
       method: "POST",
