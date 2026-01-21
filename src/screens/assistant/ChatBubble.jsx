@@ -2,8 +2,9 @@ import React, { useRef, useEffect } from "react";
 import { formatCurrency } from "../../utils/formatters/formatUtils";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
+import { MapPin, Check, X } from "lucide-react";
 
-const ChatBubble = ({ message }) => {
+const ChatBubble = ({ message, onAction }) => {
   const isUser = message.sender === "user";
   const scrollRef = useRef(null);
 
@@ -30,6 +31,33 @@ const ChatBubble = ({ message }) => {
         <p className="whitespace-pre-wrap text-sm leading-relaxed">
           {message.content}
         </p>
+
+        {/* --- Location Request UI --- */}
+        {!isUser && message.type === "location_request" && (
+          <div className="mt-3 bg-blue-50 p-3 rounded-xl border border-blue-100">
+             <div className="flex items-center gap-2 mb-2 text-blue-700 font-medium text-sm">
+                <MapPin size={16} />
+                <span>Yêu cầu truy cập vị trí</span>
+             </div>
+             <p className="text-xs text-gray-600 mb-3">
+                Cho phép Misa truy cập vị trí hiện tại để hỗ trợ thông tin thời tiết, chỉ đường... chính xác hơn?
+             </p>
+             <div className="flex gap-2">
+                <button
+                  onClick={() => onAction && onAction(message, 'allow')}
+                  className="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold py-2 px-3 rounded-lg flex items-center justify-center gap-1 transition-colors"
+                >
+                    <Check size={14} /> Cho phép
+                </button>
+                <button
+                  onClick={() => onAction && onAction(message, 'deny')}
+                  className="flex-1 bg-white hover:bg-gray-50 text-gray-600 border border-gray-200 text-xs font-bold py-2 px-3 rounded-lg flex items-center justify-center gap-1 transition-colors"
+                >
+                    <X size={14} /> Từ chối
+                </button>
+             </div>
+          </div>
+        )}
 
         {/* Specialized Content Types */}
         {!isUser && message.type === "stats" && message.data && (

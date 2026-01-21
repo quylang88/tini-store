@@ -10,6 +10,7 @@ import {
   HarmBlockThreshold,
 } from "@google/generative-ai";
 import { formatCurrency } from "../utils/formatters/formatUtils";
+import { format } from "date-fns";
 
 // --- BIẾN CACHE (Singleton) ---
 let cachedKey = null;
@@ -35,11 +36,24 @@ const safetySettings = [
   },
 ];
 
+// Định nghĩa Tool
+const tools = [
+  {
+    googleSearch: {},
+  },
+  {
+    functionDeclarations: [
+      {
+        name: "getUserLocation",
+        description:
+          "Lấy tọa độ vị trí hiện tại của người dùng (latitude, longitude). Dùng khi người dùng hỏi về thời tiết, chỉ đường, hoặc các câu hỏi liên quan đến vị trí địa lý của họ.",
+      },
+    ],
+  },
+];
+
 /**
  * Hàm lấy Model thông minh (có Cache)
- * Chúng ta LUÔN bật googleSearchRetrieval (Search Grounding) vì:
- * Dù prompt ưu tiên "tìm local trước", model cần công cụ này để thực hiện vế "sau đó tìm trên mạng".
- * Mode 'dynamic' cho phép model tự quyết định khi nào cần search.
  */
 const getModel = (apiKey) => {
   if (apiKey !== cachedKey) {
@@ -50,16 +64,12 @@ const getModel = (apiKey) => {
   if (cachedModel) return cachedModel;
 
   const genAI = new GoogleGenerativeAI(apiKey);
-  const modelName = import.meta.env.VITE_GEMINI_MODEL_NAME;
+  const modelName = import.meta.env.VITE_GEMINI_MODEL_NAME || "gemini-1.5-flash";
 
   cachedModel = genAI.getGenerativeModel({
     model: modelName,
     safetySettings: safetySettings,
-    tools: [
-      {
-        googleSearch: {},
-      },
-    ],
+    tools: tools,
   });
 
   return cachedModel;
@@ -78,12 +88,12 @@ export const processQuery = async (query, context) => {
   }
 
   // 2. LẤY API KEY
-  let apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+  let apiKey = context.settings?.aiApiKey || import.meta.env.VITE_GEMINI_API_KEY;
 
   if (!apiKey) {
     return createResponse(
       "text",
-      "Chưa có cấu hình API Key. Vui lòng kiểm tra cài đặt.",
+      "Chưa có cấu hình API Key. Vui lòng vào Cài đặt để nhập Gemini API Key.",
     );
   }
 
@@ -99,10 +109,10 @@ const processQueryWithGemini = async (query, context, apiKey) => {
 
   // --- CHUẨN BỊ DATA ---
   const productContext = products
-    .slice(0, 100)
+    .slice(0, 100) // Giới hạn 100 sản phẩm để tránh quá token
     .map(
       (p) =>
-        `- ${p.name} (Giá bán: ${formatCurrency(p.price)}, Kho: ${p.stock})`,
+        `- ${p.name} (Giá: ${formatCurrency(p.price)}, Kho: ${p.stock}, ID: ${p.id})`,
     )
     .join("\n");
 
@@ -111,10 +121,21 @@ const processQueryWithGemini = async (query, context, apiKey) => {
     .filter((o) => o.date.startsWith(today) && o.status !== "cancelled")
     .reduce((sum, o) => sum + o.total, 0);
 
+  // Lấy 20 đơn hàng gần nhất
+  const recentOrders = [...orders]
+    .sort((a, b) => new Date(b.date) - new Date(a.date))
+    .slice(0, 20)
+    .map((o) => {
+        const dateStr = format(new Date(o.date), "dd/MM/yyyy HH:mm");
+        const itemsSummary = o.items.map(i => `${i.name} (x${i.quantity})`).join(", ");
+        return `- Đơn ${o.id} (${dateStr}): ${o.customerName || "Khách lẻ"} - ${formatCurrency(o.total)} - Items: ${itemsSummary} - Trạng thái: ${o.status}`;
+    })
+    .join("\n");
+
   const statsContext = `
     - Ngày hiện tại: ${today}
     - Doanh thu hôm nay: ${formatCurrency(todayRevenue)}
-    - Tổng số đơn hàng: ${orders.length}
+    - Tổng số đơn hàng tích lũy: ${orders.length}
     `;
 
   const systemPrompt = `
@@ -124,27 +145,40 @@ const processQueryWithGemini = async (query, context, apiKey) => {
       DỮ LIỆU SHOP:
       ${statsContext}
 
-      TOP SẢN PHẨM:
+      TOP SẢN PHẨM (Tối đa 100):
       ${productContext}
+
+      ĐƠN HÀNG GẦN ĐÂY (Tối đa 20):
+      ${recentOrders}
 
       CÂU HỎI: "${query}"
 
       QUY TẮC:
-      1. Ưu tiên dùng dữ liệu shop để trả lời.
-      2. Nếu không có trong dữ liệu shop hoặc user hỏi thông tin bên ngoài (thời tiết, tin tức, so sánh, giá thị trường ...), HÃY DÙNG GOOGLE SEARCH.
-      3.Định dạng tiền tệ: Nếu user hỏi về giá, luôn trả lời kèm định dạng tiền tệ VNĐ (ví dụ: "1.000.000₫"). Nếu user muốn tiền yên Nhật, hãy quy đổi theo tỷ giá hiện tại.
-      4. Nếu không tìm thấy thông tin, trả lời: "Xin lỗi, mình không tìm thấy thông tin bạn cần."
+      1. Ưu tiên dùng dữ liệu shop (sản phẩm, đơn hàng) để trả lời.
+      2. Nếu người dùng hỏi về vị trí của họ, thời tiết nơi họ đang đứng... hãy GỌI TOOL "getUserLocation".
+      3. Nếu người dùng hỏi thông tin bên ngoài khác, HÃY DÙNG GOOGLE SEARCH.
+      4. Định dạng tiền tệ: Luôn dùng VNĐ (ví dụ: "1.000.000₫").
+      5. Nếu không tìm thấy thông tin, trả lời: "Xin lỗi, mình không tìm thấy thông tin bạn cần."
     `;
 
   try {
     const model = getModel(apiKey);
     const result = await model.generateContent(systemPrompt);
     const response = await result.response;
+
+    // Kiểm tra Function Call
+    const functionCalls = response.functionCalls();
+    if (functionCalls && functionCalls.length > 0) {
+      const call = functionCalls[0];
+      if (call.name === "getUserLocation") {
+        return createResponse("location_request", "Mình cần biết vị trí của bạn để trả lời câu hỏi này.");
+      }
+    }
+
     return createResponse("text", response.text());
   } catch (error) {
     console.error("Gemini Error:", error);
 
-    // Xử lý lỗi mạng cụ thể
     if (
       !navigator.onLine ||
       error.message?.includes("Failed to fetch") ||
@@ -156,10 +190,9 @@ const processQueryWithGemini = async (query, context, apiKey) => {
       );
     }
 
-    // Các lỗi khác (API Key, Quota...) trả về thông báo chung
     return createResponse(
       "text",
-      "Đã có lỗi xảy ra khi xử lý yêu cầu. Vui lòng thử lại sau.",
+      "Đã có lỗi xảy ra khi xử lý yêu cầu (" + error.message + ")",
     );
   }
 };
