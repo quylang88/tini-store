@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import { motion } from "framer-motion";
 import useMountTransition from "../hooks/ui/useMountTransition";
+import AssistantIcon from "./common/AssistantIcon";
 
 const TabBar = ({ activeTab, setActiveTab, isVisible = true }) => {
   const tabs = [
@@ -41,24 +42,7 @@ const TabBar = ({ activeTab, setActiveTab, isVisible = true }) => {
               }`}
             >
               {tab.id === "assistant" ? (
-                <motion.div
-                  animate={
-                    isActive
-                      ? {
-                          rotate: [0, -15, 15, -15, 15, 0],
-                          scale: [1, 1.2, 1],
-                          filter: [
-                            "brightness(1)",
-                            "brightness(1.3)",
-                            "brightness(1)",
-                          ],
-                        }
-                      : {}
-                  }
-                  transition={{ duration: 0.5 }}
-                >
-                  <Icon size={24} strokeWidth={isActive ? 2.5 : 2} />
-                </motion.div>
+                <AssistantIcon isActive={isActive} size={24} />
               ) : (
                 <Icon size={24} strokeWidth={isActive ? 2.5 : 2} />
               )}
