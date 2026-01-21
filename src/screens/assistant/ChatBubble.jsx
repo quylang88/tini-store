@@ -8,7 +8,7 @@ const ChatBubble = ({ message, onAction }) => {
   const isUser = message.sender === "user";
   const scrollRef = useRef(null);
 
-  // Scroll into view when new message appears
+  // Cuộn xuống cuối khi có tin nhắn mới
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollIntoView({ behavior: "smooth", block: "end" });
@@ -27,12 +27,12 @@ const ChatBubble = ({ message, onAction }) => {
             : "bg-white text-gray-800 border border-gray-100 rounded-bl-none"
         }`}
       >
-        {/* Text Content */}
+        {/* Nội dung văn bản */}
         <p className="whitespace-pre-wrap text-sm leading-relaxed">
           {message.content}
         </p>
 
-        {/* --- Location Request UI --- */}
+        {/* --- Giao diện yêu cầu vị trí --- */}
         {!isUser && message.type === "location_request" && (
           <div className="mt-3 bg-blue-50 p-3 rounded-xl border border-blue-100">
              <div className="flex items-center gap-2 mb-2 text-blue-700 font-medium text-sm">
@@ -59,7 +59,7 @@ const ChatBubble = ({ message, onAction }) => {
           </div>
         )}
 
-        {/* Specialized Content Types */}
+        {/* Các loại nội dung đặc biệt */}
         {!isUser && message.type === "stats" && message.data && (
           <div className="mt-3 bg-rose-50 rounded-xl p-3 border border-rose-100">
             <div className="text-xs text-rose-500 uppercase font-bold tracking-wider mb-1">
@@ -144,7 +144,7 @@ const ChatBubble = ({ message, onAction }) => {
             </div>
           )}
 
-        {/* Timestamp */}
+        {/* Thời gian */}
         <div
           className={`text-[10px] mt-1 text-right ${isUser ? "text-rose-100" : "text-gray-400"}`}
         >

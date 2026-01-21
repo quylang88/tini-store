@@ -15,7 +15,7 @@ const Assistant = ({
   setIsTyping,
 }) => {
   const messagesEndRef = useRef(null);
-  // Keep track of the last user query to retry after permission is granted
+  // Lưu câu hỏi cuối cùng để thử lại sau khi có quyền truy cập vị trí
   const lastQueryRef = useRef("");
 
   const scrollToBottom = () => {
@@ -30,15 +30,14 @@ const Assistant = ({
   const handleLocationAction = (message, action) => {
     if (action === "allow") {
       localStorage.setItem("ai_location_permission", "granted");
-      executeLocationQuery(true); // Retry with location
+      executeLocationQuery(true); // Thử lại với vị trí
     } else if (action === "deny") {
       localStorage.setItem("ai_location_permission", "denied");
-      executeLocationQuery(false); // Retry without location (or specific denied msg)
+      executeLocationQuery(false); // Thử lại không có vị trí
     }
 
-    // Update UI: Remove the request bubble or mark it processed?
-    // For simplicity, we just leave it in history but the user has already clicked.
-    // Ideally, we could replace it with a text "Đã cho phép" but appending new answer is fine.
+    // Cập nhật UI: Đơn giản là giữ lại bong bóng chat nhưng user đã bấm.
+    // Lý tưởng là thay thế bằng text "Đã cho phép" nhưng việc append câu trả lời mới là ổn.
   };
 
   const executeLocationQuery = (isGranted) => {
@@ -65,7 +64,7 @@ const Assistant = ({
           },
           (error) => {
             console.error("Location Error:", error);
-            // Fallback if location fails even after permission
+            // Fallback nếu lấy vị trí thất bại dù đã cấp quyền
              handleAutoResponse("Không thể lấy vị trí (Lỗi thiết bị). Vui lòng thử lại hoặc hỏi câu khác.");
              setIsTyping(false);
           }
@@ -75,7 +74,7 @@ const Assistant = ({
         setIsTyping(false);
       }
     } else {
-      // User denied
+      // Người dùng từ chối
       handleAutoResponse("Người dùng từ chối chia sẻ vị trí. Hãy trả lời câu hỏi dựa trên thông tin chung.");
     }
   };
@@ -94,7 +93,7 @@ const Assistant = ({
 
 
   const handleSendMessage = async (text) => {
-    lastQueryRef.current = text; // Save for potential retry
+    lastQueryRef.current = text; // Lưu để thử lại nếu cần
 
     // Thêm tin nhắn người dùng
     const userMsg = {
@@ -114,23 +113,23 @@ const Assistant = ({
         settings,
       });
 
-      // INTERCEPT LOCATION REQUEST
+      // CHẶN REQUEST LOCATION
       if (response.type === "location_request") {
         const permission = localStorage.getItem("ai_location_permission");
 
         if (permission === "granted") {
-           // Auto-execute
+           // Tự động thực thi
            executeLocationQuery(true);
-           return; // Skip adding the request bubble
+           return; // Bỏ qua việc hiển thị bong bóng yêu cầu
         }
 
         if (permission === "denied") {
-            // Auto-deny flow
+            // Tự động từ chối
             executeLocationQuery(false);
-            return; // Skip adding the request bubble
+            return; // Bỏ qua việc hiển thị bong bóng yêu cầu
         }
 
-        // If permission is null/unknown -> Show the bubble
+        // Nếu permission là null/unknown -> Hiển thị bong bóng
       }
 
       setMessages((prev) => [...prev, response]);

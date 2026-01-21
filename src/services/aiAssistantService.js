@@ -166,7 +166,7 @@ const processQueryWithGemini = async (query, context, apiKey) => {
     const result = await model.generateContent(systemPrompt);
     const response = await result.response;
 
-    // Kiểm tra Function Call
+    // Kiểm tra gọi hàm (Function Call)
     const functionCalls = response.functionCalls();
     if (functionCalls && functionCalls.length > 0) {
       const call = functionCalls[0];
