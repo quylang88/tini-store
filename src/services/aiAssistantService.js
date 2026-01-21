@@ -47,6 +47,10 @@ const tools = [
         name: "getUserLocation",
         description:
           "Lấy tọa độ vị trí hiện tại của người dùng (latitude, longitude). Dùng khi người dùng hỏi về thời tiết, chỉ đường, hoặc các câu hỏi liên quan đến vị trí địa lý của họ.",
+        parameters: {
+          type: "OBJECT",
+          properties: {},
+        },
       },
     ],
   },
