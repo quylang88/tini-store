@@ -1,10 +1,10 @@
-import { normalizeString } from "../../utils/formatters/formatters";
-import { normalizeWarehouseStock } from "../../utils/inventory/warehouseUtils";
+import { normalizeString } from "../formatters/formatters";
+import { normalizeWarehouseStock } from "./warehouseUtils";
 import {
   addPurchaseLot,
   getLatestCost,
   normalizePurchaseLots,
-} from "../../utils/inventory/purchaseUtils";
+} from "./purchaseUtils";
 
 // Gom validation vào 1 chỗ để dễ test và dễ review.
 export const getInventoryValidationError = ({

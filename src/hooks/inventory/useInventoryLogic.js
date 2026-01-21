@@ -9,7 +9,7 @@ import useInventoryFilters from "./useInventoryFilters";
 import {
   buildNextProductFromForm,
   getInventoryValidationError,
-} from "./inventorySaveUtils";
+} from "../../utils/inventory/inventorySaveUtils";
 import useHighlightFields from "../ui/useHighlightFields";
 
 const useInventoryLogic = ({ products, setProducts, settings }) => {
