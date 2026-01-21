@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Send } from "lucide-react";
 import AssistantIcon from "../../screens/assistant/AssistantIcon";
 
@@ -11,49 +11,79 @@ const PLACEHOLDERS = [
   "Phân tích khách hàng tiềm năng...",
 ];
 
+const shuffleArray = (array) => {
+  const newArray = [...array];
+  for (let i = newArray.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
+  }
+  return newArray;
+};
+
 const ChatInput = ({ onSend, disabled }) => {
   const [text, setText] = useState("");
   const [isFocused, setIsFocused] = useState(false);
 
-  // Typewriter state
+  // Trạng thái hiệu ứng gõ chữ
   const [displayedText, setDisplayedText] = useState("");
   const [isDeleting, setIsDeleting] = useState(false);
+
+  // Khởi tạo index ngẫu nhiên, tránh logic ref khi render
   const [currentPlaceholderIndex, setCurrentPlaceholderIndex] = useState(() =>
     Math.floor(Math.random() * PLACEHOLDERS.length),
   );
-  const typingSpeed = 50;
-  const deletingSpeed = 30;
-  const pauseTime = 2000;
+
+  // Sử dụng ref để lưu hàng đợi đã xáo trộn
+  const remainingIndicesRef = useRef(null);
+
+  const typingSpeed = 25;
+  const deletingSpeed = 15;
+  const pauseTime = 1500;
 
   useEffect(() => {
-    if (isFocused || text) return; // Pause animation if focused or typing
+    // Tạm dừng hiệu ứng nếu đang focus hoặc đang gõ
+    if (isFocused || text) return;
+
+    const getNextIndex = () => {
+      // Khởi tạo lười (lazy) cho hàng đợi ở lần gọi đầu tiên
+      if (remainingIndicesRef.current === null) {
+        // Tạo danh sách index loại trừ index hiện tại để bắt đầu
+        const indices = PLACEHOLDERS.map((_, i) => i).filter(
+          (i) => i !== currentPlaceholderIndex,
+        );
+        remainingIndicesRef.current = shuffleArray(indices);
+      }
+
+      if (remainingIndicesRef.current.length === 0) {
+        // Tạo danh sách index đã xáo trộn mới cho các vòng lặp tiếp theo
+        const indices = PLACEHOLDERS.map((_, i) => i);
+        remainingIndicesRef.current = shuffleArray(indices);
+      }
+
+      return remainingIndicesRef.current.pop();
+    };
 
     const currentFullText = PLACEHOLDERS[currentPlaceholderIndex];
 
     const handleTyping = () => {
       setDisplayedText((current) => {
         if (isDeleting) {
-          // Deleting
+          // Đang xóa
           if (current.length > 0) {
             return current.slice(0, -1);
           } else {
-            // Finished deleting, switch to next phrase
+            // Xóa xong, chuyển sang câu tiếp theo từ hàng đợi
             setIsDeleting(false);
-            setCurrentPlaceholderIndex((prev) => {
-              let next;
-              do {
-                next = Math.floor(Math.random() * PLACEHOLDERS.length);
-              } while (next === prev && PLACEHOLDERS.length > 1);
-              return next;
-            });
+            // Gọi getNextIndex ở đây là an toàn (bên trong callback của effect)
+            setCurrentPlaceholderIndex(getNextIndex());
             return "";
           }
         } else {
-          // Typing
+          // Đang gõ
           if (current.length < currentFullText.length) {
             return currentFullText.slice(0, current.length + 1);
           } else {
-            // Finished typing, wait before deleting
+            // Gõ xong, đợi trước khi xóa
             return current;
           }
         }
@@ -92,12 +122,11 @@ const ChatInput = ({ onSend, disabled }) => {
             <AssistantIcon isActive={isFocused} size={18} />
           </div>
 
-          {/* Animated Placeholder */}
+          {/* Placeholder có hiệu ứng */}
           {!text && (
             <div className="absolute inset-0 flex items-center pl-10 pointer-events-none overflow-hidden">
               <span className="text-sm text-gray-400 truncate w-full">
                 {isFocused ? "Hỏi Misa về bất kỳ điều gì..." : displayedText}
-                {!isFocused && <span className="animate-pulse">|</span>}
               </span>
             </div>
           )}

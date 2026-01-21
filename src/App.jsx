@@ -43,6 +43,19 @@ const App = () => {
   const [logoutModalOpen, setLogoutModalOpen] = useState(false);
   const [backupReminderOpen, setBackupReminderOpen] = useState(false);
 
+  // --- 1b. TRẠNG THÁI CHAT ASSISTANT ---
+  const [chatMessages, setChatMessages] = useState([
+    {
+      id: "welcome",
+      type: "text",
+      sender: "assistant",
+      content:
+        "Chào bạn! Mình là trợ lý ảo Misa. Mình có thể giúp gì cho bạn hôm nay?",
+      timestamp: new Date(),
+    },
+  ]);
+  const [isChatTyping, setIsChatTyping] = useState(false);
+
   // --- 2. KHỞI TẠO DỮ LIỆU TỪ LOCALSTORAGE ---
   const [products, setProducts] = useState(() => {
     const saved = localStorage.getItem("shop_products_v2");
@@ -280,6 +293,10 @@ const App = () => {
                 products={products}
                 orders={orders}
                 settings={settings}
+                messages={chatMessages}
+                setMessages={setChatMessages}
+                isTyping={isChatTyping}
+                setIsTyping={setIsChatTyping}
               />
             </motion.div>
           )}
