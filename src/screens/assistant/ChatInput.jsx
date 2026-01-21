@@ -28,19 +28,30 @@ const ChatInput = ({ onSend, disabled }) => {
   const [displayedText, setDisplayedText] = useState("");
   const [isDeleting, setIsDeleting] = useState(false);
 
-  // Use a ref to store the shuffled queue to maintain order across renders
-  const remainingIndicesRef = useRef([]);
+  // Initialize with a random index without ref logic during render
+  const [currentPlaceholderIndex, setCurrentPlaceholderIndex] = useState(() =>
+    Math.floor(Math.random() * PLACEHOLDERS.length)
+  );
+
+  // Use a ref to store the shuffled queue
+  const remainingIndicesRef = useRef(null);
 
   const getNextIndex = () => {
+    // Lazy initialization for the queue on first call
+    if (remainingIndicesRef.current === null) {
+      // Create list of all indices excluding the current one to start with
+      const indices = PLACEHOLDERS.map((_, i) => i).filter(i => i !== currentPlaceholderIndex);
+      remainingIndicesRef.current = shuffleArray(indices);
+    }
+
     if (remainingIndicesRef.current.length === 0) {
-      // Create a new shuffled list of indices [0, 1, ..., N-1]
+      // Create a new shuffled list of all indices for subsequent loops
       const indices = PLACEHOLDERS.map((_, i) => i);
       remainingIndicesRef.current = shuffleArray(indices);
     }
+
     return remainingIndicesRef.current.pop();
   };
-
-  const [currentPlaceholderIndex, setCurrentPlaceholderIndex] = useState(() => getNextIndex());
 
   const typingSpeed = 30;
   const deletingSpeed = 15;
@@ -60,6 +71,7 @@ const ChatInput = ({ onSend, disabled }) => {
           } else {
             // Finished deleting, switch to next phrase from the shuffled queue
             setIsDeleting(false);
+            // Calling getNextIndex here is safe (inside effect callback)
             setCurrentPlaceholderIndex(getNextIndex());
             return "";
           }
