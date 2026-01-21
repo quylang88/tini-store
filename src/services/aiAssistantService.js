@@ -1,11 +1,32 @@
 /**
  * aiAssistantService.js
  *
- * Service này đóng vai trò là "Bộ não" cho Trợ lý ảo cục bộ và tích hợp Gemini AI.
- * Nó phân tích các truy vấn ngôn ngữ tự nhiên của người dùng bằng Regex (local) hoặc gọi API Gemini (cloud).
+ * Service này đóng vai trò là "Bộ não" cho Trợ lý ảo.
+ * Đã được cấu hình để sử dụng API Key bảo mật từ biến môi trường (.env).
  */
 
+import { GoogleGenerativeAI } from "@google/generative-ai";
 import { formatCurrency } from "../utils/formatters/formatUtils";
+
+// 1. CẤU HÌNH API KEY TỪ BIẾN MÔI TRƯỜNG (AN TOÀN)
+// Vite sử dụng import.meta.env để truy cập biến bắt đầu bằng VITE_
+const API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
+
+// Khởi tạo SDK (chỉ khởi tạo nếu có key)
+let model = null;
+
+if (API_KEY) {
+  const genAI = new GoogleGenerativeAI(API_KEY);
+  model = genAI.getGenerativeModel({
+    model: "gemini-1.5-flash",
+    // Kích hoạt công cụ Google Search để tìm giá/thông tin trên mạng
+    tools: [{ googleSearch: {} }],
+  });
+} else {
+  console.warn(
+    "⚠️ Chưa tìm thấy VITE_GEMINI_API_KEY trong file .env. Trợ lý sẽ chạy ở chế độ Offline (Rule-based).",
+  );
+}
 
 /**
  * Chuẩn hóa văn bản để so sánh (chữ thường, bỏ dấu).
@@ -19,40 +40,41 @@ const normalizeText = (text) => {
 
 /**
  * Xử lý truy vấn của người dùng.
- * Hàm này giờ đây là async để hỗ trợ gọi API.
  *
  * @param {string} query Câu hỏi của user
  * @param {object} context { products, orders, settings }
  */
 export const processQuery = async (query, context) => {
-  const { settings } = context;
+  // Ưu tiên dùng Key trong .env.
+  // Nếu không có, fallback về settings của user (nếu bạn vẫn muốn giữ tính năng nhập key thủ công),
+  // hoặc chạy local.
+  const hasEnvKey = !!API_KEY;
 
-  // Kiểm tra nếu có API Key hợp lệ thì gọi Gemini
-  if (settings && settings.aiApiKey && settings.aiApiKey.length > 10) {
+  if (hasEnvKey) {
     return await processQueryWithGemini(query, context);
   }
 
-  // Nếu không, fallback về logic cục bộ (local rule-based)
+  // Nếu không có Key -> Chạy logic cục bộ
   return processQueryLocal(query, context);
 };
 
 /**
- * LOGIC CỤC BỘ (Rule-based)
- * Chạy khi không có API Key.
+ * LOGIC CỤC BỘ (Rule-based / Offline)
+ * Chạy khi không có API Key hoặc mất mạng.
  */
 const processQueryLocal = (query, context) => {
   const { products, orders } = context;
   const cleanQuery = normalizeText(query);
 
-  // 1. CHÀO HỎI (Greetings)
+  // 1. CHÀO HỎI
   if (cleanQuery.match(/^(xin chao|hi|hello|chao|lo|alo)/)) {
     return createResponse(
       "text",
-      'Xin chào! Mình là trợ lý ảo Tiny (Offline). Mình có thể giúp gì cho bạn? (Ví dụ: "Doanh thu hôm nay", "Tìm sản phẩm")',
+      'Xin chào! Hiện tại mình đang chạy ở chế độ Offline. Mình chỉ có thể giúp tra cứu nhanh như: "Doanh thu hôm nay", "Tìm [tên sản phẩm]".',
     );
   }
 
-  // 2. DOANH THU / THỐNG KÊ (Revenue / Stats)
+  // 2. DOANH THU
   if (cleanQuery.includes("doanh thu") || cleanQuery.includes("tien ban")) {
     if (cleanQuery.includes("hom nay") || cleanQuery.includes("nay")) {
       const today = new Date().toLocaleDateString("en-CA");
@@ -73,7 +95,6 @@ const processQueryLocal = (query, context) => {
       );
     }
 
-    // Mặc định là tổng doanh thu
     const total = orders
       .filter((o) => o.status !== "cancelled")
       .reduce((sum, o) => sum + o.total, 0);
@@ -88,7 +109,7 @@ const processQueryLocal = (query, context) => {
     );
   }
 
-  // 3. TÌM KIẾM SẢN PHẨM (Product Search)
+  // 3. TÌM KIẾM SẢN PHẨM
   if (
     cleanQuery.includes("tim") ||
     cleanQuery.includes("gia") ||
@@ -99,10 +120,7 @@ const processQueryLocal = (query, context) => {
       .trim();
 
     if (keyword.length < 2) {
-      return createResponse(
-        "text",
-        "Bạn muốn tìm sản phẩm gì? Hãy nhập tên cụ thể hơn nhé.",
-      );
+      return createResponse("text", "Bạn muốn tìm sản phẩm gì?");
     }
 
     const results = products.filter((p) =>
@@ -112,14 +130,7 @@ const processQueryLocal = (query, context) => {
     if (results.length === 0) {
       return createResponse(
         "text",
-        `Không tìm thấy sản phẩm nào khớp với từ khóa "${keyword}".`,
-      );
-    } else if (results.length === 1) {
-      const p = results[0];
-      return createResponse(
-        "product_list",
-        `Tìm thấy: ${p.name}. Giá: ${formatCurrency(p.price)}. Tồn: ${p.stock}.`,
-        [p],
+        `Không tìm thấy sản phẩm nào khớp với "${keyword}".`,
       );
     } else {
       return createResponse(
@@ -130,113 +141,88 @@ const processQueryLocal = (query, context) => {
     }
   }
 
-  // FALLBACK (Dự phòng)
+  // FALLBACK
   return createResponse(
     "text",
-    'Chế độ Offline: Mình chỉ hiểu các lệnh đơn giản như "Doanh thu", "Tìm [tên sản phẩm]". Hãy nhập API Key trong Cài đặt để mình thông minh hơn nhé!',
+    "Chế độ Offline: Vui lòng kết nối mạng để mình có thể trả lời thông minh hơn và tra cứu giá trên mạng!",
   );
 };
 
 /**
- * LOGIC GỌI GEMINI API (Cloud AI)
+ * XỬ LÝ VỚI GEMINI AI (ONLINE)
+ * Sử dụng SDK Google Generative AI
  */
 const processQueryWithGemini = async (query, context) => {
-  const { products, orders, settings } = context;
-  const apiKey = settings.aiApiKey;
+  const { products, orders } = context;
 
   // 1. Chuẩn bị ngữ cảnh (Context Injection)
-  // Giới hạn số lượng sản phẩm để tránh quá token limit (chọn 50 sản phẩm mới nhất hoặc quan trọng nhất)
-  // Ở đây ta lấy hết nhưng chỉ lấy tên, giá, tồn để tiết kiệm.
+  // Lấy tối đa 100 sản phẩm để tiết kiệm token, ưu tiên sản phẩm mới hoặc bán chạy nếu có logic sort
   const productContext = products
     .slice(0, 100)
-    .map((p) => `- ${p.name} (Giá: ${p.price}đ, Tồn: ${p.stock})`)
+    .map(
+      (p) =>
+        `- ${p.name} (Giá bán tại shop: ${formatCurrency(p.price)}, Tồn kho: ${p.stock})`,
+    )
     .join("\n");
 
-  // Thống kê sơ bộ để AI nắm bắt
-  const totalRevenue = orders
-    .filter((o) => o.status !== "cancelled")
-    .reduce((sum, o) => sum + o.total, 0);
   const today = new Date().toLocaleDateString("en-CA");
   const todayRevenue = orders
     .filter((o) => o.date.startsWith(today) && o.status !== "cancelled")
     .reduce((sum, o) => sum + o.total, 0);
 
   const statsContext = `
-    - Tổng doanh thu toàn thời gian: ${totalRevenue}đ
-    - Doanh thu hôm nay (${today}): ${todayRevenue}đ
-    - Tổng số đơn hàng: ${orders.length}
+    - Ngày hiện tại: ${today}
+    - Doanh thu hôm nay: ${formatCurrency(todayRevenue)}
+    - Tổng số đơn hàng trong lịch sử: ${orders.length}
     `;
 
-  // 2. Tạo Prompt (Lời nhắc hệ thống)
+  // 2. Tạo System Prompt
   const systemPrompt = `
-      Bạn là Trợ lý ảo thông minh của ứng dụng quản lý bán hàng "Tiny Shop".
-      Hãy trả lời người dùng ngắn gọn, thân thiện, hữu ích bằng tiếng Việt.
+      Bạn là Trợ lý ảo quản lý bán hàng của "Tiny Shop".
+      Nhiệm vụ: Trả lời ngắn gọn, chính xác, giọng điệu thân thiện.
 
-      DỮ LIỆU CỬA HÀNG HIỆN TẠI:
+      DỮ LIỆU CỬA HÀNG (NỘI BỘ):
       ${statsContext}
 
       DANH SÁCH SẢN PHẨM (Top 100):
       ${productContext}
 
-      YÊU CẦU CỦA NGƯỜI DÙNG: "${query}"
+      CÂU HỎI NGƯỜI DÙNG: "${query}"
 
-      HƯỚNG DẪN TRẢ LỜI:
-      - Nếu người dùng hỏi về thông tin nội bộ (doanh thu, tồn kho, giá bán tại shop), hãy ƯU TIÊN dùng dữ liệu ở trên.
-      - Nếu người dùng hỏi về GIÁ THỊ TRƯỜNG, XU HƯỚNG, ĐỐI THỦ, hoặc thông tin sản phẩm bên ngoài: HÃY SỬ DỤNG GOOGLE SEARCH để tìm câu trả lời mới nhất.
-      - Nếu sản phẩm không có trong danh sách shop, hãy nói là không tìm thấy trong kho, nhưng có thể tìm thông tin bên ngoài nếu cần.
-      - Luôn dẫn nguồn nếu lấy thông tin từ internet.
+      QUY TẮC TRẢ LỜI:
+      1. Ưu tiên dùng dữ liệu nội bộ ở trên để trả lời về giá bán, tồn kho, doanh thu.
+      2. Nếu người dùng hỏi so sánh giá, tìm kiếm thông tin bên ngoài, giá thị trường -> HÃY SỬ DỤNG CÔNG CỤ TÌM KIẾM (Google Search) được cung cấp.
+      3. Nếu không tìm thấy sản phẩm trong danh sách trên, hãy nói rõ là "không thấy trong kho của shop" trước khi tìm thông tin trên mạng.
+      4. Định dạng tiền tệ dạng Việt Nam (ví dụ: 150.000đ).
     `;
 
   try {
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+    // Gọi Gemini qua SDK
+    const result = await model.generateContent(systemPrompt);
+    const response = await result.response;
+    const textResponse = response.text();
 
-    const response = await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: systemPrompt }] }],
-        tools: [
-          {
-            googleSearchRetrieval: {
-              dynamicRetrievalConfig: {
-                mode: "MODE_DYNAMIC",
-                dynamicThreshold: 0.6,
-              },
-            },
-          },
-        ],
-      }),
-    });
-
-    if (!response.ok) {
-      const errData = await response.json();
-      throw new Error(errData.error?.message || "API Error");
-    }
-
-    const data = await response.json();
-    const textResponse = data.candidates?.[0]?.content?.parts?.[0]?.text;
-
-    if (!textResponse) throw new Error("No response from AI");
+    // Kiểm tra xem có Grounding Metadata (nguồn search) không để hiển thị (tuỳ chọn)
+    // const groundingMetadata = response.candidates[0].groundingMetadata;
 
     return createResponse("text", textResponse);
   } catch (error) {
     console.error("Gemini API Error:", error);
     return createResponse(
       "text",
-      `Lỗi kết nối AI: ${error.message}. (Đang chuyển về chế độ offline...)`,
+      "Xin lỗi, kết nối với AI đang gặp sự cố. Vui lòng thử lại sau.",
     );
   }
 };
 
 /**
- * Hàm hỗ trợ tạo đối tượng phản hồi có cấu trúc
+ * Helper tạo object phản hồi chuẩn
  */
 const createResponse = (type, content, data = null) => {
   return {
-    id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
-    timestamp: new Date(),
+    id: Date.now().toString(),
     sender: "assistant",
-    type,
+    type, // 'text', 'stats', 'product_list'
     content,
     data,
   };

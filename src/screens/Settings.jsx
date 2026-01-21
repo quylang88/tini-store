@@ -125,34 +125,7 @@ const Settings = ({
           </div>
         </SettingsSection>
 
-        {/* 2. Cấu hình Trợ lý AI */}
-        <SettingsSection
-          title="Cấu hình Trợ lý AI"
-          icon={Sparkles}
-          iconClassName="text-purple-500"
-        >
-          <div>
-            <label className="block text-xs font-bold text-rose-700 uppercase mb-2">
-              Google Gemini API Key
-            </label>
-            <div className="relative">
-              <input
-                type="password"
-                className="w-full border border-gray-200 rounded-lg px-3 py-3 outline-none focus:border-rose-400 font-medium text-sm text-gray-900"
-                value={settings.aiApiKey || ""}
-                onChange={(e) => {
-                  saveSettings({ ...settings, aiApiKey: e.target.value });
-                }}
-                placeholder="Nhập API Key..."
-              />
-            </div>
-            <p className="text-xs text-rose-600 mt-2">
-              * Nhập API Key để kích hoạt trí tuệ nhân tạo Gemini 1.5 Flash.
-            </p>
-          </div>
-        </SettingsSection>
-
-        {/* 3. Quản lý Danh mục */}
+        {/* 2. Quản lý Danh mục */}
         <SettingsSection
           title="Danh mục sản phẩm"
           icon={Plus}
@@ -194,7 +167,7 @@ const Settings = ({
           </div>
         </SettingsSection>
 
-        {/* 4. Sao lưu & Khôi phục */}
+        {/* 3. Sao lưu & Khôi phục */}
         <SettingsSection
           title="Sao lưu & Khôi phục"
           icon={Download}
@@ -281,7 +254,7 @@ const Settings = ({
           </label>
         </SettingsSection>
 
-        {/* 5. Nút Đăng Xuất */}
+        {/* 4. Nút Đăng Xuất */}
         <button
           onClick={onLogout}
           className="w-full flex items-center justify-center gap-2 mt-4 bg-rose-500 text-white py-3 rounded-xl font-bold active:scale-95 active:bg-rose-400 transition-all"
@@ -291,7 +264,7 @@ const Settings = ({
 
         {/* Footer info */}
         <div className="text-center text-xs text-rose-400 pb-4">
-          Phiên bản 26.2 - Tiny Shop
+          Phiên bản 15.6 - Tiny Shop
           <br />
           Được phát triển bởi Quý Lăng &copy; 2026
         </div>
