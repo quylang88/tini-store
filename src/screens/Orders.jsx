@@ -7,7 +7,7 @@ import OrderDetailModal from "./orders/OrderDetailModal";
 import ConfirmModalHost from "../components/modals/ConfirmModalHost";
 import ErrorModal from "../components/modals/ErrorModal";
 import ScreenTransition from "../components/common/ScreenTransition";
-import useOrdersLogic from "../hooks/useOrdersLogic";
+import useOrdersLogic from "../hooks/orders/useOrdersLogic";
 
 const Orders = ({
   products,

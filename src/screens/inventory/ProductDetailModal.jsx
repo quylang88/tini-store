@@ -1,9 +1,9 @@
 import React from "react";
-import { formatNumber } from "../../utils/helpers";
-import { getLatestCost, getLatestLot } from "../../utils/purchaseUtils";
-import { getWarehouseLabel } from "../../utils/warehouseUtils";
+import { formatNumber } from "../../utils/formatters/formatters";
+import { getLatestCost, getLatestLot } from "../../utils/inventory/purchaseUtils";
+import { getWarehouseLabel } from "../../utils/inventory/warehouseUtils";
 import SheetModal from "../../components/modals/SheetModal";
-import useModalCache from "../../hooks/useModalCache";
+import useModalCache from "../../hooks/ui/useModalCache";
 import Button from "../../components/button/Button";
 
 // ProductDetailModal: Hiển thị lịch sử nhập hàng (View Only)

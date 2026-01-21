@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { getLatestUnitCost } from "../utils/purchaseUtils";
+import { getLatestUnitCost } from "../../utils/inventory/purchaseUtils";
 
 // Tạo label thời gian động theo tháng/năm hiện tại và tách bộ lọc cho dashboard vs chi tiết.
 const buildRangeOptions = (mode = "dashboard", now) => {

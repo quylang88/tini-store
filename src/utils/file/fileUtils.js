@@ -1,4 +1,4 @@
-import { formatNumber } from "./helpers.js";
+import { formatNumber } from "../formatters/formatters";
 
 /**
  * Handles file export by prioritizing Web Share API (for Mobile/PWA)

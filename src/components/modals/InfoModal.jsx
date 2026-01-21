@@ -1,6 +1,6 @@
 import React, { useMemo } from "react";
 import ModalShell from "./ModalShell";
-import useModalCache from "../../hooks/useModalCache";
+import useModalCache from "../../hooks/ui/useModalCache";
 
 // Modal thông tin nhẹ: không có nút, chỉ chạm ra ngoài để đóng.
 const InfoModal = ({ open, title, message, onClose }) => {

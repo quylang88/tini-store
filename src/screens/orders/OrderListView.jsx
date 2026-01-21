@@ -1,12 +1,12 @@
 import React, { useEffect } from "react";
 import { ShoppingCart, Plus } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
-import { formatNumber } from "../../utils/helpers";
-import { getWarehouseLabel } from "../../utils/warehouseUtils";
-import { getOrderDisplayName } from "../../utils/orderUtils";
+import { formatNumber } from "../../utils/formatters/formatters";
+import { getWarehouseLabel } from "../../utils/inventory/warehouseUtils";
+import { getOrderDisplayName } from "../../utils/orders/orderUtils";
 import FloatingActionButton from "../../components/button/FloatingActionButton";
 import AppHeader from "../../components/common/AppHeader";
-import useScrollHandling from "../../hooks/useScrollHandling";
+import useScrollHandling from "../../hooks/ui/useScrollHandling";
 
 // Giao diện danh sách đơn tách riêng để dễ quản lý và thêm nút huỷ đơn
 const OrderListView = ({

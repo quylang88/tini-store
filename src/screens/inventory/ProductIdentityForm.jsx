@@ -1,7 +1,6 @@
 import React, { useRef } from "react";
 import { ScanBarcode, Upload, Camera } from "lucide-react";
-import { formatNumber } from "../../utils/helpers";
-
+import { formatNumber } from "../../utils/formatters/formatters";
 const ProductIdentityForm = ({
   // Data props
   image,

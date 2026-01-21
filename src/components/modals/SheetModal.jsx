@@ -1,7 +1,7 @@
 import React from "react";
 import { createPortal } from "react-dom";
 import { X } from "lucide-react";
-import useMountTransition from "../../hooks/useMountTransition";
+import useMountTransition from "../../hooks/ui/useMountTransition";
 
 // SheetModal: Modal dạng trượt từ dưới lên (Bottom Sheet).
 // Animation: Slide Up (translate-y-full -> translate-y-0).
@@ -65,7 +65,7 @@ const SheetModal = ({
         )}
       </div>
     </div>,
-    document.body
+    document.body,
   );
 };
 

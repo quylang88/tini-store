@@ -1,10 +1,10 @@
 import { useState } from "react";
-import { syncProductsStock } from "../utils/orderStock";
-import useOrderCatalog from "./orders/useOrderCatalog";
-import { buildCartFromItems } from "./orders/orderDraftUtils";
-import useCartLogic from "./orders/useCartLogic";
-import useOrderFormLogic from "./orders/useOrderFormLogic";
-import useOrderSubmitLogic from "./orders/useOrderSubmitLogic";
+import { syncProductsStock } from "../../utils/orders/orderStock";
+import useOrderCatalog from "./useOrderCatalog";
+import { buildCartFromItems } from "../../utils/orders/orderDraftUtils";
+import useCartLogic from "./useCartLogic";
+import useOrderFormLogic from "./useOrderFormLogic";
+import useOrderSubmitLogic from "../../utils/orders/useOrderSubmitLogic";
 
 const DEFAULT_STATUS = "shipping";
 const DEFAULT_WAREHOUSE = "vinhPhuc";

@@ -1,11 +1,11 @@
 import React from "react";
 import { Download, Upload, Plus, RefreshCw, X, LogOut } from "lucide-react";
-import { formatInputNumber, sanitizeNumberInput } from "../utils/helpers";
+import { formatInputNumber, sanitizeNumberInput } from "../utils/formatters/formatters";
 import ConfirmModalHost from "../components/modals/ConfirmModalHost";
 import ErrorModal from "../components/modals/ErrorModal";
 import InfoModal from "../components/modals/InfoModal";
 import SettingsSection from "./settings/SettingsSection";
-import useSettingsLogic from "../hooks/useSettingsLogic";
+import useSettingsLogic from "../hooks/settings/useSettingsLogic";
 import AppHeader from "../components/common/AppHeader";
 import AnimatedFilterTabs from "../components/common/AnimatedFilterTabs";
 import { AnimatePresence, motion } from "framer-motion";

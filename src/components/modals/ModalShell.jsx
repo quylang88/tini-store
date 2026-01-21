@@ -1,6 +1,6 @@
 import React from "react";
 import { createPortal } from "react-dom";
-import useMountTransition from "../../hooks/useMountTransition";
+import useMountTransition from "../../hooks/ui/useMountTransition";
 
 // ModalShell: Modal dạng popup hiển thị chính giữa màn hình (Center Modal).
 // Animation: Zoom In + Fade (scale-95 opacity-0 -> scale-100 opacity-100).
@@ -43,7 +43,7 @@ const ModalShell = ({
         </div>
       </div>
     </div>,
-    document.body
+    document.body,
   );
 };
 

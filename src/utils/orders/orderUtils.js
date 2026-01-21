@@ -1,4 +1,4 @@
-import { getWarehouseLabel } from "./warehouseUtils";
+import { getWarehouseLabel } from "../inventory/warehouseUtils";
 
 export const getOrderDisplayName = (order) => {
   // Nếu là bán tại kho thì hiển thị rõ "Tại kho: <địa điểm>" để nhận biết nhanh.

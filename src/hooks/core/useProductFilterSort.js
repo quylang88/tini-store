@@ -1,6 +1,6 @@
 import { useMemo } from "react";
-import { normalizeString } from "../utils/helpers";
-import { getProductDate } from "../utils/sortingUtils";
+import { normalizeString } from "../../utils/formatters/formatters";
+import { getProductDate } from "../../utils/common/sortingUtils";
 
 const useProductFilterSort = ({
   products,

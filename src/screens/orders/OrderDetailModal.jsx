@@ -1,11 +1,11 @@
 import React, { useState } from "react";
 import SheetModal from "../../components/modals/SheetModal";
-import { formatNumber } from "../../utils/helpers";
-import { getWarehouseLabel } from "../../utils/warehouseUtils";
-import { getOrderDisplayName } from "../../utils/orderUtils";
-import useModalCache from "../../hooks/useModalCache";
+import { formatNumber } from "../../utils/formatters/formatters";
+import { getWarehouseLabel } from "../../utils/inventory/warehouseUtils";
+import { getOrderDisplayName } from "../../utils/orders/orderUtils";
+import useModalCache from "../../hooks/ui/useModalCache";
 import Button from "../../components/button/Button";
-import { exportOrderToHTML } from "../../utils/fileUtils";
+import { exportOrderToHTML } from "../../utils/file/fileUtils";
 import LoadingOverlay from "../../components/common/LoadingOverlay";
 
 // OrderDetailModal: Xem chi tiết đơn hàng (View Only) -> showCloseIcon={false}
