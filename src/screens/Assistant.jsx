@@ -5,18 +5,15 @@ import ChatBubble from "./assistant/ChatBubble";
 import ChatInput from "./assistant/ChatInput";
 import { processQuery } from "../services/aiAssistantService";
 
-const Assistant = ({ products, orders, settings }) => {
-  const [messages, setMessages] = useState([
-    {
-      id: "welcome",
-      type: "text",
-      sender: "assistant",
-      content:
-        "Chào bạn! Mình là trợ lý ảo Misa. Mình có thể giúp gì cho bạn hôm nay?",
-      timestamp: new Date(),
-    },
-  ]);
-  const [isTyping, setIsTyping] = useState(false);
+const Assistant = ({
+  products,
+  orders,
+  settings,
+  messages,
+  setMessages,
+  isTyping,
+  setIsTyping,
+}) => {
   const messagesEndRef = useRef(null);
 
   const scrollToBottom = () => {
