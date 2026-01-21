@@ -38,7 +38,7 @@ const TabBar = ({ activeTab, setActiveTab, isVisible = true }) => {
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
               className={`relative flex flex-col items-center justify-center w-full h-full gap-0.5 ${
-                isActive ? "text-rose-600" : "text-amber-500"
+                isActive ? "text-rose-600 z-10" : "text-amber-500 z-0"
               }`}
             >
               {tab.id === "assistant" ? (

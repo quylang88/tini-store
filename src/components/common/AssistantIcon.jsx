@@ -50,7 +50,7 @@ const AssistantIcon = ({ isActive, size = 24, strokeWidth = 2 }) => {
             : { rotate: 0, scale: 1 }
         }
         transition={isActive ? transition : { duration: 0 }}
-        style={{ originX: "12px", originY: "12px" }}
+        style={{ transformOrigin: "12px 12px" }}
       />
 
       {/* Top Right Dot (Cross) - Center approx (19, 5) */}
@@ -58,7 +58,7 @@ const AssistantIcon = ({ isActive, size = 24, strokeWidth = 2 }) => {
         d="M19 3v4 M17 5h4"
         animate={isActive ? { opacity: [1, 0, 0, 1], scale: [1, 0, 0, 1] } : { opacity: 1, scale: 1 }}
         transition={isActive ? transition : { duration: 0 }}
-        style={{ originX: "19px", originY: "5px" }}
+        style={{ transformOrigin: "19px 5px" }}
       />
 
       {/* Bottom Left Dot (Cross) - Center approx (5, 19) */}
@@ -66,7 +66,7 @@ const AssistantIcon = ({ isActive, size = 24, strokeWidth = 2 }) => {
         d="M5 17v4 M3 19h4"
         animate={isActive ? { opacity: [1, 0, 0, 1], scale: [1, 0, 0, 1] } : { opacity: 1, scale: 1 }}
         transition={isActive ? transition : { duration: 0 }}
-        style={{ originX: "5px", originY: "19px" }}
+        style={{ transformOrigin: "5px 19px" }}
       />
     </svg>
   );
