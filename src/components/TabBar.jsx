@@ -6,8 +6,8 @@ import {
   Settings,
   Sparkles,
 } from "lucide-react";
-import { motion } from "framer-motion";
 import useMountTransition from "../hooks/ui/useMountTransition";
+import AssistantIcon from "../screens/assistant/AssistantIcon";
 
 const TabBar = ({ activeTab, setActiveTab, isVisible = true }) => {
   const tabs = [
@@ -37,33 +37,11 @@ const TabBar = ({ activeTab, setActiveTab, isVisible = true }) => {
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
               className={`relative flex flex-col items-center justify-center w-full h-full gap-0.5 ${
-                isActive ? "text-rose-600" : "text-amber-500"
+                isActive ? "text-rose-600 z-10" : "text-amber-500 z-0"
               }`}
             >
               {tab.id === "assistant" ? (
-                <div className="relative">
-                  <motion.div
-                    animate={
-                      isActive
-                        ? {
-                            rotate: [0, -15, 15, -15, 15, 0],
-                            scale: [1, 1.2, 1],
-                            filter: [
-                              "brightness(1)",
-                              "brightness(1.3)",
-                              "brightness(1)",
-                            ],
-                          }
-                        : {}
-                    }
-                    transition={{ duration: 0.5 }}
-                  >
-                    <Icon size={24} strokeWidth={isActive ? 2.5 : 2} />
-                  </motion.div>
-                  <span className="absolute -top-2 -right-3 bg-gradient-to-r from-rose-500 to-orange-500 text-white text-[8px] font-bold px-1 py-0.5 rounded-full shadow-sm z-10 animate-pulse">
-                    BETA
-                  </span>
-                </div>
+                <AssistantIcon isActive={isActive} size={24} />
               ) : (
                 <Icon size={24} strokeWidth={isActive ? 2.5 : 2} />
               )}

@@ -81,7 +81,14 @@ const Assistant = ({ products, orders, settings }) => {
           <Bot size={24} />
         </div>
         <div>
-          <h1 className="font-bold text-rose-900 text-lg">Trợ lý ảo Misa</h1>
+          <div className="flex items-start gap-1">
+            <h1 className="font-bold text-rose-900 text-lg relative">
+              Trợ lý ảo Misa
+            </h1>
+            <span className="bg-gradient-to-r from-rose-500 to-orange-500 text-white text-[8px] font-bold px-1.5 py-0.5 rounded-full shadow-sm animate-pulse">
+              BETA
+            </span>
+          </div>
           <p className="text-xs text-gray-600 flex items-center gap-1">
             <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
             Đang hoạt động

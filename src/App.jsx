@@ -266,20 +266,14 @@ const App = () => {
               key="assistant"
               className="absolute top-0 left-0 w-full h-full z-20"
               initial={{
-                clipPath: "circle(0% at 50% 100%)",
-                opacity: 0,
+                clipPath: "circle(0px at 50% calc(100% - 25px))",
               }}
               animate={{
-                clipPath: "circle(150% at 50% 100%)",
-                opacity: 1,
-              }}
-              exit={{
-                clipPath: "circle(0% at 50% 100%)",
-                opacity: 0,
+                clipPath: "circle(150% at 50% calc(100% - 25px))",
               }}
               transition={{
-                duration: 0.5,
-                ease: "easeInOut",
+                duration: 1.2,
+                ease: [0.22, 1, 0.36, 1], // Custom easing for "spread" feel
               }}
             >
               <Assistant
