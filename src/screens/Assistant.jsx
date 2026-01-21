@@ -1,8 +1,8 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Bot } from "lucide-react";
 import { motion } from "framer-motion";
-import ChatBubble from "../components/assistant/ChatBubble";
-import ChatInput from "../components/assistant/ChatInput";
+import ChatBubble from "./assistant/ChatBubble";
+import ChatInput from "./assistant/ChatInput";
 import { processQuery } from "../services/aiAssistantService";
 
 const Assistant = ({ products, orders, settings }) => {

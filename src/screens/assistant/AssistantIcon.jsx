@@ -1,7 +1,8 @@
-import React from "react";
+import React, { useId } from "react";
 import { motion } from "framer-motion";
 
 const AssistantIcon = ({ isActive, size = 24, strokeWidth = 2 }) => {
+  const gradientId = useId().replace(/:/g, "");
   // Animation duration
   const DURATION = 2;
 
@@ -12,7 +13,7 @@ const AssistantIcon = ({ isActive, size = 24, strokeWidth = 2 }) => {
     times: [0, 0.2, 0.8, 1], // Keyframes: Start -> Fade Out -> Rotate End -> Fade In
   };
 
-  const activeStroke = "url(#gemini-gradient)";
+  const activeStroke = `url(#${gradientId})`;
   const inactiveStroke = "currentColor";
 
   return (
@@ -29,13 +30,7 @@ const AssistantIcon = ({ isActive, size = 24, strokeWidth = 2 }) => {
       className="lucide lucide-sparkles"
     >
       <defs>
-        <linearGradient
-          id="gemini-gradient"
-          x1="0%"
-          y1="0%"
-          x2="100%"
-          y2="100%"
-        >
+        <linearGradient id={gradientId} x1="0%" y1="0%" x2="100%" y2="100%">
           <stop offset="0%" stopColor="#eab308" /> {/* Yellow-500 */}
           <stop offset="35%" stopColor="#ec4899" /> {/* Pink-500 */}
           <stop offset="65%" stopColor="#3b82f6" /> {/* Blue-500 */}
