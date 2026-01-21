@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Send } from "lucide-react";
+import { Send, Settings2 } from "lucide-react";
 import AssistantIcon from "./AssistantIcon";
 
 const PLACEHOLDERS = [
@@ -20,7 +20,7 @@ const shuffleArray = (array) => {
   return newArray;
 };
 
-const ChatInput = ({ onSend, disabled }) => {
+const ChatInput = ({ onSend, disabled, onOpenModelSelector }) => {
   const [text, setText] = useState("");
   const [isFocused, setIsFocused] = useState(false);
 
@@ -117,6 +117,16 @@ const ChatInput = ({ onSend, disabled }) => {
   return (
     <div className="bg-white border-t border-gray-100 p-3 pb-[calc(env(safe-area-inset-bottom)+12px)]">
       <form onSubmit={handleSubmit} className="flex gap-2 items-center">
+        {/* Model Selector Button */}
+        <button
+          type="button"
+          onClick={onOpenModelSelector}
+          disabled={disabled}
+          className="p-3 bg-gray-100 text-gray-500 rounded-full hover:bg-gray-200 active:scale-90 transition-all flex items-center justify-center"
+        >
+          <Settings2 size={20} />
+        </button>
+
         <div className="relative flex-1">
           <div className="absolute left-3 top-1/2 -translate-y-1/2 text-rose-400 z-10">
             <AssistantIcon isActive={isFocused} size={18} />
