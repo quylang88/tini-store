@@ -47,7 +47,8 @@ const Assistant = ({
         navigator.geolocation.getCurrentPosition(
           async (position) => {
             const { latitude, longitude } = position.coords;
-            const locationContext = `[Thông tin hệ thống]: Người dùng đang ở Vĩ độ ${latitude}, Kinh độ ${longitude}. Hãy trả lời câu hỏi: "${lastQueryRef.current}"`;
+            // Context rất rõ ràng để tránh AI hỏi lại
+            const locationContext = `[Thông tin hệ thống - TỌA ĐỘ VỊ TRÍ]: Latitude ${latitude}, Longitude ${longitude}. (Hãy dùng Google Search với tọa độ này để biết địa điểm cụ thể và trả lời câu hỏi). Câu hỏi gốc: "${lastQueryRef.current}"`;
 
             try {
               const response = await processQuery(locationContext, {
@@ -55,7 +56,19 @@ const Assistant = ({
                 orders,
                 settings,
               });
-              setMessages((prev) => [...prev, response]);
+
+              // Nếu AI vẫn cứng đầu trả về location_request dù đã có tọa độ -> Hiển thị lỗi thay vì loop
+              if (response.type === "location_request") {
+                 setMessages((prev) => [...prev, {
+                     id: Date.now().toString(),
+                     type: "text",
+                     sender: "assistant",
+                     content: "Xin lỗi, mình đã nhận được tọa độ nhưng gặp sự cố khi xử lý dữ liệu vị trí. Vui lòng thử lại câu hỏi khác.",
+                     timestamp: new Date()
+                 }]);
+              } else {
+                 setMessages((prev) => [...prev, response]);
+              }
             } catch (error) {
               console.error(error);
             } finally {
@@ -65,8 +78,13 @@ const Assistant = ({
           (error) => {
             console.error("Location Error:", error);
             // Fallback nếu lấy vị trí thất bại dù đã cấp quyền
-             handleAutoResponse("Không thể lấy vị trí (Lỗi thiết bị). Vui lòng thử lại hoặc hỏi câu khác.");
+             handleAutoResponse("Không thể lấy vị trí chính xác (Lỗi thiết bị hoặc tín hiệu yếu). Vui lòng thử lại.");
              setIsTyping(false);
+          },
+          {
+            enableHighAccuracy: true,
+            timeout: 10000,
+            maximumAge: 0
           }
         );
       } else {

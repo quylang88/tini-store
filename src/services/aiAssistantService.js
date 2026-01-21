@@ -146,7 +146,9 @@ const processQueryWithGemini = async (query, context, apiKey) => {
 
       QUY TẮC:
       1. Ưu tiên dùng dữ liệu shop (sản phẩm, đơn hàng) để trả lời.
-      2. Nếu người dùng hỏi về vị trí của họ, thời tiết nơi họ đang đứng... hãy trả lời bằng đúng thẻ sau: [[REQUEST_LOCATION]]
+      2. Nếu người dùng hỏi về vị trí, thời tiết...:
+         - NẾU trong câu hỏi hoặc context đã có tọa độ (Vĩ độ/Kinh độ), HÃY DÙNG GOOGLE SEARCH với tọa độ đó để trả lời. KHÔNG được yêu cầu lại vị trí.
+         - NẾU CHƯA CÓ tọa độ, hãy trả lời duy nhất bằng thẻ: [[REQUEST_LOCATION]]
       3. Nếu người dùng hỏi thông tin bên ngoài khác, HÃY DÙNG GOOGLE SEARCH.
       4. Định dạng tiền tệ: Luôn dùng VNĐ (ví dụ: "1.000.000₫").
       5. Nếu không tìm thấy thông tin, trả lời: "Xin lỗi, mình không tìm thấy thông tin bạn cần."
