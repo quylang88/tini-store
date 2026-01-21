@@ -192,23 +192,19 @@ const processQueryWithFailover = async (query, context, apiKey, config) => {
 const generateContent = async (model, query, context, enableTools) => {
     const systemPrompt = buildSystemPrompt(query, context, enableTools);
 
-    try {
-        const result = await model.generateContent(systemPrompt);
-        const response = await result.response;
-        const text = response.text();
+    const result = await model.generateContent(systemPrompt);
+    const response = await result.response;
+    const text = response.text();
 
-        // Kiểm tra yêu cầu vị trí qua thẻ (chỉ khi có tools hoặc context liên quan)
-        if (text.includes("[[REQUEST_LOCATION]]")) {
-          return createResponse(
-            "location_request",
-            "Mình cần biết vị trí của bạn để trả lời câu hỏi này.",
-          );
-        }
-
-        return createResponse("text", text);
-    } catch (error) {
-        throw error;
+    // Kiểm tra yêu cầu vị trí qua thẻ (chỉ khi có tools hoặc context liên quan)
+    if (text.includes("[[REQUEST_LOCATION]]")) {
+      return createResponse(
+        "location_request",
+        "Mình cần biết vị trí của bạn để trả lời câu hỏi này.",
+      );
     }
+
+    return createResponse("text", text);
 }
 
 /**
