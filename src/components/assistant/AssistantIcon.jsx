@@ -41,7 +41,7 @@ const AssistantIcon = ({
             ? {
                 y: [0, -2, 0], // Gentle float
                 scale: [1, 1.1, 1], // Gentle pulse
-                rotate: [0, 5, -5, 0] // Subtle tilt
+                rotate: [0, 5, -5, 0], // Subtle tilt
               }
             : { y: 0, scale: 1, rotate: 0 }
         }
@@ -52,53 +52,45 @@ const AssistantIcon = ({
         }}
         style={{ transformOrigin: "12px 12px" }}
       >
-         <path d="M12 3L10.088 8.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z" />
+        <path d="M12 3L10.088 8.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z" />
       </motion.g>
 
-      {/* Orbiting Particle 1 */}
-      <motion.circle
-        cx="12"
-        cy="12"
-        r="1"
-        fill={isActive ? activeStroke : "currentColor"}
-        stroke="none"
-        animate={isActive ? { rotate: 360 } : { rotate: 0 }}
-        transition={{
-          duration: 4,
-          repeat: isActive && loop ? Infinity : 0,
-          ease: "linear",
-        }}
-        style={{
-            transformOrigin: "12px 12px",
-            offsetPath: "path('M12 12 m -8, 0 a 8,8 0 1,0 16,0 a 8,8 0 1,0 -16,0')", // Circular path
-        }}
-        // Using transform to simulate orbit if offsetPath isn't fully supported in all SVG contexts efficiently,
-        // but simple rotation around center with an offset usually works better in framer-motion by animating the group.
-        // Let's use a simpler group rotation strategy for orbits.
-      />
-
-       {/* Orbit Group - Replacing the circle above for better compatibility */}
-       {isActive && loop && (
+      {/* Orbiting Particles - Simpler Group Rotation Strategy */}
+      {isActive && loop && (
         <>
-            {/* Particle 1 - Fast inner orbit */}
-            <motion.g
-                animate={{ rotate: 360 }}
-                transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
-                style={{ transformOrigin: "12px 12px" }}
-            >
-                <circle cx="12" cy="5" r="1.5" fill={isActive ? activeStroke : "currentColor"} stroke="none" opacity={0.6} />
-            </motion.g>
+          {/* Particle 1 - Fast inner orbit */}
+          <motion.g
+            animate={{ rotate: 360 }}
+            transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
+            style={{ transformOrigin: "12px 12px" }}
+          >
+            <circle
+              cx="12"
+              cy="5"
+              r="1.5"
+              fill={isActive ? activeStroke : "currentColor"}
+              stroke="none"
+              opacity={0.6}
+            />
+          </motion.g>
 
-             {/* Particle 2 - Slower outer orbit reverse */}
-             <motion.g
-                animate={{ rotate: -360 }}
-                transition={{ duration: 5, repeat: Infinity, ease: "linear" }}
-                style={{ transformOrigin: "12px 12px" }}
-            >
-                <circle cx="12" cy="20" r="1" fill={isActive ? activeStroke : "currentColor"} stroke="none" opacity={0.4} />
-            </motion.g>
+          {/* Particle 2 - Slower outer orbit reverse */}
+          <motion.g
+            animate={{ rotate: -360 }}
+            transition={{ duration: 5, repeat: Infinity, ease: "linear" }}
+            style={{ transformOrigin: "12px 12px" }}
+          >
+            <circle
+              cx="12"
+              cy="20"
+              r="1"
+              fill={isActive ? activeStroke : "currentColor"}
+              stroke="none"
+              opacity={0.4}
+            />
+          </motion.g>
         </>
-       )}
+      )}
 
       {/* Twinkling Stars (Corner elements) */}
       <motion.path
@@ -109,10 +101,10 @@ const AssistantIcon = ({
             : { scale: 1, opacity: 1 }
         }
         transition={{
-            duration: 2,
-            repeat: isActive && loop ? Infinity : 0,
-            times: [0, 0.5, 1],
-            delay: 0.5
+          duration: 2,
+          repeat: isActive && loop ? Infinity : 0,
+          times: [0, 0.5, 1],
+          delay: 0.5,
         }}
         style={{ transformOrigin: "19px 5px" }}
       />
@@ -125,9 +117,9 @@ const AssistantIcon = ({
             : { scale: 1, opacity: 1 }
         }
         transition={{
-            duration: 2.5,
-            repeat: isActive && loop ? Infinity : 0,
-            times: [0, 0.5, 1],
+          duration: 2.5,
+          repeat: isActive && loop ? Infinity : 0,
+          times: [0, 0.5, 1],
         }}
         style={{ transformOrigin: "5px 19px" }}
       />
