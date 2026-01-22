@@ -9,10 +9,10 @@ const DeepIcon = ({ isActive, size = 24, strokeWidth = 2, loop = false }) => {
   // Transition settings for synchronized animation
   const transition = {
     duration: DURATION,
-    ease: "easeInOut",
+    ease: "linear",
     times: [0, 0.5, 1],
     repeat: isActive && loop ? Infinity : 0,
-    repeatDelay: 0.5,
+    repeatDelay: 0,
   };
 
   const activeStroke = `url(#${gradientId})`;
@@ -29,7 +29,7 @@ const DeepIcon = ({ isActive, size = 24, strokeWidth = 2, loop = false }) => {
       strokeWidth={isActive ? 2.2 : strokeWidth}
       strokeLinecap="round"
       strokeLinejoin="round"
-      className="lucide lucide-microscope overflow-visible"
+      className="lucide lucide-scan-search overflow-visible"
     >
       <defs>
         <linearGradient id={gradientId} x1="0%" y1="0%" x2="100%" y2="100%">
@@ -40,28 +40,34 @@ const DeepIcon = ({ isActive, size = 24, strokeWidth = 2, loop = false }) => {
         </linearGradient>
       </defs>
 
-      {/* Base */}
-      <path d="M6 18h12" />
-      <path d="M3 22h18" />
+      {/* Viewfinder Corners */}
+      <path d="M16 21h2a2 2 0 0 0 2-2v-2" />
+      <path d="M20 7V5a2 2 0 0 0-2-2h-2" />
+      <path d="M4 7V5a2 2 0 0 1 2-2h2" />
+      <path d="M8 21H6a2 2 0 0 1-2-2v-2" />
 
-      {/* Arm - Static */}
-      <path d="M14 22a7 7 0 1 0 0-14h-1" />
+      {/* Magnifying Glass */}
+      <circle cx="12" cy="12" r="3.5" />
+      <path d="m14.5 14.5 2.5 2.5" />
 
-      {/* Tube / Lens - Animating (Focusing up and down) */}
-      <motion.g
+      {/* Scan Line - Animated */}
+      <motion.line
+        x1="2"
+        y1="4"
+        x2="22"
+        y2="4"
+        strokeOpacity={0.8}
+        strokeDasharray="2 2"
         animate={
           isActive
             ? {
-                y: [0, -1.5, 0], // Moving up and down like focusing
+                y: [0, 16, 0], // Scans down and up
+                opacity: [0, 1, 0], // Fades in/out at edges
               }
-            : { y: 0 }
+            : { y: 8, opacity: 0 } // Hidden when inactive
         }
         transition={transition}
-      >
-        <path d="M9 14h2" /> {/* Stage/Slide holder */}
-        <path d="M9 12a2 2 0 0 1 2-2v6h-2z" /> {/* Objective Lens */}
-        <path d="M12 6a2 2 0 0 1 2 2v6h-2V8a2 2 0 0 1 2-2z" /> {/* Main Tube */}
-      </motion.g>
+      />
     </svg>
   );
 };
