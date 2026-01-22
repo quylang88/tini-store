@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useState } from "react";
+import React from "react";
 import { Bot, Palette, Sparkles, Eraser } from "lucide-react";
 import { motion } from "framer-motion";
 import ChatBubble from "../components/assistant/ChatBubble";
@@ -7,16 +7,14 @@ import ModelSelector from "../components/assistant/ModelSelector";
 import AssistantIcon from "../components/assistant/AssistantIcon";
 import FlashIcon from "../components/assistant/FlashIcon";
 import DeepIcon from "../components/assistant/DeepIcon";
-import {
-  processQuery,
-  summarizeChatHistory,
-} from "../services/aiAssistantService";
-import { ASSISTANT_THEMES } from "../constants/assistantThemes";
 import { AI_MODES } from "../services/ai/config";
 
-// --- CẤU HÌNH AN TOÀN BỘ NHỚ ---
-const MAX_BUFFER_SIZE = 50; // Chỉ cho phép lưu tối đa 20 tin nhắn trong bộ nhớ đệm. Quá số này sẽ tự xóa tin cũ.
-const BUFFER_TRIGGER_SIZE = 20; // Đủ 20 tin nhắn thì kích hoạt tóm tắt để dọn dẹp.
+// Hooks
+import { useAssistantTheme } from "../hooks/assistant/useAssistantTheme";
+import { useAssistantMode } from "../hooks/assistant/useAssistantMode";
+import { useAssistantMemory } from "../hooks/assistant/useAssistantMemory";
+import { useAssistantChat } from "../hooks/assistant/useAssistantChat";
+import { useAutoScroll } from "../hooks/assistant/useAutoScroll";
 
 const Assistant = ({
   products,
@@ -27,210 +25,45 @@ const Assistant = ({
   isTyping,
   setIsTyping,
 }) => {
-  const messagesEndRef = useRef(null);
+  // 1. Theme Logic
+  const { activeTheme, handleCycleTheme } = useAssistantTheme();
 
-  // --- 1. MEMORY STATE (BỘ NHỚ DÀI HẠN) ---
-  const [chatSummary, setChatSummary] = useState(() => {
-    if (typeof window !== "undefined") {
-      return localStorage.getItem("ai_chat_summary") || "";
-    }
-    return "";
-  });
+  // 2. Mode Logic
+  const {
+    modelMode,
+    setModelMode,
+    isModelSelectorOpen,
+    setIsModelSelectorOpen,
+  } = useAssistantMode();
 
-  // --- 2. LOGIC "BUFFER CLEANUP" (DỌN DẸP KHI KHỞI ĐỘNG) ---
-  useEffect(() => {
-    const processPendingBuffer = async () => {
-      const pendingJson = localStorage.getItem("ai_pending_buffer");
-      if (pendingJson) {
-        try {
-          const pendingMessages = JSON.parse(pendingJson);
+  // 3. Memory Logic
+  const {
+    chatSummary,
+    setChatSummary,
+    appendToPendingBuffer,
+    checkAndSummarizeBuffer,
+    forceSummarizeBuffer,
+  } = useAssistantMemory();
 
-          // [SAFETY VALVE 1] Nếu buffer rỗng hoặc lỗi, xóa ngay
-          if (!Array.isArray(pendingMessages) || pendingMessages.length === 0) {
-            localStorage.removeItem("ai_pending_buffer");
-            return;
-          }
+  // 4. Chat Logic
+  const { loadingText, handleSendMessage, handleClearScreen } =
+    useAssistantChat({
+      messages,
+      setMessages,
+      setIsTyping,
+      products,
+      orders,
+      settings,
+      modelMode,
+      chatSummary,
+      setChatSummary,
+      appendToPendingBuffer,
+      checkAndSummarizeBuffer,
+      forceSummarizeBuffer,
+    });
 
-          console.log(
-            `Phát hiện ${pendingMessages.length} tin nhắn tồn đọng. Đang dọn dẹp...`,
-          );
-
-          // Gọi hàm tóm tắt để chuyển hóa buffer thành ký ức dài hạn
-          const currentMem = localStorage.getItem("ai_chat_summary") || "";
-          const newSummary = await summarizeChatHistory(
-            currentMem,
-            pendingMessages,
-          );
-
-          // Lưu bộ nhớ mới
-          setChatSummary(newSummary);
-          localStorage.setItem("ai_chat_summary", newSummary);
-
-          // [QUAN TRỌNG] Xóa buffer ngay sau khi xử lý xong
-          localStorage.removeItem("ai_pending_buffer");
-          console.log("Đã dọn dẹp bộ nhớ đệm thành công!");
-        } catch (e) {
-          console.error("Lỗi xử lý buffer, tiến hành xóa bắt buộc:", e);
-          // Nếu lỗi (VD: JSON hỏng), xóa luôn để tránh kẹt bộ nhớ
-          localStorage.removeItem("ai_pending_buffer");
-        }
-      }
-    };
-    processPendingBuffer();
-  }, []);
-
-  // --- HÀM HELPER: THÊM VÀO BUFFER VỚI GIỚI HẠN (SAFETY VALVE 2) ---
-  const appendToPendingBuffer = (newMsgs) => {
-    let currentBuffer = [];
-    try {
-      currentBuffer = JSON.parse(
-        localStorage.getItem("ai_pending_buffer") || "[]",
-      );
-    } catch {
-      currentBuffer = [];
-    }
-
-    // Gộp tin nhắn mới
-    let updatedBuffer = [...currentBuffer, ...newMsgs];
-
-    // [CƠ CHẾ TỰ DỌN DẸP] Nếu Buffer quá lớn (do lỗi API ko tóm tắt được), cắt bớt phần cũ
-    if (updatedBuffer.length > MAX_BUFFER_SIZE) {
-      console.warn("Buffer quá tải, đang cắt bớt dữ liệu cũ...");
-      // Giữ lại MAX_BUFFER_SIZE tin nhắn mới nhất
-      updatedBuffer = updatedBuffer.slice(-MAX_BUFFER_SIZE);
-    }
-
-    localStorage.setItem("ai_pending_buffer", JSON.stringify(updatedBuffer));
-    return updatedBuffer;
-  };
-
-  // --- THEME STATE ---
-  const [activeThemeId, setActiveThemeId] = useState(() => {
-    if (typeof window !== "undefined") {
-      return localStorage.getItem("ai_theme_id") || "rose";
-    }
-    return "rose";
-  });
-  const activeTheme =
-    ASSISTANT_THEMES[activeThemeId] || ASSISTANT_THEMES["rose"];
-
-  const handleCycleTheme = () => {
-    const themeIds = Object.keys(ASSISTANT_THEMES);
-    const currentIndex = themeIds.indexOf(activeThemeId);
-    const nextIndex = (currentIndex + 1) % themeIds.length;
-    const newThemeId = themeIds[nextIndex];
-    setActiveThemeId(newThemeId);
-    localStorage.setItem("ai_theme_id", newThemeId);
-  };
-
-  const [modelMode, setModelMode] = useState("standard");
-  const [isModelSelectorOpen, setIsModelSelectorOpen] = useState(false);
-  const [loadingText, setLoadingText] = useState(null);
-
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
-
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages, loadingText]);
-
-  // --- HÀM XỬ LÝ KHI GỬI TIN NHẮN ---
-  const handleSendMessage = async (text) => {
-    const userMsg = {
-      id: Date.now().toString(),
-      type: "text",
-      sender: "user",
-      content: text,
-      timestamp: new Date(),
-    };
-
-    // 1. Cập nhật UI (RAM) - Hiển thị ngay lập tức
-    const newHistory = [...messages, userMsg];
-    setMessages(newHistory);
-    setIsTyping(true);
-    setLoadingText(null);
-
-    // 2. Lưu vào Buffer (Ổ cứng tạm) - Có cơ chế giới hạn Max Size
-    const currentBuffer = appendToPendingBuffer([userMsg]);
-
-    // 3. Kiểm tra xem đã đến lúc "Dọn dẹp" (Summarize) chưa?
-    if (currentBuffer.length >= BUFFER_TRIGGER_SIZE) {
-      console.log("Buffer đạt ngưỡng, kích hoạt tóm tắt & dọn dẹp...");
-
-      // Chạy ngầm (không await để UI mượt)
-      summarizeChatHistory(chatSummary, currentBuffer)
-        .then((newSummary) => {
-          setChatSummary(newSummary);
-          localStorage.setItem("ai_chat_summary", newSummary);
-
-          // [QUAN TRỌNG] Tóm tắt xong thì XÓA BUFFER ngay
-          localStorage.removeItem("ai_pending_buffer");
-          console.log("Auto summarize done & Buffer cleared.");
-        })
-        .catch((err) => console.error("Lỗi tóm tắt ngầm:", err));
-    }
-
-    try {
-      const response = await processQuery(
-        text,
-        { products, orders, settings },
-        modelMode,
-        newHistory,
-        chatSummary,
-        (status) => setLoadingText(status),
-      );
-
-      // Lưu câu trả lời của AI vào Buffer luôn
-      const aiMsgForBuffer = { sender: "assistant", content: response.content };
-      appendToPendingBuffer([aiMsgForBuffer]);
-
-      setMessages((prev) => [...prev, response]);
-    } catch (error) {
-      console.error("AI Error:", error);
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: Date.now().toString(),
-          type: "text",
-          sender: "assistant",
-          content: "Xin lỗi, Misa bị vấp dây điện rồi.",
-          timestamp: new Date(),
-        },
-      ]);
-    } finally {
-      setIsTyping(false);
-    }
-  };
-
-  // --- HÀM CLEAR SCREEN (DỌN MÀN HÌNH + LƯU KÝ ỨC) ---
-  const handleClearScreen = async () => {
-    if (messages.length === 0) return;
-
-    // Force Summarize: Lưu những gì đang có trên buffer vào ký ức trước khi xóa màn hình
-    const pendingJson = localStorage.getItem("ai_pending_buffer");
-    if (pendingJson) {
-      setLoadingText("Đang lưu ký ức...");
-      try {
-        const pendingMessages = JSON.parse(pendingJson);
-        if (pendingMessages.length > 0) {
-          const newSummary = await summarizeChatHistory(
-            chatSummary,
-            pendingMessages,
-          );
-          setChatSummary(newSummary);
-          localStorage.setItem("ai_chat_summary", newSummary);
-        }
-      } catch (e) {
-        console.warn("Lỗi force summarize:", e);
-      }
-      // Luôn xóa buffer sau khi clear screen
-      localStorage.removeItem("ai_pending_buffer");
-      setLoadingText(null);
-    }
-
-    setMessages([]);
-  };
+  // 5. Scroll Logic
+  const messagesEndRef = useAutoScroll([messages, loadingText]);
 
   return (
     <motion.div
