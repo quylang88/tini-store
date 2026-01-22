@@ -1,7 +1,7 @@
 import React, { useId } from "react";
 import { motion } from "framer-motion";
 
-const LiteIcon = ({ isActive, size = 24, strokeWidth = 2, loop = false }) => {
+const DeepIcon = ({ isActive, size = 24, strokeWidth = 2, loop = false }) => {
   const gradientId = useId().replace(/:/g, "");
   // Animation duration
   const DURATION = 2;
@@ -10,7 +10,7 @@ const LiteIcon = ({ isActive, size = 24, strokeWidth = 2, loop = false }) => {
   const transition = {
     duration: DURATION,
     ease: "easeInOut",
-    times: [0, 0.2, 0.8, 1], // Consistent with other icons
+    times: [0, 0.5, 1],
     repeat: isActive && loop ? Infinity : 0,
     repeatDelay: 1,
   };
@@ -29,7 +29,7 @@ const LiteIcon = ({ isActive, size = 24, strokeWidth = 2, loop = false }) => {
       strokeWidth={isActive ? 2.5 : strokeWidth}
       strokeLinecap="round"
       strokeLinejoin="round"
-      className="lucide lucide-feather overflow-visible"
+      className="lucide lucide-box overflow-visible"
     >
       <defs>
         <linearGradient id={gradientId} x1="0%" y1="0%" x2="100%" y2="100%">
@@ -40,22 +40,25 @@ const LiteIcon = ({ isActive, size = 24, strokeWidth = 2, loop = false }) => {
         </linearGradient>
       </defs>
 
-      {/* Feather Path */}
-      <motion.path
-        d="M20.24 12.24a6 6 0 0 0-8.49-8.49L5 10.5V19h8.5z M16 8 2 22 M17.5 15H9"
+      <motion.g
         animate={
           isActive
             ? {
-                rotate: [0, -10, 10, 0], // Sways back and forth
-                scale: [1, 1.1, 1.1, 1], // Slight scale
+                scale: [1, 1.15, 1], // Pulse effect for "Deep Thinking"
+                rotate: [0, 5, -5, 0], // Subtle shake/thinking
               }
-            : { rotate: 0, scale: 1 }
+            : { scale: 1, rotate: 0 }
         }
         transition={transition}
         style={{ transformOrigin: "12px 12px" }}
-      />
+      >
+        {/* Box/Cube Shape - Representing Deep/Structure */}
+        <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
+        <path d="M3.27 6.96 12 12.01l8.73-5.05" />
+        <path d="M12 22.08V12" />
+      </motion.g>
     </svg>
   );
 };
 
-export default LiteIcon;
+export default DeepIcon;

@@ -43,11 +43,15 @@ const MODEL_CONFIGS = {
       model: import.meta.env.VITE_GEMINI_MODEL_2_FLASH,
     },
   ],
-  // Chế độ LITE: Dùng model nhẹ nhất (Gemini Lite)
-  LITE: [
+  // Chế độ DEEP: Tìm kiếm sâu & Phân tích kỹ (Dùng model mạnh nhất)
+  DEEP: [
     {
       provider: PROVIDERS.GEMINI,
-      model: import.meta.env.VITE_GEMINI_MODEL_2_LITE,
+      model: import.meta.env.VITE_GEMINI_MODEL_3_FLASH, // Sử dụng model có context window lớn để phân tích
+    },
+    {
+      provider: PROVIDERS.GROQ,
+      model: import.meta.env.VITE_GROQ_MODEL_NAME, // Fallback sang Groq nếu cần
     },
   ],
 };
@@ -250,9 +254,12 @@ export const processQuery = async (query, context, mode = "PRO") => {
     "quán ăn",
     "đường đi",
   ];
-  const shouldSearch = needsSearchKeywords.some((kw) =>
-    query.toLowerCase().includes(kw),
-  );
+
+  // Nếu mode là DEEP, luôn ưu tiên tìm kiếm nếu câu hỏi không quá ngắn
+  // Hoặc nếu có keyword trong danh sách
+  const shouldSearch =
+    (mode === "DEEP" && query.length > 5) ||
+    needsSearchKeywords.some((kw) => query.toLowerCase().includes(kw));
 
   let searchResults = "";
   if (shouldSearch) {
