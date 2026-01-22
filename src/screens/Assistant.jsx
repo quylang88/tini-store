@@ -38,7 +38,7 @@ const Assistant = ({
   };
 
   // State cho Model Selection
-  const [modelMode, setModelMode] = useState("SMART"); // SMART | FLASH | LITE
+  const [modelMode, setModelMode] = useState("SMART"); // SMART | FLASH | DEEP
   const [isModelSelectorOpen, setIsModelSelectorOpen] = useState(false);
 
   const scrollToBottom = () => {
@@ -123,7 +123,7 @@ const Assistant = ({
             <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
             {modelMode === "SMART" && "Misa Smart"}
             {modelMode === "FLASH" && "Misa Flash"}
-            {modelMode === "LITE" && "Misa Lite"}
+            {modelMode === "DEEP" && "Misa Deep"}
           </p>
         </div>
 

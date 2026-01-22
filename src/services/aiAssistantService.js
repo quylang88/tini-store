@@ -29,10 +29,10 @@ const MODEL_CONFIGS = {
   SMART: [
     {
       provider: PROVIDERS.GROQ,
-      model: import.meta.env.VITE_GROQ_MODEL_NAME,
+      model: import.meta.env.VITE_GROQ_MODEL_VERSATILE,
     },
   ],
-  // Chế độ FLASH: Dùng các model nhanh của Google
+  // Chế độ FLASH: Dùng các model nhanh nhất
   FLASH: [
     {
       provider: PROVIDERS.GEMINI,
@@ -42,12 +42,20 @@ const MODEL_CONFIGS = {
       provider: PROVIDERS.GEMINI,
       model: import.meta.env.VITE_GEMINI_MODEL_2_FLASH,
     },
+    {
+      provider: PROVIDERS.GROQ,
+      model: import.meta.env.VITE_GROQ_MODEL_INSTANT, // Fallback sang Groq nếu Gemini limited
+    },
   ],
-  // Chế độ LITE: Dùng model nhẹ nhất (Gemini Lite)
-  LITE: [
+  // Chế độ DEEP: Tìm kiếm sâu & Phân tích kỹ (Dùng model mạnh nhất)
+  DEEP: [
+    {
+      provider: PROVIDERS.GROQ,
+      model: import.meta.env.VITE_GROQ_MODEL_VERSATILE, // Sử dụng model có context window lớn để phân tích
+    },
     {
       provider: PROVIDERS.GEMINI,
-      model: import.meta.env.VITE_GEMINI_MODEL_2_LITE,
+      model: import.meta.env.VITE_GEMINI_MODEL_3_FLASH, // Fallback sang Gemini nếu cần
     },
   ],
 };
@@ -250,9 +258,12 @@ export const processQuery = async (query, context, mode = "PRO") => {
     "quán ăn",
     "đường đi",
   ];
-  const shouldSearch = needsSearchKeywords.some((kw) =>
-    query.toLowerCase().includes(kw),
-  );
+
+  // Nếu mode là DEEP, luôn ưu tiên tìm kiếm nếu câu hỏi không quá ngắn
+  // Hoặc nếu có keyword trong danh sách
+  const shouldSearch =
+    (mode === "DEEP" && query.length > 5) ||
+    needsSearchKeywords.some((kw) => query.toLowerCase().includes(kw));
 
   let searchResults = "";
   if (shouldSearch) {
@@ -263,7 +274,6 @@ export const processQuery = async (query, context, mode = "PRO") => {
     }
   }
 
-  
   // 3. Lấy danh sách model candidates dựa trên Mode
   const modelCandidates = MODEL_CONFIGS[mode] || MODEL_CONFIGS.SMART;
 

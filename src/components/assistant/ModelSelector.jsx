@@ -3,7 +3,7 @@ import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import AssistantIcon from "./AssistantIcon";
 import FlashIcon from "./FlashIcon";
-import LiteIcon from "./LiteIcon";
+import DeepIcon from "./DeepIcon";
 
 const ModelSelector = ({ selectedModel, onSelect, isOpen, onClose, theme }) => {
   // Default theme fallback
@@ -17,7 +17,7 @@ const ModelSelector = ({ selectedModel, onSelect, isOpen, onClose, theme }) => {
     {
       id: "SMART",
       name: "Misa Smart",
-      description: "Ổn định, thông minh, limit cao, phù hợp đa số tác vụ.",
+      description: "Cân bằng giữa tốc độ và trí tuệ. Phù hợp đa số tác vụ.",
       icon: AssistantIcon,
       color: "text-rose-600",
       bg: "bg-rose-100",
@@ -25,18 +25,18 @@ const ModelSelector = ({ selectedModel, onSelect, isOpen, onClose, theme }) => {
     {
       id: "FLASH",
       name: "Misa Flash",
-      description: "Tốc độ cao, thông minh, giới hạn lượt dùng.",
+      description: "Phản hồi tức thì, thích hợp tra cứu nhanh.",
       icon: FlashIcon,
       color: "text-amber-600",
       bg: "bg-amber-100",
     },
     {
-      id: "LITE",
-      name: "Misa Lite",
-      description: "Siêu tốc, tiết kiệm, tác vụ đơn giản.",
-      icon: LiteIcon,
-      color: "text-blue-600",
-      bg: "bg-blue-100",
+      id: "DEEP",
+      name: "Misa Deep",
+      description: "Tìm kiếm sâu và phân tích kỹ. Sẽ mất thời gian hơn.",
+      icon: DeepIcon,
+      color: "text-violet-600",
+      bg: "bg-violet-100",
     },
   ];
 
