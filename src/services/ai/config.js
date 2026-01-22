@@ -120,3 +120,17 @@ export const SEARCH_KEYWORDS = [
   "quán ăn",
   "đường đi",
 ];
+
+// Từ khóa kích hoạt tìm kiếm web trong chế độ Standard (nhưng vẫn ưu tiên dữ liệu shop)
+export const STANDARD_MODE_SEARCH_TRIGGERS = [
+  "tìm",
+  "tìm kiếm",
+  "thông tin",
+  "sản phẩm",
+  "web",
+  "trên mạng",
+  "tốt",
+];
+
+// Từ khóa BẮT BUỘC tìm kiếm web ngay (ưu tiên web hơn shop, ví dụ: hàng Nhật)
+export const FORCE_WEB_SEARCH_TRIGGERS = ["nb", "nhật", "nhật bản"];

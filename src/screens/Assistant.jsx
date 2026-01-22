@@ -41,6 +41,7 @@ const Assistant = ({
   // State cho Model Selection
   const [modelMode, setModelMode] = useState("standard"); // standard | fast | deep
   const [isModelSelectorOpen, setIsModelSelectorOpen] = useState(false);
+  const [loadingText, setLoadingText] = useState(null); // Trạng thái loading chi tiết (VD: Đang tìm kiếm...)
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -48,7 +49,7 @@ const Assistant = ({
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages]);
+  }, [messages, loadingText]); // Scroll khi có tin nhắn mới HOẶC khi loading status hiện
 
   const handleSendMessage = async (text) => {
     const userMsg = {
@@ -60,6 +61,7 @@ const Assistant = ({
     };
     setMessages((prev) => [...prev, userMsg]);
     setIsTyping(true);
+    setLoadingText(null);
 
     try {
       const response = await processQuery(
@@ -67,6 +69,7 @@ const Assistant = ({
         { products, orders, settings },
         modelMode,
         messages, // Pass current history
+        (status) => setLoadingText(status) // Callback cập nhật trạng thái
       );
 
       setMessages((prev) => [...prev, response]);
@@ -146,9 +149,9 @@ const Assistant = ({
         ))}
 
         {isTyping && (
-          <div className="flex justify-start mb-4">
+          <div className="flex justify-start mb-4 flex-col gap-2">
             <div
-              className={`bg-white border ${activeTheme.botBubbleBorder} px-5 py-3.5 rounded-[20px] rounded-tl-sm shadow-sm flex gap-1 items-center`}
+              className={`bg-white border ${activeTheme.botBubbleBorder} px-5 py-3.5 rounded-[20px] rounded-tl-sm shadow-sm flex gap-1 items-center w-fit`}
             >
               <span
                 className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce"
@@ -163,6 +166,17 @@ const Assistant = ({
                 style={{ animationDelay: "300ms" }}
               ></span>
             </div>
+
+            {/* Hiển thị trạng thái chi tiết (như "Đang tìm kiếm...") ngay dưới bubble typing */}
+            {loadingText && (
+              <motion.span
+                initial={{ opacity: 0, y: 5 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="text-xs text-gray-500 italic ml-2"
+              >
+                {loadingText}
+              </motion.span>
+            )}
           </div>
         )}
         <div ref={messagesEndRef} />

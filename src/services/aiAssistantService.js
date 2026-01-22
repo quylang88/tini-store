@@ -4,7 +4,13 @@
  * Service này đóng vai trò là "Bộ não" cho Trợ lý ảo.
  */
 
-import { getModeConfig, PROVIDERS, SEARCH_KEYWORDS } from "./ai/config";
+import {
+  getModeConfig,
+  PROVIDERS,
+  SEARCH_KEYWORDS,
+  STANDARD_MODE_SEARCH_TRIGGERS,
+  FORCE_WEB_SEARCH_TRIGGERS,
+} from "./ai/config";
 import { callGeminiAPI, callGroqAPI, searchWeb } from "./ai/providers";
 import { buildSystemPrompt } from "./ai/prompts";
 import {
@@ -27,6 +33,7 @@ export const processQuery = async (
   context,
   modeKey = "standard",
   history = [],
+  onStatusUpdate = () => {},
 ) => {
   // 1. Kiểm tra mạng
   if (!navigator.onLine) {
@@ -54,18 +61,36 @@ export const processQuery = async (
   }
 
   // Logic xác định có cần search web không
-  // Nếu mode là deep, luôn ưu tiên tìm kiếm nếu câu hỏi dài > 5 ký tự
-  // Hoặc nếu có keyword đặc biệt (thời tiết, tin tức...)
-  const shouldSearch =
+  const lowerQuery = query.toLowerCase();
+
+  // Check 1: Force search (ví dụ: Nhật Bản)
+  const isForceSearch = FORCE_WEB_SEARCH_TRIGGERS.some((kw) =>
+    lowerQuery.includes(kw),
+  );
+
+  // Check 2: Standard triggers (nếu user hỏi tìm kiếm/thông tin...)
+  const isStandardSearchTrigger =
+    modeKey === "standard" &&
+    STANDARD_MODE_SEARCH_TRIGGERS.some((kw) => lowerQuery.includes(kw));
+
+  // Check 3: Default triggers (deep mode hoặc keyword chung)
+  const isDefaultSearchTrigger =
     (modeKey === "deep" && query.length > 5) ||
-    SEARCH_KEYWORDS.some((kw) => query.toLowerCase().includes(kw));
+    SEARCH_KEYWORDS.some((kw) => lowerQuery.includes(kw));
+
+  const shouldSearch =
+    isForceSearch || isStandardSearchTrigger || isDefaultSearchTrigger;
 
   let searchResults = "";
   if (shouldSearch) {
     console.log("Đang tìm kiếm trên Tavily...");
+    onStatusUpdate("Đang tìm kiếm trên internet...");
+
     // Ưu tiên dùng tên địa điểm để search (chính xác hơn tọa độ số)
     const searchLocation = locationName || coords;
 
+    // Nếu là force search (Nhật Bản), có thể tăng depth hoặc kết quả lên chút?
+    // Hiện tại giữ nguyên config theo mode
     const webData = await searchWeb(
       query,
       searchLocation,
@@ -75,6 +100,9 @@ export const processQuery = async (
     if (webData) {
       searchResults = `\n\nTHÔNG TIN TÌM KIẾM TỪ WEB:\n${webData}`;
     }
+
+    // Clear status
+    onStatusUpdate(null);
   }
 
   // 3. Lấy danh sách model candidates từ config
