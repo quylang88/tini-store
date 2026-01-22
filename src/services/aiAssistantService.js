@@ -20,8 +20,14 @@ import {
  * @param {string} query - Câu hỏi của user
  * @param {Object} context - Dữ liệu app (products, orders)
  * @param {string} modeKey - Key chế độ AI (fast, standard, deep)
+ * @param {Array} history - Lịch sử chat (tùy chọn)
  */
-export const processQuery = async (query, context, modeKey = "standard") => {
+export const processQuery = async (
+  query,
+  context,
+  modeKey = "standard",
+  history = [],
+) => {
   // 1. Kiểm tra mạng
   if (!navigator.onLine) {
     return createResponse(
@@ -74,18 +80,36 @@ export const processQuery = async (query, context, modeKey = "standard") => {
   // 3. Lấy danh sách model candidates từ config
   const modelCandidates = modeConfig.model;
 
-  // 4. Xây dựng prompt
-  const systemPrompt = buildSystemPrompt(
-    query,
+  // 4. Xây dựng prompt hệ thống (Context)
+  // Lưu ý: Không còn append câu hỏi vào cuối system prompt nữa
+  const systemInstruction = buildSystemPrompt(
     { ...context, location: fullLocationInfo }, // Truyền thông tin vị trí đầy đủ
     searchResults,
   );
 
-  // 5. Gọi AI với cơ chế Failover và Temperature từ config
+  // 5. Chuẩn hóa lịch sử chat
+  // Lọc bỏ tin nhắn lỗi hoặc tin nhắn hệ thống không cần thiết
+  // Chỉ lấy các tin nhắn text từ user hoặc assistant
+  const formattedHistory = history
+    .filter(
+      (msg) =>
+        msg.type === "text" &&
+        (msg.sender === "user" || msg.sender === "assistant"),
+    )
+    .map((msg) => ({
+      role: msg.sender === "user" ? "user" : "model", // Gemini dùng 'model', Groq dùng 'assistant' (sẽ map lại trong provider)
+      content: msg.content,
+    }));
+
+  // Thêm câu hỏi hiện tại vào cuối history
+  formattedHistory.push({ role: "user", content: query });
+
+  // 6. Gọi AI với cơ chế Failover và Temperature từ config
   try {
     const responseText = await processQueryWithFailover(
       modelCandidates,
-      systemPrompt,
+      formattedHistory,
+      systemInstruction,
       modeConfig.temperature,
     );
     return createResponse("text", responseText);
@@ -101,7 +125,8 @@ export const processQuery = async (query, context, modeKey = "standard") => {
  */
 const processQueryWithFailover = async (
   candidates,
-  fullPrompt,
+  chatHistory,
+  systemInstruction,
   temperature,
 ) => {
   let lastError = null;
@@ -118,9 +143,19 @@ const processQueryWithFailover = async (
       let result = "";
 
       if (provider === PROVIDERS.GEMINI) {
-        result = await callGeminiAPI(model, fullPrompt, temperature);
+        result = await callGeminiAPI(
+          model,
+          chatHistory,
+          systemInstruction,
+          temperature,
+        );
       } else if (provider === PROVIDERS.GROQ) {
-        result = await callGroqAPI(model, fullPrompt, temperature);
+        result = await callGroqAPI(
+          model,
+          chatHistory,
+          systemInstruction,
+          temperature,
+        );
       }
 
       // Nếu thành công trả về luôn
