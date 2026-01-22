@@ -115,8 +115,6 @@ export const SEARCH_KEYWORDS = [
   "mấy giờ",
   "ai là",
   "sự kiện",
-  "bóng đá",
-  "tỷ số",
   "hôm nay",
   "tại sao",
   "quán ăn",

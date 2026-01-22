@@ -7,7 +7,11 @@
 import { getModeConfig, PROVIDERS, SEARCH_KEYWORDS } from "./ai/config";
 import { callGeminiAPI, callGroqAPI, searchWeb } from "./ai/providers";
 import { buildSystemPrompt } from "./ai/prompts";
-import { getCurrentLocation, createResponse } from "./ai/utils";
+import {
+  getCurrentLocation,
+  createResponse,
+  getAddressFromCoordinates,
+} from "./ai/utils";
 
 // --- XỬ LÝ CHÍNH (MAIN PROCESS) ---
 
@@ -30,7 +34,18 @@ export const processQuery = async (query, context, modeKey = "standard") => {
   const modeConfig = getModeConfig(modeKey);
 
   // 2. Xác định vị trí & Search Web
-  const userLocation = await getCurrentLocation();
+  const coords = await getCurrentLocation();
+  let locationName = null;
+  let fullLocationInfo = coords || "Chưa rõ"; // Mặc định là tọa độ thô nếu không lấy được tên
+
+  if (coords) {
+    // Thử lấy tên địa điểm từ tọa độ
+    locationName = await getAddressFromCoordinates(coords);
+    if (locationName) {
+      // Context vị trí sẽ là: "Thành phố Saitama, Nhật Bản (35.82..., 139.55...)"
+      fullLocationInfo = `${locationName} (${coords})`;
+    }
+  }
 
   // Logic xác định có cần search web không
   // Nếu mode là deep, luôn ưu tiên tìm kiếm nếu câu hỏi dài > 5 ký tự
@@ -42,9 +57,12 @@ export const processQuery = async (query, context, modeKey = "standard") => {
   let searchResults = "";
   if (shouldSearch) {
     console.log("Đang tìm kiếm trên Tavily...");
+    // Ưu tiên dùng tên địa điểm để search (chính xác hơn tọa độ số)
+    const searchLocation = locationName || coords;
+
     const webData = await searchWeb(
       query,
-      userLocation,
+      searchLocation,
       modeConfig.search_depth,
       modeConfig.max_results,
     );
@@ -59,7 +77,7 @@ export const processQuery = async (query, context, modeKey = "standard") => {
   // 4. Xây dựng prompt
   const systemPrompt = buildSystemPrompt(
     query,
-    { ...context, location: userLocation },
+    { ...context, location: fullLocationInfo }, // Truyền thông tin vị trí đầy đủ
     searchResults,
   );
 
