@@ -19,15 +19,12 @@ const MODEL_CONFIGS = {
       import.meta.env.VITE_GEMINI_MODEL_NAME_3,
       import.meta.env.VITE_GEMINI_MODEL_NAME_2,
     ],
-    enableTools: true,
   },
   FLASH: {
     models: [import.meta.env.VITE_GEMINI_MODEL_NAME_2_LITE],
-    enableTools: true,
   },
   LOCAL: {
     models: [import.meta.env.VITE_GEMMA_MODEL_NAME],
-    enableTools: false,
   },
 };
 
@@ -55,23 +52,84 @@ const safetySettings = [
   },
 ];
 
-// Định nghĩa Tool
-const tools = [
-  {
-    googleSearch: {},
-  },
-];
+const TAVILY_API_URL = "https://api.tavily.com/search";
+
+/**
+ * Helper: Lấy vị trí
+ */
+const getCurrentLocation = () => {
+  return new Promise((resolve) => {
+    if (!navigator.geolocation) {
+      resolve(null);
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      (pos) => resolve(`${pos.coords.latitude}, ${pos.coords.longitude}`),
+      () => resolve(null),
+      { timeout: 10000 },
+    );
+  });
+};
+
+/**
+ * 1. HÀM SEARCH WEB (Dùng Tavily API)
+ * Thay thế cho googleSearch tool bị giới hạn.
+ */
+const searchWeb = async (query, location = null) => {
+  const tavilyKey = import.meta.env.VITE_TAVILY_API_KEY;
+
+  if (!tavilyKey) {
+    console.warn("Chưa cấu hình VITE_TAVILY_API_KEY");
+    return null;
+  }
+
+  try {
+    // Nếu có location, thêm vào query để search chính xác hơn
+    const searchQuery = location ? `${query} tại ${location}` : query;
+
+    const response = await fetch(TAVILY_API_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        api_key: tavilyKey,
+        query: searchQuery,
+        search_depth: "basic", // "advanced" tốn credit hơn, basic là đủ
+        include_answer: false,
+        max_results: 3, // Chỉ lấy 3 kết quả đầu để tiết kiệm token cho Gemini
+      }),
+    });
+
+    const data = await response.json();
+
+    if (!data.results) return null;
+
+    // Format lại kết quả để Gemini dễ đọc
+    const searchContext = data.results
+      .map(
+        (item) =>
+          `[Tiêu đề: ${item.title}]\n[Nội dung: ${item.content}]\n[Link: ${item.url}]`,
+      )
+      .join("\n\n");
+
+    return searchContext;
+  } catch (error) {
+    console.error("Lỗi tìm kiếm Tavily:", error);
+    return null;
+  }
+};
 
 /**
  * Hàm lấy Model instance (có Cache)
  */
-const getModelInstance = (apiKey, modelName, enableTools) => {
+const getModelInstance = (apiKey, modelName) => {
   if (apiKey !== cachedKey) {
     cachedKey = apiKey;
     cachedModels = {}; // Reset cache nếu đổi key
   }
 
-  const cacheKey = `${modelName}_${enableTools}`;
+  const cacheKey = `${modelName}`;
   if (cachedModels[cacheKey]) return cachedModels[cacheKey];
 
   const genAI = new GoogleGenerativeAI(apiKey);
@@ -80,10 +138,6 @@ const getModelInstance = (apiKey, modelName, enableTools) => {
     model: modelName,
     safetySettings: safetySettings,
   };
-
-  if (enableTools) {
-    modelConfig.tools = tools;
-  }
 
   const model = genAI.getGenerativeModel(modelConfig);
   cachedModels[cacheKey] = model;
@@ -116,12 +170,57 @@ export const processQuery = async (query, context, mode = "PRO") => {
     );
   }
 
-  // 3. XÁC ĐỊNH CẤU HÌNH MODEL DỰA TRÊN MODE
+  // 3. XÁC ĐỊNH VỊ TRÍ VÀ SEARCH WEB
+  const userLocation = await getCurrentLocation();
+
+  // --- LOGIC PHÂN LOẠI CÂU HỎI (Đơn giản) ---
+  // Để tiết kiệm Tavily quota, chỉ search khi cần thiết
+  const needsSearchKeywords = [
+    "thời tiết",
+    "giá",
+    "tin tức",
+    "ở đâu",
+    "mấy giờ",
+    "ai là",
+    "sự kiện",
+    "bóng đá",
+    "tỷ số",
+    "thế giới",
+    "hôm nay",
+    "như thế nào",
+    "tại sao",
+    "quán ăn",
+    "đường đi",
+  ];
+  const lowerQuery = query.toLowerCase();
+  const shouldSearch = needsSearchKeywords.some((kw) =>
+    lowerQuery.includes(kw),
+  );
+
+  let searchResults = "";
+
+  // Nếu câu hỏi cần search, gọi Tavily trước
+  if (shouldSearch) {
+    // Gửi thông báo "Đang tìm kiếm..." (Optional, xử lý ở UI thì tốt hơn)
+    console.log("Đang tìm kiếm trên Tavily...");
+    const webData = await searchWeb(query, userLocation);
+    if (webData) {
+      searchResults = `\n\nTHÔNG TIN TÌM KIẾM TỪ WEB (Hãy dùng thông tin này để trả lời nếu liên quan):\n${webData}`;
+    }
+  }
+
+  // 4. XÁC ĐỊNH CẤU HÌNH MODEL DỰA TRÊN MODE
   const config = MODEL_CONFIGS[mode] || MODEL_CONFIGS.PRO;
 
-  // 4. GỌI GEMINI VỚI CƠ CHẾ FAILOVER
+  // 5. GỌI GEMINI VỚI CƠ CHẾ FAILOVER
   try {
-    return await processQueryWithFailover(query, context, apiKey, config);
+    return await processQueryWithFailover(
+      query,
+      { ...context, location: userLocation },
+      apiKey,
+      config,
+      searchResults,
+    );
   } catch (error) {
     console.error("Gemini Error:", error);
 
@@ -146,16 +245,22 @@ export const processQuery = async (query, context, mode = "PRO") => {
 /**
  * Thực hiện gọi AI với cơ chế thử lại (Failover) khi gặp lỗi 429
  */
-const processQueryWithFailover = async (query, context, apiKey, config) => {
-  const { models, enableTools } = config;
+const processQueryWithFailover = async (
+  query,
+  context,
+  apiKey,
+  config,
+  searchResults,
+) => {
+  const { models } = config;
   let lastError = null;
 
   for (const modelName of models) {
     try {
       if (!modelName) continue;
 
-      const model = getModelInstance(apiKey, modelName, enableTools);
-      return await generateContent(model, query, context, enableTools);
+      const model = getModelInstance(apiKey, modelName);
+      return await generateContent(model, query, context, searchResults);
     } catch (error) {
       console.error(`Error with model ${modelName}:`, error);
       lastError = error;
@@ -191,20 +296,12 @@ const processQueryWithFailover = async (query, context, apiKey, config) => {
 /**
  * Hàm core sinh nội dung
  */
-const generateContent = async (model, query, context, enableTools) => {
-  const systemPrompt = buildSystemPrompt(query, context, enableTools);
+const generateContent = async (model, query, context, searchResults) => {
+  const systemPrompt = buildSystemPrompt(query, context, searchResults);
 
   const result = await model.generateContent(systemPrompt);
   const response = await result.response;
   const text = response.text();
-
-  // Kiểm tra yêu cầu vị trí qua thẻ (chỉ khi có tools hoặc context liên quan)
-  if (text.includes("[[REQUEST_LOCATION]]")) {
-    return createResponse(
-      "location_request",
-      "Mình cần biết vị trí của bạn để trả lời câu hỏi này.",
-    );
-  }
 
   return createResponse("text", text);
 };
@@ -212,8 +309,8 @@ const generateContent = async (model, query, context, enableTools) => {
 /**
  * Xây dựng prompt hệ thống
  */
-const buildSystemPrompt = (query, context, enableTools) => {
-  const { products, orders } = context;
+const buildSystemPrompt = (query, context, searchResults) => {
+  const { products, orders, location } = context;
 
   // --- CHUẨN BỊ DATA ---
   const productContext = products
@@ -246,22 +343,8 @@ const buildSystemPrompt = (query, context, enableTools) => {
     - Ngày hiện tại: ${today}
     - Doanh thu hôm nay: ${formatCurrency(todayRevenue)}
     - Tổng số đơn hàng tích lũy: ${orders.length}
+    - VỊ TRÍ USER: ${location || "Chưa rõ"}
     `;
-
-  let searchInstructions = "";
-  if (enableTools) {
-    searchInstructions = `
-      2. Nếu người dùng hỏi về vị trí, thời tiết...:
-         - NẾU trong câu hỏi hoặc context đã có tọa độ (Vĩ độ/Kinh độ), HÃY DÙNG GOOGLE SEARCH với tọa độ đó để trả lời. KHÔNG được yêu cầu lại vị trí.
-         - NẾU CHƯA CÓ tọa độ, hãy trả lời duy nhất bằng thẻ: [[REQUEST_LOCATION]]
-      3. Nếu người dùng hỏi thông tin bên ngoài khác, HÃY DÙNG GOOGLE SEARCH.
-      `;
-  } else {
-    searchInstructions = `
-      2. Bạn đang hoạt động ở chế độ OFFLINE/LOCAL. Bạn KHÔNG có khả năng truy cập internet hay Google Search.
-      3. Chỉ trả lời dựa trên dữ liệu Shop được cung cấp và kiến thức có sẵn. Nếu không biết, hãy nói rõ là không có thông tin.
-      `;
-  }
 
   return `
       Bạn là Trợ lý ảo Misa của "Tiny Shop".
@@ -276,11 +359,14 @@ const buildSystemPrompt = (query, context, enableTools) => {
       ĐƠN HÀNG GẦN ĐÂY (Tối đa 20):
       ${recentOrders}
 
+      ${searchResults}
+
       CÂU HỎI: "${query}"
 
       QUY TẮC:
       1. Ưu tiên dùng dữ liệu shop (sản phẩm, đơn hàng) để trả lời.
-      ${searchInstructions}
+      2. Nếu có thông tin tìm kiếm từ web, hãy sử dụng nó để trả lời các câu hỏi về kiến thức chung, thời tiết, tin tức...
+      3. Nếu không có thông tin từ web và dữ liệu shop, hãy trả lời dựa trên kiến thức chung của bạn.
       4. Định dạng tiền tệ: Luôn dùng VNĐ (ví dụ: "1.000.000₫").
       5. Nếu không tìm thấy thông tin, trả lời: "Xin lỗi, mình không tìm thấy thông tin bạn cần."
     `;

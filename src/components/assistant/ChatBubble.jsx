@@ -2,7 +2,7 @@ import React, { useRef, useEffect, useState } from "react";
 import { formatCurrency } from "../../utils/formatters/formatUtils";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
-import { MapPin, Check, X, Copy, Type } from "lucide-react";
+import { Copy, Type } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 const ChatBubble = ({ message, onAction }) => {
@@ -172,40 +172,6 @@ const ChatBubble = ({ message, onAction }) => {
             </motion.div>
           )}
         </AnimatePresence>
-
-        {/* --- Giao diện yêu cầu vị trí --- */}
-        {!isUser && message.type === "location_request" && (
-          <div className="mt-3 bg-blue-50 p-3 rounded-xl border border-blue-100 select-none">
-            <div className="flex items-center gap-2 mb-2 text-blue-700 font-medium text-sm">
-              <MapPin size={16} />
-              <span>Yêu cầu truy cập vị trí</span>
-            </div>
-            <p className="text-xs text-gray-600 mb-3">
-              Cho phép Misa truy cập vị trí hiện tại để hỗ trợ thông tin thời
-              tiết, chỉ đường... chính xác hơn?
-            </p>
-            <div className="flex gap-2">
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onAction && onAction(message, "allow");
-                }}
-                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold py-2 px-3 rounded-lg flex items-center justify-center gap-1 transition-colors"
-              >
-                <Check size={14} /> Cho phép
-              </button>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onAction && onAction(message, "deny");
-                }}
-                className="flex-1 bg-white hover:bg-gray-50 text-gray-600 border border-gray-200 text-xs font-bold py-2 px-3 rounded-lg flex items-center justify-center gap-1 transition-colors"
-              >
-                <X size={14} /> Từ chối
-              </button>
-            </div>
-          </div>
-        )}
 
         {/* Các loại nội dung đặc biệt */}
         {!isUser && message.type === "stats" && message.data && (
