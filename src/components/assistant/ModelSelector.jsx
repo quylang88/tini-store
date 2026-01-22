@@ -1,4 +1,5 @@
 import React from "react";
+import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import AssistantIcon from "./AssistantIcon";
 import FlashIcon from "./FlashIcon";
@@ -32,25 +33,27 @@ const ModelSelector = ({ selectedModel, onSelect, isOpen, onClose }) => {
     },
   ];
 
-  return (
+  if (typeof document === "undefined") return null;
+
+  return createPortal(
     <AnimatePresence>
       {isOpen && (
         <>
-          {/* Overlay */}
+          {/* Overlay - Z-index 60 to be above TabBar (z-50) */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="absolute inset-0 bg-black/20 z-40 backdrop-blur-[1px]"
+            className="fixed inset-0 bg-black/20 z-[60] backdrop-blur-[1px]"
           />
 
-          {/* Menu */}
+          {/* Menu - Z-index 70 */}
           <motion.div
             initial={{ opacity: 0, y: 20, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.95 }}
-            className="absolute bottom-[80px] left-3 right-3 bg-white rounded-2xl shadow-xl border border-white/50 z-50 overflow-hidden"
+            className="fixed bottom-[80px] left-3 right-3 bg-white rounded-2xl shadow-xl border border-white/50 z-[70] overflow-hidden"
           >
             <div className="p-3 bg-gray-50 border-b border-gray-100">
               <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider">
@@ -101,7 +104,8 @@ const ModelSelector = ({ selectedModel, onSelect, isOpen, onClose }) => {
           </motion.div>
         </>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body
   );
 };
 

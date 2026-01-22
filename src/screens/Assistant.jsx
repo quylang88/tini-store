@@ -173,7 +173,7 @@ const Assistant = ({
 
   return (
     <motion.div
-      className="flex flex-col h-full relative"
+      className="flex flex-col h-full relative overflow-hidden"
       animate={{
         backgroundColor: ["#fff1f2", "#fff7ed", "#fffbeb", "#fff1f2"],
       }}
@@ -184,7 +184,7 @@ const Assistant = ({
       }}
     >
       {/* Header */}
-      <div className="flex items-center gap-3 px-4 py-3 border-b border-white/50 bg-white/60 backdrop-blur-sm sticky top-0 z-10 shadow-sm">
+      <div className="flex items-center gap-3 px-4 py-3 border-b border-white/50 bg-white/60 backdrop-blur-sm absolute top-0 left-0 right-0 z-20 shadow-sm">
         <div className="w-10 h-10 rounded-full bg-gradient-to-br from-rose-400 to-orange-400 text-white flex items-center justify-center shadow-md">
           <Bot size={24} />
         </div>
@@ -206,8 +206,8 @@ const Assistant = ({
         </div>
       </div>
 
-      {/* Message List */}
-      <div className="flex-1 overflow-y-auto p-4 bg-transparent relative">
+      {/* Message List - Added top padding for absolute header */}
+      <div className="flex-1 overflow-y-auto p-4 pt-[80px] bg-transparent relative">
         {messages.map((msg) => (
           <ChatBubble
             key={msg.id}
