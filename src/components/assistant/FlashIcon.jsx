@@ -1,7 +1,7 @@
 import React, { useId } from "react";
 import { motion } from "framer-motion";
 
-const FlashIcon = ({ isActive, size = 24, strokeWidth = 2 }) => {
+const FlashIcon = ({ isActive, size = 24, strokeWidth = 2, loop = false }) => {
   const gradientId = useId().replace(/:/g, "");
   // Animation duration
   const DURATION = 2;
@@ -11,6 +11,8 @@ const FlashIcon = ({ isActive, size = 24, strokeWidth = 2 }) => {
     duration: DURATION,
     ease: "easeInOut",
     times: [0, 0.2, 0.8, 1],
+    repeat: isActive && loop ? Infinity : 0,
+    repeatDelay: 1,
   };
 
   const activeStroke = `url(#${gradientId})`;
@@ -27,7 +29,7 @@ const FlashIcon = ({ isActive, size = 24, strokeWidth = 2 }) => {
       strokeWidth={isActive ? 2.5 : strokeWidth}
       strokeLinecap="round"
       strokeLinejoin="round"
-      className="lucide lucide-zap"
+      className="lucide lucide-zap overflow-visible"
     >
       <defs>
         <linearGradient id={gradientId} x1="0%" y1="0%" x2="100%" y2="100%">

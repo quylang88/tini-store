@@ -137,13 +137,13 @@ const ChatInput = ({
         <div className="relative flex-1">
           <div className="absolute left-3 top-1/2 -translate-y-1/2 text-rose-400 z-10">
             {selectedModel === "SMART" && (
-              <AssistantIcon isActive={isFocused} size={18} />
+              <AssistantIcon isActive={isFocused} size={18} loop={true} />
             )}
             {selectedModel === "FLASH" && (
-              <FlashIcon isActive={isFocused} size={18} />
+              <FlashIcon isActive={isFocused} size={18} loop={true} />
             )}
             {selectedModel === "LITE" && (
-              <LiteIcon isActive={isFocused} size={18} />
+              <LiteIcon isActive={isFocused} size={18} loop={true} />
             )}
           </div>
 
