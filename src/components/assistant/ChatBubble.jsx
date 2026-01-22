@@ -5,11 +5,22 @@ import { vi } from "date-fns/locale";
 import { Copy, Type } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
-const ChatBubble = ({ message }) => {
+const ChatBubble = ({ message, theme }) => {
   const isUser = message.sender === "user";
   const scrollRef = useRef(null);
   const textRef = useRef(null);
   const bubbleRef = useRef(null);
+
+  // Default theme fallback if not provided
+  const currentTheme = theme || {
+    userBubbleBg: "bg-rose-500",
+    userBubbleText: "text-white",
+    botBubbleBorder: "border-gray-100",
+    botStatsBg: "bg-rose-50",
+    botStatsBorder: "border-rose-100",
+    botStatsText: "text-rose-500",
+    botPriceText: "text-rose-600",
+  };
 
   // Interaction states
   const [isPressed, setIsPressed] = useState(false);
@@ -133,16 +144,16 @@ const ChatBubble = ({ message }) => {
         onPointerLeave={handlePointerLeave}
         animate={{ scale: isPressed ? 0.95 : 1 }}
         transition={{ type: "spring", stiffness: 400, damping: 17 }}
-        className={`max-w-[85%] rounded-2xl px-4 py-3 shadow-sm relative transition-colors duration-200 ${
+        className={`max-w-[85%] rounded-[20px] px-5 py-3.5 shadow-sm relative transition-colors duration-200 ${
           isUser
-            ? "bg-rose-500 text-white rounded-br-none"
-            : "bg-white text-gray-800 border border-gray-100 rounded-bl-none"
+            ? `${currentTheme.userBubbleBg} ${currentTheme.userBubbleText} rounded-tr-sm shadow-md`
+            : `bg-white text-gray-800 border ${currentTheme.botBubbleBorder} rounded-tl-sm shadow-sm`
         } ${enableSelection ? "select-text cursor-text" : "select-none cursor-default touch-manipulation"}`}
       >
         {/* Nội dung văn bản */}
         <p
           ref={textRef}
-          className="whitespace-pre-wrap text-sm leading-relaxed"
+          className="whitespace-pre-wrap text-[15px] leading-relaxed"
         >
           {message.content}
         </p>
@@ -175,8 +186,12 @@ const ChatBubble = ({ message }) => {
 
         {/* Các loại nội dung đặc biệt */}
         {!isUser && message.type === "stats" && message.data && (
-          <div className="mt-3 bg-rose-50 rounded-xl p-3 border border-rose-100 select-none">
-            <div className="text-xs text-rose-500 uppercase font-bold tracking-wider mb-1">
+          <div
+            className={`mt-3 ${currentTheme.botStatsBg} rounded-xl p-3 border ${currentTheme.botStatsBorder} select-none`}
+          >
+            <div
+              className={`text-xs ${currentTheme.botStatsText} uppercase font-bold tracking-wider mb-1`}
+            >
               {message.data.label}
             </div>
             <div className="text-2xl font-bold text-gray-900">
@@ -215,7 +230,9 @@ const ChatBubble = ({ message }) => {
                       {product.name}
                     </div>
                     <div className="text-xs text-gray-500 flex items-center gap-2">
-                      <span className="font-semibold text-rose-600">
+                      <span
+                        className={`font-semibold ${currentTheme.botPriceText}`}
+                      >
                         {formatCurrency(product.price)}
                       </span>
                       <span>• Kho: {product.stock}</span>
@@ -249,7 +266,9 @@ const ChatBubble = ({ message }) => {
                     <span className="text-xs text-gray-600">
                       {order.items.length} món
                     </span>
-                    <span className="text-sm font-bold text-rose-600">
+                    <span
+                      className={`text-sm font-bold ${currentTheme.botPriceText}`}
+                    >
                       {formatCurrency(order.total)}
                     </span>
                   </div>
@@ -260,7 +279,7 @@ const ChatBubble = ({ message }) => {
 
         {/* Thời gian */}
         <div
-          className={`text-[10px] mt-1 text-right select-none ${isUser ? "text-rose-100" : "text-gray-400"}`}
+          className={`text-[10px] mt-1 text-right select-none ${isUser ? "text-white/80" : "text-gray-400"}`}
         >
           {message.timestamp && format(new Date(message.timestamp), "HH:mm")}
         </div>

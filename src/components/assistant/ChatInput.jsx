@@ -27,9 +27,21 @@ const ChatInput = ({
   disabled,
   onOpenModelSelector,
   selectedModel = "SMART",
+  theme,
 }) => {
   const [text, setText] = useState("");
   const [isFocused, setIsFocused] = useState(false);
+
+  // Default theme fallback
+  const currentTheme = theme || {
+    inputBg: "bg-white",
+    inputFieldBg: "bg-gray-50",
+    inputRing: "focus:ring-rose-300",
+    sendButtonBg: "bg-rose-600",
+    sendButtonShadow: "shadow-rose-200",
+    settingsButtonBg: "bg-rose-100",
+    settingsButtonText: "text-rose-500",
+  };
 
   // Trạng thái hiệu ứng gõ chữ
   const [displayedText, setDisplayedText] = useState("");
@@ -122,20 +134,24 @@ const ChatInput = ({
   };
 
   return (
-    <div className="bg-white border-t border-gray-100 p-3 pb-[calc(env(safe-area-inset-bottom)+12px)]">
+    <div
+      className={`${currentTheme.inputBg} border-t border-gray-100 p-3 pb-[calc(env(safe-area-inset-bottom)+12px)]`}
+    >
       <form onSubmit={handleSubmit} className="flex gap-2 items-center">
         {/* Model Selector Button */}
         <button
           type="button"
           onClick={onOpenModelSelector}
           disabled={disabled}
-          className="p-3 bg-rose-100 text-rose-500 rounded-full hover:bg-rose-200 active:scale-90 transition-all flex items-center justify-center"
+          className={`p-3 ${currentTheme.settingsButtonBg} ${currentTheme.settingsButtonText} rounded-full active:scale-90 transition-all flex items-center justify-center`}
         >
           <Settings2 size={20} />
         </button>
 
         <div className="relative flex-1">
-          <div className="absolute left-3 top-1/2 -translate-y-1/2 text-rose-400 z-10">
+          <div
+            className={`absolute left-3 top-1/2 -translate-y-1/2 ${currentTheme.inputIconColor} z-10`}
+          >
             {selectedModel === "SMART" && (
               <AssistantIcon isActive={isFocused} size={18} />
             )}
@@ -163,14 +179,14 @@ const ChatInput = ({
             onFocus={() => setIsFocused(true)}
             onBlur={() => setIsFocused(false)}
             disabled={disabled}
-            className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-rose-300 transition-all text-gray-800"
+            className={`w-full pl-10 pr-4 py-3 ${currentTheme.inputFieldBg} border border-gray-200 rounded-full text-sm focus:outline-none focus:ring-2 ${currentTheme.inputRing} transition-all text-gray-800`}
           />
         </div>
 
         <button
           type="submit"
           disabled={!text.trim() || disabled}
-          className="p-3 bg-rose-600 text-white rounded-full disabled:opacity-50 disabled:cursor-not-allowed hover:bg-rose-700 active:scale-90 transition-all shadow-sm shadow-rose-200"
+          className={`p-3 ${currentTheme.sendButtonBg} text-white rounded-full disabled:opacity-50 disabled:cursor-not-allowed active:scale-90 transition-all shadow-sm ${currentTheme.sendButtonShadow}`}
         >
           <Send size={20} />
         </button>
