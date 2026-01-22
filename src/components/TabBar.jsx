@@ -32,10 +32,20 @@ const TabBar = ({ activeTab, setActiveTab, isVisible = true }) => {
         {tabs.map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
+
+          const handleTabClick = () => {
+            if (activeTab !== tab.id) {
+              if (navigator.vibrate) {
+                navigator.vibrate(15);
+              }
+              setActiveTab(tab.id);
+            }
+          };
+
           return (
             <button
               key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
+              onClick={handleTabClick}
               className={`relative flex flex-col items-center justify-center w-full h-full gap-0.5 ${
                 isActive ? "text-rose-600 z-10" : "text-amber-500 z-0"
               }`}
