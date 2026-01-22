@@ -1,4 +1,5 @@
 import React from "react";
+import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import AssistantIcon from "./AssistantIcon";
 import FlashIcon from "./FlashIcon";
@@ -11,46 +12,48 @@ const ModelSelector = ({ selectedModel, onSelect, isOpen, onClose }) => {
       name: "Misa Pro",
       description: "Thông minh nhất, dùng cho tác vụ phức tạp.",
       icon: AssistantIcon,
-      color: "text-rose-500",
-      bg: "bg-rose-50",
+      color: "text-rose-600",
+      bg: "bg-rose-100",
     },
     {
       id: "FLASH",
       name: "Misa Flash",
       description: "Phản hồi nhanh, dùng cho câu hỏi đơn giản.",
       icon: FlashIcon,
-      color: "text-amber-500",
-      bg: "bg-amber-50",
+      color: "text-amber-600",
+      bg: "bg-amber-100",
     },
     {
       id: "LOCAL",
       name: "Misa Local",
       description: "Chạy cục bộ, bảo mật cao, không Internet.",
       icon: LocalIcon,
-      color: "text-blue-500",
-      bg: "bg-blue-50",
+      color: "text-blue-600",
+      bg: "bg-blue-100",
     },
   ];
 
-  return (
+  if (typeof document === "undefined") return null;
+
+  return createPortal(
     <AnimatePresence>
       {isOpen && (
         <>
-          {/* Overlay */}
+          {/* Overlay - Z-index 60 to be above TabBar (z-50) */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="absolute inset-0 bg-black/20 z-40 backdrop-blur-[1px]"
+            className="fixed inset-0 bg-black/20 z-[60] backdrop-blur-[1px]"
           />
 
-          {/* Menu */}
+          {/* Menu - Z-index 70 */}
           <motion.div
             initial={{ opacity: 0, y: 20, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.95 }}
-            className="absolute bottom-[80px] left-3 right-3 bg-white rounded-2xl shadow-xl border border-white/50 z-50 overflow-hidden"
+            className="fixed bottom-[80px] left-3 right-3 bg-white rounded-2xl shadow-xl border border-white/50 z-[70] overflow-hidden"
           >
             <div className="p-3 bg-gray-50 border-b border-gray-100">
               <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider">
@@ -81,7 +84,7 @@ const ModelSelector = ({ selectedModel, onSelect, isOpen, onClose }) => {
                     </div>
                     <div className="flex-1">
                       <div className="flex items-center gap-2">
-                        <span className="font-bold text-gray-800 text-sm">
+                        <span className="font-bold text-gray-600 text-sm">
                           {model.name}
                         </span>
                         {isSelected && (
@@ -101,7 +104,8 @@ const ModelSelector = ({ selectedModel, onSelect, isOpen, onClose }) => {
           </motion.div>
         </>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body,
   );
 };
 
