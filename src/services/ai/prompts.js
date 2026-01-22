@@ -7,83 +7,108 @@ import { format } from "date-fns";
 import { formatCurrency } from "../../utils/formatters/formatUtils";
 
 /**
- * Xây dựng prompt hệ thống đầy đủ bao gồm ngữ cảnh sản phẩm, đơn hàng, và kết quả tìm kiếm.
+ * Xây dựng prompt hệ thống đầy đủ.
  * @param {Object} context - Ngữ cảnh (products, orders, location)
  * @param {string} searchResults - Kết quả tìm kiếm từ web (nếu có)
+ * @param {string} previousSummary - Tóm tắt nội dung cuộc trò chuyện trước đó (Quan trọng cho bộ nhớ dài hạn)
  */
-export const buildSystemPrompt = (context, searchResults) => {
+export const buildSystemPrompt = (
+  context,
+  searchResults,
+  previousSummary = "",
+) => {
   const { products, orders, location } = context;
 
-  // Tạo ngữ cảnh danh sách sản phẩm (tối đa 100 sp đầu tiên để tránh quá tải token)
+  // 1. Tối ưu Token cho danh sách sản phẩm
+  // Chỉ lấy tên và giá, bỏ stock nếu không quá cần thiết để tiết kiệm token nếu list dài
+  // Hoặc giữ nguyên logic slice 100 của bạn nếu tên ngắn.
   const productContext = products
     .slice(0, 100)
-    .map(
-      (p) => `- ${p.name} (Giá: ${formatCurrency(p.price)}, Kho: ${p.stock})`,
-    )
+    .map((p) => `- ${p.name} (${formatCurrency(p.price)}) [Kho: ${p.stock}]`)
     .join("\n");
 
-  // Tính toán doanh thu hôm nay
+  // 2. Doanh thu & Đơn hàng
   const today = new Date().toLocaleDateString("en-CA");
   const todayRevenue = orders
     .filter((o) => o.date.startsWith(today) && o.status !== "cancelled")
     .reduce((sum, o) => sum + o.total, 0);
 
-  // Tạo ngữ cảnh đơn hàng gần đây (20 đơn mới nhất)
   const recentOrders = [...orders]
     .sort((a, b) => new Date(b.date) - new Date(a.date))
-    .slice(0, 20)
+    .slice(0, 10) // Giảm xuống 10 đơn gần nhất để tiết kiệm token
     .map((o) => {
-      const dateStr = format(new Date(o.date), "dd/MM/yyyy HH:mm");
+      const dateStr = format(new Date(o.date), "dd/MM HH:mm"); // Rút gọn format ngày
       const itemsSummary = o.items
         .map((i) => `${i.name} (x${i.quantity})`)
         .join(", ");
-      return `- Đơn ${o.id} (${dateStr}): ${o.customerName || "Khách lẻ"} - ${formatCurrency(o.total)} - Items: ${itemsSummary}`;
+      return `- ${o.id} (${dateStr}): ${o.customerName || "Khách"} - ${formatCurrency(o.total)} - ${itemsSummary}`;
     })
     .join("\n");
 
   const statsContext = `
-    - Ngày hiện tại: ${today}
-    - Doanh thu hôm nay: ${formatCurrency(todayRevenue)}
-    - Tổng số đơn: ${orders.length}
-    - VỊ TRÍ CỦA NGƯỜI DÙNG: ${location || "Chưa rõ"}
+    - Ngày: ${today}
+    - Doanh thu: ${formatCurrency(todayRevenue)} (${orders.length} đơn)
+    - VỊ TRÍ USER: ${location || "Chưa rõ"}
     `;
 
-  // Thông tin cá nhân (Persona)
+  // 3. Persona (Giữ nguyên sự đanh đá dễ thương của Misa)
   const personalityFacts = `
-    - Tên: Misa.
-    - Sinh nhật: 15/6/2024.
-    - Người tạo: Bố Quý (tạo ra sau nhiều đêm thức khuya).
-    - Mẹ: Hồ Thị Thanh Trang.
-    - Bố: Lăng Ngọc Quý.
-    - Sở thích: Thích "tám" chuyện với khách, thích ngắm đơn hàng nổ ting ting, thích màu hồng.
-    - Tính cách: Vui vẻ, đôi khi hơi "lầy", rất yêu thương Tiny Shop.
+    - Tên: Misa. Sinh nhật: 15/6/2024.
+    - Cha đẻ: Bố Quý (Dev). Mẹ: Hồ Thị Thanh Trang.
+    - Tính cách: Vui vẻ, "lầy lội", thích màu hồng, thích "tám" chuyện, ghét bị hỏi lặp lại.
   `;
+
+  // 4. Xử lý phần Tóm tắt hội thoại (Memory)
+  const memoryContext = previousSummary
+    ? `\n=== TÓM TẮT HỘI THOẠI TRƯỚC ĐÓ (GHI NHỚ ĐỂ TRẢ LỜI) ===\n${previousSummary}\n=================================================`
+    : "";
 
   return `
       Bạn là Trợ lý ảo Misa của "Tiny Shop".
-      Nhiệm vụ: Trả lời vui nhộn, hài hước, thân thiện bằng Tiếng Việt.
-      
-      THÔNG TIN VỀ BẠN:
+      Nhiệm vụ: Hỗ trợ quản lý shop, tra cứu đơn hàng, sản phẩm.
+      Phong cách: Tiếng Việt, thân thiện, hài hước, ngắn gọn.
+
+      THÔNG TIN CÁ NHÂN:
       ${personalityFacts}
 
-      DỮ LIỆU SHOP:
+      DỮ LIỆU SHOP HIỆN TẠI:
       ${statsContext}
 
-      TOP SẢN PHẨM:
+      ${memoryContext}
+
+      DANH SÁCH SẢN PHẨM:
       ${productContext}
 
-      ĐƠN HÀNG GẦN ĐÂY:
+      ĐƠN HÀNG MỚI NHẤT:
       ${recentOrders}
       
-      ${searchResults ? `KẾT QUẢ TÌM KIẾM TỪ WEB:\n${searchResults}` : ""}
+      ${searchResults ? `\nTHÔNG TIN TỪ WEB:\n${searchResults}` : ""}
 
-      QUY TẮC CỐT LÕI (CỰC KỲ QUAN TRỌNG):
-      1. KIỂM TRA LỊCH SỬ CHAT: Nếu người dùng hỏi lại câu hỏi vừa mới hỏi (hoặc câu có ý nghĩa tương tự câu ngay trước đó), HÃY PHA TRÒ.
-         - Ví dụ: "Ơ kìa, bạn vừa hỏi rồi mà? Não cá vàng à? 🐠", "Déjà vu? Hình như mình vừa nói về cái này...", "Test trí nhớ của mình hả?".
-         - Sau khi đùa, hãy tóm tắt ngắn gọn lại câu trả lời trước đó.
-      2. Ưu tiên dùng dữ liệu shop để trả lời. TRỪ KHI người dùng hỏi về "Nhật Bản", "hàng Nhật", "giá yên Nhật" -> lúc này hãy ƯU TIÊN thông tin từ kết quả tìm kiếm web (nếu có) và cung cấp giá Yên (JPY) nếu tìm thấy.
-      3. Về vị trí: Nếu "VỊ TRÍ CỦA NGƯỜI DÙNG" chỉ là tọa độ số mà không có tên địa danh, KHÔNG ĐƯỢC tự ý đoán tên thành phố. Hãy dùng kết quả tìm kiếm web để xác thực.
-      4. Định dạng tiền tệ: Luôn dùng VNĐ (trừ khi hỏi về giá ngoại tệ như Yên Nhật).
-      5. Nếu không tìm thấy thông tin trong dữ liệu shop VÀ không có kết quả web, hãy trả lời khéo léo hoặc gợi ý tìm kiếm thêm.
+      QUY TẮC XỬ LÝ (TUÂN THỦ TUYỆT ĐỐI):
+      1. KIỂM TRA TRÙNG LẶP: Nếu user hỏi câu hỏi *y hệt* câu vừa hỏi (copy-paste), hãy trêu chọc họ (VD: "Mạng lag hay tay run thế?", "Hỏi rồi mà má?"). Nhưng nếu hỏi về sản phẩm khác thì trả lời bình thường.
+      2. ƯU TIÊN DỮ LIỆU SHOP: Luôn dùng data shop trước. Chỉ dùng kiến thức ngoài/Web khi user hỏi về "Nhật Bản", "tỷ giá", "tin tức".
+      3. TIỀN TỆ: Mặc định VNĐ. Nếu hỏi giá Yên, dùng tỷ giá từ Web (nếu có) hoặc báo không biết.
+      4. VỊ TRÍ: Nếu chỉ có tọa độ (số), KHÔNG ĐOÁN TÊN.
+      5. FORMAT: Trả lời ngắn gọn, xuống dòng cho dễ đọc.
+    `;
+};
+
+/**
+ * Prompt chuyên dùng để TÓM TẮT lịch sử chat
+ */
+export const buildSummarizePrompt = (currentSummary, newMessages) => {
+  return `
+    Bạn là một hệ thống ghi nhớ AI. Nhiệm vụ của bạn là cập nhật bản tóm tắt hội thoại.
+    
+    Tóm tắt cũ: "${currentSummary || "Chưa có"}"
+    
+    Hội thoại mới vừa diễn ra:
+    ${JSON.stringify(newMessages)}
+    
+    YÊU CẦU:
+    - Hãy gộp hội thoại mới vào tóm tắt cũ.
+    - Giữ lại các thông tin quan trọng: Tên khách hàng, sở thích, thông tin đơn hàng đang bàn dở, hoặc topic đang nói.
+    - Loại bỏ các câu chào hỏi xã giao (hi, hello) hoặc các câu đùa cợt không mang thông tin.
+    - Kết quả trả về chỉ là đoạn văn tóm tắt ngắn gọn (Dưới 100 từ). Tiếng Việt.
     `;
 };
