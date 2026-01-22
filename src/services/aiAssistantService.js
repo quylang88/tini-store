@@ -12,31 +12,53 @@ import {
 import { formatCurrency } from "../utils/formatters/formatUtils";
 import { format } from "date-fns";
 
-// --- CẤU HÌNH MODEL ---
-const MODEL_CONFIGS = {
-  PRO: {
-    models: [
-      import.meta.env.VITE_GEMINI_MODEL_NAME_3,
-      import.meta.env.VITE_GEMINI_MODEL_NAME_2,
-    ],
-    enableTools: true,
-  },
-  FLASH: {
-    models: [import.meta.env.VITE_GEMINI_MODEL_NAME_2_LITE],
-    enableTools: true,
-  },
-  LOCAL: {
-    models: [import.meta.env.VITE_GEMMA_MODEL_NAME],
-    enableTools: false,
-  },
+// --- 1. CẤU HÌNH PROVIDER & MODEL ---
+
+// Định nghĩa các Provider
+const PROVIDERS = {
+  GEMINI: "GEMINI",
+  GROQ: "GROQ",
 };
 
-// --- BIẾN CACHE (Singleton) ---
-let cachedKey = null;
-let cachedModels = {}; // Cache model instances by modelName
+/**
+ * Cấu hình danh sách model theo thứ tự ưu tiên.
+ * Mỗi mục gồm: provider (nhà cung cấp) và model (tên model).
+ */
+const MODEL_CONFIGS = {
+  // Chế độ PRO: Ưu tiên dùng Groq (nhanh/thông minh), nếu lỗi có thể fallback về Gemini Pro (nếu có config)
+  PRO: [
+    {
+      provider: PROVIDERS.GROQ,
+      model: import.meta.env.VITE_GROQ_MODEL_NAME,
+    },
+    // Bạn có thể thêm Gemini Pro vào đây làm dự phòng nếu muốn
+  ],
+  // Chế độ FLASH: Dùng các model nhanh của Google
+  FLASH: [
+    {
+      provider: PROVIDERS.GEMINI,
+      model: import.meta.env.VITE_GEMINI_MODEL_3_FLASH,
+    },
+    {
+      provider: PROVIDERS.GEMINI,
+      model: import.meta.env.VITE_GEMINI_MODEL_2_FLASH,
+    },
+  ],
+  // Chế độ LITE: Dùng model nhẹ nhất
+  LITE: [
+    {
+      provider: PROVIDERS.GEMINI,
+      model: import.meta.env.VITE_GEMINI_MODEL_2_LITE,
+    },
+  ],
+};
 
-// Cấu hình an toàn
-const safetySettings = [
+// --- 2. BIẾN CACHE GEMINI (Singleton) ---
+let cachedGeminiKey = null;
+let cachedGeminiModels = {}; // Cache Gemini model instances
+
+// Cấu hình an toàn cho Gemini
+const geminiSafetySettings = [
   {
     category: HarmCategory.HARM_CATEGORY_HARASSMENT,
     threshold: HarmBlockThreshold.BLOCK_NONE,
@@ -55,50 +77,156 @@ const safetySettings = [
   },
 ];
 
-// Định nghĩa Tool
-const tools = [
-  {
-    googleSearch: {},
-  },
-];
+// Tavily API
+const TAVILY_API_URL = "https://api.tavily.com/search";
+
+// --- 3. HELPER FUNCTIONS ---
 
 /**
- * Hàm lấy Model instance (có Cache)
+ * Helper: Lấy vị trí
  */
-const getModelInstance = (apiKey, modelName, enableTools) => {
-  if (apiKey !== cachedKey) {
-    cachedKey = apiKey;
-    cachedModels = {}; // Reset cache nếu đổi key
-  }
-
-  const cacheKey = `${modelName}_${enableTools}`;
-  if (cachedModels[cacheKey]) return cachedModels[cacheKey];
-
-  const genAI = new GoogleGenerativeAI(apiKey);
-
-  const modelConfig = {
-    model: modelName,
-    safetySettings: safetySettings,
-  };
-
-  if (enableTools) {
-    modelConfig.tools = tools;
-  }
-
-  const model = genAI.getGenerativeModel(modelConfig);
-  cachedModels[cacheKey] = model;
-
-  return model;
+const getCurrentLocation = () => {
+  return new Promise((resolve) => {
+    if (!navigator.geolocation) {
+      resolve(null);
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      (pos) => resolve(`${pos.coords.latitude}, ${pos.coords.longitude}`),
+      () => resolve(null),
+      { timeout: 10000 },
+    );
+  });
 };
 
 /**
- * Xử lý truy vấn của người dùng.
- * @param {string} query - Câu hỏi của user
- * @param {object} context - Dữ liệu shop (products, orders...)
- * @param {string} mode - 'PRO' | 'FLASH' | 'LOCAL'
+ * Helper: Lấy Gemini Model Instance (có Cache)
+ */
+const getGeminiModelInstance = (apiKey, modelName) => {
+  if (apiKey !== cachedGeminiKey) {
+    cachedGeminiKey = apiKey;
+    cachedGeminiModels = {};
+  }
+
+  const cacheKey = `${modelName}`;
+  if (cachedGeminiModels[cacheKey]) return cachedGeminiModels[cacheKey];
+
+  const genAI = new GoogleGenerativeAI(apiKey);
+  const model = genAI.getGenerativeModel({
+    model: modelName,
+    safetySettings: geminiSafetySettings,
+  });
+
+  cachedGeminiModels[cacheKey] = model;
+  return model;
+};
+
+// --- 4. CÁC HÀM GỌI API RIÊNG BIỆT ---
+
+/**
+ * Gọi API Google Gemini
+ */
+const callGeminiAPI = async (modelName, fullPrompt) => {
+  const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+  if (!apiKey) throw new Error("Chưa cấu hình VITE_GEMINI_API_KEY");
+
+  const model = getGeminiModelInstance(apiKey, modelName);
+  const result = await model.generateContent(fullPrompt);
+  const response = await result.response;
+  return response.text();
+};
+
+/**
+ * Gọi API Groq (Tương thích OpenAI)
+ * Sử dụng fetch trực tiếp để không cần cài thêm SDK
+ */
+const callGroqAPI = async (modelName, fullPrompt) => {
+  const apiKey = import.meta.env.VITE_GROQ_API_KEY;
+  if (!apiKey) throw new Error("Chưa cấu hình VITE_GROQ_API_KEY");
+
+  const response = await fetch(
+    "https://api.groq.com/openai/v1/chat/completions",
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        messages: [
+          {
+            role: "system",
+            content:
+              "Bạn là trợ lý ảo Misa hữu ích. Hãy trả lời dựa trên dữ liệu được cung cấp.",
+          },
+          {
+            role: "user",
+            content: fullPrompt,
+          },
+        ],
+        model: modelName,
+        temperature: 0.5,
+        max_tokens: 1024,
+      }),
+    },
+  );
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(
+      `Groq API Error: ${errorData?.error?.message || response.statusText}`,
+    );
+  }
+
+  const data = await response.json();
+  return data.choices[0]?.message?.content || "";
+};
+
+// --- 5. LOGIC SEARCH (TAVILY) ---
+
+const searchWeb = async (query, location = null) => {
+  const tavilyKey = import.meta.env.VITE_TAVILY_API_KEY;
+  if (!tavilyKey) {
+    console.warn("Chưa cấu hình VITE_TAVILY_API_KEY");
+    return null;
+  }
+
+  try {
+    const searchQuery = location ? `${query} tại ${location}` : query;
+    const response = await fetch(TAVILY_API_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        api_key: tavilyKey,
+        query: searchQuery,
+        search_depth: "basic",
+        include_answer: false,
+        max_results: 3,
+      }),
+    });
+
+    const data = await response.json();
+    if (!data.results) return null;
+
+    return data.results
+      .map(
+        (item) =>
+          `[Tiêu đề: ${item.title}]\n[Nội dung: ${item.content}]\n[Link: ${item.url}]`,
+      )
+      .join("\n\n");
+  } catch (error) {
+    console.error("Lỗi Tavily:", error);
+    return null;
+  }
+};
+
+// --- 6. XỬ LÝ CHÍNH (MAIN PROCESS) ---
+
+/**
+ * Hàm chính để xử lý truy vấn
  */
 export const processQuery = async (query, context, mode = "PRO") => {
-  // 1. KIỂM TRA MẠNG
+  // 1. Kiểm tra mạng
   if (!navigator.onLine) {
     return createResponse(
       "text",
@@ -106,121 +234,105 @@ export const processQuery = async (query, context, mode = "PRO") => {
     );
   }
 
-  // 2. LẤY API KEY
-  let apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+  // 2. Xác định vị trí & Search Web
+  const userLocation = await getCurrentLocation();
+  const needsSearchKeywords = [
+    "thời tiết",
+    "giá",
+    "tin tức",
+    "ở đâu",
+    "mấy giờ",
+    "ai là",
+    "sự kiện",
+    "bóng đá",
+    "tỷ số",
+    "hôm nay",
+    "tại sao",
+    "quán ăn",
+    "đường đi",
+  ];
+  const shouldSearch = needsSearchKeywords.some((kw) =>
+    query.toLowerCase().includes(kw),
+  );
 
-  if (!apiKey) {
-    return createResponse(
-      "text",
-      "Chưa có cấu hình API Key. Vui lòng vào Cài đặt để nhập Gemini API Key.",
-    );
+  let searchResults = "";
+  if (shouldSearch) {
+    console.log("Đang tìm kiếm trên Tavily...");
+    const webData = await searchWeb(query, userLocation);
+    if (webData) {
+      searchResults = `\n\nTHÔNG TIN TÌM KIẾM TỪ WEB:\n${webData}`;
+    }
   }
 
-  // 3. XÁC ĐỊNH CẤU HÌNH MODEL DỰA TRÊN MODE
-  const config = MODEL_CONFIGS[mode] || MODEL_CONFIGS.PRO;
+  // 3. Lấy danh sách model candidates dựa trên Mode
+  const modelCandidates = MODEL_CONFIGS[mode] || MODEL_CONFIGS.FLASH;
 
-  // 4. GỌI GEMINI VỚI CƠ CHẾ FAILOVER
+  // 4. Xây dựng prompt
+  // Lưu ý: Chúng ta xây dựng prompt 1 lần và dùng chung cho cả Groq và Gemini
+  const systemPrompt = buildSystemPrompt(
+    query,
+    { ...context, location: userLocation },
+    searchResults,
+  );
+
+  // 5. Gọi AI với cơ chế Failover
   try {
-    return await processQueryWithFailover(query, context, apiKey, config);
-  } catch (error) {
-    console.error("Gemini Error:", error);
-
-    if (
-      !navigator.onLine ||
-      error.message?.includes("Failed to fetch") ||
-      error.message?.includes("NetworkError")
-    ) {
-      return createResponse(
-        "text",
-        "Lỗi kết nối mạng. Vui lòng kiểm tra internet và thử lại.",
-      );
-    }
-
-    return createResponse(
-      "text",
-      "Đã có lỗi xảy ra khi xử lý yêu cầu (" + error.message + ")",
+    const responseText = await processQueryWithFailover(
+      modelCandidates,
+      systemPrompt,
     );
+    return createResponse("text", responseText);
+  } catch (error) {
+    console.error("AI Service Error:", error);
+    return createResponse("text", `Đã có lỗi xảy ra: ${error.message}`);
   }
 };
 
 /**
- * Thực hiện gọi AI với cơ chế thử lại (Failover) khi gặp lỗi 429
+ * Chạy qua danh sách các models/providers, nếu cái đầu lỗi thì thử cái sau
  */
-const processQueryWithFailover = async (query, context, apiKey, config) => {
-  const { models, enableTools } = config;
+const processQueryWithFailover = async (candidates, fullPrompt) => {
   let lastError = null;
 
-  for (const modelName of models) {
+  for (const candidate of candidates) {
+    const { provider, model } = candidate;
+    if (!model) continue;
+
+    console.log(`Đang thử gọi model: ${model} (${provider})...`);
+
     try {
-      if (!modelName) continue;
+      let result = "";
 
-      const model = getModelInstance(apiKey, modelName, enableTools);
-      return await generateContent(model, query, context, enableTools);
-    } catch (error) {
-      console.error(`Error with model ${modelName}:`, error);
-      lastError = error;
-
-      // Nếu lỗi 429 (Resource Exhausted), thử model tiếp theo trong danh sách
-      if (error.message?.includes("429") || error.status === 429) {
-        console.warn(
-          `Model ${modelName} hit rate limit. Switching to backup...`,
-        );
-        continue;
+      if (provider === PROVIDERS.GEMINI) {
+        result = await callGeminiAPI(model, fullPrompt);
+      } else if (provider === PROVIDERS.GROQ) {
+        result = await callGroqAPI(model, fullPrompt);
       }
 
-      // Nếu không phải 429, throw luôn để handle ở catch ngoài
-      throw error;
+      // Nếu thành công trả về luôn
+      if (result) return result;
+    } catch (error) {
+      console.error(`Lỗi với ${provider} - ${model}:`, error);
+      lastError = error;
+
+      // Nếu là lỗi rate limit (429) hoặc lỗi mạng, continue để thử model tiếp theo
+      // Nếu là lỗi cấu hình (thiếu key), có thể break luôn hoặc thử cái khác
+      continue;
     }
   }
 
-  // Nếu chạy hết vòng lặp mà vẫn lỗi
-  if (
-    lastError &&
-    (lastError.message?.includes("429") || lastError.status === 429)
-  ) {
-    return createResponse(
-      "text",
-      "Bạn đã đạt tới giới hạn sử dụng hôm nay cho chế độ này. Vui lòng thử lại vào ngày mai hoặc chuyển sang chế độ khác (FLASH/LOCAL).",
-    );
-  }
-
-  // Các lỗi khác
-  throw lastError;
+  throw lastError || new Error("Tất cả các models đều thất bại.");
 };
 
-/**
- * Hàm core sinh nội dung
- */
-const generateContent = async (model, query, context, enableTools) => {
-  const systemPrompt = buildSystemPrompt(query, context, enableTools);
+// --- 7. PROMPT BUILDER & UTILS ---
 
-  const result = await model.generateContent(systemPrompt);
-  const response = await result.response;
-  const text = response.text();
+const buildSystemPrompt = (query, context, searchResults) => {
+  const { products, orders, location } = context;
 
-  // Kiểm tra yêu cầu vị trí qua thẻ (chỉ khi có tools hoặc context liên quan)
-  if (text.includes("[[REQUEST_LOCATION]]")) {
-    return createResponse(
-      "location_request",
-      "Mình cần biết vị trí của bạn để trả lời câu hỏi này.",
-    );
-  }
-
-  return createResponse("text", text);
-};
-
-/**
- * Xây dựng prompt hệ thống
- */
-const buildSystemPrompt = (query, context, enableTools) => {
-  const { products, orders } = context;
-
-  // --- CHUẨN BỊ DATA ---
   const productContext = products
     .slice(0, 100)
     .map(
-      (p) =>
-        `- ${p.name} (Giá: ${formatCurrency(p.price)}, Kho: ${p.stock}, ID: ${p.id})`,
+      (p) => `- ${p.name} (Giá: ${formatCurrency(p.price)}, Kho: ${p.stock})`,
     )
     .join("\n");
 
@@ -229,7 +341,6 @@ const buildSystemPrompt = (query, context, enableTools) => {
     .filter((o) => o.date.startsWith(today) && o.status !== "cancelled")
     .reduce((sum, o) => sum + o.total, 0);
 
-  // Lấy 20 đơn hàng gần nhất
   const recentOrders = [...orders]
     .sort((a, b) => new Date(b.date) - new Date(a.date))
     .slice(0, 20)
@@ -238,30 +349,16 @@ const buildSystemPrompt = (query, context, enableTools) => {
       const itemsSummary = o.items
         .map((i) => `${i.name} (x${i.quantity})`)
         .join(", ");
-      return `- Đơn ${o.id} (${dateStr}): ${o.customerName || "Khách lẻ"} - ${formatCurrency(o.total)} - Items: ${itemsSummary} - Trạng thái: ${o.status}`;
+      return `- Đơn ${o.id} (${dateStr}): ${o.customerName || "Khách lẻ"} - ${formatCurrency(o.total)} - Items: ${itemsSummary}`;
     })
     .join("\n");
 
   const statsContext = `
     - Ngày hiện tại: ${today}
     - Doanh thu hôm nay: ${formatCurrency(todayRevenue)}
-    - Tổng số đơn hàng tích lũy: ${orders.length}
+    - Tổng số đơn: ${orders.length}
+    - VỊ TRÍ USER: ${location || "Chưa rõ"}
     `;
-
-  let searchInstructions = "";
-  if (enableTools) {
-    searchInstructions = `
-      2. Nếu người dùng hỏi về vị trí, thời tiết...:
-         - NẾU trong câu hỏi hoặc context đã có tọa độ (Vĩ độ/Kinh độ), HÃY DÙNG GOOGLE SEARCH với tọa độ đó để trả lời. KHÔNG được yêu cầu lại vị trí.
-         - NẾU CHƯA CÓ tọa độ, hãy trả lời duy nhất bằng thẻ: [[REQUEST_LOCATION]]
-      3. Nếu người dùng hỏi thông tin bên ngoài khác, HÃY DÙNG GOOGLE SEARCH.
-      `;
-  } else {
-    searchInstructions = `
-      2. Bạn đang hoạt động ở chế độ OFFLINE/LOCAL. Bạn KHÔNG có khả năng truy cập internet hay Google Search.
-      3. Chỉ trả lời dựa trên dữ liệu Shop được cung cấp và kiến thức có sẵn. Nếu không biết, hãy nói rõ là không có thông tin.
-      `;
-  }
 
   return `
       Bạn là Trợ lý ảo Misa của "Tiny Shop".
@@ -270,25 +367,24 @@ const buildSystemPrompt = (query, context, enableTools) => {
       DỮ LIỆU SHOP:
       ${statsContext}
 
-      TOP SẢN PHẨM (Tối đa 100):
+      TOP SẢN PHẨM:
       ${productContext}
 
-      ĐƠN HÀNG GẦN ĐÂY (Tối đa 20):
+      ĐƠN HÀNG GẦN ĐÂY:
       ${recentOrders}
+      
+      ${searchResults}
 
       CÂU HỎI: "${query}"
 
       QUY TẮC:
-      1. Ưu tiên dùng dữ liệu shop (sản phẩm, đơn hàng) để trả lời.
-      ${searchInstructions}
-      4. Định dạng tiền tệ: Luôn dùng VNĐ (ví dụ: "1.000.000₫").
-      5. Nếu không tìm thấy thông tin, trả lời: "Xin lỗi, mình không tìm thấy thông tin bạn cần."
+      1. Ưu tiên dùng dữ liệu shop để trả lời.
+      2. Nếu có thông tin tìm kiếm web, hãy sử dụng nó.
+      3. Định dạng tiền tệ: Luôn dùng VNĐ.
+      4. Nếu không tìm thấy thông tin, trả lời: "Xin lỗi, mình không tìm thấy thông tin bạn cần."
     `;
 };
 
-/**
- * Helper tạo object phản hồi
- */
 const createResponse = (type, content, data = null) => {
   return {
     id: Date.now().toString(),
