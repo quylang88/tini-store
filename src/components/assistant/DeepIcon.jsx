@@ -12,7 +12,7 @@ const DeepIcon = ({ isActive, size = 24, strokeWidth = 2, loop = false }) => {
     ease: "easeInOut",
     times: [0, 0.5, 1],
     repeat: isActive && loop ? Infinity : 0,
-    repeatDelay: 1,
+    repeatDelay: 0.5,
   };
 
   const activeStroke = `url(#${gradientId})`;
@@ -26,10 +26,10 @@ const DeepIcon = ({ isActive, size = 24, strokeWidth = 2, loop = false }) => {
       viewBox="0 0 24 24"
       fill="none"
       stroke={isActive ? activeStroke : inactiveStroke}
-      strokeWidth={isActive ? 2.5 : strokeWidth}
+      strokeWidth={isActive ? 2.2 : strokeWidth}
       strokeLinecap="round"
       strokeLinejoin="round"
-      className="lucide lucide-box overflow-visible"
+      className="lucide lucide-microscope overflow-visible"
     >
       <defs>
         <linearGradient id={gradientId} x1="0%" y1="0%" x2="100%" y2="100%">
@@ -40,22 +40,27 @@ const DeepIcon = ({ isActive, size = 24, strokeWidth = 2, loop = false }) => {
         </linearGradient>
       </defs>
 
+      {/* Base */}
+      <path d="M6 18h12" />
+      <path d="M3 22h18" />
+
+      {/* Arm - Static */}
+      <path d="M14 22a7 7 0 1 0 0-14h-1" />
+
+      {/* Tube / Lens - Animating (Focusing up and down) */}
       <motion.g
         animate={
           isActive
             ? {
-                scale: [1, 1.15, 1], // Pulse effect for "Deep Thinking"
-                rotate: [0, 5, -5, 0], // Subtle shake/thinking
+                y: [0, -1.5, 0], // Moving up and down like focusing
               }
-            : { scale: 1, rotate: 0 }
+            : { y: 0 }
         }
         transition={transition}
-        style={{ transformOrigin: "12px 12px" }}
       >
-        {/* Box/Cube Shape - Representing Deep/Structure */}
-        <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
-        <path d="M3.27 6.96 12 12.01l8.73-5.05" />
-        <path d="M12 22.08V12" />
+        <path d="M9 14h2" /> {/* Stage/Slide holder */}
+        <path d="M9 12a2 2 0 0 1 2-2v6h-2z" /> {/* Objective Lens */}
+        <path d="M12 6a2 2 0 0 1 2 2v6h-2V8a2 2 0 0 1 2-2z" /> {/* Main Tube */}
       </motion.g>
     </svg>
   );
