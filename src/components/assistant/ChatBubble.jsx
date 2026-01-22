@@ -20,6 +20,7 @@ const ChatBubble = ({ message, theme }) => {
     botStatsBorder: "border-rose-100",
     botStatsText: "text-rose-500",
     botPriceText: "text-rose-600",
+    inputIconColor: "text-rose-500", // Fallback for menu icons
   };
 
   // Interaction states
@@ -44,7 +45,7 @@ const ChatBubble = ({ message, theme }) => {
       setShowMenu(true);
       // Rung nhẹ (Haptic feedback) nếu có thể
       if (navigator.vibrate) navigator.vibrate(50);
-    }, 500); // 500ms threshold for long press
+    }, 250); // Reduced to 250ms for faster response
   };
 
   const handlePointerUp = () => {
@@ -135,6 +136,7 @@ const ChatBubble = ({ message, theme }) => {
   return (
     <div
       ref={scrollRef}
+      style={{ zIndex: showMenu ? 50 : "auto" }} // Fix z-index overlap issue
       className={`flex w-full mb-4 relative ${isUser ? "justify-end" : "justify-start"}`}
     >
       <motion.div
@@ -165,20 +167,20 @@ const ChatBubble = ({ message, theme }) => {
               initial={{ opacity: 0, scale: 0.8, y: 10 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.8, y: 10 }}
-              className={`chat-bubble-menu absolute z-50 min-w-[140px] bg-gray-800 text-white rounded-xl shadow-xl overflow-hidden flex flex-col py-1 ${isUser ? "right-0 top-full mt-2" : "left-0 top-full mt-2"}`}
+              className={`chat-bubble-menu absolute z-50 min-w-[160px] bg-white border border-gray-100 text-gray-700 rounded-xl shadow-xl overflow-hidden flex flex-col py-1 ${isUser ? "right-0 top-full mt-2" : "left-0 top-full mt-2"}`}
             >
               <button
                 onClick={handleCopy}
-                className="flex items-center gap-3 px-4 py-3 hover:bg-gray-700 active:bg-gray-600 text-left text-sm font-medium"
+                className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 active:bg-gray-100 text-left text-sm font-medium transition-colors"
               >
-                <Copy size={16} /> Sao chép
+                <Copy size={16} className={currentTheme.inputIconColor} /> Sao chép
               </button>
-              <div className="h-[1px] bg-gray-700 mx-2"></div>
+              <div className="h-[1px] bg-gray-100 mx-2"></div>
               <button
                 onClick={handleSelectText}
-                className="flex items-center gap-3 px-4 py-3 hover:bg-gray-700 active:bg-gray-600 text-left text-sm font-medium"
+                className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 active:bg-gray-100 text-left text-sm font-medium transition-colors"
               >
-                <Type size={16} /> Chọn văn bản
+                <Type size={16} className={currentTheme.inputIconColor} /> Chọn văn bản
               </button>
             </motion.div>
           )}
