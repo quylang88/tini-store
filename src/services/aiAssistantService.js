@@ -55,8 +55,6 @@ const checkDuplicateQuery = (currentQuery, lastQuery) => {
   const similarity = calculateSimilarity(currentQuery, lastQuery);
 
   // Ngưỡng: 0.85 nghĩa là giống nhau 85% về mặt từ ngữ
-  // VD: "Bạn tên gì" vs "Tên bạn là gì" -> Similarity ~ 0.9 -> Trùng
-  // VD: "SP A" (3 từ) vs "SP B" (3 từ) -> Trùng "SP" (2 từ) -> Sim = (2*2)/6 = 0.66 -> KHÔNG trùng.
   const SIMILARITY_THRESHOLD = 0.85;
 
   if (similarity >= SIMILARITY_THRESHOLD) {
@@ -83,7 +81,7 @@ const checkDuplicateQuery = (currentQuery, lastQuery) => {
  * @param {string} query - Câu hỏi của user
  * @param {Object} context - Dữ liệu app (products, orders)
  * @param {string} modeKey - Key chế độ AI (fast, standard, deep)
- * @param {Array} history - Lịch sử chat ĐẦY ĐỦ
+ * @param {Array} history - Lịch sử chat ĐẦY ĐỦ (Bao gồm cả câu hỏi hiện tại)
  * @param {string} currentSummary - Tóm tắt ngữ cảnh cũ (Memory)
  */
 export const processQuery = async (
@@ -139,17 +137,25 @@ export const processQuery = async (
 
   // 2. Xử lý Lịch sử chat & CHECK TRÙNG LẶP THÔNG MINH
 
-  // Lấy tin nhắn cuối cùng CỦA USER
-  const lastUserMessage = [...history]
-    .reverse()
-    .find((msg) => msg.sender === "user");
+  // Vì history truyền vào đã bao gồm câu hỏi hiện tại ở cuối cùng.
+  // Nên ta phải lọc ra danh sách User Message, sau đó lấy tin nhắn ÁP CHÓT (tin trước tin hiện tại).
 
-  // Sử dụng hàm so sánh thông minh mới
-  const isDuplicate =
-    lastUserMessage && checkDuplicateQuery(query, lastUserMessage.content);
+  const userMessages = history.filter(
+    (msg) => msg.sender === "user" || msg.role === "user",
+  );
+  let isDuplicate = false;
 
-  if (isDuplicate) {
-    console.log("Phát hiện trùng lặp nội dung (Smart Check).");
+  // Chỉ check trùng lặp nếu có ít nhất 2 tin nhắn của user (Tin hiện tại + Tin trước đó)
+  if (userMessages.length >= 2) {
+    const previousUserMsg = userMessages[userMessages.length - 2]; // Lấy tin nhắn áp chót
+    isDuplicate = checkDuplicateQuery(query, previousUserMsg.content);
+
+    if (isDuplicate) {
+      console.log(
+        "Phát hiện trùng lặp với tin nhắn trước đó:",
+        previousUserMsg.content,
+      );
+    }
   }
 
   const cleanHistory = history
@@ -164,8 +170,6 @@ export const processQuery = async (
     }));
 
   const recentHistory = cleanHistory.slice(-SLIDING_WINDOW_SIZE);
-  // Thêm câu hỏi mới vào cuối
-  recentHistory.push({ role: "user", content: query });
 
   // 3. Xây dựng System Prompt (với cờ isDuplicate)
   const systemInstruction = buildSystemPrompt(
@@ -224,7 +228,6 @@ export const summarizeChatHistory = async (
 
   const prompt = buildSummarizePrompt(currentSummary, cleanMessages);
 
-  // Gọi AI nhưng không cần history (vì history đã nằm trong prompt tóm tắt rồi)
   try {
     const newSummary = await processQueryWithFailover(
       fastModel,
@@ -236,7 +239,7 @@ export const summarizeChatHistory = async (
     return newSummary;
   } catch (e) {
     console.warn("Lỗi khi tóm tắt:", e);
-    return currentSummary; // Lỗi thì giữ nguyên cái cũ
+    return currentSummary;
   }
 };
 

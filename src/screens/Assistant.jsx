@@ -4,6 +4,9 @@ import { motion } from "framer-motion";
 import ChatBubble from "../components/assistant/ChatBubble";
 import ChatInput from "../components/assistant/ChatInput";
 import ModelSelector from "../components/assistant/ModelSelector";
+import AssistantIcon from "../components/assistant/AssistantIcon";
+import FlashIcon from "../components/assistant/FlashIcon";
+import DeepIcon from "../components/assistant/DeepIcon";
 import {
   processQuery,
   summarizeChatHistory,
@@ -269,10 +272,18 @@ const Assistant = ({
             </p>
             {chatSummary && (
               <span
-                className="text-[10px] bg-blue-100 text-blue-600 px-1.5 rounded-full flex items-center gap-0.5"
-                title="Misa đang nhớ thông tin cũ"
+                className={`text-[10px] ${activeTheme.themeBtnBg} ${activeTheme.themeBtnText} px-1.5 rounded-full flex items-center gap-0.5`}
               >
-                <Sparkles size={10} /> Đang nhớ
+                {modelMode === "standard" && (
+                  <AssistantIcon isActive={false} size={14} />
+                )}
+                {modelMode === "fast" && (
+                  <FlashIcon isActive={false} size={14} />
+                )}
+                {modelMode === "deep" && (
+                  <DeepIcon isActive={false} size={14} />
+                )}
+                Đang nhớ
               </span>
             )}
           </div>
@@ -282,10 +293,10 @@ const Assistant = ({
         {messages.length > 0 && (
           <button
             onClick={handleClearScreen}
-            className={`p-2.5 mr-1 rounded-full transition-all shadow-sm active:scale-90 ring-1 bg-white/50 hover:bg-red-100 text-gray-600 hover:text-red-500 ring-white/50`}
+            className={`p-2.5 mr-1 rounded-full transition-all shadow-sm active:scale-90 ring-1 ${activeTheme.themeBtnBg} ${activeTheme.themeBtnRing}`}
             title="Dọn màn hình (AI vẫn nhớ)"
           >
-            <Eraser size={18} />
+            <Eraser size={20} className={activeTheme.themeBtnText} />
           </button>
         )}
 
