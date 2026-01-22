@@ -9,6 +9,7 @@ const ChatBubble = ({ message, onAction }) => {
   const isUser = message.sender === "user";
   const scrollRef = useRef(null);
   const textRef = useRef(null);
+  const bubbleRef = useRef(null);
 
   // Interaction states
   const [isPressed, setIsPressed] = useState(false);
@@ -83,22 +84,42 @@ const ChatBubble = ({ message, onAction }) => {
   // Click outside to close menu
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (showMenu && !event.target.closest('.chat-bubble-menu')) {
+      if (showMenu && !event.target.closest(".chat-bubble-menu")) {
         setShowMenu(false);
         setIsPressed(false);
       }
     };
 
     if (showMenu) {
-        document.addEventListener('mousedown', handleClickOutside);
-        document.addEventListener('touchstart', handleClickOutside);
+      document.addEventListener("mousedown", handleClickOutside);
+      document.addEventListener("touchstart", handleClickOutside);
     }
 
     return () => {
-        document.removeEventListener('mousedown', handleClickOutside);
-        document.removeEventListener('touchstart', handleClickOutside);
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("touchstart", handleClickOutside);
     };
   }, [showMenu]);
+
+  // Click outside to cancel text selection
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (bubbleRef.current && !bubbleRef.current.contains(event.target)) {
+        setEnableSelection(false);
+        window.getSelection().removeAllRanges();
+      }
+    };
+
+    if (enableSelection) {
+      document.addEventListener("mousedown", handleClickOutside);
+      document.addEventListener("touchstart", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("touchstart", handleClickOutside);
+    };
+  }, [enableSelection]);
 
 
   return (
@@ -107,6 +128,7 @@ const ChatBubble = ({ message, onAction }) => {
       className={`flex w-full mb-4 relative ${isUser ? "justify-end" : "justify-start"}`}
     >
       <motion.div
+        ref={bubbleRef}
         onPointerDown={handlePointerDown}
         onPointerUp={handlePointerUp}
         onPointerLeave={handlePointerLeave}
