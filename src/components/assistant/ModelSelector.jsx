@@ -5,7 +5,14 @@ import AssistantIcon from "./AssistantIcon";
 import FlashIcon from "./FlashIcon";
 import LiteIcon from "./LiteIcon";
 
-const ModelSelector = ({ selectedModel, onSelect, isOpen, onClose }) => {
+const ModelSelector = ({ selectedModel, onSelect, isOpen, onClose, theme }) => {
+  // Default theme fallback
+  const currentTheme = theme || {
+    modelActiveBg: "bg-rose-50",
+    modelActiveRing: "ring-rose-200",
+    modelBadgeBg: "bg-rose-500",
+  };
+
   const models = [
     {
       id: "SMART",
@@ -73,7 +80,7 @@ const ModelSelector = ({ selectedModel, onSelect, isOpen, onClose }) => {
                     }}
                     className={`w-full flex items-center gap-3 p-3 rounded-xl text-left transition-all ${
                       isSelected
-                        ? "bg-rose-50 ring-1 ring-rose-200"
+                        ? `${currentTheme.modelActiveBg} ring-1 ${currentTheme.modelActiveRing}`
                         : "hover:bg-gray-50"
                     }`}
                   >
@@ -88,7 +95,9 @@ const ModelSelector = ({ selectedModel, onSelect, isOpen, onClose }) => {
                           {model.name}
                         </span>
                         {isSelected && (
-                          <span className="text-[10px] font-bold px-1.5 py-0.5 bg-rose-500 text-white rounded-full">
+                          <span
+                            className={`text-[10px] font-bold px-1.5 py-0.5 ${currentTheme.modelBadgeBg} text-white rounded-full`}
+                          >
                             ĐANG DÙNG
                           </span>
                         )}
