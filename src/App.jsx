@@ -297,6 +297,7 @@ const App = () => {
                 setMessages={setChatMessages}
                 isTyping={isChatTyping}
                 setIsTyping={setIsChatTyping}
+                setTabBarVisible={setIsTabBarVisible}
               />
             </motion.div>
           )}
