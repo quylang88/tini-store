@@ -65,7 +65,13 @@ const Orders = ({
     isCreateView,
     sortConfig,
     setSortConfig,
-  } = useOrdersLogic({ products, setProducts, orders, setOrders });
+  } = useOrdersLogic({
+    products,
+    setProducts,
+    orders,
+    setOrders,
+    setTabBarVisible,
+  });
 
   const renderContent = () => {
     if (isCreateView) {
