@@ -24,7 +24,7 @@ const ChatBubble = ({ message, onAction }) => {
   }, []);
 
   // --- LONG PRESS LOGIC ---
-  const handlePointerDown = (e) => {
+  const handlePointerDown = () => {
     if (enableSelection) return; // Nếu đang ở chế độ chọn text thì không kích hoạt long press
 
     pressTimer.current = setTimeout(() => {
