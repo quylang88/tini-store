@@ -18,13 +18,13 @@ const TabBar = ({ activeTab, setActiveTab, isVisible = true }) => {
     { id: "settings", icon: Settings, label: "Cài đặt" },
   ];
 
-  const { shouldRender, active } = useMountTransition(isVisible, 300);
+  const { shouldRender, active } = useMountTransition(isVisible, 500);
 
   if (!shouldRender) return null;
 
   return (
     <div
-      className={`fixed bottom-0 left-0 right-0 bg-amber-50/90 border-t border-amber-200 pt-1 pb-[calc(env(safe-area-inset-bottom)+4px)] z-50 backdrop-blur transition-transform duration-300 ease-in-out ${
+      className={`fixed bottom-0 left-0 right-0 bg-amber-50/90 border-t border-amber-200 pt-1 pb-[calc(env(safe-area-inset-bottom)+4px)] z-50 backdrop-blur transition-transform duration-500 ease-in-out ${
         active ? "translate-y-0" : "translate-y-full"
       }`}
     >

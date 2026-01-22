@@ -27,6 +27,8 @@ const ChatInput = ({
   disabled,
   onOpenModelSelector,
   selectedModel = "PRO",
+  onInputFocus,
+  onInputBlur,
 }) => {
   const [text, setText] = useState("");
   const [isFocused, setIsFocused] = useState(false);
@@ -160,8 +162,14 @@ const ChatInput = ({
             type="text"
             value={text}
             onChange={(e) => setText(e.target.value)}
-            onFocus={() => setIsFocused(true)}
-            onBlur={() => setIsFocused(false)}
+            onFocus={() => {
+              setIsFocused(true);
+              if (onInputFocus) onInputFocus();
+            }}
+            onBlur={() => {
+              setIsFocused(false);
+              if (onInputBlur) onInputBlur();
+            }}
             disabled={disabled}
             className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-rose-300 transition-all text-gray-800"
           />

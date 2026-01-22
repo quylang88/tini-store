@@ -14,6 +14,8 @@ const Assistant = ({
   setMessages,
   isTyping,
   setIsTyping,
+  setTabBarVisible,
+  isTabBarVisible = true,
 }) => {
   const messagesEndRef = useRef(null);
   const lastQueryRef = useRef("");
@@ -24,6 +26,14 @@ const Assistant = ({
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  const handleInputFocus = () => {
+    if (setTabBarVisible) setTabBarVisible(false);
+  };
+
+  const handleInputBlur = () => {
+    if (setTabBarVisible) setTabBarVisible(true);
   };
 
   useEffect(() => {
@@ -183,8 +193,8 @@ const Assistant = ({
         ease: "linear",
       }}
     >
-      {/* Header */}
-      <div className="flex items-center gap-3 px-4 py-3 border-b border-white/50 bg-white/60 backdrop-blur-sm sticky top-0 z-10 shadow-sm">
+      {/* Header - Fixed absolute để tránh bị trôi khi keyboard hiện trên iOS */}
+      <div className="absolute top-0 left-0 w-full flex items-center gap-3 px-4 py-3 border-b border-white/50 bg-white/60 backdrop-blur-sm z-30 shadow-sm">
         <div className="w-10 h-10 rounded-full bg-gradient-to-br from-rose-400 to-orange-400 text-white flex items-center justify-center shadow-md">
           <Bot size={24} />
         </div>
@@ -206,8 +216,8 @@ const Assistant = ({
         </div>
       </div>
 
-      {/* Message List */}
-      <div className="flex-1 overflow-y-auto p-4 bg-transparent relative">
+      {/* Message List - Thêm padding top để bù cho header absolute */}
+      <div className="flex-1 overflow-y-auto p-4 pt-[72px] bg-transparent relative">
         {messages.map((msg) => (
           <ChatBubble
             key={msg.id}
@@ -250,10 +260,17 @@ const Assistant = ({
         disabled={isTyping}
         onOpenModelSelector={() => setIsModelSelectorOpen(true)}
         selectedModel={modelMode}
+        onInputFocus={handleInputFocus}
+        onInputBlur={handleInputBlur}
       />
 
-      {/* Safe Area Spacer */}
-      <div className="h-14"></div>
+      {/* Safe Area Spacer - Animated to sync with TabBar */}
+      <motion.div
+        initial={{ height: 56 }}
+        animate={{ height: isTabBarVisible ? 56 : 0 }}
+        transition={{ duration: 0.5, ease: "easeInOut" }}
+        className="w-full"
+      />
     </motion.div>
   );
 };
