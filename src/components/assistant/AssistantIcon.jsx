@@ -1,7 +1,12 @@
 import React, { useId } from "react";
 import { motion } from "framer-motion";
 
-const AssistantIcon = ({ isActive, size = 24, strokeWidth = 2 }) => {
+const AssistantIcon = ({
+  isActive,
+  size = 24,
+  strokeWidth = 2,
+  loop = false,
+}) => {
   const gradientId = useId().replace(/:/g, "");
   // Animation duration
   const DURATION = 2;
@@ -11,7 +16,8 @@ const AssistantIcon = ({ isActive, size = 24, strokeWidth = 2 }) => {
     duration: DURATION,
     ease: "easeInOut",
     times: [0, 0.2, 0.8, 1], // Keyframes: Start -> Fade Out -> Rotate End -> Fade In
-    repeat: isActive ? Infinity : 0,
+    repeat: isActive && loop ? Infinity : 0,
+    repeatDelay: 1,
   };
 
   const activeStroke = `url(#${gradientId})`;

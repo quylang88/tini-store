@@ -1,7 +1,7 @@
 import React, { useId } from "react";
 import { motion } from "framer-motion";
 
-const LiteIcon = ({ isActive, size = 24, strokeWidth = 2 }) => {
+const LiteIcon = ({ isActive, size = 24, strokeWidth = 2, loop = false }) => {
   const gradientId = useId().replace(/:/g, "");
   // Animation duration
   const DURATION = 2;
@@ -10,8 +10,9 @@ const LiteIcon = ({ isActive, size = 24, strokeWidth = 2 }) => {
   const transition = {
     duration: DURATION,
     ease: "easeInOut",
-    repeat: isActive ? Infinity : 0,
     times: [0, 0.2, 0.8, 1], // Consistent with other icons
+    repeat: isActive && loop ? Infinity : 0,
+    repeatDelay: 1,
   };
 
   const activeStroke = `url(#${gradientId})`;
