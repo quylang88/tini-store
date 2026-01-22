@@ -6,33 +6,6 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { PROVIDERS, TAVILY_API_URL, geminiSafetySettings } from "./config";
 
-// --- QUẢN LÝ CACHE GEMINI ---
-let cachedGeminiKey = null;
-let cachedGeminiModels = {}; // Cache Gemini model instances
-
-/**
- * Lấy Gemini Model Instance (có Cache)
- * Giúp tránh việc khởi tạo lại instance không cần thiết
- */
-const getGeminiModelInstance = (apiKey, modelName) => {
-  if (apiKey !== cachedGeminiKey) {
-    cachedGeminiKey = apiKey;
-    cachedGeminiModels = {};
-  }
-
-  const cacheKey = `${modelName}`;
-  if (cachedGeminiModels[cacheKey]) return cachedGeminiModels[cacheKey];
-
-  const genAI = new GoogleGenerativeAI(apiKey);
-  const model = genAI.getGenerativeModel({
-    model: modelName,
-    safetySettings: geminiSafetySettings,
-  });
-
-  cachedGeminiModels[cacheKey] = model;
-  return model;
-};
-
 // --- CÁC HÀM GỌI API ---
 
 /**
