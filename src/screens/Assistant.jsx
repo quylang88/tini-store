@@ -19,14 +19,22 @@ const Assistant = ({
   const messagesEndRef = useRef(null);
 
   // Theme State
-  const [activeThemeId, setActiveThemeId] = useState("rose");
-  const activeTheme = ASSISTANT_THEMES[activeThemeId];
+  const [activeThemeId, setActiveThemeId] = useState(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("ai_theme_id") || "rose";
+    }
+    return "rose";
+  });
+  const activeTheme =
+    ASSISTANT_THEMES[activeThemeId] || ASSISTANT_THEMES["rose"];
 
   const handleCycleTheme = () => {
     const themeIds = Object.keys(ASSISTANT_THEMES);
     const currentIndex = themeIds.indexOf(activeThemeId);
     const nextIndex = (currentIndex + 1) % themeIds.length;
-    setActiveThemeId(themeIds[nextIndex]);
+    const newThemeId = themeIds[nextIndex];
+    setActiveThemeId(newThemeId);
+    localStorage.setItem("ai_theme_id", newThemeId);
   };
 
   // State cho Model Selection
