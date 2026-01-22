@@ -29,7 +29,7 @@ const LiteIcon = ({ isActive, size = 24, strokeWidth = 2, loop = false }) => {
       strokeWidth={isActive ? 2.5 : strokeWidth}
       strokeLinecap="round"
       strokeLinejoin="round"
-      className="lucide lucide-feather"
+      className="lucide lucide-feather overflow-visible"
     >
       <defs>
         <linearGradient id={gradientId} x1="0%" y1="0%" x2="100%" y2="100%">

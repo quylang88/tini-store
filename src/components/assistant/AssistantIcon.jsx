@@ -34,7 +34,7 @@ const AssistantIcon = ({
       strokeWidth={isActive ? 2.5 : strokeWidth} // Slightly thicker when active
       strokeLinecap="round"
       strokeLinejoin="round"
-      className="lucide lucide-sparkles"
+      className="lucide lucide-sparkles overflow-visible"
     >
       <defs>
         <linearGradient id={gradientId} x1="0%" y1="0%" x2="100%" y2="100%">
