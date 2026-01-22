@@ -44,7 +44,7 @@ const MODEL_CONFIGS = {
       model: import.meta.env.VITE_GEMINI_MODEL_2_FLASH,
     },
   ],
-  // Chế độ LITE: Dùng model nhẹ nhất
+  // Chế độ LITE: Dùng model nhẹ nhất (Gemini Lite)
   LITE: [
     {
       provider: PROVIDERS.GEMINI,

@@ -93,9 +93,9 @@ const Assistant = ({
           </div>
           <p className="text-xs text-gray-600 flex items-center gap-1">
             <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
-            {modelMode === "PRO" && "Chế độ Pro"}
-            {modelMode === "FLASH" && "Chế độ Flash"}
-            {modelMode === "LOCAL" && "Chế độ Local"}
+            {modelMode === "PRO" && "Misa Smart"}
+            {modelMode === "FLASH" && "Misa Flash"}
+            {modelMode === "LITE" && "Misa Lite"}
           </p>
         </div>
       </div>

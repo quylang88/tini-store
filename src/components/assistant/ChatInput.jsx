@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { Send, Settings2 } from "lucide-react";
 import AssistantIcon from "./AssistantIcon";
 import FlashIcon from "./FlashIcon";
-import LocalIcon from "./LocalIcon";
+import LiteIcon from "./LiteIcon";
 
 const PLACEHOLDERS = [
   "Hôm nay cửa hàng thế nào...",
@@ -142,8 +142,8 @@ const ChatInput = ({
             {selectedModel === "FLASH" && (
               <FlashIcon isActive={isFocused} size={18} />
             )}
-            {selectedModel === "LOCAL" && (
-              <LocalIcon isActive={isFocused} size={18} />
+            {selectedModel === "LITE" && (
+              <LiteIcon isActive={isFocused} size={18} />
             )}
           </div>
 
