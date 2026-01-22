@@ -135,7 +135,7 @@ const ChatInput = ({
         </button>
 
         <div className="relative flex-1">
-          <div className="absolute left-3 top-1/2 -translate-y-1/2 text-rose-400 z-10">
+          <div className="absolute left-3 top-1/2 -translate-y-1/2 text-rose-400 z-50">
             {selectedModel === "SMART" && (
               <AssistantIcon isActive={isFocused} size={18} />
             )}

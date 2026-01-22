@@ -11,7 +11,7 @@ const LiteIcon = ({ isActive, size = 24, strokeWidth = 2 }) => {
     duration: DURATION,
     ease: "easeInOut",
     repeat: isActive ? Infinity : 0,
-    repeatType: "reverse",
+    times: [0, 0.2, 0.8, 1], // Consistent with other icons
   };
 
   const activeStroke = `url(#${gradientId})`;
@@ -32,9 +32,10 @@ const LiteIcon = ({ isActive, size = 24, strokeWidth = 2 }) => {
     >
       <defs>
         <linearGradient id={gradientId} x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#60a5fa" /> {/* Blue-400 */}
-          <stop offset="50%" stopColor="#3b82f6" /> {/* Blue-500 */}
-          <stop offset="100%" stopColor="#22d3ee" /> {/* Cyan-400 */}
+          <stop offset="0%" stopColor="#eab308" /> {/* Yellow-500 */}
+          <stop offset="35%" stopColor="#ec4899" /> {/* Pink-500 */}
+          <stop offset="65%" stopColor="#3b82f6" /> {/* Blue-500 */}
+          <stop offset="100%" stopColor="#22c55e" /> {/* Green-500 */}
         </linearGradient>
       </defs>
 
@@ -44,10 +45,10 @@ const LiteIcon = ({ isActive, size = 24, strokeWidth = 2 }) => {
         animate={
           isActive
             ? {
-                rotate: [0, -10, 0],
-                y: [0, -2, 0],
+                rotate: [0, -10, 10, 0], // Sways back and forth
+                scale: [1, 1.1, 1.1, 1], // Slight scale
               }
-            : { rotate: 0, y: 0 }
+            : { rotate: 0, scale: 1 }
         }
         transition={transition}
         style={{ transformOrigin: "12px 12px" }}

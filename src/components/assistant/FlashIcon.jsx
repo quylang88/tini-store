@@ -11,6 +11,7 @@ const FlashIcon = ({ isActive, size = 24, strokeWidth = 2 }) => {
     duration: DURATION,
     ease: "easeInOut",
     times: [0, 0.2, 0.8, 1],
+    repeat: isActive ? Infinity : 0,
   };
 
   const activeStroke = `url(#${gradientId})`;
