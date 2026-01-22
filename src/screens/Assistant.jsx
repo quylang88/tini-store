@@ -217,7 +217,11 @@ const Assistant = ({
         onInputBlur={handleInputBlur}
       />
       <motion.div
-        animate={{ height: isInputFocused ? 0 : 56 }}
+        animate={{
+          height: isInputFocused
+            ? 0
+            : "calc(52px + env(safe-area-inset-bottom))",
+        }}
         transition={{ duration: 0.3 }}
       />
     </motion.div>

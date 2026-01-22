@@ -137,7 +137,7 @@ const ChatInput = ({
 
   return (
     <div
-      className={`${currentTheme.inputBg} border-t border-gray-100 p-3 pb-[calc(env(safe-area-inset-bottom)+12px)]`}
+      className={`${currentTheme.inputBg} border-t border-gray-100 p-3 ${isFocused ? "pb-[calc(env(safe-area-inset-bottom)+12px)]" : "pb-3"}`}
     >
       <form onSubmit={handleSubmit} className="flex gap-2 items-center">
         {/* Model Selector Button */}
