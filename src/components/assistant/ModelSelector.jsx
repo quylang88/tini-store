@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import AssistantIcon from "./AssistantIcon";
 import FlashIcon from "./FlashIcon";
 import DeepIcon from "./DeepIcon";
+import { AI_MODES } from "../../services/ai/config";
 
 const ModelSelector = ({ selectedModel, onSelect, isOpen, onClose, theme }) => {
   // Default theme fallback
@@ -15,25 +16,25 @@ const ModelSelector = ({ selectedModel, onSelect, isOpen, onClose, theme }) => {
 
   const models = [
     {
-      id: "SMART",
-      name: "Misa Smart",
-      description: "Cân bằng giữa tốc độ và trí tuệ. Phù hợp đa số tác vụ.",
+      id: "standard",
+      name: AI_MODES.standard.label,
+      description: AI_MODES.standard.description,
       icon: AssistantIcon,
       color: "text-rose-600",
       bg: "bg-rose-100",
     },
     {
-      id: "FLASH",
-      name: "Misa Flash",
-      description: "Phản hồi tức thì, thích hợp tra cứu nhanh.",
+      id: "fast",
+      name: AI_MODES.fast.label,
+      description: AI_MODES.fast.description,
       icon: FlashIcon,
       color: "text-amber-600",
       bg: "bg-amber-100",
     },
     {
-      id: "DEEP",
-      name: "Misa Deep",
-      description: "Tìm kiếm sâu và phân tích kỹ. Sẽ mất thời gian hơn.",
+      id: "deep",
+      name: AI_MODES.deep.label,
+      description: AI_MODES.deep.description,
       icon: DeepIcon,
       color: "text-violet-600",
       bg: "bg-violet-100",
