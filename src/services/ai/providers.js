@@ -10,37 +10,72 @@ import { PROVIDERS, TAVILY_API_URL, geminiSafetySettings } from "./config";
 
 /**
  * Gọi API Google Gemini
+ * @param {string} modelName
+ * @param {Array} history - Danh sách tin nhắn [{role: 'user'|'model', content: '...'}]
+ * @param {string} systemInstruction - Prompt hệ thống
+ * @param {number} temperature
  */
 export const callGeminiAPI = async (
   modelName,
-  fullPrompt,
+  history,
+  systemInstruction,
   temperature = 0.7,
 ) => {
   const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
   if (!apiKey) throw new Error("Chưa cấu hình VITE_GEMINI_API_KEY");
 
-  // Gemini SDK allows setting generation config
   const genAI = new GoogleGenerativeAI(apiKey);
   const model = genAI.getGenerativeModel({
     model: modelName,
     safetySettings: geminiSafetySettings,
+    systemInstruction: systemInstruction, // Gemini hỗ trợ systemInstruction trực tiếp
     generationConfig: {
       temperature: temperature,
     },
   });
 
-  const result = await model.generateContent(fullPrompt);
+  // Chuyển đổi format history sang format của Gemini (Content objects)
+  // Gemini expects: { role: "user" | "model", parts: [{ text: "..." }] }
+  // Lưu ý: history ở đây đã bao gồm câu hỏi mới nhất ở cuối
+  const contents = history.map((msg) => ({
+    role: msg.role === "user" ? "user" : "model",
+    parts: [{ text: msg.content }],
+  }));
+
+  // Gọi generateContent với toàn bộ lịch sử hội thoại
+  const result = await model.generateContent({ contents });
   const response = await result.response;
   return response.text();
 };
 
 /**
  * Gọi API Groq (Tương thích OpenAI)
- * Sử dụng fetch trực tiếp để không cần cài thêm SDK
+ * @param {string} modelName
+ * @param {Array} history - Danh sách tin nhắn [{role: 'user'|'model', content: '...'}]
+ * @param {string} systemInstruction - Prompt hệ thống
+ * @param {number} temperature
  */
-export const callGroqAPI = async (modelName, fullPrompt, temperature = 0.5) => {
+export const callGroqAPI = async (
+  modelName,
+  history,
+  systemInstruction,
+  temperature = 0.5,
+) => {
   const apiKey = import.meta.env.VITE_GROQ_API_KEY;
   if (!apiKey) throw new Error("Chưa cấu hình VITE_GROQ_API_KEY");
+
+  // Chuyển đổi format history sang format của OpenAI/Groq
+  // Groq expects: { role: "user" | "assistant" | "system", content: "..." }
+  const messages = [
+    {
+      role: "system",
+      content: systemInstruction,
+    },
+    ...history.map((msg) => ({
+      role: msg.role === "user" ? "user" : "assistant", // Map 'model' -> 'assistant'
+      content: msg.content,
+    })),
+  ];
 
   const response = await fetch(
     "https://api.groq.com/openai/v1/chat/completions",
@@ -51,17 +86,7 @@ export const callGroqAPI = async (modelName, fullPrompt, temperature = 0.5) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        messages: [
-          {
-            role: "system",
-            content:
-              "Bạn là trợ lý ảo Misa hữu ích. Hãy trả lời dựa trên dữ liệu được cung cấp.",
-          },
-          {
-            role: "user",
-            content: fullPrompt,
-          },
-        ],
+        messages: messages,
         model: modelName,
         temperature: temperature,
         max_tokens: 1024,

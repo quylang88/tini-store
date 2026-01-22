@@ -66,6 +66,7 @@ const Assistant = ({
         text,
         { products, orders, settings },
         modelMode,
+        messages, // Pass current history
       );
 
       setMessages((prev) => [...prev, response]);

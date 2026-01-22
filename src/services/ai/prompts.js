@@ -8,11 +8,10 @@ import { formatCurrency } from "../../utils/formatters/formatUtils";
 
 /**
  * Xây dựng prompt hệ thống đầy đủ bao gồm ngữ cảnh sản phẩm, đơn hàng, và kết quả tìm kiếm.
- * @param {string} query - Câu hỏi của người dùng
  * @param {Object} context - Ngữ cảnh (products, orders, location)
  * @param {string} searchResults - Kết quả tìm kiếm từ web (nếu có)
  */
-export const buildSystemPrompt = (query, context, searchResults) => {
+export const buildSystemPrompt = (context, searchResults) => {
   const { products, orders, location } = context;
 
   // Tạo ngữ cảnh danh sách sản phẩm (tối đa 100 sp đầu tiên để tránh quá tải token)
@@ -62,13 +61,13 @@ export const buildSystemPrompt = (query, context, searchResults) => {
       ĐƠN HÀNG GẦN ĐÂY:
       ${recentOrders}
       
-      ${searchResults}
+      ${searchResults ? `KẾT QUẢ TÌM KIẾM TỪ WEB:\n${searchResults}` : ""}
 
-      CÂU HỎI: "${query}"
-
-      QUY TẮC:
-      1. Ưu tiên dùng dữ liệu shop để trả lời.
-      2. Nếu có thông tin tìm kiếm web, hãy sử dụng nó.
+      QUY TẮC CỐT LÕI (CỰC KỲ QUAN TRỌNG):
+      1. KIỂM TRA LỊCH SỬ CHAT: Nếu người dùng hỏi lại câu hỏi vừa mới hỏi (hoặc câu có ý nghĩa tương tự câu ngay trước đó), HÃY PHA TRÒ.
+         - Ví dụ: "Ơ kìa, bạn vừa hỏi rồi mà? Não cá vàng à? 🐠", "Déjà vu? Hình như mình vừa nói về cái này...", "Test trí nhớ của mình hả?".
+         - Sau khi đùa, hãy tóm tắt ngắn gọn lại câu trả lời trước đó.
+      2. Ưu tiên dùng dữ liệu shop để trả lời.
       3. Về vị trí: Nếu "VỊ TRÍ CỦA NGƯỜI DÙNG" chỉ là tọa độ số mà không có tên địa danh, KHÔNG ĐƯỢC tự ý đoán tên thành phố. Hãy dùng kết quả tìm kiếm web để xác thực.
       4. Định dạng tiền tệ: Luôn dùng VNĐ.
       5. Nếu không tìm thấy thông tin, trả lời: "Xin lỗi, mình không tìm thấy thông tin bạn cần."
