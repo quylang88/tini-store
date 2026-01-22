@@ -6,6 +6,7 @@ import ChatInput from "../components/assistant/ChatInput";
 import ModelSelector from "../components/assistant/ModelSelector";
 import { processQuery } from "../services/aiAssistantService";
 import { ASSISTANT_THEMES } from "../constants/assistantThemes";
+import { AI_MODES } from "../services/ai/config";
 
 const Assistant = ({
   products,
@@ -38,7 +39,7 @@ const Assistant = ({
   };
 
   // State cho Model Selection
-  const [modelMode, setModelMode] = useState("SMART"); // SMART | FLASH | DEEP
+  const [modelMode, setModelMode] = useState("standard"); // standard | fast | deep
   const [isModelSelectorOpen, setIsModelSelectorOpen] = useState(false);
 
   const scrollToBottom = () => {
@@ -121,9 +122,9 @@ const Assistant = ({
           </div>
           <p className="text-xs text-gray-600 flex items-center gap-1">
             <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
-            {modelMode === "SMART" && "Misa Smart"}
-            {modelMode === "FLASH" && "Misa Flash"}
-            {modelMode === "DEEP" && "Misa Deep"}
+            {modelMode === "standard" && "Misa Smart"}
+            {modelMode === "fast" && "Misa Flash"}
+            {modelMode === "deep" && "Misa Deep"}
           </p>
         </div>
 

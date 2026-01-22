@@ -26,7 +26,7 @@ const ChatInput = ({
   onSend,
   disabled,
   onOpenModelSelector,
-  selectedModel = "SMART",
+  selectedModel = "standard",
   theme,
 }) => {
   const [text, setText] = useState("");
@@ -152,13 +152,13 @@ const ChatInput = ({
           <div
             className={`absolute left-3 top-1/2 -translate-y-1/2 ${currentTheme.inputIconColor} z-10`}
           >
-            {selectedModel === "SMART" && (
+            {selectedModel === "standard" && (
               <AssistantIcon isActive={isFocused} size={18} loop={true} />
             )}
-            {selectedModel === "FLASH" && (
+            {selectedModel === "fast" && (
               <FlashIcon isActive={isFocused} size={18} loop={true} />
             )}
-            {selectedModel === "DEEP" && (
+            {selectedModel === "deep" && (
               <DeepIcon isActive={isFocused} size={18} loop={true} />
             )}
           </div>

@@ -38,11 +38,20 @@ const getGeminiModelInstance = (apiKey, modelName) => {
 /**
  * Gọi API Google Gemini
  */
-export const callGeminiAPI = async (modelName, fullPrompt) => {
+export const callGeminiAPI = async (modelName, fullPrompt, temperature = 0.7) => {
   const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
   if (!apiKey) throw new Error("Chưa cấu hình VITE_GEMINI_API_KEY");
 
-  const model = getGeminiModelInstance(apiKey, modelName);
+  // Gemini SDK allows setting generation config
+  const genAI = new GoogleGenerativeAI(apiKey);
+  const model = genAI.getGenerativeModel({
+    model: modelName,
+    safetySettings: geminiSafetySettings,
+    generationConfig: {
+      temperature: temperature,
+    }
+  });
+
   const result = await model.generateContent(fullPrompt);
   const response = await result.response;
   return response.text();
@@ -52,7 +61,7 @@ export const callGeminiAPI = async (modelName, fullPrompt) => {
  * Gọi API Groq (Tương thích OpenAI)
  * Sử dụng fetch trực tiếp để không cần cài thêm SDK
  */
-export const callGroqAPI = async (modelName, fullPrompt) => {
+export const callGroqAPI = async (modelName, fullPrompt, temperature = 0.5) => {
   const apiKey = import.meta.env.VITE_GROQ_API_KEY;
   if (!apiKey) throw new Error("Chưa cấu hình VITE_GROQ_API_KEY");
 
@@ -77,7 +86,7 @@ export const callGroqAPI = async (modelName, fullPrompt) => {
           },
         ],
         model: modelName,
-        temperature: 0.5,
+        temperature: temperature,
         max_tokens: 1024,
       }),
     },
@@ -97,7 +106,7 @@ export const callGroqAPI = async (modelName, fullPrompt) => {
 /**
  * Gọi Tavily API để tìm kiếm thông tin trên web
  */
-export const searchWeb = async (query, location = null) => {
+export const searchWeb = async (query, location = null, searchDepth = "basic", maxResults = 3) => {
   const tavilyKey = import.meta.env.VITE_TAVILY_API_KEY;
   if (!tavilyKey) {
     console.warn("Chưa cấu hình VITE_TAVILY_API_KEY");
@@ -112,9 +121,9 @@ export const searchWeb = async (query, location = null) => {
       body: JSON.stringify({
         api_key: tavilyKey,
         query: searchQuery,
-        search_depth: "basic",
+        search_depth: searchDepth,
         include_answer: false,
-        max_results: 3,
+        max_results: maxResults,
       }),
     });
 
