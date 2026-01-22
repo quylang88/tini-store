@@ -3,14 +3,14 @@ import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import AssistantIcon from "./AssistantIcon";
 import FlashIcon from "./FlashIcon";
-import LocalIcon from "./LocalIcon";
+import LiteIcon from "./LiteIcon";
 
 const ModelSelector = ({ selectedModel, onSelect, isOpen, onClose }) => {
   const models = [
     {
-      id: "PRO",
-      name: "Misa Pro",
-      description: "Thông minh nhất, dùng cho tác vụ phức tạp.",
+      id: "SMART",
+      name: "Misa Smart",
+      description: "Ổn định, thông minh, limit cao, phù hợp đa số tác vụ.",
       icon: AssistantIcon,
       color: "text-rose-600",
       bg: "bg-rose-100",
@@ -18,16 +18,16 @@ const ModelSelector = ({ selectedModel, onSelect, isOpen, onClose }) => {
     {
       id: "FLASH",
       name: "Misa Flash",
-      description: "Phản hồi nhanh, dùng cho câu hỏi đơn giản.",
+      description: "Tốc độ cao, thông minh, giới hạn lượt dùng.",
       icon: FlashIcon,
       color: "text-amber-600",
       bg: "bg-amber-100",
     },
     {
-      id: "LOCAL",
-      name: "Misa Local",
-      description: "Chạy cục bộ, bảo mật cao, không Internet.",
-      icon: LocalIcon,
+      id: "LITE",
+      name: "Misa Lite",
+      description: "Siêu tốc, tiết kiệm, tác vụ đơn giản.",
+      icon: LiteIcon,
       color: "text-blue-600",
       bg: "bg-blue-100",
     },

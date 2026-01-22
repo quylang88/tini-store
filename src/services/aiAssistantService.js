@@ -25,13 +25,12 @@ const PROVIDERS = {
  * Mỗi mục gồm: provider (nhà cung cấp) và model (tên model).
  */
 const MODEL_CONFIGS = {
-  // Chế độ PRO: Ưu tiên dùng Groq (nhanh/thông minh), nếu lỗi có thể fallback về Gemini Pro (nếu có config)
-  PRO: [
+  // Chế độ SMART: Ưu tiên dùng Groq (nhanh/thông minh)
+  SMART: [
     {
       provider: PROVIDERS.GROQ,
       model: import.meta.env.VITE_GROQ_MODEL_NAME,
     },
-    // Bạn có thể thêm Gemini Pro vào đây làm dự phòng nếu muốn
   ],
   // Chế độ FLASH: Dùng các model nhanh của Google
   FLASH: [
@@ -44,7 +43,7 @@ const MODEL_CONFIGS = {
       model: import.meta.env.VITE_GEMINI_MODEL_2_FLASH,
     },
   ],
-  // Chế độ LITE: Dùng model nhẹ nhất
+  // Chế độ LITE: Dùng model nhẹ nhất (Gemini Lite)
   LITE: [
     {
       provider: PROVIDERS.GEMINI,
@@ -264,8 +263,9 @@ export const processQuery = async (query, context, mode = "PRO") => {
     }
   }
 
+  
   // 3. Lấy danh sách model candidates dựa trên Mode
-  const modelCandidates = MODEL_CONFIGS[mode] || MODEL_CONFIGS.FLASH;
+  const modelCandidates = MODEL_CONFIGS[mode] || MODEL_CONFIGS.SMART;
 
   // 4. Xây dựng prompt
   // Lưu ý: Chúng ta xây dựng prompt 1 lần và dùng chung cho cả Groq và Gemini
