@@ -1,56 +1,67 @@
 import React from "react";
+import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import AssistantIcon from "./AssistantIcon";
 import FlashIcon from "./FlashIcon";
-import LocalIcon from "./LocalIcon";
+import DeepIcon from "./DeepIcon";
+import { AI_MODES } from "../../services/ai/config";
 
-const ModelSelector = ({ selectedModel, onSelect, isOpen, onClose }) => {
+const ModelSelector = ({ selectedModel, onSelect, isOpen, onClose, theme }) => {
+  // Default theme fallback
+  const currentTheme = theme || {
+    modelActiveBg: "bg-rose-50",
+    modelActiveRing: "ring-rose-200",
+    modelBadgeBg: "bg-rose-500",
+  };
+
   const models = [
     {
-      id: "PRO",
-      name: "Misa Pro",
-      description: "Thông minh nhất, dùng cho tác vụ phức tạp.",
+      id: "standard",
+      name: AI_MODES.standard.label,
+      description: AI_MODES.standard.description,
       icon: AssistantIcon,
-      color: "text-rose-500",
-      bg: "bg-rose-50",
+      color: "text-rose-600",
+      bg: "bg-rose-100",
     },
     {
-      id: "FLASH",
-      name: "Misa Flash",
-      description: "Phản hồi nhanh, dùng cho câu hỏi đơn giản.",
+      id: "fast",
+      name: AI_MODES.fast.label,
+      description: AI_MODES.fast.description,
       icon: FlashIcon,
-      color: "text-amber-500",
-      bg: "bg-amber-50",
+      color: "text-amber-600",
+      bg: "bg-amber-100",
     },
     {
-      id: "LOCAL",
-      name: "Misa Local",
-      description: "Chạy cục bộ, bảo mật cao, không Internet.",
-      icon: LocalIcon,
-      color: "text-blue-500",
-      bg: "bg-blue-50",
+      id: "deep",
+      name: AI_MODES.deep.label,
+      description: AI_MODES.deep.description,
+      icon: DeepIcon,
+      color: "text-violet-600",
+      bg: "bg-violet-100",
     },
   ];
 
-  return (
+  if (typeof document === "undefined") return null;
+
+  return createPortal(
     <AnimatePresence>
       {isOpen && (
         <>
-          {/* Overlay */}
+          {/* Overlay - Z-index 60 to be above TabBar (z-50) */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="absolute inset-0 bg-black/20 z-40 backdrop-blur-[1px]"
+            className="fixed inset-0 bg-black/20 z-[60] backdrop-blur-[1px]"
           />
 
-          {/* Menu */}
+          {/* Menu - Z-index 70 */}
           <motion.div
             initial={{ opacity: 0, y: 20, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.95 }}
-            className="absolute bottom-[80px] left-3 right-3 bg-white rounded-2xl shadow-xl border border-white/50 z-50 overflow-hidden"
+            className="fixed bottom-[80px] left-3 right-3 bg-white rounded-2xl shadow-xl border border-white/50 z-[70] overflow-hidden"
           >
             <div className="p-3 bg-gray-50 border-b border-gray-100">
               <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider">
@@ -70,7 +81,7 @@ const ModelSelector = ({ selectedModel, onSelect, isOpen, onClose }) => {
                     }}
                     className={`w-full flex items-center gap-3 p-3 rounded-xl text-left transition-all ${
                       isSelected
-                        ? "bg-rose-50 ring-1 ring-rose-200"
+                        ? `${currentTheme.modelActiveBg} ring-1 ${currentTheme.modelActiveRing}`
                         : "hover:bg-gray-50"
                     }`}
                   >
@@ -81,11 +92,13 @@ const ModelSelector = ({ selectedModel, onSelect, isOpen, onClose }) => {
                     </div>
                     <div className="flex-1">
                       <div className="flex items-center gap-2">
-                        <span className="font-bold text-gray-800 text-sm">
+                        <span className="font-bold text-gray-600 text-sm">
                           {model.name}
                         </span>
                         {isSelected && (
-                          <span className="text-[10px] font-bold px-1.5 py-0.5 bg-rose-500 text-white rounded-full">
+                          <span
+                            className={`text-[10px] font-bold px-1.5 py-0.5 ${currentTheme.modelBadgeBg} text-white rounded-full`}
+                          >
                             ĐANG DÙNG
                           </span>
                         )}
@@ -101,7 +114,8 @@ const ModelSelector = ({ selectedModel, onSelect, isOpen, onClose }) => {
           </motion.div>
         </>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body,
   );
 };
 

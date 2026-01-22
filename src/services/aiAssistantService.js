@@ -1,301 +1,281 @@
 /**
  * aiAssistantService.js
- *
  * Service này đóng vai trò là "Bộ não" cho Trợ lý ảo.
  */
 
 import {
-  GoogleGenerativeAI,
-  HarmCategory,
-  HarmBlockThreshold,
-} from "@google/generative-ai";
-import { formatCurrency } from "../utils/formatters/formatUtils";
-import { format } from "date-fns";
+  getModeConfig,
+  PROVIDERS,
+  SEARCH_KEYWORDS,
+  STANDARD_MODE_SEARCH_TRIGGERS,
+  FORCE_WEB_SEARCH_TRIGGERS,
+} from "./ai/config";
+import { callGeminiAPI, callGroqAPI, searchWeb } from "./ai/providers";
+import { buildSystemPrompt, buildSummarizePrompt } from "./ai/prompts";
+import {
+  getCurrentLocation,
+  createResponse,
+  getAddressFromCoordinates,
+} from "./ai/utils";
 
-// --- CẤU HÌNH MODEL ---
-const MODEL_CONFIGS = {
-  PRO: {
-    models: [
-      import.meta.env.VITE_GEMINI_MODEL_NAME_3,
-      import.meta.env.VITE_GEMINI_MODEL_NAME_2,
-    ],
-    enableTools: true,
-  },
-  FLASH: {
-    models: [import.meta.env.VITE_GEMINI_MODEL_NAME_2_LITE],
-    enableTools: true,
-  },
-  LOCAL: {
-    models: [import.meta.env.VITE_GEMMA_MODEL_NAME],
-    enableTools: false,
-  },
+// --- CẤU HÌNH MEMORY ---
+const SLIDING_WINDOW_SIZE = 6;
+
+// --- THUẬT TOÁN SO SÁNH CHUỖI THÔNG MINH (Dice Coefficient) ---
+const getBigrams = (str) => {
+  const s = str.toLowerCase().replace(/[^\w\s\u00C0-\u1EF9]/g, ""); // Giữ lại tiếng Việt và số
+  const words = s.split(/\s+/).filter((w) => w.length > 0);
+  return words;
 };
 
-// --- BIẾN CACHE (Singleton) ---
-let cachedKey = null;
-let cachedModels = {}; // Cache model instances by modelName
+const calculateSimilarity = (str1, str2) => {
+  const words1 = getBigrams(str1);
+  const words2 = getBigrams(str2);
 
-// Cấu hình an toàn
-const safetySettings = [
-  {
-    category: HarmCategory.HARM_CATEGORY_HARASSMENT,
-    threshold: HarmBlockThreshold.BLOCK_NONE,
-  },
-  {
-    category: HarmCategory.HARM_CATEGORY_HATE_SPEECH,
-    threshold: HarmBlockThreshold.BLOCK_NONE,
-  },
-  {
-    category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
-    threshold: HarmBlockThreshold.BLOCK_NONE,
-  },
-  {
-    category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
-    threshold: HarmBlockThreshold.BLOCK_NONE,
-  },
-];
+  if (words1.length === 0 || words2.length === 0) return 0.0;
 
-// Định nghĩa Tool
-const tools = [
-  {
-    googleSearch: {},
-  },
-];
+  const set1 = new Set(words1);
+  const set2 = new Set(words2);
 
-/**
- * Hàm lấy Model instance (có Cache)
- */
-const getModelInstance = (apiKey, modelName, enableTools) => {
-  if (apiKey !== cachedKey) {
-    cachedKey = apiKey;
-    cachedModels = {}; // Reset cache nếu đổi key
-  }
+  // Tìm số từ trùng nhau
+  const intersection = new Set([...set1].filter((x) => set2.has(x)));
 
-  const cacheKey = `${modelName}_${enableTools}`;
-  if (cachedModels[cacheKey]) return cachedModels[cacheKey];
-
-  const genAI = new GoogleGenerativeAI(apiKey);
-
-  const modelConfig = {
-    model: modelName,
-    safetySettings: safetySettings,
-  };
-
-  if (enableTools) {
-    modelConfig.tools = tools;
-  }
-
-  const model = genAI.getGenerativeModel(modelConfig);
-  cachedModels[cacheKey] = model;
-
-  return model;
+  // Công thức Dice: (2 * số_từ_trùng) / (tổng_số_từ_cả_2_câu)
+  return (2.0 * intersection.size) / (set1.size + set2.size);
 };
 
+const checkDuplicateQuery = (currentQuery, lastQuery) => {
+  if (!lastQuery) return false;
+
+  // 1. Check cơ bản: Giống hệt nhau
+  if (currentQuery.trim().toLowerCase() === lastQuery.trim().toLowerCase())
+    return true;
+
+  // 2. Check thông minh: Độ tương đồng từ ngữ
+  const similarity = calculateSimilarity(currentQuery, lastQuery);
+
+  // Ngưỡng: 0.85 nghĩa là giống nhau 85% về mặt từ ngữ
+  const SIMILARITY_THRESHOLD = 0.85;
+
+  if (similarity >= SIMILARITY_THRESHOLD) {
+    // --- GUARD: KIỂM TRA SỐ LIỆU ---
+    // Nếu câu chứa số khác nhau thì KHÔNG bao giờ là trùng (VD: Mua 1 cái vs Mua 2 cái)
+    const nums1 = currentQuery.match(/\d+/g) || [];
+    const nums2 = lastQuery.match(/\d+/g) || [];
+
+    // Nếu số lượng con số tìm thấy khác nhau, hoặc giá trị số khác nhau -> KHÔNG trùng
+    if (nums1.join(",") !== nums2.join(",")) {
+      return false;
+    }
+
+    return true;
+  }
+
+  return false;
+};
+
+// --- XỬ LÝ CHÍNH (MAIN PROCESS) ---
+
 /**
- * Xử lý truy vấn của người dùng.
+ * Hàm chính để xử lý truy vấn từ người dùng.
  * @param {string} query - Câu hỏi của user
- * @param {object} context - Dữ liệu shop (products, orders...)
- * @param {string} mode - 'PRO' | 'FLASH' | 'LOCAL'
+ * @param {Object} context - Dữ liệu app (products, orders)
+ * @param {string} modeKey - Key chế độ AI (fast, standard, deep)
+ * @param {Array} history - Lịch sử chat ĐẦY ĐỦ (Bao gồm cả câu hỏi hiện tại)
+ * @param {string} currentSummary - Tóm tắt ngữ cảnh cũ (Memory)
  */
-export const processQuery = async (query, context, mode = "PRO") => {
-  // 1. KIỂM TRA MẠNG
+export const processQuery = async (
+  query,
+  context,
+  modeKey = "standard",
+  history = [],
+  currentSummary = "",
+  onStatusUpdate = () => {},
+) => {
   if (!navigator.onLine) {
-    return createResponse(
-      "text",
-      "Bạn đang Offline. Vui lòng kiểm tra kết nối mạng.",
-    );
+    return createResponse("text", "Bạn đang Offline. Kiểm tra mạng đi bạn êi.");
   }
 
-  // 2. LẤY API KEY
-  let apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+  const modeConfig = getModeConfig(modeKey);
 
-  if (!apiKey) {
-    return createResponse(
-      "text",
-      "Chưa có cấu hình API Key. Vui lòng vào Cài đặt để nhập Gemini API Key.",
-    );
+  // 1. Xác định vị trí & Search Web
+  const coords = await getCurrentLocation();
+  let locationName = null;
+  let fullLocationInfo = coords || "Chưa rõ";
+
+  if (coords) {
+    locationName = await getAddressFromCoordinates(coords);
+    if (locationName) fullLocationInfo = `${locationName} (${coords})`;
   }
 
-  // 3. XÁC ĐỊNH CẤU HÌNH MODEL DỰA TRÊN MODE
-  const config = MODEL_CONFIGS[mode] || MODEL_CONFIGS.PRO;
+  const lowerQuery = query.toLowerCase();
+  const isForceSearch = FORCE_WEB_SEARCH_TRIGGERS.some((kw) =>
+    lowerQuery.includes(kw),
+  );
+  const isStandardSearchTrigger =
+    modeKey === "standard" &&
+    STANDARD_MODE_SEARCH_TRIGGERS.some((kw) => lowerQuery.includes(kw));
+  const isDefaultSearchTrigger =
+    (modeKey === "deep" && query.length > 5) ||
+    SEARCH_KEYWORDS.some((kw) => lowerQuery.includes(kw));
+  const shouldSearch =
+    isForceSearch || isStandardSearchTrigger || isDefaultSearchTrigger;
 
-  // 4. GỌI GEMINI VỚI CƠ CHẾ FAILOVER
-  try {
-    return await processQueryWithFailover(query, context, apiKey, config);
-  } catch (error) {
-    console.error("Gemini Error:", error);
+  let searchResults = "";
+  if (shouldSearch) {
+    onStatusUpdate("Đang lướt web tìm info...");
+    const searchLocation = locationName || coords;
+    const webData = await searchWeb(
+      query,
+      searchLocation,
+      modeConfig.search_depth,
+      modeConfig.max_results,
+    );
+    if (webData) searchResults = webData;
+    onStatusUpdate(null);
+  }
 
-    if (
-      !navigator.onLine ||
-      error.message?.includes("Failed to fetch") ||
-      error.message?.includes("NetworkError")
-    ) {
-      return createResponse(
-        "text",
-        "Lỗi kết nối mạng. Vui lòng kiểm tra internet và thử lại.",
+  // 2. Xử lý Lịch sử chat & CHECK TRÙNG LẶP THÔNG MINH
+
+  // Vì history truyền vào đã bao gồm câu hỏi hiện tại ở cuối cùng.
+  // Nên ta phải lọc ra danh sách User Message, sau đó lấy tin nhắn ÁP CHÓT (tin trước tin hiện tại).
+
+  const userMessages = history.filter(
+    (msg) => msg.sender === "user" || msg.role === "user",
+  );
+  let isDuplicate = false;
+
+  // Chỉ check trùng lặp nếu có ít nhất 2 tin nhắn của user (Tin hiện tại + Tin trước đó)
+  if (userMessages.length >= 2) {
+    const previousUserMsg = userMessages[userMessages.length - 2]; // Lấy tin nhắn áp chót
+    isDuplicate = checkDuplicateQuery(query, previousUserMsg.content);
+
+    if (isDuplicate) {
+      console.log(
+        "Phát hiện trùng lặp với tin nhắn trước đó:",
+        previousUserMsg.content,
       );
     }
+  }
 
-    return createResponse(
-      "text",
-      "Đã có lỗi xảy ra khi xử lý yêu cầu (" + error.message + ")",
+  const cleanHistory = history
+    .filter(
+      (msg) =>
+        msg.type === "text" &&
+        (msg.sender === "user" || msg.sender === "assistant"),
+    )
+    .map((msg) => ({
+      role: msg.sender === "user" ? "user" : "model",
+      content: msg.content,
+    }));
+
+  const recentHistory = cleanHistory.slice(-SLIDING_WINDOW_SIZE);
+
+  // 3. Xây dựng System Prompt (với cờ isDuplicate)
+  const systemInstruction = buildSystemPrompt(
+    { ...context, location: fullLocationInfo },
+    searchResults,
+    currentSummary,
+    isDuplicate, // <--- Truyền kết quả so sánh vào
+  );
+
+  // 4. Gọi AI
+  try {
+    const responseText = await processQueryWithFailover(
+      modeConfig.model,
+      recentHistory,
+      systemInstruction,
+      modeConfig.temperature,
     );
+    return createResponse("text", responseText);
+  } catch (error) {
+    console.error("AI Service Error:", error);
+    return createResponse("text", `Misa bị lỗi rồi: ${error.message}`);
   }
 };
 
 /**
- * Thực hiện gọi AI với cơ chế thử lại (Failover) khi gặp lỗi 429
+ * Hàm TÓM TẮT LỊCH SỬ
  */
-const processQueryWithFailover = async (query, context, apiKey, config) => {
-  const { models, enableTools } = config;
+export const summarizeChatHistory = async (
+  currentSummary,
+  messagesToSummarize,
+) => {
+  if (!messagesToSummarize || messagesToSummarize.length === 0)
+    return currentSummary;
+
+  console.log("Đang chạy tóm tắt ngầm...");
+  // Dùng model NHANH NHẤT để tóm tắt cho rẻ và lẹ (Gemini Flash hoặc Groq Llama Instant)
+  const fastModel = [
+    {
+      provider: PROVIDERS.GEMINI,
+      model: import.meta.env.VITE_GEMINI_MODEL_2_FLASH,
+    }, // Ưu tiên Gemini Flash vì context window lớn
+    {
+      provider: PROVIDERS.GEMINI,
+      model: import.meta.env.VITE_GEMINI_MODEL_2_LITE,
+    },
+    {
+      provider: PROVIDERS.GROQ,
+      model: import.meta.env.VITE_GROQ_MODEL_INSTANT,
+    },
+  ];
+
+  const cleanMessages = messagesToSummarize.map((m) => ({
+    role: m.sender,
+    content: m.content,
+  }));
+
+  const prompt = buildSummarizePrompt(currentSummary, cleanMessages);
+
+  try {
+    const newSummary = await processQueryWithFailover(
+      fastModel,
+      [],
+      prompt,
+      0.3,
+    );
+    console.log("Tóm tắt mới:", newSummary);
+    return newSummary;
+  } catch (e) {
+    console.warn("Lỗi khi tóm tắt:", e);
+    return currentSummary;
+  }
+};
+
+const processQueryWithFailover = async (
+  candidates,
+  chatHistory,
+  systemInstruction,
+  temperature,
+) => {
   let lastError = null;
-
-  for (const modelName of models) {
+  for (const candidate of candidates) {
+    const { provider, model } = candidate;
+    if (!model) continue;
     try {
-      if (!modelName) continue;
-
-      const model = getModelInstance(apiKey, modelName, enableTools);
-      return await generateContent(model, query, context, enableTools);
-    } catch (error) {
-      console.error(`Error with model ${modelName}:`, error);
-      lastError = error;
-
-      // Nếu lỗi 429 (Resource Exhausted), thử model tiếp theo trong danh sách
-      if (error.message?.includes("429") || error.status === 429) {
-        console.warn(
-          `Model ${modelName} hit rate limit. Switching to backup...`,
+      let result = "";
+      if (provider === PROVIDERS.GEMINI) {
+        result = await callGeminiAPI(
+          model,
+          chatHistory,
+          systemInstruction,
+          temperature,
         );
-        continue;
+      } else if (provider === PROVIDERS.GROQ) {
+        result = await callGroqAPI(
+          model,
+          chatHistory,
+          systemInstruction,
+          temperature,
+        );
       }
-
-      // Nếu không phải 429, throw luôn để handle ở catch ngoài
-      throw error;
+      if (result) return result;
+    } catch (error) {
+      console.error(`Lỗi ${provider}:`, error);
+      lastError = error;
+      continue;
     }
   }
-
-  // Nếu chạy hết vòng lặp mà vẫn lỗi
-  if (
-    lastError &&
-    (lastError.message?.includes("429") || lastError.status === 429)
-  ) {
-    return createResponse(
-      "text",
-      "Bạn đã đạt tới giới hạn sử dụng hôm nay cho chế độ này. Vui lòng thử lại vào ngày mai hoặc chuyển sang chế độ khác (FLASH/LOCAL).",
-    );
-  }
-
-  // Các lỗi khác
-  throw lastError;
-};
-
-/**
- * Hàm core sinh nội dung
- */
-const generateContent = async (model, query, context, enableTools) => {
-  const systemPrompt = buildSystemPrompt(query, context, enableTools);
-
-  const result = await model.generateContent(systemPrompt);
-  const response = await result.response;
-  const text = response.text();
-
-  // Kiểm tra yêu cầu vị trí qua thẻ (chỉ khi có tools hoặc context liên quan)
-  if (text.includes("[[REQUEST_LOCATION]]")) {
-    return createResponse(
-      "location_request",
-      "Mình cần biết vị trí của bạn để trả lời câu hỏi này.",
-    );
-  }
-
-  return createResponse("text", text);
-};
-
-/**
- * Xây dựng prompt hệ thống
- */
-const buildSystemPrompt = (query, context, enableTools) => {
-  const { products, orders } = context;
-
-  // --- CHUẨN BỊ DATA ---
-  const productContext = products
-    .slice(0, 100)
-    .map(
-      (p) =>
-        `- ${p.name} (Giá: ${formatCurrency(p.price)}, Kho: ${p.stock}, ID: ${p.id})`,
-    )
-    .join("\n");
-
-  const today = new Date().toLocaleDateString("en-CA");
-  const todayRevenue = orders
-    .filter((o) => o.date.startsWith(today) && o.status !== "cancelled")
-    .reduce((sum, o) => sum + o.total, 0);
-
-  // Lấy 20 đơn hàng gần nhất
-  const recentOrders = [...orders]
-    .sort((a, b) => new Date(b.date) - new Date(a.date))
-    .slice(0, 20)
-    .map((o) => {
-      const dateStr = format(new Date(o.date), "dd/MM/yyyy HH:mm");
-      const itemsSummary = o.items
-        .map((i) => `${i.name} (x${i.quantity})`)
-        .join(", ");
-      return `- Đơn ${o.id} (${dateStr}): ${o.customerName || "Khách lẻ"} - ${formatCurrency(o.total)} - Items: ${itemsSummary} - Trạng thái: ${o.status}`;
-    })
-    .join("\n");
-
-  const statsContext = `
-    - Ngày hiện tại: ${today}
-    - Doanh thu hôm nay: ${formatCurrency(todayRevenue)}
-    - Tổng số đơn hàng tích lũy: ${orders.length}
-    `;
-
-  let searchInstructions = "";
-  if (enableTools) {
-    searchInstructions = `
-      2. Nếu người dùng hỏi về vị trí, thời tiết...:
-         - NẾU trong câu hỏi hoặc context đã có tọa độ (Vĩ độ/Kinh độ), HÃY DÙNG GOOGLE SEARCH với tọa độ đó để trả lời. KHÔNG được yêu cầu lại vị trí.
-         - NẾU CHƯA CÓ tọa độ, hãy trả lời duy nhất bằng thẻ: [[REQUEST_LOCATION]]
-      3. Nếu người dùng hỏi thông tin bên ngoài khác, HÃY DÙNG GOOGLE SEARCH.
-      `;
-  } else {
-    searchInstructions = `
-      2. Bạn đang hoạt động ở chế độ OFFLINE/LOCAL. Bạn KHÔNG có khả năng truy cập internet hay Google Search.
-      3. Chỉ trả lời dựa trên dữ liệu Shop được cung cấp và kiến thức có sẵn. Nếu không biết, hãy nói rõ là không có thông tin.
-      `;
-  }
-
-  return `
-      Bạn là Trợ lý ảo Misa của "Tiny Shop".
-      Nhiệm vụ: Trả lời ngắn gọn, thân thiện bằng Tiếng Việt.
-
-      DỮ LIỆU SHOP:
-      ${statsContext}
-
-      TOP SẢN PHẨM (Tối đa 100):
-      ${productContext}
-
-      ĐƠN HÀNG GẦN ĐÂY (Tối đa 20):
-      ${recentOrders}
-
-      CÂU HỎI: "${query}"
-
-      QUY TẮC:
-      1. Ưu tiên dùng dữ liệu shop (sản phẩm, đơn hàng) để trả lời.
-      ${searchInstructions}
-      4. Định dạng tiền tệ: Luôn dùng VNĐ (ví dụ: "1.000.000₫").
-      5. Nếu không tìm thấy thông tin, trả lời: "Xin lỗi, mình không tìm thấy thông tin bạn cần."
-    `;
-};
-
-/**
- * Helper tạo object phản hồi
- */
-const createResponse = (type, content, data = null) => {
-  return {
-    id: Date.now().toString(),
-    sender: "assistant",
-    type,
-    content,
-    data,
-    timestamp: new Date(),
-  };
+  throw lastError || new Error("All models failed.");
 };
