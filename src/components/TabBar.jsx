@@ -28,6 +28,7 @@ const TabBar = ({ activeTab, setActiveTab, isVisible = true }) => {
         active ? "translate-y-0" : "translate-y-full"
       }`}
     >
+      <div className="absolute top-full left-0 right-0 h-16 bg-amber-50/90 backdrop-blur" />
       <div className="flex justify-around items-center h-12">
         {tabs.map((tab) => {
           const Icon = tab.icon;
