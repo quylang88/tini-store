@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { ShoppingCart, Plus } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { formatNumber } from "../../utils/formatters/formatUtils";
@@ -24,6 +24,13 @@ const OrderListView = ({
     mode: "simple",
     setTabBarVisible,
   });
+
+  // Optimize: Memoize sorted orders to prevent re-sorting on every render (e.g. on scroll)
+  const sortedOrders = useMemo(() => {
+    return [...orders].sort(
+      (a, b) => new Date(b.date || 0) - new Date(a.date || 0),
+    );
+  }, [orders]);
 
   return (
     <div className="relative h-full bg-transparent">
@@ -55,9 +62,7 @@ const OrderListView = ({
         className="h-full overflow-y-auto p-3 pt-[calc(80px+env(safe-area-inset-top))] pb-24 space-y-3 min-h-0"
         onScroll={handleScroll}
       >
-        {[...orders]
-          .sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0)) // Newest first
-          .map((order) => {
+        {sortedOrders.map((order) => {
             const statusInfo = getOrderStatusInfo(order);
             const isPaid = order.status === "paid";
             const orderLabel = order.orderNumber
