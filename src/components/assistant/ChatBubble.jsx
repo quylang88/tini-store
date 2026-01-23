@@ -27,6 +27,7 @@ const ChatBubble = ({ message, theme }) => {
   // Interaction states
   const [isPressed, setIsPressed] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
+  const [menuPosition, setMenuPosition] = useState("bottom"); // "top" or "bottom"
   const [enableSelection, setEnableSelection] = useState(false);
   const pressTimer = useRef(null);
 
@@ -42,10 +43,22 @@ const ChatBubble = ({ message, theme }) => {
     if (enableSelection) return; // Nếu đang ở chế độ chọn text thì không kích hoạt long press
 
     pressTimer.current = setTimeout(() => {
+      // Calculate Menu Position
+      if (bubbleRef.current) {
+        const rect = bubbleRef.current.getBoundingClientRect();
+        const spaceBelow = window.innerHeight - rect.bottom;
+        // Nếu khoảng trống bên dưới < 220px (đủ cho menu + keyboard đè lên), hiện menu lên trên
+        if (spaceBelow < 220) {
+          setMenuPosition("top");
+        } else {
+          setMenuPosition("bottom");
+        }
+      }
+
       setIsPressed(true);
       setShowMenu(true);
       triggerHaptic(HAPTIC_PATTERNS.medium);
-    }, 250); // Reduced to 250ms for faster response
+    }, 500); // Tăng lên 500ms để tránh hiện nhầm
   };
 
   const handlePointerUp = () => {
@@ -133,6 +146,13 @@ const ChatBubble = ({ message, theme }) => {
     };
   }, [enableSelection]);
 
+  // Design: iMessage Style Border Radius
+  // User: Bo tròn hết, trừ góc dưới phải nhọn
+  // Bot: Bo tròn hết, trừ góc dưới trái nhọn
+  const borderRadiusClass = isUser
+    ? "rounded-[18px] rounded-br-[2px]"
+    : "rounded-[18px] rounded-bl-[2px]";
+
   return (
     <div
       ref={scrollRef}
@@ -146,10 +166,10 @@ const ChatBubble = ({ message, theme }) => {
         onPointerLeave={handlePointerLeave}
         animate={{ scale: isPressed ? 0.95 : 1 }}
         transition={{ type: "spring", stiffness: 400, damping: 17 }}
-        className={`max-w-[85%] rounded-[20px] px-5 py-3.5 shadow-sm relative transition-colors duration-200 ${
+        className={`max-w-[85%] px-5 py-3.5 shadow-sm relative transition-colors duration-200 ${borderRadiusClass} ${
           isUser
-            ? `${currentTheme.userBubbleBg} ${currentTheme.userBubbleText} rounded-tr-sm shadow-md`
-            : `bg-white text-gray-800 border ${currentTheme.botBubbleBorder} rounded-tl-sm shadow-sm`
+            ? `${currentTheme.userBubbleBg} ${currentTheme.userBubbleText} shadow-md`
+            : `bg-white text-gray-800 border ${currentTheme.botBubbleBorder} shadow-sm`
         } ${enableSelection ? "select-text cursor-text" : "select-none cursor-default touch-manipulation"}`}
       >
         {/* Nội dung văn bản */}
@@ -164,10 +184,25 @@ const ChatBubble = ({ message, theme }) => {
         <AnimatePresence>
           {showMenu && (
             <motion.div
-              initial={{ opacity: 0, scale: 0.8, y: 10 }}
+              initial={{
+                opacity: 0,
+                scale: 0.8,
+                y: menuPosition === "top" ? 10 : -10,
+              }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.8, y: 10 }}
-              className={`chat-bubble-menu absolute z-50 min-w-[160px] bg-white border border-gray-100 text-gray-700 rounded-xl shadow-xl overflow-hidden flex flex-col py-1 ${isUser ? "right-0 top-full mt-2" : "left-0 top-full mt-2"}`}
+              exit={{
+                opacity: 0,
+                scale: 0.8,
+                y: menuPosition === "top" ? 10 : -10,
+              }}
+              style={{
+                originY: menuPosition === "top" ? 1 : 0,
+              }}
+              className={`chat-bubble-menu absolute z-50 min-w-[160px] bg-white border border-gray-100 text-gray-700 rounded-xl shadow-xl overflow-hidden flex flex-col py-1 ${
+                isUser ? "right-0" : "left-0"
+              } ${
+                menuPosition === "top" ? "bottom-full mb-2" : "top-full mt-2"
+              }`}
             >
               <button
                 onClick={handleCopy}
