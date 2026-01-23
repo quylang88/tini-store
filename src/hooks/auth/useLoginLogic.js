@@ -1,25 +1,34 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
-const useLoginLogic = ({ onLogin }) => {
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
-  const [remember, setRemember] = useState(false);
-  const [error, setError] = useState("");
-
-  // Khi mở màn hình Login -> Kiểm tra xem có lưu mật khẩu không
-  useEffect(() => {
+const getSavedCredentials = () => {
+  try {
     const savedCreds = localStorage.getItem("tini_saved_creds");
     if (savedCreds) {
-      try {
-        const { user, pass } = JSON.parse(savedCreds);
-        setUsername(user);
-        setPassword(pass);
-        setRemember(true); // Tự động tích vào ô ghi nhớ
-      } catch {
-        localStorage.removeItem("tini_saved_creds");
-      }
+      return JSON.parse(savedCreds);
     }
-  }, []);
+  } catch {
+    localStorage.removeItem("tini_saved_creds");
+  }
+  return null;
+};
+
+const useLoginLogic = ({ onLogin }) => {
+  const [username, setUsername] = useState(() => {
+    const creds = getSavedCredentials();
+    return creds?.user || "";
+  });
+
+  const [password, setPassword] = useState(() => {
+    const creds = getSavedCredentials();
+    return creds?.pass || "";
+  });
+
+  const [remember, setRemember] = useState(() => {
+    const creds = getSavedCredentials();
+    return !!creds;
+  });
+
+  const [error, setError] = useState("");
 
   const handleSubmit = (e) => {
     e.preventDefault();
