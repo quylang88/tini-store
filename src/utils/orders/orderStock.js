@@ -44,12 +44,15 @@ export const syncProductsStock = (
   nextWarehouseKey,
   previousWarehouseKey = nextWarehouseKey,
 ) => {
-  const nextMap = new Map(
-    orderItems.map((item) => [item.productId, item.quantity]),
-  );
-  const previousItemMap = new Map(
-    previousItems.map((item) => [item.productId, item]),
-  );
+  const nextMap = new Map();
+  for (const item of orderItems) {
+    nextMap.set(item.productId, item.quantity);
+  }
+
+  const previousItemMap = new Map();
+  for (const item of previousItems) {
+    previousItemMap.set(item.productId, item);
+  }
 
   return products.map((product) => {
     const previousItem = previousItemMap.get(product.id);

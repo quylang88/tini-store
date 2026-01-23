@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useRef, useState, useCallback } from "react";
 import {
   createFormDataForLot,
   createFormDataForNewProduct,
@@ -185,18 +185,24 @@ const useInventoryLogic = ({ products, setProducts, settings }) => {
     });
   };
 
-  const handleDelete = (id) => {
-    const product = products.find((p) => p.id === id);
-    setConfirmModal({
-      title: "Xoá sản phẩm?",
-      message: product
-        ? `Bạn có chắc muốn xoá "${product.name}" khỏi kho?`
-        : "Bạn có chắc muốn xoá sản phẩm này?",
-      confirmLabel: "Xoá sản phẩm",
-      tone: "danger",
-      onConfirm: () => setProducts(products.filter((p) => p.id !== id)),
-    });
-  };
+  // Sử dụng useCallback để giữ reference của hàm handleDelete ổn định giữa các lần render.
+  // Điều này rất quan trọng để React.memo trong ProductListItem hoạt động hiệu quả,
+  // tránh việc các item trong danh sách bị render lại khi cha render (ví dụ khi scroll).
+  const handleDelete = useCallback(
+    (id) => {
+      const product = products.find((p) => p.id === id);
+      setConfirmModal({
+        title: "Xoá sản phẩm?",
+        message: product
+          ? `Bạn có chắc muốn xoá "${product.name}" khỏi kho?`
+          : "Bạn có chắc muốn xoá sản phẩm này?",
+        confirmLabel: "Xoá sản phẩm",
+        tone: "danger",
+        onConfirm: () => setProducts(products.filter((p) => p.id !== id)),
+      });
+    },
+    [products, setProducts],
+  );
 
   const { filteredProducts, nameSuggestions } = useInventoryFilters({
     products,
