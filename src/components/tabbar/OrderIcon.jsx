@@ -6,11 +6,10 @@ const OrderIcon = ({ isActive, size = 24, strokeWidth = 2, loop = false }) => {
   const activeStroke = `url(#${gradientId})`;
   const inactiveStroke = "currentColor";
 
-  // Cart body: Rolls forward (active), Rolls back slowly (inactive)
+  // Cart body pulses/breaths when active
   const cartVariants = {
     active: {
-      x: [0, 3, 0], // Roll forward slightly
-      rotate: [0, -5, 0],
+      scale: [1, 1.05, 1],
       transition: {
         duration: 2,
         repeat: loop ? Infinity : 0,
@@ -18,35 +17,28 @@ const OrderIcon = ({ isActive, size = 24, strokeWidth = 2, loop = false }) => {
       }
     },
     inactive: {
-      x: 0,
-      rotate: 0,
-      transition: {
-        duration: 2.5, // Slow roll back
-        ease: "easeInOut"
-      }
+      scale: 1,
+      transition: { duration: 2.5, ease: "easeInOut" }
     }
   };
 
-  // Items: Drop in (active), Float up/Fade out (inactive)
-  const itemVariants = {
-    active: (custom) => ({
-      y: [0, custom.dropDistance],
-      opacity: [0, 1],
-      scale: [0.5, 1],
+  // Content fills up inside the cart
+  const fillVariants = {
+    active: {
+      pathLength: 1,
+      opacity: 1,
+      y: [5, 0], // Rise up
       transition: {
         duration: 1.5,
-        delay: custom.delay,
-        repeat: loop ? Infinity : 0,
-        repeatType: "reverse",
-        ease: "bounceOut",
+        ease: "easeOut",
       }
-    }),
+    },
     inactive: {
-      y: -10, // Float up
+      pathLength: 0,
       opacity: 0,
-      scale: 0.5,
+      y: 5, // Sink down
       transition: {
-        duration: 2, // Slow fade out
+        duration: 2.5,
         ease: "easeInOut"
       }
     }
@@ -74,28 +66,28 @@ const OrderIcon = ({ isActive, size = 24, strokeWidth = 2, loop = false }) => {
         </linearGradient>
       </defs>
 
-      {/* Falling Item 1 */}
-      <motion.circle
-        cx="14"
-        cy="6"
-        r="2"
+      {/* Content (Fill) - Represents items inside */}
+      <motion.path
+        d="M6 10h11v7h-11z" // Simple block shape inside cart area
         fill={isActive ? activeStroke : "none"}
         stroke="none"
-        variants={itemVariants}
-        custom={{ dropDistance: 10, delay: 0.2 }}
+        opacity="0.3"
+        variants={fillVariants}
+        initial="inactive"
         animate={isActive ? "active" : "inactive"}
       />
 
-      {/* Falling Item 2 */}
-      <motion.circle
-        cx="10"
-        cy="4"
-        r="1.5"
-        fill={isActive ? activeStroke : "none"}
-        stroke="none"
-        variants={itemVariants}
-        custom={{ dropDistance: 12, delay: 0.5 }}
-        animate={isActive ? "active" : "inactive"}
+      {/* Items popping out top */}
+      <motion.path
+         d="M8 8l2-2 M12 7l0-3 M16 8l-2-2"
+         stroke={isActive ? activeStroke : "none"}
+         strokeWidth="2"
+         variants={{
+            active: { opacity: [0, 1], y: [5, 0], transition: { delay: 0.5, duration: 1 } },
+            inactive: { opacity: 0, y: 5, transition: { duration: 2 } }
+         }}
+         initial="inactive"
+         animate={isActive ? "active" : "inactive"}
       />
 
       {/* Cart Body */}

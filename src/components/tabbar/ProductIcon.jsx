@@ -6,46 +6,71 @@ const ProductIcon = ({ isActive, size = 24, strokeWidth = 2, loop = false }) => 
   const activeStroke = `url(#${gradientId})`;
   const inactiveStroke = "currentColor";
 
-  const boxVariants = {
+  // 3D Cube Faces Variants
+  // Top Face
+  const topFaceVariants = {
     active: {
-      scale: [1, 0],
-      opacity: [1, 0],
-      rotate: [0, 180],
-      transition: { duration: 1.5, ease: "easeInOut" }
+      y: -4,
+      rotate: -10,
+      opacity: 0.8,
+      transition: { duration: 2, repeat: loop ? Infinity : 0, repeatType: "reverse", ease: "easeInOut" }
     },
     inactive: {
-      scale: 1,
-      opacity: 1,
+      y: 0,
       rotate: 0,
-      transition: {
-        duration: 2.5, // Slow reverse
-        ease: "easeInOut",
-        delay: 0.2
-      }
+      opacity: 1,
+      transition: { duration: 2.5, ease: "easeInOut" }
     }
   };
 
-  const starVariants = {
+  // Left Face
+  const leftFaceVariants = {
     active: {
-      scale: [0, 1.2, 1],
-      opacity: [0, 1, 1],
-      rotate: [0, 180, 360],
-      transition: {
-        duration: 2.5,
-        repeat: loop ? Infinity : 0,
-        repeatType: "reverse",
-        ease: "easeInOut",
-        delay: 1 // Wait for box
-      }
+      x: -3,
+      y: 2,
+      rotate: -5,
+      opacity: 0.8,
+      transition: { duration: 2, repeat: loop ? Infinity : 0, repeatType: "reverse", ease: "easeInOut", delay: 0.1 }
+    },
+    inactive: {
+      x: 0,
+      y: 0,
+      rotate: 0,
+      opacity: 1,
+      transition: { duration: 2.5, ease: "easeInOut" }
+    }
+  };
+
+  // Right Face
+  const rightFaceVariants = {
+    active: {
+      x: 3,
+      y: 2,
+      rotate: 5,
+      opacity: 0.8,
+      transition: { duration: 2, repeat: loop ? Infinity : 0, repeatType: "reverse", ease: "easeInOut", delay: 0.2 }
+    },
+    inactive: {
+      x: 0,
+      y: 0,
+      rotate: 0,
+      opacity: 1,
+      transition: { duration: 2.5, ease: "easeInOut" }
+    }
+  };
+
+  // Inner Glow Core (Only visible when active)
+  const coreVariants = {
+    active: {
+      scale: [0, 1, 0.8],
+      opacity: [0, 1, 0.5],
+      rotate: 180,
+      transition: { duration: 2, repeat: loop ? Infinity : 0, repeatType: "reverse", ease: "easeInOut" }
     },
     inactive: {
       scale: 0,
       opacity: 0,
-      rotate: 0,
-      transition: {
-        duration: 2.5, // Slow reverse
-        ease: "easeInOut"
-      }
+      transition: { duration: 1.5, ease: "fadeOut" }
     }
   };
 
@@ -71,31 +96,40 @@ const ProductIcon = ({ isActive, size = 24, strokeWidth = 2, loop = false }) => 
         </linearGradient>
       </defs>
 
-      {/* Box Group - Transforms into Star */}
-      <motion.g
-        variants={boxVariants}
+      {/* Inner Core (Glow) */}
+      <motion.circle
+        cx="12"
+        cy="12"
+        r="3"
+        fill={isActive ? activeStroke : "none"}
+        stroke="none"
+        variants={coreVariants}
         animate={isActive ? "active" : "inactive"}
-        style={{ transformOrigin: "12px 12px" }}
-      >
-        <path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z" />
-        <path d="m3.3 7 8.7 5 8.7-5" />
-        <path d="M12 22v-9" />
-      </motion.g>
+      />
 
-      {/* Magic Star/Sparkle - Appears when Active */}
-      <motion.g
-        variants={starVariants}
-        initial="inactive"
+      {/* Top Face (Diamond) */}
+      <motion.path
+        d="M12 3l7 4-7 4-7-4 7-4z"
+        variants={topFaceVariants}
         animate={isActive ? "active" : "inactive"}
         style={{ transformOrigin: "12px 12px" }}
-      >
-        <path
-          d="M12 2L14.4 9.6L22 12L14.4 14.4L12 22L9.6 14.4L2 12L9.6 9.6L12 2Z"
-          fill={isActive ? activeStroke : "none"}
-          stroke={isActive ? activeStroke : "none"}
-        />
-        <circle cx="12" cy="12" r="8" stroke={isActive ? activeStroke : "none"} strokeWidth="1" strokeDasharray="4 4" opacity="0.5" />
-      </motion.g>
+      />
+
+      {/* Left Face */}
+      <motion.path
+        d="M5 7v10l7 4v-10l-7-4z"
+        variants={leftFaceVariants}
+        animate={isActive ? "active" : "inactive"}
+        style={{ transformOrigin: "12px 12px" }}
+      />
+
+      {/* Right Face */}
+      <motion.path
+        d="M19 7v10l-7 4v-10l7-4z"
+        variants={rightFaceVariants}
+        animate={isActive ? "active" : "inactive"}
+        style={{ transformOrigin: "12px 12px" }}
+      />
     </svg>
   );
 };
