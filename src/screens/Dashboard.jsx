@@ -67,7 +67,7 @@ const Dashboard = ({ products, orders, onOpenDetail }) => {
 
       {/* Nội dung cuộn */}
       <div
-        className="h-full overflow-y-auto min-h-0 p-4 pt-[80px] space-y-4 pb-24 animate-fade-in"
+        className="h-full overflow-y-auto min-h-0 p-4 pt-[calc(80px+env(safe-area-inset-top))] space-y-4 pb-24 animate-fade-in"
         onScroll={handleScroll}
       >
         {/* Nhãn tiêu đề */}

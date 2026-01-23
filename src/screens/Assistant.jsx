@@ -1,5 +1,5 @@
 import React from "react";
-import { Bot, Palette, Sparkles, Eraser } from "lucide-react";
+import { Bot, Palette, Eraser } from "lucide-react";
 import { motion } from "framer-motion";
 import ChatBubble from "../components/assistant/ChatBubble";
 import ChatInput from "../components/assistant/ChatInput";
@@ -24,9 +24,25 @@ const Assistant = ({
   setMessages,
   isTyping,
   setIsTyping,
+  setTabBarVisible,
 }) => {
   // 1. Theme Logic
   const { activeTheme, handleCycleTheme } = useAssistantTheme();
+
+  const [isInputFocused, setIsInputFocused] = React.useState(false);
+
+  const handleInputFocus = () => {
+    setIsInputFocused(true);
+    setTabBarVisible(false);
+  };
+
+  const handleInputBlur = () => {
+    setIsInputFocused(false);
+    // Delay một chút để tránh layout bị giật trước khi bàn phím đóng hẳn
+    setTimeout(() => {
+      setTabBarVisible(true);
+    }, 100);
+  };
 
   // 2. Mode Logic
   const {
@@ -65,9 +81,15 @@ const Assistant = ({
   // 5. Scroll Logic
   const messagesEndRef = useAutoScroll([messages, loadingText]);
 
+  // Chiều cao TabBar mặc định (ước lượng 60px + safe area)
+  // Bạn có thể chỉnh số 60px này cho khớp với chiều cao thực tế của TabBar app bạn
+  const TABBAR_HEIGHT_SPACER = "calc(60px + env(safe-area-inset-bottom))";
+
   return (
     <motion.div
-      className="flex flex-col h-full relative overflow-hidden"
+      // FIX 1: Dùng fixed inset-0 để neo cứng màn hình vào viewport, tránh bị đẩy lên khi bàn phím hiện
+      // FIX 2: overscroll-none ngăn chặn việc kéo cả trang web xuống
+      className="fixed inset-0 z-40 flex flex-col w-full h-full overflow-hidden overscroll-none"
       animate={{
         backgroundColor: activeTheme.bgGradient,
       }}
@@ -77,9 +99,9 @@ const Assistant = ({
         ease: "linear",
       }}
     >
-      {/* Header */}
+      {/* HEADER: Flex-none để không bị co giãn */}
       <div
-        className={`flex items-center gap-3 px-4 py-3 border-b border-white/50 backdrop-blur-sm absolute top-0 left-0 right-0 z-20 shadow-sm ${activeTheme.headerBg}`}
+        className={`flex-none pt-[env(safe-area-inset-top)] flex items-center gap-3 px-4 py-3 border-b border-white/50 backdrop-blur-sm z-20 shadow-sm ${activeTheme.headerBg}`}
       >
         <div
           className={`w-10 h-10 rounded-full ${activeTheme.headerIconBg} text-white flex items-center justify-center shadow-md`}
@@ -142,7 +164,7 @@ const Assistant = ({
       </div>
 
       {/* Message List */}
-      <div className="flex-1 overflow-y-auto p-4 pt-[80px] bg-transparent relative">
+      <div className="flex-1 overflow-y-auto p-4 bg-transparent relative scroll-smooth overscroll-contain">
         {messages.length === 0 ? (
           <div className="h-full flex flex-col items-center justify-center text-gray-400 text-sm italic">
             <p>Màn hình trống.</p>
@@ -194,14 +216,32 @@ const Assistant = ({
         theme={activeTheme}
       />
 
-      <ChatInput
-        onSend={handleSendMessage}
-        disabled={isTyping}
-        onOpenModelSelector={() => setIsModelSelectorOpen(true)}
-        selectedModel={modelMode}
-        theme={activeTheme}
-      />
-      <div className="h-14"></div>
+      {/* Input Area + Spacer Container */}
+      {/* Container này sẽ nằm đè lên vị trí của TabBar khi bàn phím tắt */}
+      <div className="flex-none bg-white z-30 pb-0">
+        <ChatInput
+          onSend={handleSendMessage}
+          disabled={isTyping}
+          onOpenModelSelector={() => setIsModelSelectorOpen(true)}
+          selectedModel={modelMode}
+          theme={activeTheme}
+          onInputFocus={handleInputFocus}
+          onInputBlur={handleInputBlur}
+          isFocused={isInputFocused}
+        />
+
+        {/* SPACER QUAN TRỌNG: 
+            - Khi focus (phím hiện): Chiều cao = 0 (để input sát phím).
+            - Khi blur (phím ẩn): Chiều cao = TabBar (để đẩy input lên trên TabBar).
+        */}
+        <div
+          style={{
+            height: isInputFocused ? 0 : TABBAR_HEIGHT_SPACER,
+            transition: "height 0.3s ease-out",
+          }}
+          className="w-full bg-white flex-none"
+        />
+      </div>
     </motion.div>
   );
 };
