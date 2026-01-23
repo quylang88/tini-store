@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { processQuery } from "../../services/aiAssistantService";
+import { getRandomGreeting } from "../../constants/assistantGreetings";
 
 export const useAssistantChat = ({
   messages,
@@ -77,7 +78,9 @@ export const useAssistantChat = ({
     await forceSummarizeBuffer();
     setLoadingText(null);
 
-    setMessages([]);
+    // Reset về một câu chào mới ngẫu nhiên (tránh trùng câu cũ nếu có)
+    const currentGreeting = messages.length > 0 ? messages[0].content : null;
+    setMessages([getRandomGreeting(currentGreeting)]);
   };
 
   return {
