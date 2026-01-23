@@ -28,6 +28,8 @@ const ChatInput = ({
   onOpenModelSelector,
   selectedModel = "standard",
   theme,
+  onInputFocus,
+  onInputBlur,
 }) => {
   const [text, setText] = useState("");
   const [isFocused, setIsFocused] = useState(false);
@@ -135,7 +137,7 @@ const ChatInput = ({
 
   return (
     <div
-      className={`${currentTheme.inputBg} border-t border-gray-100 p-3 pb-[calc(env(safe-area-inset-bottom)+12px)]`}
+      className={`${currentTheme.inputBg} border-t border-gray-100 p-3 ${isFocused ? "pb-env(safe-area-inset-bottom)]" : "pb-3"}`}
     >
       <form onSubmit={handleSubmit} className="flex gap-2 items-center">
         {/* Model Selector Button */}
@@ -176,8 +178,14 @@ const ChatInput = ({
             type="text"
             value={text}
             onChange={(e) => setText(e.target.value)}
-            onFocus={() => setIsFocused(true)}
-            onBlur={() => setIsFocused(false)}
+            onFocus={() => {
+              setIsFocused(true);
+              if (onInputFocus) onInputFocus();
+            }}
+            onBlur={() => {
+              setIsFocused(false);
+              if (onInputBlur) onInputBlur();
+            }}
             disabled={disabled}
             className={`w-full pl-10 pr-4 py-3 ${currentTheme.inputFieldBg} border border-gray-200 rounded-full text-sm focus:outline-none focus:ring-2 ${currentTheme.inputRing} transition-all text-gray-800`}
           />

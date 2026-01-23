@@ -24,9 +24,22 @@ const Assistant = ({
   setMessages,
   isTyping,
   setIsTyping,
+  setTabBarVisible,
 }) => {
   // 1. Theme Logic
   const { activeTheme, handleCycleTheme } = useAssistantTheme();
+
+  const [isInputFocused, setIsInputFocused] = React.useState(false);
+
+  const handleInputFocus = () => {
+    setIsInputFocused(true);
+    setTabBarVisible(false);
+  };
+
+  const handleInputBlur = () => {
+    setIsInputFocused(false);
+    setTabBarVisible(true);
+  };
 
   // 2. Mode Logic
   const {
@@ -200,8 +213,17 @@ const Assistant = ({
         onOpenModelSelector={() => setIsModelSelectorOpen(true)}
         selectedModel={modelMode}
         theme={activeTheme}
+        onInputFocus={handleInputFocus}
+        onInputBlur={handleInputBlur}
       />
-      <div className="h-14"></div>
+      <motion.div
+        animate={{
+          height: isInputFocused
+            ? 0
+            : "calc(52px + env(safe-area-inset-bottom))",
+        }}
+        transition={{ duration: 0.3 }}
+      />
     </motion.div>
   );
 };
