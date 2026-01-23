@@ -15,6 +15,7 @@ import { useAssistantMode } from "../hooks/assistant/useAssistantMode";
 import { useAssistantMemory } from "../hooks/assistant/useAssistantMemory";
 import { useAssistantChat } from "../hooks/assistant/useAssistantChat";
 import { useAutoScroll } from "../hooks/assistant/useAutoScroll";
+import { useSwipeToReveal } from "../hooks/assistant/useSwipeToReveal";
 
 const Assistant = ({
   products,
@@ -80,6 +81,9 @@ const Assistant = ({
 
   // 5. Scroll Logic
   const messagesEndRef = useAutoScroll([messages, loadingText, isTyping]);
+
+  // 6. Swipe Logic
+  const { swipeX, handlers } = useSwipeToReveal();
 
   // Chiều cao TabBar mặc định (ước lượng 60px + safe area)
   // Bạn có thể chỉnh số 60px này cho khớp với chiều cao thực tế của TabBar app bạn
@@ -164,7 +168,12 @@ const Assistant = ({
       </div>
 
       {/* Message List */}
-      <div className="flex-1 overflow-y-auto p-4 bg-transparent relative scroll-smooth overscroll-contain">
+      <div
+        // FIX: Tăng padding-bottom (pb-20) để đảm bảo tin nhắn cuối không bị che bởi spacer hoặc bàn phím
+        // touch-pan-y: Cho phép scroll dọc tự nhiên, nhưng JS xử lý scroll ngang (swipe)
+        className="flex-1 overflow-y-auto overflow-x-hidden px-4 pt-4 pb-20 bg-transparent relative scroll-smooth overscroll-contain touch-pan-y"
+        {...handlers}
+      >
         {messages.length === 0 ? (
           <div className="h-full flex flex-col items-center justify-center text-gray-400 text-sm italic">
             <p>Màn hình trống.</p>
@@ -172,7 +181,12 @@ const Assistant = ({
           </div>
         ) : (
           messages.map((msg) => (
-            <ChatBubble key={msg.id} message={msg} theme={activeTheme} />
+            <ChatBubble
+              key={msg.id}
+              message={msg}
+              theme={activeTheme}
+              swipeX={swipeX}
+            />
           ))
         )}
 

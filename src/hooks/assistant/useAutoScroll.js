@@ -18,7 +18,12 @@ export const useAutoScroll = (dependencies = []) => {
     }
 
     // Cuộn mượt mà khi có thay đổi (tin nhắn mới, trạng thái typing...)
-    endRef.current?.scrollIntoView({ behavior: "smooth" });
+    // Thêm timeout nhỏ để đảm bảo DOM đã được cập nhật hoàn toàn (đặc biệt là layout)
+    const timer = setTimeout(() => {
+      endRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+    }, 100);
+
+    return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, dependencies);
 

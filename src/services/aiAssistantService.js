@@ -18,7 +18,7 @@ import {
 } from "./ai/utils";
 
 // --- CẤU HÌNH MEMORY ---
-const SLIDING_WINDOW_SIZE = 8; // Tăng window để nhớ ngữ cảnh dài hơn khi phân tích
+const SLIDING_WINDOW_SIZE = 6;
 
 // --- THUẬT TOÁN SO SÁNH CHUỖI ---
 const getBigrams = (str) => {
@@ -65,13 +65,13 @@ export const processQuery = async (
   if (!navigator.onLine) {
     return createResponse(
       "text",
-      "Mất kết nối mạng. Không thể check giá online được sếp ơi.",
+      "Mất mạng rồi mẹ Trang ơi, Misa không check giá online được 🥺",
     );
   }
 
   const modeConfig = getModeConfig(modeKey);
 
-  // 1. Xác định vị trí (Quan trọng nếu muốn tìm cửa hàng đối thủ quanh đây)
+  // 1. Xác định vị trí
   const coords = await getCurrentLocation();
   let locationName = null;
   let fullLocationInfo = coords || "Chưa rõ";
@@ -80,35 +80,36 @@ export const processQuery = async (
     if (locationName) fullLocationInfo = `${locationName} (${coords})`;
   }
 
-  // 2. LOGIC TÌM KIẾM THÔNG MINH (SMART SOURCING SEARCH)
+  // 2. LOGIC TÌM KIẾM THÔNG MINH (STRICT SOURCING)
   const lowerQuery = query.toLowerCase();
 
-  // Check trigger
   const isForceSearch = FORCE_WEB_SEARCH_TRIGGERS.some((kw) =>
     lowerQuery.includes(kw),
   );
   const isStandardSearchTrigger =
     modeKey === "standard" &&
     STANDARD_MODE_SEARCH_TRIGGERS.some((kw) => lowerQuery.includes(kw));
-  const isDeepSearch = modeKey === "deep"; // Mode deep luôn search nếu query đủ dài
+  const isDeepSearch = modeKey === "deep";
 
   const shouldSearch =
     isForceSearch ||
     isStandardSearchTrigger ||
     (isDeepSearch && query.length > 3);
 
-  let searchResults = "";
+  let searchResults = null; // Mặc định là null để Prompt biết là KHÔNG CÓ DATA
 
   if (shouldSearch) {
-    onStatusUpdate("Đang check giá & nguồn hàng...");
+    onStatusUpdate("Misa đang đi soi giá thị trường...");
 
-    // TỐI ƯU QUERY CHO SOURCING:
-    // Nếu user hỏi về giá/nhập hàng, tự động thêm ngữ cảnh Nhật Bản để tìm chính xác hơn
+    // Tự động thêm từ khóa để tìm đúng nguồn Nhật/Giá cả
     let searchQuery = query;
-    if (lowerQuery.includes("giá") || lowerQuery.includes("nhập")) {
-      // Nếu chưa có từ khóa Nhật, thêm vào để ưu tiên tìm nguồn gốc
+    if (
+      lowerQuery.includes("giá") ||
+      lowerQuery.includes("nhập") ||
+      lowerQuery.includes("mua")
+    ) {
       if (!lowerQuery.includes("nhật") && !lowerQuery.includes("japan")) {
-        searchQuery += " price Japan Rakuten Amazon JP";
+        searchQuery += " price Japan Rakuten Amazon JP review";
       }
     }
 
@@ -121,7 +122,15 @@ export const processQuery = async (
         modeConfig.search_depth,
         modeConfig.max_results,
       );
-      if (webData) searchResults = webData;
+
+      // FORMAT DỮ LIỆU ĐỂ AI TRÍCH DẪN ĐƯỢC
+      // Giả sử searchWeb trả về string hoặc object, ta cần format rõ ràng
+      if (webData) {
+        // Nếu providers trả về chuỗi raw, ta dùng luôn.
+        // Nếu logic bên providers đã parse ra array results, ta format lại ở đây (tuỳ implement của providers.js)
+        // Ở đây mình giả định webData là string tổng hợp từ providers.js
+        searchResults = webData;
+      }
     } catch (err) {
       console.warn("Search failed:", err);
     }
@@ -129,7 +138,7 @@ export const processQuery = async (
     onStatusUpdate(null);
   }
 
-  // 3. Xử lý Lịch sử & Check trùng
+  // 3. Xử lý Lịch sử
   const userMessages = history.filter(
     (msg) => msg.sender === "user" || msg.role === "user",
   );
@@ -152,10 +161,10 @@ export const processQuery = async (
 
   const recentHistory = cleanHistory.slice(-SLIDING_WINDOW_SIZE);
 
-  // 4. Build System Prompt (Updated for Manager)
+  // 4. Build System Prompt (STRICT MODE)
   const systemInstruction = buildSystemPrompt(
     { ...context, location: fullLocationInfo },
-    searchResults,
+    searchResults, // Truyền null nếu không tìm thấy gì
     currentSummary,
     isDuplicate,
   );
@@ -173,13 +182,13 @@ export const processQuery = async (
     console.error("AI Service Error:", error);
     return createResponse(
       "text",
-      `Lỗi hệ thống: ${error.message}. Thử lại sau nhé sếp.`,
+      `Lỗi rồi: ${error.message}. Misa chịu thua 😭`,
     );
   }
 };
 
 /**
- * Tóm tắt lịch sử (Giữ nguyên)
+ * Tóm tắt lịch sử
  */
 export const summarizeChatHistory = async (
   currentSummary,
@@ -188,7 +197,6 @@ export const summarizeChatHistory = async (
   if (!messagesToSummarize || messagesToSummarize.length === 0)
     return currentSummary;
 
-  // Dùng Gemini Flash cho nhanh và rẻ
   const fastModel = [
     {
       provider: PROVIDERS.GEMINI,

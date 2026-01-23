@@ -17,8 +17,10 @@ export const ASSISTANT_THEMES = {
 
     // Bubbles
     userBubbleBg: "bg-gradient-to-br from-rose-500 to-orange-500",
+    userTailFill: "fill-orange-500",
     userBubbleText: "text-white",
     botBubbleBorder: "border-rose-100",
+    botTailStroke: "stroke-rose-100",
     botStatsBg: "bg-rose-50",
     botStatsBorder: "border-rose-100",
     botStatsText: "text-rose-500",
@@ -56,8 +58,10 @@ export const ASSISTANT_THEMES = {
 
     // Bubbles
     userBubbleBg: "bg-gradient-to-br from-cyan-500 to-blue-600",
+    userTailFill: "fill-blue-600",
     userBubbleText: "text-white",
     botBubbleBorder: "border-cyan-100",
+    botTailStroke: "stroke-cyan-100",
     botStatsBg: "bg-cyan-50",
     botStatsBorder: "border-cyan-100",
     botStatsText: "text-cyan-600",
@@ -95,8 +99,10 @@ export const ASSISTANT_THEMES = {
 
     // Bubbles
     userBubbleBg: "bg-gradient-to-br from-violet-500 to-fuchsia-600",
+    userTailFill: "fill-fuchsia-600",
     userBubbleText: "text-white",
     botBubbleBorder: "border-violet-100",
+    botTailStroke: "stroke-violet-100",
     botStatsBg: "bg-violet-50",
     botStatsBorder: "border-violet-100",
     botStatsText: "text-violet-600",
