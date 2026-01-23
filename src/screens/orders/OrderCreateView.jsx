@@ -4,10 +4,10 @@ import { motion } from "framer-motion";
 import BarcodeScanner from "../../components/BarcodeScanner";
 import { WAREHOUSES } from "../../utils/inventory/warehouseUtils";
 
-import OrderCreateHeader from "./OrderCreateHeader";
-import OrderCreateProductList from "./OrderCreateProductList";
-import OrderCreateFooter from "./OrderCreateFooter";
-import OrderCreateReviewModal from "./OrderCreateReviewModal";
+import OrderCreateHeader from "../../components/orders/OrderCreateHeader";
+import OrderCreateProductList from "../../components/orders/OrderCreateProductList";
+import OrderCreateFooter from "../../components/orders/OrderCreateFooter";
+import OrderCreateReviewModal from "../../components/orders/OrderCreateReviewModal";
 import useScrollHandling from "../../hooks/ui/useScrollHandling";
 import ProductFilterHeader from "../../components/common/ProductFilterHeader";
 
