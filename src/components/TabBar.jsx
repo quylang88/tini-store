@@ -1,22 +1,19 @@
 import React from "react";
-import {
-  LayoutDashboard,
-  ShoppingCart,
-  Package,
-  Settings,
-  Sparkles,
-} from "lucide-react";
 import useMountTransition from "../hooks/ui/useMountTransition";
-import AssistantIcon from "./assistant/AssistantIcon";
 import { triggerHaptic, HAPTIC_PATTERNS } from "../utils/common/haptics";
+import DashboardIcon from "./tabbar/DashboardIcon";
+import ProductIcon from "./tabbar/ProductIcon";
+import OrderIcon from "./tabbar/OrderIcon";
+import SettingsIcon from "./tabbar/SettingsIcon";
+import AssistantIcon from "./assistant/AssistantIcon";
 
 const TabBar = ({ activeTab, setActiveTab, isVisible = true }) => {
   const tabs = [
-    { id: "dashboard", icon: LayoutDashboard, label: "Tổng quan" },
-    { id: "products", icon: Package, label: "Nhập kho" },
-    { id: "assistant", icon: Sparkles, label: "Trợ lý" },
-    { id: "orders", icon: ShoppingCart, label: "Xuất kho" },
-    { id: "settings", icon: Settings, label: "Cài đặt" },
+    { id: "dashboard", component: DashboardIcon, label: "Tổng quan" },
+    { id: "products", component: ProductIcon, label: "Nhập kho" },
+    { id: "assistant", component: AssistantIcon, label: "Trợ lý" },
+    { id: "orders", component: OrderIcon, label: "Xuất kho" },
+    { id: "settings", component: SettingsIcon, label: "Cài đặt" },
   ];
 
   const { shouldRender, active } = useMountTransition(isVisible, 300);
@@ -31,7 +28,7 @@ const TabBar = ({ activeTab, setActiveTab, isVisible = true }) => {
     >
       <div className="flex justify-around items-center h-14">
         {tabs.map((tab) => {
-          const Icon = tab.icon;
+          const IconComponent = tab.component;
           const isActive = activeTab === tab.id;
 
           const handleTabClick = () => {
@@ -49,11 +46,7 @@ const TabBar = ({ activeTab, setActiveTab, isVisible = true }) => {
                 isActive ? "text-rose-600 z-10" : "text-amber-500 z-0"
               }`}
             >
-              {tab.id === "assistant" ? (
-                <AssistantIcon isActive={isActive} size={24} />
-              ) : (
-                <Icon size={24} strokeWidth={isActive ? 2.5 : 2} />
-              )}
+              <IconComponent isActive={isActive} size={24} loop={false} />
               <span className="text-[10px] font-medium uppercase">
                 {tab.label}
               </span>

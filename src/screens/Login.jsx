@@ -11,25 +11,32 @@ const AuthField = ({
   value,
   onChange,
   placeholder,
-}) => (
-  <div>
-    <label className="block text-xs font-bold text-amber-700 uppercase mb-2 ml-1">
-      {label}
-    </label>
-    <div className="relative">
-      <span className="absolute left-3 top-3 text-amber-500">
-        <Icon size={20} />
-      </span>
-      <input
-        type={type}
-        className="w-full bg-white/90 border border-rose-200 rounded-xl py-3 pl-10 pr-4 outline-none focus:bg-white focus:border-rose-400 focus:ring-2 focus:ring-rose-100 transition text-amber-900"
-        placeholder={placeholder}
-        value={value}
-        onChange={onChange}
-      />
+}) => {
+  const id = React.useId();
+  return (
+    <div>
+      <label
+        htmlFor={id}
+        className="block text-xs font-bold text-amber-700 uppercase mb-2 ml-1"
+      >
+        {label}
+      </label>
+      <div className="relative">
+        <span className="absolute left-3 top-3 text-amber-500">
+          <Icon size={20} />
+        </span>
+        <input
+          id={id}
+          type={type}
+          className="w-full bg-white/90 border border-rose-200 rounded-xl py-3 pl-10 pr-4 outline-none focus:bg-white focus:border-rose-400 focus:ring-2 focus:ring-rose-100 transition text-amber-900"
+          placeholder={placeholder}
+          value={value}
+          onChange={onChange}
+        />
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 const Login = ({ onLogin }) => {
   const {
@@ -97,12 +104,15 @@ const Login = ({ onLogin }) => {
             />
 
             {/* Checkbox Ghi nhớ thông tin */}
-            <div
-              className="flex items-center gap-2 cursor-pointer group"
-              onClick={() => setRemember(!remember)}
-            >
+            <label className="flex items-center gap-2 cursor-pointer group">
+              <input
+                type="checkbox"
+                className="sr-only peer"
+                checked={remember}
+                onChange={(e) => setRemember(e.target.checked)}
+              />
               <div
-                className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${
+                className={`w-5 h-5 rounded border flex items-center justify-center transition-colors peer-focus:ring-2 peer-focus:ring-rose-500 peer-focus:ring-offset-1 ${
                   remember
                     ? "bg-rose-500 border-rose-500"
                     : "bg-white border-rose-200 group-active:border-rose-400"
@@ -113,7 +123,7 @@ const Login = ({ onLogin }) => {
               <span className="text-sm text-amber-700 select-none">
                 Lưu thông tin đăng nhập
               </span>
-            </div>
+            </label>
 
             <button
               type="submit"
