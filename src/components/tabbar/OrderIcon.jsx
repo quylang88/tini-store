@@ -6,51 +6,46 @@ const OrderIcon = ({ isActive, size = 24, strokeWidth = 2, loop = false }) => {
   const activeStroke = `url(#${gradientId})`;
   const inactiveStroke = "currentColor";
 
-  // Cart Jump Animation
-  const cartVariants = {
+  // Paper "Printing" Animation
+  const paperVariants = {
     active: {
-      y: [0, 4, -8, 0], // Anticipation (down), Jump (up), Land
-      rotate: [0, -5, 5, 0], // Tilt mid-air
-      scale: [1, 1.1, 0.9, 1], // Stretch/Squash
+      height: 20, // Expands to full height
       transition: {
-        duration: 0.8,
+        duration: 1.5,
         repeat: loop ? Infinity : 0,
-        repeatDelay: 1,
+        repeatType: "reverse",
         ease: "easeInOut"
       }
     },
     inactive: {
-      y: 0,
-      rotate: 0,
-      scale: 1,
-      transition: {
-        duration: 2, // Slow settle
-        ease: "spring", // Gentle wobble
-        stiffness: 50,
-        damping: 10
-      }
+      height: 12, // Short receipt
+      transition: { duration: 2.5, ease: "easeInOut" }
     }
   };
 
-  // Wheels Spin
-  const wheelVariants = {
-    active: {
-      rotate: 360,
+  // Lines writing on the receipt
+  const lineVariants = {
+    active: (i) => ({
+      opacity: [0, 1], // Explicitly animate from invisible
+      pathLength: [0, 1], // Explicitly draw the line
       transition: {
-        duration: 0.8,
+        duration: 0.5,
+        delay: 0.5 + (i * 0.2), // Staggered appearance
         repeat: loop ? Infinity : 0,
-        repeatDelay: 1,
-        ease: "linear"
+        repeatType: "reverse",
+        ease: "easeOut"
       }
-    },
-    inactive: {
-      rotate: 0,
-      transition: { duration: 2.5, ease: "easeOut" } // Spin down slowly
-    }
+    }),
+    inactive: (i) => ({
+      // Keep top lines visible, hide bottom lines
+      opacity: i < 2 ? 1 : 0,
+      pathLength: 1,
+      transition: { duration: 1.5, ease: "easeInOut" }
+    })
   };
 
   return (
-    <svg
+    <motion.svg
       xmlns="http://www.w3.org/2000/svg"
       width={size}
       height={size}
@@ -60,7 +55,9 @@ const OrderIcon = ({ isActive, size = 24, strokeWidth = 2, loop = false }) => {
       strokeWidth={isActive ? 2 : strokeWidth}
       strokeLinecap="round"
       strokeLinejoin="round"
-      className="lucide lucide-shopping-cart overflow-visible"
+      className="lucide lucide-receipt overflow-visible"
+      initial="inactive"
+      animate={isActive ? "active" : "inactive"}
     >
       <defs>
         <linearGradient id={gradientId} x1="0%" y1="0%" x2="100%" y2="100%">
@@ -71,35 +68,26 @@ const OrderIcon = ({ isActive, size = 24, strokeWidth = 2, loop = false }) => {
         </linearGradient>
       </defs>
 
-      {/* Cart Body Group */}
-      <motion.g
-        variants={cartVariants}
-        animate={isActive ? "active" : "inactive"}
-        style={{ transformOrigin: "12px 21px" }}
-      >
-        <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12" />
+      {/* Paper Body */}
+      <motion.rect
+        x="5" y="2" width="14" rx="2"
+        variants={paperVariants}
+      />
 
-        {/* Wheel 1 */}
-        <motion.g
-            style={{ originX: "8px", originY: "21px" }}
-            variants={wheelVariants}
-            animate={isActive ? "active" : "inactive"}
-        >
-            <circle cx="8" cy="21" r="1" />
-            <path d="M8 20v2 M7 21h2" strokeWidth="0.5" opacity="0.5" /> {/* Spokes */}
-        </motion.g>
+      {/* Lines */}
+      {/* Line 1: y=6 */}
+      <motion.path d="M9 6h6" variants={lineVariants} custom={0} />
 
-        {/* Wheel 2 */}
-        <motion.g
-            style={{ originX: "19px", originY: "21px" }}
-            variants={wheelVariants}
-            animate={isActive ? "active" : "inactive"}
-        >
-            <circle cx="19" cy="21" r="1" />
-            <path d="M19 20v2 M18 21h2" strokeWidth="0.5" opacity="0.5" /> {/* Spokes */}
-        </motion.g>
-      </motion.g>
-    </svg>
+      {/* Line 2: y=10 */}
+      <motion.path d="M9 10h6" variants={lineVariants} custom={1} />
+
+      {/* Line 3: y=14 */}
+      <motion.path d="M9 14h4" variants={lineVariants} custom={2} />
+
+      {/* Line 4: y=18 */}
+      <motion.path d="M9 18h2" variants={lineVariants} custom={3} />
+
+    </motion.svg>
   );
 };
 

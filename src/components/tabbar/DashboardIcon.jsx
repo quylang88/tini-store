@@ -6,31 +6,56 @@ const DashboardIcon = ({ isActive, size = 24, strokeWidth = 2, loop = false }) =
   const activeStroke = `url(#${gradientId})`;
   const inactiveStroke = "currentColor";
 
-  // Needle Rotation
-  const needleVariants = {
+  // Pie Chart Slices
+
+  // Minor Slice (Top-Right Quarter: 12 o'clock to 3 o'clock)
+  // Path: Center(12,12) -> Top(12,2) -> Arc to Right(22,12) -> Close
+  const minorSlicePath = "M 12 12 L 12 2 A 10 10 0 0 1 22 12 Z";
+
+  // Major Slice (The rest: 3 o'clock to 12 o'clock)
+  // Path: Center(12,12) -> Right(22,12) -> Large Arc to Top(12,2) -> Close
+  const majorSlicePath = "M 12 12 L 22 12 A 10 10 0 1 1 12 2 Z";
+
+  const minorSliceVariants = {
     active: {
-      rotate: [0, 180], // Sweep from left to right
+      x: 3, // Move Right
+      y: -3, // Move Up
       transition: {
-        duration: 1, // Fast sweep
-        type: "spring",
-        stiffness: 120,
-        damping: 10,
+        duration: 1.5,
         repeat: loop ? Infinity : 0,
         repeatType: "reverse",
-        repeatDelay: 0.5
+        ease: "easeInOut"
       }
     },
     inactive: {
-      rotate: 0, // Return to start
+      x: 0,
+      y: 0,
+      transition: { duration: 2.5, ease: "easeInOut" }
+    }
+  };
+
+  const majorSliceVariants = {
+    active: {
+      x: -1,
+      y: 1,
+      scale: 0.98, // Slight shrink to emphasize separation
       transition: {
-        duration: 2.5, // Slow return
+        duration: 1.5,
+        repeat: loop ? Infinity : 0,
+        repeatType: "reverse",
         ease: "easeInOut"
       }
+    },
+    inactive: {
+      x: 0,
+      y: 0,
+      scale: 1,
+      transition: { duration: 2.5, ease: "easeInOut" }
     }
   };
 
   return (
-    <svg
+    <motion.svg
       xmlns="http://www.w3.org/2000/svg"
       width={size}
       height={size}
@@ -40,7 +65,9 @@ const DashboardIcon = ({ isActive, size = 24, strokeWidth = 2, loop = false }) =
       strokeWidth={isActive ? 2 : strokeWidth}
       strokeLinecap="round"
       strokeLinejoin="round"
-      className="lucide lucide-gauge overflow-visible"
+      className="lucide lucide-pie-chart overflow-visible"
+      initial="inactive"
+      animate={isActive ? "active" : "inactive"}
     >
       <defs>
         <linearGradient id={gradientId} x1="0%" y1="0%" x2="100%" y2="100%">
@@ -51,24 +78,18 @@ const DashboardIcon = ({ isActive, size = 24, strokeWidth = 2, loop = false }) =
         </linearGradient>
       </defs>
 
-      {/* Gauge Arc */}
-      <path d="m12 15 2 2" opacity="0" /> {/* Spacer */}
-      <path d="M12 22 c5.52 0 10-4.48 10-10 S17.52 2 12 2 2 6.48 2 12c0 1.6.4 3.1 1.1 4.4" opacity="0.1" /> {/* Background Arc Reference */}
+      {/* Major Slice (Pacman) */}
+      <motion.path
+        d={majorSlicePath}
+        variants={majorSliceVariants}
+      />
 
-      {/* Main Gauge Arc (Semi-circle approx) */}
-      <path d="M3 13 a9 9 0 0 1 18 0" stroke={isActive ? activeStroke : inactiveStroke} strokeWidth="2.5" />
-      <path d="M12 13 v1" stroke="none" /> {/* Center pivot */}
-
-      {/* Needle */}
-      <motion.g
-        variants={needleVariants}
-        animate={isActive ? "active" : "inactive"}
-        style={{ transformOrigin: "12px 13px" }} // Pivot at center bottom of arc
-      >
-        <path d="M12 13 L5 13" stroke={isActive ? activeStroke : inactiveStroke} strokeWidth="2.5" />
-        <circle cx="12" cy="13" r="2" fill={isActive ? activeStroke : inactiveStroke} stroke="none" />
-      </motion.g>
-    </svg>
+      {/* Minor Slice (Quarter) */}
+      <motion.path
+        d={minorSlicePath}
+        variants={minorSliceVariants}
+      />
+    </motion.svg>
   );
 };
 

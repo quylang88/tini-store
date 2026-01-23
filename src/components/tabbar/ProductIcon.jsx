@@ -75,7 +75,7 @@ const ProductIcon = ({ isActive, size = 24, strokeWidth = 2, loop = false }) => 
   };
 
   return (
-    <svg
+    <motion.svg
       xmlns="http://www.w3.org/2000/svg"
       width={size}
       height={size}
@@ -86,6 +86,8 @@ const ProductIcon = ({ isActive, size = 24, strokeWidth = 2, loop = false }) => 
       strokeLinecap="round"
       strokeLinejoin="round"
       className="lucide lucide-box overflow-visible"
+      initial="inactive"
+      animate={isActive ? "active" : "inactive"}
     >
       <defs>
         <linearGradient id={gradientId} x1="0%" y1="0%" x2="100%" y2="100%">
@@ -104,14 +106,12 @@ const ProductIcon = ({ isActive, size = 24, strokeWidth = 2, loop = false }) => 
         fill={isActive ? activeStroke : "none"}
         stroke="none"
         variants={coreVariants}
-        animate={isActive ? "active" : "inactive"}
       />
 
       {/* Top Face (Diamond) */}
       <motion.path
         d="M12 3l7 4-7 4-7-4 7-4z"
         variants={topFaceVariants}
-        animate={isActive ? "active" : "inactive"}
         style={{ transformOrigin: "12px 12px" }}
       />
 
@@ -119,7 +119,6 @@ const ProductIcon = ({ isActive, size = 24, strokeWidth = 2, loop = false }) => 
       <motion.path
         d="M5 7v10l7 4v-10l-7-4z"
         variants={leftFaceVariants}
-        animate={isActive ? "active" : "inactive"}
         style={{ transformOrigin: "12px 12px" }}
       />
 
@@ -127,10 +126,9 @@ const ProductIcon = ({ isActive, size = 24, strokeWidth = 2, loop = false }) => 
       <motion.path
         d="M19 7v10l-7 4v-10l7-4z"
         variants={rightFaceVariants}
-        animate={isActive ? "active" : "inactive"}
         style={{ transformOrigin: "12px 12px" }}
       />
-    </svg>
+    </motion.svg>
   );
 };
 
