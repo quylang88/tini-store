@@ -137,7 +137,9 @@ const ChatInput = ({
 
   return (
     <div
-      className={`${currentTheme.inputBg} border-t border-gray-100 p-3 ${isFocused ? "pb-env(safe-area-inset-bottom)]" : "pb-3"}`}
+      // FIX: Đơn giản hóa class padding.
+      // Không cần logic phức tạp vì safe-area đã được xử lý bởi Spacer ở component cha
+      className={`${currentTheme.inputBg} border-t border-gray-100 p-3`}
     >
       <form onSubmit={handleSubmit} className="flex gap-2 items-center">
         {/* Model Selector Button */}

@@ -1,5 +1,5 @@
-import React from "react";
-import { Bot, Palette, Sparkles, Eraser } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { Bot, Palette, Eraser } from "lucide-react";
 import { motion } from "framer-motion";
 import ChatBubble from "../components/assistant/ChatBubble";
 import ChatInput from "../components/assistant/ChatInput";
@@ -30,6 +30,34 @@ const Assistant = ({
   const { activeTheme, handleCycleTheme } = useAssistantTheme();
 
   const [isInputFocused, setIsInputFocused] = React.useState(false);
+
+  // --- FIX: Visual Viewport Logic for iOS ---
+  // Dùng state để lưu chiều cao thực tế của vùng hiển thị
+  const [viewportHeight, setViewportHeight] = useState("100dvh");
+
+  useEffect(() => {
+    // Chỉ chạy logic này nếu trình duyệt hỗ trợ visualViewport (iOS Safari/Chrome)
+    if (!window.visualViewport) return;
+
+    const handleResize = () => {
+      // Cập nhật chiều cao container bằng đúng chiều cao nhìn thấy được
+      setViewportHeight(`${window.visualViewport.height}px`);
+      // Scroll window về 0 để tránh header bị đẩy lên trên
+      window.scrollTo(0, 0);
+    };
+
+    window.visualViewport.addEventListener("resize", handleResize);
+    window.visualViewport.addEventListener("scroll", handleResize);
+
+    // Set chiều cao ban đầu
+    handleResize();
+
+    return () => {
+      window.visualViewport.removeEventListener("resize", handleResize);
+      window.visualViewport.removeEventListener("scroll", handleResize);
+    };
+  }, []);
+  // ------------------------------------------
 
   const handleInputFocus = () => {
     setIsInputFocused(true);
@@ -80,7 +108,9 @@ const Assistant = ({
 
   return (
     <motion.div
-      className="flex flex-col h-full relative overflow-hidden"
+      // --- FIX: Áp dụng chiều cao cứng từ visualViewport ---
+      style={{ height: viewportHeight }}
+      className="flex flex-col w-full relative overflow-hidden"
       animate={{
         backgroundColor: activeTheme.bgGradient,
       }}
@@ -90,9 +120,11 @@ const Assistant = ({
         ease: "linear",
       }}
     >
-      {/* Header */}
+      {/* HEADER: Chuyển từ absolute sang flex-none (static). 
+        Điều này giúp layout cứng cáp hơn, header không bao giờ bị scroll mất.
+      */}
       <div
-        className={`flex items-center gap-3 px-4 py-3 border-b border-white/50 backdrop-blur-sm absolute top-0 left-0 right-0 z-20 shadow-sm ${activeTheme.headerBg}`}
+        className={`flex-none pt-[env(safe-area-inset-top)] flex items-center gap-3 px-4 py-3 border-b border-white/50 backdrop-blur-sm z-20 shadow-sm ${activeTheme.headerBg}`}
       >
         <div
           className={`w-10 h-10 rounded-full ${activeTheme.headerIconBg} text-white flex items-center justify-center shadow-md`}
@@ -154,8 +186,10 @@ const Assistant = ({
         </button>
       </div>
 
-      {/* Message List */}
-      <div className="flex-1 overflow-y-auto p-4 pt-[80px] bg-transparent relative">
+      {/* Message List: flex-1 để chiếm toàn bộ khoảng trống còn lại.
+        Bỏ padding-top cứng (80px) vì header không còn là absolute nữa.
+      */}
+      <div className="flex-1 overflow-y-auto p-4 bg-transparent relative scroll-smooth">
         {messages.length === 0 ? (
           <div className="h-full flex flex-col items-center justify-center text-gray-400 text-sm italic">
             <p>Màn hình trống.</p>
@@ -207,22 +241,32 @@ const Assistant = ({
         theme={activeTheme}
       />
 
-      <ChatInput
-        onSend={handleSendMessage}
-        disabled={isTyping}
-        onOpenModelSelector={() => setIsModelSelectorOpen(true)}
-        selectedModel={modelMode}
-        theme={activeTheme}
-        onInputFocus={handleInputFocus}
-        onInputBlur={handleInputBlur}
-      />
+      {/* Input Area */}
+      <div className="flex-none z-30 bg-white">
+        <ChatInput
+          onSend={handleSendMessage}
+          disabled={isTyping}
+          onOpenModelSelector={() => setIsModelSelectorOpen(true)}
+          selectedModel={modelMode}
+          theme={activeTheme}
+          onInputFocus={handleInputFocus}
+          onInputBlur={handleInputBlur}
+          isFocused={isInputFocused}
+        />
+      </div>
+
+      {/* Spacer cho TabBar: 
+        Khi input focus (bàn phím hiện), spacer = 0.
+        Khi input blur (bàn phím ẩn), spacer = chiều cao TabBar + Safe area.
+      */}
       <motion.div
         animate={{
           height: isInputFocused
             ? 0
             : "calc(52px + env(safe-area-inset-bottom))",
         }}
-        transition={{ duration: 0.3 }}
+        transition={{ duration: 0.2 }}
+        className="flex-none bg-white"
       />
     </motion.div>
   );
