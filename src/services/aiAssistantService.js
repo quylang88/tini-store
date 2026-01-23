@@ -1,12 +1,11 @@
 /**
  * aiAssistantService.js
- * Service này đóng vai trò là "Bộ não" cho Trợ lý ảo.
+ * "Bộ não" xử lý logic cho Trợ lý Quản lý Tiny Shop.
  */
 
 import {
   getModeConfig,
   PROVIDERS,
-  SEARCH_KEYWORDS,
   STANDARD_MODE_SEARCH_TRIGGERS,
   FORCE_WEB_SEARCH_TRIGGERS,
 } from "./ai/config";
@@ -19,11 +18,11 @@ import {
 } from "./ai/utils";
 
 // --- CẤU HÌNH MEMORY ---
-const SLIDING_WINDOW_SIZE = 6;
+const SLIDING_WINDOW_SIZE = 8; // Tăng window để nhớ ngữ cảnh dài hơn khi phân tích
 
-// --- THUẬT TOÁN SO SÁNH CHUỖI THÔNG MINH (Dice Coefficient) ---
+// --- THUẬT TOÁN SO SÁNH CHUỖI ---
 const getBigrams = (str) => {
-  const s = str.toLowerCase().replace(/[^\w\s\u00C0-\u1EF9]/g, ""); // Giữ lại tiếng Việt và số
+  const s = str.toLowerCase().replace(/[^\w\s\u00C0-\u1EF9]/g, "");
   const words = s.split(/\s+/).filter((w) => w.length > 0);
   return words;
 };
@@ -31,59 +30,30 @@ const getBigrams = (str) => {
 const calculateSimilarity = (str1, str2) => {
   const words1 = getBigrams(str1);
   const words2 = getBigrams(str2);
-
   if (words1.length === 0 || words2.length === 0) return 0.0;
-
   const set1 = new Set(words1);
   const set2 = new Set(words2);
-
-  // Tìm số từ trùng nhau
   const intersection = new Set([...set1].filter((x) => set2.has(x)));
-
-  // Công thức Dice: (2 * số_từ_trùng) / (tổng_số_từ_cả_2_câu)
   return (2.0 * intersection.size) / (set1.size + set2.size);
 };
 
 const checkDuplicateQuery = (currentQuery, lastQuery) => {
   if (!lastQuery) return false;
-
-  // 1. Check cơ bản: Giống hệt nhau
   if (currentQuery.trim().toLowerCase() === lastQuery.trim().toLowerCase())
     return true;
-
-  // 2. Check thông minh: Độ tương đồng từ ngữ
   const similarity = calculateSimilarity(currentQuery, lastQuery);
-
-  // Ngưỡng: 0.85 nghĩa là giống nhau 85% về mặt từ ngữ
   const SIMILARITY_THRESHOLD = 0.85;
-
   if (similarity >= SIMILARITY_THRESHOLD) {
-    // --- GUARD: KIỂM TRA SỐ LIỆU ---
-    // Nếu câu chứa số khác nhau thì KHÔNG bao giờ là trùng (VD: Mua 1 cái vs Mua 2 cái)
     const nums1 = currentQuery.match(/\d+/g) || [];
     const nums2 = lastQuery.match(/\d+/g) || [];
-
-    // Nếu số lượng con số tìm thấy khác nhau, hoặc giá trị số khác nhau -> KHÔNG trùng
-    if (nums1.join(",") !== nums2.join(",")) {
-      return false;
-    }
-
+    if (nums1.join(",") !== nums2.join(",")) return false;
     return true;
   }
-
   return false;
 };
 
-// --- XỬ LÝ CHÍNH (MAIN PROCESS) ---
+// --- XỬ LÝ CHÍNH ---
 
-/**
- * Hàm chính để xử lý truy vấn từ người dùng.
- * @param {string} query - Câu hỏi của user
- * @param {Object} context - Dữ liệu app (products, orders)
- * @param {string} modeKey - Key chế độ AI (fast, standard, deep)
- * @param {Array} history - Lịch sử chat ĐẦY ĐỦ (Bao gồm cả câu hỏi hiện tại)
- * @param {string} currentSummary - Tóm tắt ngữ cảnh cũ (Memory)
- */
 export const processQuery = async (
   query,
   context,
@@ -93,69 +63,80 @@ export const processQuery = async (
   onStatusUpdate = () => {},
 ) => {
   if (!navigator.onLine) {
-    return createResponse("text", "Bạn đang Offline. Kiểm tra mạng đi bạn êi.");
+    return createResponse(
+      "text",
+      "Mất kết nối mạng. Không thể check giá online được sếp ơi.",
+    );
   }
 
   const modeConfig = getModeConfig(modeKey);
 
-  // 1. Xác định vị trí & Search Web
+  // 1. Xác định vị trí (Quan trọng nếu muốn tìm cửa hàng đối thủ quanh đây)
   const coords = await getCurrentLocation();
   let locationName = null;
   let fullLocationInfo = coords || "Chưa rõ";
-
   if (coords) {
     locationName = await getAddressFromCoordinates(coords);
     if (locationName) fullLocationInfo = `${locationName} (${coords})`;
   }
 
+  // 2. LOGIC TÌM KIẾM THÔNG MINH (SMART SOURCING SEARCH)
   const lowerQuery = query.toLowerCase();
+
+  // Check trigger
   const isForceSearch = FORCE_WEB_SEARCH_TRIGGERS.some((kw) =>
     lowerQuery.includes(kw),
   );
   const isStandardSearchTrigger =
     modeKey === "standard" &&
     STANDARD_MODE_SEARCH_TRIGGERS.some((kw) => lowerQuery.includes(kw));
-  const isDefaultSearchTrigger =
-    (modeKey === "deep" && query.length > 5) ||
-    SEARCH_KEYWORDS.some((kw) => lowerQuery.includes(kw));
+  const isDeepSearch = modeKey === "deep"; // Mode deep luôn search nếu query đủ dài
+
   const shouldSearch =
-    isForceSearch || isStandardSearchTrigger || isDefaultSearchTrigger;
+    isForceSearch ||
+    isStandardSearchTrigger ||
+    (isDeepSearch && query.length > 3);
 
   let searchResults = "";
+
   if (shouldSearch) {
-    onStatusUpdate("Đang lướt web tìm info...");
+    onStatusUpdate("Đang check giá & nguồn hàng...");
+
+    // TỐI ƯU QUERY CHO SOURCING:
+    // Nếu user hỏi về giá/nhập hàng, tự động thêm ngữ cảnh Nhật Bản để tìm chính xác hơn
+    let searchQuery = query;
+    if (lowerQuery.includes("giá") || lowerQuery.includes("nhập")) {
+      // Nếu chưa có từ khóa Nhật, thêm vào để ưu tiên tìm nguồn gốc
+      if (!lowerQuery.includes("nhật") && !lowerQuery.includes("japan")) {
+        searchQuery += " price Japan Rakuten Amazon JP";
+      }
+    }
+
     const searchLocation = locationName || coords;
-    const webData = await searchWeb(
-      query,
-      searchLocation,
-      modeConfig.search_depth,
-      modeConfig.max_results,
-    );
-    if (webData) searchResults = webData;
+
+    try {
+      const webData = await searchWeb(
+        searchQuery,
+        searchLocation,
+        modeConfig.search_depth,
+        modeConfig.max_results,
+      );
+      if (webData) searchResults = webData;
+    } catch (err) {
+      console.warn("Search failed:", err);
+    }
+
     onStatusUpdate(null);
   }
 
-  // 2. Xử lý Lịch sử chat & CHECK TRÙNG LẶP THÔNG MINH
-
-  // Vì history truyền vào đã bao gồm câu hỏi hiện tại ở cuối cùng.
-  // Nên ta phải lọc ra danh sách User Message, sau đó lấy tin nhắn ÁP CHÓT (tin trước tin hiện tại).
-
+  // 3. Xử lý Lịch sử & Check trùng
   const userMessages = history.filter(
     (msg) => msg.sender === "user" || msg.role === "user",
   );
   let isDuplicate = false;
-
-  // Chỉ check trùng lặp nếu có ít nhất 2 tin nhắn của user (Tin hiện tại + Tin trước đó)
   if (userMessages.length >= 2) {
-    const previousUserMsg = userMessages[userMessages.length - 2]; // Lấy tin nhắn áp chót
+    const previousUserMsg = userMessages[userMessages.length - 2];
     isDuplicate = checkDuplicateQuery(query, previousUserMsg.content);
-
-    if (isDuplicate) {
-      console.log(
-        "Phát hiện trùng lặp với tin nhắn trước đó:",
-        previousUserMsg.content,
-      );
-    }
   }
 
   const cleanHistory = history
@@ -171,15 +152,15 @@ export const processQuery = async (
 
   const recentHistory = cleanHistory.slice(-SLIDING_WINDOW_SIZE);
 
-  // 3. Xây dựng System Prompt (với cờ isDuplicate)
+  // 4. Build System Prompt (Updated for Manager)
   const systemInstruction = buildSystemPrompt(
     { ...context, location: fullLocationInfo },
     searchResults,
     currentSummary,
-    isDuplicate, // <--- Truyền kết quả so sánh vào
+    isDuplicate,
   );
 
-  // 4. Gọi AI
+  // 5. Gọi AI
   try {
     const responseText = await processQueryWithFailover(
       modeConfig.model,
@@ -190,12 +171,15 @@ export const processQuery = async (
     return createResponse("text", responseText);
   } catch (error) {
     console.error("AI Service Error:", error);
-    return createResponse("text", `Misa bị lỗi rồi: ${error.message}`);
+    return createResponse(
+      "text",
+      `Lỗi hệ thống: ${error.message}. Thử lại sau nhé sếp.`,
+    );
   }
 };
 
 /**
- * Hàm TÓM TẮT LỊCH SỬ
+ * Tóm tắt lịch sử (Giữ nguyên)
  */
 export const summarizeChatHistory = async (
   currentSummary,
@@ -204,16 +188,11 @@ export const summarizeChatHistory = async (
   if (!messagesToSummarize || messagesToSummarize.length === 0)
     return currentSummary;
 
-  console.log("Đang chạy tóm tắt ngầm...");
-  // Dùng model NHANH NHẤT để tóm tắt cho rẻ và lẹ (Gemini Flash hoặc Groq Llama Instant)
+  // Dùng Gemini Flash cho nhanh và rẻ
   const fastModel = [
     {
       provider: PROVIDERS.GEMINI,
       model: import.meta.env.VITE_GEMINI_MODEL_2_FLASH,
-    }, // Ưu tiên Gemini Flash vì context window lớn
-    {
-      provider: PROVIDERS.GEMINI,
-      model: import.meta.env.VITE_GEMINI_MODEL_2_LITE,
     },
     {
       provider: PROVIDERS.GROQ,
@@ -229,16 +208,8 @@ export const summarizeChatHistory = async (
   const prompt = buildSummarizePrompt(currentSummary, cleanMessages);
 
   try {
-    const newSummary = await processQueryWithFailover(
-      fastModel,
-      [],
-      prompt,
-      0.3,
-    );
-    console.log("Tóm tắt mới:", newSummary);
-    return newSummary;
-  } catch (e) {
-    console.warn("Lỗi khi tóm tắt:", e);
+    return await processQueryWithFailover(fastModel, [], prompt, 0.3);
+  } catch {
     return currentSummary;
   }
 };
@@ -254,23 +225,21 @@ const processQueryWithFailover = async (
     const { provider, model } = candidate;
     if (!model) continue;
     try {
-      let result = "";
       if (provider === PROVIDERS.GEMINI) {
-        result = await callGeminiAPI(
+        return await callGeminiAPI(
           model,
           chatHistory,
           systemInstruction,
           temperature,
         );
       } else if (provider === PROVIDERS.GROQ) {
-        result = await callGroqAPI(
+        return await callGroqAPI(
           model,
           chatHistory,
           systemInstruction,
           temperature,
         );
       }
-      if (result) return result;
     } catch (error) {
       console.error(`Lỗi ${provider}:`, error);
       lastError = error;

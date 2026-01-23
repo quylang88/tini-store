@@ -79,7 +79,7 @@ const Assistant = ({
     });
 
   // 5. Scroll Logic
-  const messagesEndRef = useAutoScroll([messages, loadingText]);
+  const messagesEndRef = useAutoScroll([messages, loadingText, isTyping]);
 
   // Chiều cao TabBar mặc định (ước lượng 60px + safe area)
   // Bạn có thể chỉnh số 60px này cho khớp với chiều cao thực tế của TabBar app bạn

@@ -1,18 +1,16 @@
 import { HarmCategory, HarmBlockThreshold } from "@google/generative-ai";
 
 // --- CẤU HÌNH PROVIDERS ---
-
 export const PROVIDERS = {
   GEMINI: "GEMINI",
   GROQ: "GROQ",
 };
 
-// --- CẤU HÌNH AI MODES ---
+// --- CẤU HÌNH AI MODES (Đã điều chỉnh cho Owner) ---
 export const AI_MODES = {
   standard: {
     label: "Misa Smart",
-    description:
-      "Cân bằng giữa tốc độ và trí tuệ. Phù hợp với đa số các tác vụ.",
+    description: "Phân tích, gợi ý nhập hàng và trả lời các câu hỏi chung.",
     config: {
       model: [
         {
@@ -22,12 +20,12 @@ export const AI_MODES = {
       ],
       search_depth: "basic",
       max_results: 5,
-      temperature: 0.7,
+      temperature: 0.6, // Giảm sáng tạo để tăng độ chính xác
     },
   },
   fast: {
     label: "Misa Flash",
-    description: "Phản hồi tức thì, thích hợp tra cứu nhanh.",
+    description: "Phản hồi tức thì, tra cứu nhanh tồn kho và đơn hàng.",
     config: {
       model: [
         {
@@ -45,12 +43,12 @@ export const AI_MODES = {
       ],
       search_depth: "basic",
       max_results: 3,
-      temperature: 0.5,
+      temperature: 0.4,
     },
   },
   deep: {
     label: "Misa Deep",
-    description: "Tìm kiếm sâu và phân tích kỹ. Sẽ mất thời gian hơn.",
+    description: "Tìm nguồn hàng, so sánh giá, phân tích kỹ (Web Search).",
     config: {
       model: [
         {
@@ -63,27 +61,24 @@ export const AI_MODES = {
         },
       ],
       search_depth: "advanced",
-      max_results: 10,
+      max_results: 8,
       temperature: 0.7,
     },
   },
 };
 
-// Hàm lấy config (fallback về standard nếu lỗi)
 export const getModeConfig = (modeKey) => {
   return AI_MODES[modeKey]?.config || AI_MODES["standard"].config;
 };
 
-// Export MODEL_CONFIGS for backward compatibility (mapped to new structure)
-// NOTE: Các file khác nên chuyển dần sang dùng AI_MODES
+// Export MODEL_CONFIGS for backward compatibility
 export const MODEL_CONFIGS = {
   SMART: AI_MODES.standard.config.model,
   FLASH: AI_MODES.fast.config.model,
   DEEP: AI_MODES.deep.config.model,
 };
 
-// --- CẤU HÌNH AN TOÀN CHO GEMINI ---
-
+// --- CẤU HÌNH AN TOÀN ---
 export const geminiSafetySettings = [
   {
     category: HarmCategory.HARM_CATEGORY_HARASSMENT,
@@ -103,32 +98,34 @@ export const geminiSafetySettings = [
   },
 ];
 
-// --- CẤU HÌNH API KHÁC ---
-
 export const TAVILY_API_URL = "https://api.tavily.com/search";
 
-export const SEARCH_KEYWORDS = [
-  "thời tiết",
-  "tin tức",
-  "ở đâu",
-  "mấy giờ",
-  "ai là",
-  "sự kiện",
-  "tại sao",
-  "quán ăn",
-  "đường đi",
-];
+// --- KEYWORDS KÍCH HOẠT SEARCH (Updated cho Sourcing) ---
 
-// Từ khóa kích hoạt tìm kiếm web trong chế độ Standard (nhưng vẫn ưu tiên dữ liệu shop)
+// Kích hoạt tìm kiếm trong chế độ Standard
 export const STANDARD_MODE_SEARCH_TRIGGERS = [
   "tìm",
-  "tìm kiếm",
-  "thông tin",
-  "sản phẩm",
-  "web",
-  "trên mạng",
+  "so sánh",
+  "giá nhập",
+  "giá sỉ",
+  "shopee",
+  "lazada",
+  "amazon",
+  "rakuten",
+  "cosme",
+  "rẻ",
   "tốt",
+  "trend",
 ];
 
-// Từ khóa BẮT BUỘC tìm kiếm web ngay (ưu tiên web hơn shop, ví dụ: hàng Nhật)
-export const FORCE_WEB_SEARCH_TRIGGERS = ["nb", "nhật", "nhật bản"];
+// BẮT BUỘC tìm kiếm (Ưu tiên cao nhất)
+export const FORCE_WEB_SEARCH_TRIGGERS = [
+  "bên nhật",
+  "tại nhật",
+  "web nhật",
+  "nguồn hàng",
+  "giá yên",
+  "check giá",
+  "review",
+  "đánh giá",
+];
