@@ -224,7 +224,7 @@ const App = () => {
   }
 
   return (
-    <div className="h-[100dvh] bg-rose-50 text-gray-900 font-sans overflow-hidden flex flex-col pt-[env(safe-area-inset-top)]">
+    <div className="h-screen bg-rose-50 text-gray-900 font-sans overflow-hidden flex flex-col pt-[env(safe-area-inset-top)]">
       <OfflineAlert initialAcknowledged={offlineAcknowledged} />
       <div className="flex-1 overflow-hidden relative">
         <AnimatePresence mode="popLayout" initial={false} custom={direction}>

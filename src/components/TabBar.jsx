@@ -24,12 +24,11 @@ const TabBar = ({ activeTab, setActiveTab, isVisible = true }) => {
 
   return (
     <div
-      className={`fixed bottom-[-1px] left-0 right-0 bg-amber-50/90 border-t border-amber-200 pt-1 pb-[env(safe-area-inset-bottom)] z-50 backdrop-blur transition-transform duration-300 ease-in-out ${
+      className={`fixed bottom-0 left-0 right-0 bg-amber-50/90 border-t border-amber-200 pb-safe-area z-50 backdrop-blur transition-transform duration-300 ease-in-out ${
         active ? "translate-y-0" : "translate-y-full"
       }`}
     >
-      <div className="absolute top-full left-0 right-0 h-16 bg-amber-50/90 backdrop-blur" />
-      <div className="flex justify-around items-center h-12">
+      <div className="flex justify-around items-center h-14">
         {tabs.map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
