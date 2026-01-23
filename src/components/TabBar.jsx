@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import useMountTransition from "../hooks/ui/useMountTransition";
 import AssistantIcon from "./assistant/AssistantIcon";
+import { triggerHaptic, HAPTIC_PATTERNS } from "../utils/haptics";
 
 const TabBar = ({ activeTab, setActiveTab, isVisible = true }) => {
   const tabs = [
@@ -35,9 +36,7 @@ const TabBar = ({ activeTab, setActiveTab, isVisible = true }) => {
 
           const handleTabClick = () => {
             if (activeTab !== tab.id) {
-              if (navigator.vibrate) {
-                navigator.vibrate(15);
-              }
+              triggerHaptic(HAPTIC_PATTERNS.light);
               setActiveTab(tab.id);
             }
           };
