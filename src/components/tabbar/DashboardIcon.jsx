@@ -6,24 +6,27 @@ const DashboardIcon = ({ isActive, size = 24, strokeWidth = 2, loop = false }) =
   const activeStroke = `url(#${gradientId})`;
   const inactiveStroke = "currentColor";
 
-  // Bars animate height in a wave pattern
-  const barVariants = {
-    active: (i) => ({
-      scaleY: [1, 1.5, 0.5, 1], // Pulse up and down
+  // Needle Rotation
+  const needleVariants = {
+    active: {
+      rotate: [0, 180], // Sweep from left to right
       transition: {
-        duration: 2,
+        duration: 1, // Fast sweep
+        type: "spring",
+        stiffness: 120,
+        damping: 10,
         repeat: loop ? Infinity : 0,
-        ease: "easeInOut",
-        delay: i * 0.2, // Stagger effect
-      },
-    }),
-    inactive: {
-      scaleY: 1,
-      transition: {
-        duration: 2.5, // Slow return to normal
-        ease: "easeInOut",
-      },
+        repeatType: "reverse",
+        repeatDelay: 0.5
+      }
     },
+    inactive: {
+      rotate: 0, // Return to start
+      transition: {
+        duration: 2.5, // Slow return
+        ease: "easeInOut"
+      }
+    }
   };
 
   return (
@@ -37,7 +40,7 @@ const DashboardIcon = ({ isActive, size = 24, strokeWidth = 2, loop = false }) =
       strokeWidth={isActive ? 2 : strokeWidth}
       strokeLinecap="round"
       strokeLinejoin="round"
-      className="lucide lucide-bar-chart-3 overflow-visible"
+      className="lucide lucide-gauge overflow-visible"
     >
       <defs>
         <linearGradient id={gradientId} x1="0%" y1="0%" x2="100%" y2="100%">
@@ -48,45 +51,23 @@ const DashboardIcon = ({ isActive, size = 24, strokeWidth = 2, loop = false }) =
         </linearGradient>
       </defs>
 
-      {/* Bar 1 (Left) */}
-      <motion.path
-        d="M3 3v18h18" // Axis
-        stroke={isActive ? activeStroke : inactiveStroke}
-        strokeWidth={isActive ? 2 : strokeWidth}
-      />
+      {/* Gauge Arc */}
+      <path d="m12 15 2 2" opacity="0" /> {/* Spacer */}
+      <path d="M12 22 c5.52 0 10-4.48 10-10 S17.52 2 12 2 2 6.48 2 12c0 1.6.4 3.1 1.1 4.4" opacity="0.1" /> {/* Background Arc Reference */}
 
-      {/* Bar 1 */}
-      <motion.rect
-        x="7" y="10" width="3" height="11" rx="1"
-        style={{ transformOrigin: "bottom" }}
-        variants={barVariants}
-        custom={0}
-        animate={isActive ? "active" : "inactive"}
-        fill={isActive ? activeStroke : "none"}
-        stroke={isActive ? "none" : inactiveStroke}
-      />
+      {/* Main Gauge Arc (Semi-circle approx) */}
+      <path d="M3 13 a9 9 0 0 1 18 0" stroke={isActive ? activeStroke : inactiveStroke} strokeWidth="2.5" />
+      <path d="M12 13 v1" stroke="none" /> {/* Center pivot */}
 
-      {/* Bar 2 */}
-      <motion.rect
-        x="12" y="5" width="3" height="16" rx="1"
-        style={{ transformOrigin: "bottom" }}
-        variants={barVariants}
-        custom={1}
+      {/* Needle */}
+      <motion.g
+        variants={needleVariants}
         animate={isActive ? "active" : "inactive"}
-        fill={isActive ? activeStroke : "none"}
-        stroke={isActive ? "none" : inactiveStroke}
-      />
-
-      {/* Bar 3 */}
-      <motion.rect
-        x="17" y="14" width="3" height="7" rx="1"
-        style={{ transformOrigin: "bottom" }}
-        variants={barVariants}
-        custom={2}
-        animate={isActive ? "active" : "inactive"}
-        fill={isActive ? activeStroke : "none"}
-        stroke={isActive ? "none" : inactiveStroke}
-      />
+        style={{ transformOrigin: "12px 13px" }} // Pivot at center bottom of arc
+      >
+        <path d="M12 13 L5 13" stroke={isActive ? activeStroke : inactiveStroke} strokeWidth="2.5" />
+        <circle cx="12" cy="13" r="2" fill={isActive ? activeStroke : inactiveStroke} stroke="none" />
+      </motion.g>
     </svg>
   );
 };
