@@ -96,8 +96,8 @@ const StatsDetail = ({ products, orders, onBack }) => {
   const modalItems = activeModal === "quantity" ? topByQuantity : topByProfit;
 
   return (
-    <div className="h-full overflow-y-auto p-4 space-y-4 pb-24 animate-fade-in">
-      <div>
+    <div className="flex flex-col h-full animate-fade-in bg-rose-50">
+      <div className="flex-none pt-[env(safe-area-inset-top)] bg-rose-50 z-20 sticky top-0 px-4 py-2 border-b border-rose-100/50 backdrop-blur-sm">
         <div className="text-xl text-rose-700 font-bold whitespace-nowrap">
           Thống kê chi tiết
         </div>
@@ -106,7 +106,8 @@ const StatsDetail = ({ products, orders, onBack }) => {
         </div>
       </div>
 
-      <div className="bg-amber-50 rounded-2xl shadow-sm border border-amber-100 p-3">
+      <div className="flex-1 overflow-y-auto p-4 space-y-4 pb-24">
+        <div className="bg-amber-50 rounded-2xl shadow-sm border border-amber-100 p-3">
         {/* Bộ lọc thời gian chi tiết hơn để xem theo nhiều khoảng khác nhau. */}
         <DateRangeFilter
           customRange={customRange}
@@ -246,13 +247,14 @@ const StatsDetail = ({ products, orders, onBack }) => {
         </ul>
       </div>
 
-      {/* Dùng modal chung để xem chi tiết top khi chạm vào từng bảng. */}
-      <StatListModal
-        open={Boolean(activeModal)}
-        onClose={closeTopModal}
-        items={modalItems}
-        type={activeModal === "quantity" ? "quantity" : "profit"}
-      />
+        {/* Dùng modal chung để xem chi tiết top khi chạm vào từng bảng. */}
+        <StatListModal
+          open={Boolean(activeModal)}
+          onClose={closeTopModal}
+          items={modalItems}
+          type={activeModal === "quantity" ? "quantity" : "profit"}
+        />
+      </div>
     </div>
   );
 };

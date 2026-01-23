@@ -70,7 +70,7 @@ const Settings = ({
       <AppHeader isScrolled={isScrolled} />
 
       <div
-        className="h-full overflow-y-auto min-h-0 p-4 pt-[80px] space-y-6 pb-24"
+        className="h-full overflow-y-auto min-h-0 p-4 pt-[calc(80px+env(safe-area-inset-top))] space-y-6 pb-24"
         onScroll={handleScroll}
       >
         {/* 1. Cấu hình Tiền tệ */}

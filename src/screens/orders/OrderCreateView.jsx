@@ -103,6 +103,7 @@ const OrderCreateView = ({
           y: isSearchVisible ? 0 : -searchBarHeight, // Slide up by height of search bar
         }}
         transition={{ duration: 0.3 }}
+        style={{ marginTop: "env(safe-area-inset-top)" }}
       >
         <ProductFilterHeader
           searchTerm={searchTerm}
@@ -127,7 +128,9 @@ const OrderCreateView = ({
         <OrderCreateProductList
           filteredProducts={filteredProducts}
           handleScroll={handleScroll}
-          style={{ paddingTop: listPaddingTop }} // Pass dynamic style for padding
+          style={{
+            paddingTop: `calc(${listPaddingTop}px + env(safe-area-inset-top))`,
+          }} // Pass dynamic style for padding
           cart={cart}
           selectedWarehouse={selectedWarehouse}
           orderBeingEdited={orderBeingEdited}

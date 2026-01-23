@@ -85,10 +85,10 @@ const Inventory = ({
       )}
 
       {/* Container cho nội dung chính, bắt đầu từ dưới AppHeader */}
-      <div className="flex flex-col h-full pt-[72px] relative">
+      <div className="flex flex-col h-full pt-[calc(72px+env(safe-area-inset-top))] relative">
         {/* InventoryHeader cố định phía trên danh sách (Chỉ Search) */}
         <motion.div
-          className="absolute top-[72px] left-0 right-0 z-10 bg-amber-50"
+          className="absolute top-[calc(72px+env(safe-area-inset-top))] left-0 right-0 z-10 bg-amber-50"
           initial={{ y: 0 }}
           animate={{ y: isSearchVisible ? 0 : -80 }}
           transition={{ duration: 0.3 }}
