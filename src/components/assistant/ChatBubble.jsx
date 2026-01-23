@@ -4,6 +4,7 @@ import { format } from "date-fns";
 import { vi } from "date-fns/locale";
 import { Copy, Type } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { triggerHaptic, HAPTIC_PATTERNS } from "../../utils/common/haptics";
 
 const ChatBubble = ({ message, theme }) => {
   const isUser = message.sender === "user";
@@ -43,8 +44,7 @@ const ChatBubble = ({ message, theme }) => {
     pressTimer.current = setTimeout(() => {
       setIsPressed(true);
       setShowMenu(true);
-      // Rung nhẹ (Haptic feedback) nếu có thể
-      if (navigator.vibrate) navigator.vibrate(50);
+      triggerHaptic(HAPTIC_PATTERNS.medium);
     }, 250); // Reduced to 250ms for faster response
   };
 
