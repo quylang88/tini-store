@@ -183,7 +183,7 @@ const ChatBubble = ({ message, theme, swipeX }) => {
             viewBox="0 0 11 20"
             className={`absolute bottom-0 -right-[7px] w-[11px] h-[20px] ${currentTheme.userTailFill}`}
           >
-            <path d="M0 0v20h11c-6 0-11-6-11-20z" fill="currentColor" />
+            <path d="M0 0v20h11c-6 0-11-6-11-20z" />
           </svg>
         ) : (
           <svg
@@ -193,7 +193,6 @@ const ChatBubble = ({ message, theme, swipeX }) => {
             {/* Bot Tail with Border Stroke */}
             <path
               d="M11 0v20H0C6 20 11 14 11 0z"
-              stroke="currentColor"
               strokeWidth="1"
               fill="white"
             />

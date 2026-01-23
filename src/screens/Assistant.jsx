@@ -170,7 +170,8 @@ const Assistant = ({
       {/* Message List */}
       <div
         // FIX: Tăng padding-bottom (pb-20) để đảm bảo tin nhắn cuối không bị che bởi spacer hoặc bàn phím
-        className="flex-1 overflow-y-auto overflow-x-hidden px-4 pt-4 pb-20 bg-transparent relative scroll-smooth overscroll-contain"
+        // touch-pan-y: Cho phép scroll dọc tự nhiên, nhưng JS xử lý scroll ngang (swipe)
+        className="flex-1 overflow-y-auto overflow-x-hidden px-4 pt-4 pb-20 bg-transparent relative scroll-smooth overscroll-contain touch-pan-y"
         {...handlers}
       >
         {messages.length === 0 ? (
