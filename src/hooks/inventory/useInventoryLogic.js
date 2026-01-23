@@ -185,6 +185,9 @@ const useInventoryLogic = ({ products, setProducts, settings }) => {
     });
   };
 
+  // Sử dụng useCallback để giữ reference của hàm handleDelete ổn định giữa các lần render.
+  // Điều này rất quan trọng để React.memo trong ProductListItem hoạt động hiệu quả,
+  // tránh việc các item trong danh sách bị render lại khi cha render (ví dụ khi scroll).
   const handleDelete = useCallback(
     (id) => {
       const product = products.find((p) => p.id === id);

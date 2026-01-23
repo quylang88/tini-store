@@ -21,6 +21,11 @@ const ProductList = ({
            Kết hợp với 'popLayout', điều này đảm bảo text xuất hiện ngay lập tức ở đúng vị trí
            mà không bị đẩy bởi các item đang exit hoặc tự animate.
       */}
+      {/*
+         Tối ưu hóa danh sách: Sử dụng ProductListItem đã được memoized.
+         Điều này đảm bảo rằng chỉ những item thực sự thay đổi mới bị render lại,
+         giúp scroll mượt mà hơn trên các thiết bị yếu.
+      */}
       <AnimatePresence mode="popLayout">
         {products.map((product) => (
           <ProductListItem

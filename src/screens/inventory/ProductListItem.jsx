@@ -8,6 +8,9 @@ import {
 } from "../../utils/inventory/purchaseUtils";
 import { normalizeWarehouseStock } from "../../utils/inventory/warehouseUtils";
 
+// Sử dụng React.memo để ngăn component render lại không cần thiết
+// khi props (như product) không thay đổi. Điều này giúp tối ưu hiệu năng
+// khi danh sách sản phẩm dài.
 const ProductListItem = memo(({
   product,
   onDelete,
