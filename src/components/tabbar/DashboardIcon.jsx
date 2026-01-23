@@ -6,17 +6,22 @@ const DashboardIcon = ({ isActive, size = 24, strokeWidth = 2, loop = false }) =
   const activeStroke = `url(#${gradientId})`;
   const inactiveStroke = "currentColor";
 
-  const rectVariants = {
-    active: (custom) => ({
-      scale: [1, 1.15, 1],
+  // Animation for the grid items to "fly" and "swirl"
+  const itemVariants = {
+    active: (i) => ({
+      x: [0, i % 2 === 0 ? -5 : 5, 0], // Move out horizontally
+      y: [0, i < 2 ? -5 : 5, 0],       // Move out vertically
+      rotate: [0, 90, 0],              // Rotate while out
+      scale: [1, 0.8, 1],              // Shrink slightly while moving
+      opacity: [1, 0.8, 1],
       transition: {
-        delay: custom * 0.1,
-        duration: 2,
+        duration: 3,
         repeat: loop ? Infinity : 0,
-        ease: "easeInOut"
-      }
+        ease: "easeInOut",
+        delay: i * 0.1, // Stagger slightly
+      },
     }),
-    inactive: { scale: 1 }
+    inactive: { x: 0, y: 0, rotate: 0, scale: 1, opacity: 1 },
   };
 
   return (
@@ -41,46 +46,53 @@ const DashboardIcon = ({ isActive, size = 24, strokeWidth = 2, loop = false }) =
         </linearGradient>
       </defs>
 
+      {/* Item 1 (Top Left) */}
       <motion.rect
         x="3"
         y="3"
         width="7"
         height="9"
         rx="1"
-        variants={rectVariants}
+        variants={itemVariants}
         custom={0}
         animate={isActive ? "active" : "inactive"}
         style={{ transformOrigin: "6.5px 7.5px" }}
       />
+
+      {/* Item 2 (Top Right) */}
       <motion.rect
         x="14"
         y="3"
         width="7"
         height="5"
         rx="1"
-        variants={rectVariants}
+        variants={itemVariants}
         custom={1}
         animate={isActive ? "active" : "inactive"}
         style={{ transformOrigin: "17.5px 5.5px" }}
       />
+
+      {/* Item 3 (Bottom Right) */}
       <motion.rect
         x="14"
         y="12"
         width="7"
         height="9"
         rx="1"
-        variants={rectVariants}
+        variants={itemVariants}
         custom={2}
         animate={isActive ? "active" : "inactive"}
         style={{ transformOrigin: "17.5px 16.5px" }}
       />
+
+      {/* Item 4 (Bottom Left) */}
       <motion.rect
         x="3"
         y="16"
         width="7"
         height="5"
         rx="1"
-        variants={rectVariants}
+        variants={itemVariants}
         custom={3}
         animate={isActive ? "active" : "inactive"}
         style={{ transformOrigin: "6.5px 18.5px" }}

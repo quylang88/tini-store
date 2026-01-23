@@ -17,7 +17,7 @@ const ProductIcon = ({ isActive, size = 24, strokeWidth = 2, loop = false }) => 
       strokeWidth={isActive ? 2 : strokeWidth}
       strokeLinecap="round"
       strokeLinejoin="round"
-      className="lucide lucide-package overflow-visible"
+      className="lucide lucide-box overflow-visible"
     >
       <defs>
         <linearGradient id={gradientId} x1="0%" y1="0%" x2="100%" y2="100%">
@@ -28,49 +28,50 @@ const ProductIcon = ({ isActive, size = 24, strokeWidth = 2, loop = false }) => 
         </linearGradient>
       </defs>
 
-      {/* Floating Item (Star/Sparkle) */}
-      <motion.path
-        d="M12 8m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"
-        stroke={isActive ? activeStroke : "none"}
-        fill={isActive ? activeStroke : "none"}
-        opacity={0}
+      {/* Box Group - Morphs out */}
+      <motion.g
         animate={
           isActive
-            ? { opacity: [0, 1, 0], y: [0, -6, 0], scale: [0, 1, 0] }
-            : { opacity: 0, y: 0, scale: 0 }
+            ? { scale: [1, 0, 0, 1], opacity: [1, 0, 0, 1], rotate: [0, 180, 0, 0] }
+            : { scale: 1, opacity: 1, rotate: 0 }
         }
         transition={{
-          duration: 2.5,
+          duration: 4,
           repeat: loop ? Infinity : 0,
-          times: [0, 0.5, 1],
+          times: [0, 0.3, 0.7, 1],
           ease: "easeInOut",
         }}
-        style={{ transformOrigin: "12px 8px" }}
-      />
+        style={{ transformOrigin: "12px 12px" }}
+      >
+        <path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z" />
+        <path d="m3.3 7 8.7 5 8.7-5" />
+        <path d="M12 22v-9" />
+      </motion.g>
 
-      {/* Box Body */}
-      {/* Left Wall */}
-      <path d="M3 8v8.7a2 2 0 0 0 1 1.73l7 4" />
-      {/* Right Wall */}
-      <path d="M12 22.43l7-4a2 2 0 0 0 1-1.73V8" />
-      {/* Center Vertical Line */}
-      <path d="M12 22.43V13" />
-
-      {/* Lid - Floating */}
-      <motion.path
-        d="M3 8l9-4.5 9 4.5-9 4.5z"
+      {/* Magic Star/Sparkle - Morphs in */}
+      <motion.g
+        initial={{ scale: 0, opacity: 0 }}
         animate={
           isActive
-            ? { y: [0, -5, 0], rotate: [0, -5, 0] }
-            : { y: 0, rotate: 0 }
+            ? { scale: [0, 1.2, 1.2, 0], opacity: [0, 1, 1, 0], rotate: [0, 90, 180, 360] }
+            : { scale: 0, opacity: 0 }
         }
         transition={{
-          duration: 2.5,
+          duration: 4,
           repeat: loop ? Infinity : 0,
+          times: [0, 0.3, 0.7, 1],
           ease: "easeInOut",
         }}
-        style={{ transformOrigin: "12px 8px" }}
-      />
+        style={{ transformOrigin: "12px 12px" }}
+      >
+        <path
+          d="M12 2L14.4 9.6L22 12L14.4 14.4L12 22L9.6 14.4L2 12L9.6 9.6L12 2Z"
+          fill={isActive ? activeStroke : "none"}
+          stroke={isActive ? activeStroke : "none"}
+        />
+        {/* Orbiting particles around the star */}
+        <circle cx="12" cy="12" r="8" stroke={isActive ? activeStroke : "none"} strokeWidth="1" strokeDasharray="4 4" opacity="0.5" />
+      </motion.g>
     </svg>
   );
 };
