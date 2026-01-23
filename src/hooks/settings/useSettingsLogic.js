@@ -184,6 +184,12 @@ const useSettingsLogic = ({
           if (data.settings) {
             setSettings(data.settings);
           }
+
+          // Khôi phục bộ nhớ AI (nếu có trong file backup)
+          if (typeof data.aiChatSummary === "string") {
+            localStorage.setItem("ai_chat_summary", data.aiChatSummary);
+          }
+
           // Thông báo sau khi khôi phục thành công.
           setNoticeModal({
             title: "Khôi phục thành công",
