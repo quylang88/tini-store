@@ -87,9 +87,9 @@ const Assistant = ({
 
   return (
     <motion.div
-      // FIX 1: Dùng 100dvh (Dynamic Viewport Height) chuẩn cho mobile
-      // FIX 2: overscroll-none ngăn chặn việc kéo cả trang web xuống (lỗi header rời vị trí)
-      className="flex flex-col w-full h-[100dvh] relative overflow-hidden overscroll-none"
+      // FIX 1: Dùng fixed inset-0 để neo cứng màn hình vào viewport, tránh bị đẩy lên khi bàn phím hiện
+      // FIX 2: overscroll-none ngăn chặn việc kéo cả trang web xuống
+      className="fixed inset-0 z-40 flex flex-col w-full h-full overflow-hidden overscroll-none bg-white"
       animate={{
         backgroundColor: activeTheme.bgGradient,
       }}
@@ -237,9 +237,9 @@ const Assistant = ({
         <div
           style={{
             height: isInputFocused ? 0 : TABBAR_HEIGHT_SPACER,
-            transition: "height 0.2s ease-out",
+            transition: "height 0.3s ease-out",
           }}
-          className="w-full bg-white"
+          className="w-full bg-white flex-none"
         />
       </div>
     </motion.div>
