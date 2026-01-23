@@ -96,8 +96,8 @@ const StatsDetail = ({ products, orders, onBack }) => {
   const modalItems = activeModal === "quantity" ? topByQuantity : topByProfit;
 
   return (
-    <div className="h-full overflow-y-auto p-4 space-y-4 pb-24 animate-fade-in">
-      <div>
+    <div className="flex flex-col h-full animate-fade-in bg-rose-50">
+      <div className="flex-none pt-[env(safe-area-inset-top)] bg-rose-50 z-20 sticky top-0 px-4 py-2 border-b border-rose-100/50 backdrop-blur-sm">
         <div className="text-xl text-rose-700 font-bold whitespace-nowrap">
           Thống kê chi tiết
         </div>
@@ -106,153 +106,155 @@ const StatsDetail = ({ products, orders, onBack }) => {
         </div>
       </div>
 
-      <div className="bg-amber-50 rounded-2xl shadow-sm border border-amber-100 p-3">
-        {/* Bộ lọc thời gian chi tiết hơn để xem theo nhiều khoảng khác nhau. */}
-        <DateRangeFilter
-          customRange={customRange}
-          setCustomRange={setCustomRange}
-        />
-      </div>
+      <div className="flex-1 overflow-y-auto p-4 space-y-4 pb-24">
+        <div className="bg-amber-50 rounded-2xl shadow-sm border border-amber-100 p-3">
+          {/* Bộ lọc thời gian chi tiết hơn để xem theo nhiều khoảng khác nhau. */}
+          <DateRangeFilter
+            customRange={customRange}
+            setCustomRange={setCustomRange}
+          />
+        </div>
 
-      <div className="grid grid-cols-2 gap-3">
-        <MetricCard
-          icon={DollarSign}
-          label="Doanh thu"
-          value={`${formatNumber(totalRevenue)}đ`}
-          className="bg-rose-400 shadow-rose-200"
-        />
-        <MetricCard
-          icon={TrendingUp}
-          label="Lợi nhuận"
-          value={`${formatNumber(totalProfit)}đ`}
-          className="bg-emerald-400 shadow-emerald-100"
-        />
-        <div className="bg-amber-50 text-rose-900 p-4 rounded-2xl shadow-sm border border-amber-100 col-span-2">
-          <div className="grid grid-cols-3 gap-3 text-xs">
-            <div>
-              <div className="text-rose-500 uppercase font-semibold">
-                Số đơn
+        <div className="grid grid-cols-2 gap-3">
+          <MetricCard
+            icon={DollarSign}
+            label="Doanh thu"
+            value={`${formatNumber(totalRevenue)}đ`}
+            className="bg-rose-400 shadow-rose-200"
+          />
+          <MetricCard
+            icon={TrendingUp}
+            label="Lợi nhuận"
+            value={`${formatNumber(totalProfit)}đ`}
+            className="bg-emerald-400 shadow-emerald-100"
+          />
+          <div className="bg-amber-50 text-rose-900 p-4 rounded-2xl shadow-sm border border-amber-100 col-span-2">
+            <div className="grid grid-cols-3 gap-3 text-xs">
+              <div>
+                <div className="text-rose-500 uppercase font-semibold">
+                  Số đơn
+                </div>
+                <div className="text-lg font-bold text-rose-700">
+                  {orderCount}
+                </div>
               </div>
-              <div className="text-lg font-bold text-rose-700">
-                {orderCount}
+              <div>
+                <div className="text-rose-500 uppercase font-semibold">
+                  Giá trị TB
+                </div>
+                <div className="text-lg font-bold text-rose-700">
+                  {formatNumber(avgOrder)}đ
+                </div>
               </div>
-            </div>
-            <div>
-              <div className="text-rose-500 uppercase font-semibold">
-                Giá trị TB
-              </div>
-              <div className="text-lg font-bold text-rose-700">
-                {formatNumber(avgOrder)}đ
-              </div>
-            </div>
-            <div>
-              <div className="text-rose-500 uppercase font-semibold">
-                Biên lợi nhuận
-              </div>
-              <div className="text-lg font-bold text-rose-700">
-                {profitMargin.toFixed(1)}%
+              <div>
+                <div className="text-rose-500 uppercase font-semibold">
+                  Biên lợi nhuận
+                </div>
+                <div className="text-lg font-bold text-rose-700">
+                  {profitMargin.toFixed(1)}%
+                </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Phần Top Bán Chạy (Tái sử dụng) */}
-      <TopSellingSection
-        topOptions={topOptions}
-        activeTopOption={topLimit}
-        onOptionChange={setTopLimit}
-        topByProfit={topByProfit}
-        topByQuantity={topByQuantity}
-        onOpenModal={openTopModal}
-        layoutIdPrefix="stats-detail-top-selling"
-      />
+        {/* Phần Top Bán Chạy (Tái sử dụng) */}
+        <TopSellingSection
+          topOptions={topOptions}
+          activeTopOption={topLimit}
+          onOptionChange={setTopLimit}
+          topByProfit={topByProfit}
+          topByQuantity={topByQuantity}
+          onOpenModal={openTopModal}
+          layoutIdPrefix="stats-detail-top-selling"
+        />
 
-      <div className="bg-amber-50 rounded-2xl shadow-sm border border-amber-100 p-4 space-y-3">
-        <div className="flex items-center gap-2 text-rose-700">
-          <BarChart3 size={18} />
-          <h3 className="text-sm font-bold uppercase">So sánh kỳ hiện tại</h3>
-        </div>
-        <div className="grid grid-cols-2 gap-3 text-xs">
-          <div className="rounded-xl border border-amber-100 bg-amber-100 p-3">
-            <div className="text-rose-600 font-semibold uppercase mb-2">
-              Kỳ hiện tại
+        <div className="bg-amber-50 rounded-2xl shadow-sm border border-amber-100 p-4 space-y-3">
+          <div className="flex items-center gap-2 text-rose-700">
+            <BarChart3 size={18} />
+            <h3 className="text-sm font-bold uppercase">So sánh kỳ hiện tại</h3>
+          </div>
+          <div className="grid grid-cols-2 gap-3 text-xs">
+            <div className="rounded-xl border border-amber-100 bg-amber-100 p-3">
+              <div className="text-rose-600 font-semibold uppercase mb-2">
+                Kỳ hiện tại
+              </div>
+              <div className="space-y-1 text-rose-900">
+                <div>
+                  Doanh thu:{" "}
+                  <span className="font-semibold">
+                    {formatNumber(comparisonStats.current.revenue)}đ
+                  </span>
+                </div>
+                <div>
+                  Lợi nhuận:{" "}
+                  <span className="font-semibold">
+                    {formatNumber(comparisonStats.current.profit)}đ
+                  </span>
+                </div>
+                <div>
+                  Số đơn:{" "}
+                  <span className="font-semibold">
+                    {comparisonStats.current.count}
+                  </span>
+                </div>
+              </div>
             </div>
-            <div className="space-y-1 text-rose-900">
-              <div>
-                Doanh thu:{" "}
-                <span className="font-semibold">
-                  {formatNumber(comparisonStats.current.revenue)}đ
-                </span>
+            <div className="rounded-xl border border-gray-200 bg-gray-50/80 p-3">
+              <div className="text-gray-500 font-semibold uppercase mb-2">
+                Kỳ trước
               </div>
-              <div>
-                Lợi nhuận:{" "}
-                <span className="font-semibold">
-                  {formatNumber(comparisonStats.current.profit)}đ
-                </span>
-              </div>
-              <div>
-                Số đơn:{" "}
-                <span className="font-semibold">
-                  {comparisonStats.current.count}
-                </span>
+              <div className="space-y-1 text-gray-700">
+                <div>
+                  Doanh thu:{" "}
+                  <span className="font-semibold">
+                    {formatNumber(comparisonStats.previous.revenue)}đ
+                  </span>
+                </div>
+                <div>
+                  Lợi nhuận:{" "}
+                  <span className="font-semibold">
+                    {formatNumber(comparisonStats.previous.profit)}đ
+                  </span>
+                </div>
+                <div>
+                  Số đơn:{" "}
+                  <span className="font-semibold">
+                    {comparisonStats.previous.count}
+                  </span>
+                </div>
               </div>
             </div>
           </div>
-          <div className="rounded-xl border border-gray-200 bg-gray-50/80 p-3">
-            <div className="text-gray-500 font-semibold uppercase mb-2">
-              Kỳ trước
-            </div>
-            <div className="space-y-1 text-gray-700">
-              <div>
-                Doanh thu:{" "}
-                <span className="font-semibold">
-                  {formatNumber(comparisonStats.previous.revenue)}đ
-                </span>
-              </div>
-              <div>
-                Lợi nhuận:{" "}
-                <span className="font-semibold">
-                  {formatNumber(comparisonStats.previous.profit)}đ
-                </span>
-              </div>
-              <div>
-                Số đơn:{" "}
-                <span className="font-semibold">
-                  {comparisonStats.previous.count}
-                </span>
-              </div>
-            </div>
+          <div className="text-[11px] text-rose-500">
+            So sánh theo cùng số ngày của kỳ đang chọn để dễ theo dõi biến động.
           </div>
         </div>
-        <div className="text-[11px] text-rose-500">
-          So sánh theo cùng số ngày của kỳ đang chọn để dễ theo dõi biến động.
-        </div>
-      </div>
 
-      <div className="bg-amber-50 rounded-2xl shadow-sm border border-amber-100 p-4 space-y-2">
-        <div className="flex items-center gap-2 text-rose-700">
-          <TrendingUp size={18} />
-          <h3 className="text-sm font-bold uppercase">Ý tưởng thêm</h3>
+        <div className="bg-amber-50 rounded-2xl shadow-sm border border-amber-100 p-4 space-y-2">
+          <div className="flex items-center gap-2 text-rose-700">
+            <TrendingUp size={18} />
+            <h3 className="text-sm font-bold uppercase">Ý tưởng thêm</h3>
+          </div>
+          <ul className="text-xs text-rose-700 space-y-1 list-disc list-inside">
+            <li>
+              Tỉ trọng doanh thu theo danh mục/sản phẩm và mức tăng trưởng theo
+              kỳ.
+            </li>
+            <li>So sánh chi phí vận chuyển & chiết khấu theo từng kênh bán.</li>
+            <li>Bản đồ nhiệt ngày/giờ có nhiều đơn để tối ưu lịch chạy ads.</li>
+            <li>Danh sách đơn hoàn/hủy để theo dõi lý do thất thoát.</li>
+          </ul>
         </div>
-        <ul className="text-xs text-rose-700 space-y-1 list-disc list-inside">
-          <li>
-            Tỉ trọng doanh thu theo danh mục/sản phẩm và mức tăng trưởng theo
-            kỳ.
-          </li>
-          <li>So sánh chi phí vận chuyển & chiết khấu theo từng kênh bán.</li>
-          <li>Bản đồ nhiệt ngày/giờ có nhiều đơn để tối ưu lịch chạy ads.</li>
-          <li>Danh sách đơn hoàn/hủy để theo dõi lý do thất thoát.</li>
-        </ul>
-      </div>
 
-      {/* Dùng modal chung để xem chi tiết top khi chạm vào từng bảng. */}
-      <StatListModal
-        open={Boolean(activeModal)}
-        onClose={closeTopModal}
-        items={modalItems}
-        type={activeModal === "quantity" ? "quantity" : "profit"}
-      />
+        {/* Dùng modal chung để xem chi tiết top khi chạm vào từng bảng. */}
+        <StatListModal
+          open={Boolean(activeModal)}
+          onClose={closeTopModal}
+          items={modalItems}
+          type={activeModal === "quantity" ? "quantity" : "profit"}
+        />
+      </div>
     </div>
   );
 };

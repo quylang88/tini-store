@@ -52,7 +52,7 @@ const OrderListView = ({
       </AnimatePresence>
 
       <div
-        className="h-full overflow-y-auto p-3 pt-[80px] pb-24 space-y-3 min-h-0"
+        className="h-full overflow-y-auto p-3 pt-[calc(80px+env(safe-area-inset-top))] pb-24 space-y-3 min-h-0"
         onScroll={handleScroll}
       >
         {[...orders]

@@ -74,7 +74,7 @@ const OrderCreateView = ({
   // Search Header: ~56px
   // We calculate dynamic top/padding based on orderBeingEdited
 
-  const headerHeight = orderBeingEdited ? 68 : 53;
+  const headerHeight = orderBeingEdited ? 68 : 52; // Reduced 53 -> 52 to close gap
   const searchBarHeight = 60; // Slightly more than 56 to avoid overlap
   const listPaddingTop = headerHeight + searchBarHeight;
 
@@ -103,6 +103,7 @@ const OrderCreateView = ({
           y: isSearchVisible ? 0 : -searchBarHeight, // Slide up by height of search bar
         }}
         transition={{ duration: 0.3 }}
+        style={{ marginTop: "env(safe-area-inset-top)" }}
       >
         <ProductFilterHeader
           searchTerm={searchTerm}
@@ -127,7 +128,9 @@ const OrderCreateView = ({
         <OrderCreateProductList
           filteredProducts={filteredProducts}
           handleScroll={handleScroll}
-          style={{ paddingTop: listPaddingTop }} // Pass dynamic style for padding
+          style={{
+            paddingTop: `calc(${listPaddingTop}px + env(safe-area-inset-top))`,
+          }} // Pass dynamic style for padding
           cart={cart}
           selectedWarehouse={selectedWarehouse}
           orderBeingEdited={orderBeingEdited}

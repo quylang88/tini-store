@@ -3,7 +3,7 @@ import React from "react";
 const AppHeader = ({ className = "", isScrolled = false }) => {
   return (
     <div
-      className={`absolute top-0 left-0 right-0 z-20 px-4 py-0 bg-rose-50 transition-shadow duration-200 ${
+      className={`absolute top-0 left-0 right-0 z-20 px-4 py-0 bg-rose-50 transition-shadow duration-200 pt-[env(safe-area-inset-top)] ${
         isScrolled ? "shadow-sm" : "shadow-none"
       } ${className}`}
     >
