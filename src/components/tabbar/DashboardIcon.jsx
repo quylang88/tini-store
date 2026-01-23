@@ -4,24 +4,34 @@ import { motion } from "framer-motion";
 const DashboardIcon = ({ isActive, size = 24, strokeWidth = 2, loop = false }) => {
   const gradientId = useId().replace(/:/g, "");
   const activeStroke = `url(#${gradientId})`;
-  const inactiveStroke = "currentColor";
+  const inactiveStroke = "currentColor"; // Inherits Amber-500 from parent
 
-  // Animation for the grid items to "fly" and "swirl"
+  // Grid items explode out when active, come back when inactive
   const itemVariants = {
     active: (i) => ({
-      x: [0, i % 2 === 0 ? -5 : 5, 0], // Move out horizontally
-      y: [0, i < 2 ? -5 : 5, 0],       // Move out vertically
-      rotate: [0, 90, 0],              // Rotate while out
-      scale: [1, 0.8, 1],              // Shrink slightly while moving
-      opacity: [1, 0.8, 1],
+      x: [0, i % 2 === 0 ? -6 : 6, 0],
+      y: [0, i < 2 ? -6 : 6, 0],
+      rotate: [0, 90, 0],
+      scale: [1, 0.8, 1],
+      opacity: 1,
       transition: {
         duration: 3,
         repeat: loop ? Infinity : 0,
         ease: "easeInOut",
-        delay: i * 0.1, // Stagger slightly
+        delay: i * 0.1,
       },
     }),
-    inactive: { x: 0, y: 0, rotate: 0, scale: 1, opacity: 1 },
+    inactive: (i) => ({
+      x: 0,
+      y: 0,
+      rotate: 0,
+      scale: 1,
+      opacity: 1,
+      transition: {
+        duration: 0.8, // Smooth return
+        ease: "backOut", // Nice "snap" effect
+      },
+    }),
   };
 
   return (

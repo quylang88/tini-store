@@ -6,6 +6,43 @@ const OrderIcon = ({ isActive, size = 24, strokeWidth = 2, loop = false }) => {
   const activeStroke = `url(#${gradientId})`;
   const inactiveStroke = "currentColor";
 
+  const cartVariants = {
+    active: {
+      rotate: [0, -5, 5, 0],
+      y: [0, 2, 0],
+      transition: {
+        duration: 0.6,
+        delay: 0.6, // Wait for items to drop
+        repeat: loop ? Infinity : 0,
+      }
+    },
+    inactive: {
+      rotate: 0,
+      y: 0,
+      transition: { duration: 0.5, ease: "backOut" }
+    }
+  };
+
+  const itemVariants = {
+    active: (custom) => ({
+      y: [0, custom.dropDistance],
+      opacity: [0, 1, 0],
+      scale: [0.5, 1, 0],
+      transition: {
+        duration: 1.5,
+        delay: custom.delay,
+        repeat: loop ? Infinity : 0,
+        ease: "easeIn",
+      }
+    }),
+    inactive: {
+      y: 0,
+      opacity: 0,
+      scale: 0,
+      transition: { duration: 0.3 }
+    }
+  };
+
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -35,17 +72,9 @@ const OrderIcon = ({ isActive, size = 24, strokeWidth = 2, loop = false }) => {
         r="2"
         fill={isActive ? activeStroke : "none"}
         stroke="none"
-        opacity={0}
-        animate={
-          isActive
-            ? { y: [0, 10], opacity: [0, 1, 0], scale: [0.5, 1, 0] }
-            : { opacity: 0 }
-        }
-        transition={{
-          duration: 1.5,
-          repeat: loop ? Infinity : 0,
-          ease: "easeIn",
-        }}
+        variants={itemVariants}
+        custom={{ dropDistance: 10, delay: 0 }}
+        animate={isActive ? "active" : "inactive"}
       />
 
       {/* Falling Item 2 */}
@@ -55,32 +84,15 @@ const OrderIcon = ({ isActive, size = 24, strokeWidth = 2, loop = false }) => {
         r="1.5"
         fill={isActive ? activeStroke : "none"}
         stroke="none"
-        opacity={0}
-        animate={
-          isActive
-            ? { y: [0, 12], opacity: [0, 1, 0], scale: [0.5, 1, 0] }
-            : { opacity: 0 }
-        }
-        transition={{
-          duration: 1.8,
-          delay: 0.3,
-          repeat: loop ? Infinity : 0,
-          ease: "easeIn",
-        }}
+        variants={itemVariants}
+        custom={{ dropDistance: 12, delay: 0.3 }}
+        animate={isActive ? "active" : "inactive"}
       />
 
       {/* Cart Body */}
       <motion.g
-        animate={
-          isActive
-            ? { rotate: [0, -3, 3, 0], y: [0, 1, 0] }
-            : { rotate: 0, y: 0 }
-        }
-        transition={{
-          duration: 0.6,
-          delay: 0.6, // Wait for items to land
-          repeat: loop ? Infinity : 0,
-        }}
+        variants={cartVariants}
+        animate={isActive ? "active" : "inactive"}
         style={{ transformOrigin: "12px 21px" }}
       >
         <circle cx="8" cy="21" r="1" />

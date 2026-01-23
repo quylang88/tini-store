@@ -6,6 +6,41 @@ const ProductIcon = ({ isActive, size = 24, strokeWidth = 2, loop = false }) => 
   const activeStroke = `url(#${gradientId})`;
   const inactiveStroke = "currentColor";
 
+  const boxVariants = {
+    active: {
+      scale: [1, 0],
+      opacity: [1, 0],
+      rotate: [0, 180],
+      transition: { duration: 1, ease: "easeInOut" }
+    },
+    inactive: {
+      scale: 1,
+      opacity: 1,
+      rotate: 0,
+      transition: { duration: 0.8, ease: "backOut", delay: 0.2 } // Wait for star to disappear
+    }
+  };
+
+  const starVariants = {
+    active: {
+      scale: [0, 1.2, 1],
+      opacity: [0, 1, 1],
+      rotate: [0, 180, 360],
+      transition: {
+        duration: 3,
+        repeat: loop ? Infinity : 0,
+        ease: "easeInOut",
+        delay: 0.5 // Start after box disappears
+      }
+    },
+    inactive: {
+      scale: 0,
+      opacity: 0,
+      rotate: 0,
+      transition: { duration: 0.6, ease: "easeIn" }
+    }
+  };
+
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -28,19 +63,10 @@ const ProductIcon = ({ isActive, size = 24, strokeWidth = 2, loop = false }) => 
         </linearGradient>
       </defs>
 
-      {/* Box Group - Morphs out */}
+      {/* Box Group - Transforms into Star */}
       <motion.g
-        animate={
-          isActive
-            ? { scale: [1, 0, 0, 1], opacity: [1, 0, 0, 1], rotate: [0, 180, 0, 0] }
-            : { scale: 1, opacity: 1, rotate: 0 }
-        }
-        transition={{
-          duration: 4,
-          repeat: loop ? Infinity : 0,
-          times: [0, 0.3, 0.7, 1],
-          ease: "easeInOut",
-        }}
+        variants={boxVariants}
+        animate={isActive ? "active" : "inactive"}
         style={{ transformOrigin: "12px 12px" }}
       >
         <path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z" />
@@ -48,20 +74,11 @@ const ProductIcon = ({ isActive, size = 24, strokeWidth = 2, loop = false }) => 
         <path d="M12 22v-9" />
       </motion.g>
 
-      {/* Magic Star/Sparkle - Morphs in */}
+      {/* Magic Star/Sparkle - Appears when Active */}
       <motion.g
-        initial={{ scale: 0, opacity: 0 }}
-        animate={
-          isActive
-            ? { scale: [0, 1.2, 1.2, 0], opacity: [0, 1, 1, 0], rotate: [0, 90, 180, 360] }
-            : { scale: 0, opacity: 0 }
-        }
-        transition={{
-          duration: 4,
-          repeat: loop ? Infinity : 0,
-          times: [0, 0.3, 0.7, 1],
-          ease: "easeInOut",
-        }}
+        variants={starVariants}
+        initial="inactive"
+        animate={isActive ? "active" : "inactive"}
         style={{ transformOrigin: "12px 12px" }}
       >
         <path
@@ -69,7 +86,6 @@ const ProductIcon = ({ isActive, size = 24, strokeWidth = 2, loop = false }) => 
           fill={isActive ? activeStroke : "none"}
           stroke={isActive ? activeStroke : "none"}
         />
-        {/* Orbiting particles around the star */}
         <circle cx="12" cy="12" r="8" stroke={isActive ? activeStroke : "none"} strokeWidth="1" strokeDasharray="4 4" opacity="0.5" />
       </motion.g>
     </svg>
