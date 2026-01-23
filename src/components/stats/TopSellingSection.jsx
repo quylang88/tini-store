@@ -1,10 +1,10 @@
-import React from "react";
+import React, { useMemo, memo } from "react";
 import { Trophy } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import AnimatedFilterTabs from "../common/AnimatedFilterTabs";
 import RankBadge from "./RankBadge";
 
-const TopSellingSection = ({
+const TopSellingSection = memo(({
   topOptions,
   activeTopOption,
   onOptionChange,
@@ -15,10 +15,10 @@ const TopSellingSection = ({
 }) => {
   // Chuyển đổi topOptions sang định dạng yêu cầu của AnimatedFilterTabs (key, label)
   // Giả sử topOptions có { id, label }
-  const tabs = topOptions.map((opt) => ({
+  const tabs = useMemo(() => topOptions.map((opt) => ({
     key: opt.id,
     label: opt.label,
-  }));
+  })), [topOptions]);
 
   return (
     <div className="bg-amber-50 rounded-2xl shadow-sm border border-amber-100 p-4 space-y-4">
@@ -115,6 +115,6 @@ const TopSellingSection = ({
       </div>
     </div>
   );
-};
+});
 
 export default TopSellingSection;

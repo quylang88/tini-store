@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useCallback } from "react";
 import {
   ArrowUpRight,
   DollarSign,
@@ -37,8 +37,8 @@ const Dashboard = ({ products, orders, onOpenDetail }) => {
   const [showInventoryWarningModal, setShowInventoryWarningModal] =
     useState(false);
 
-  const openTopModal = (type) => setActiveModal(type);
-  const closeTopModal = () => setActiveModal(null);
+  const openTopModal = useCallback((type) => setActiveModal(type), []);
+  const closeTopModal = useCallback(() => setActiveModal(null), []);
 
   const modalItems = activeModal === "quantity" ? topByQuantity : topByProfit;
 
