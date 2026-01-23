@@ -6,40 +6,49 @@ const OrderIcon = ({ isActive, size = 24, strokeWidth = 2, loop = false }) => {
   const activeStroke = `url(#${gradientId})`;
   const inactiveStroke = "currentColor";
 
+  // Cart body: Rolls forward (active), Rolls back slowly (inactive)
   const cartVariants = {
     active: {
-      rotate: [0, -5, 5, 0],
-      y: [0, 2, 0],
+      x: [0, 3, 0], // Roll forward slightly
+      rotate: [0, -5, 0],
       transition: {
-        duration: 0.6,
-        delay: 0.6, // Wait for items to drop
+        duration: 2,
         repeat: loop ? Infinity : 0,
+        ease: "easeInOut",
       }
     },
     inactive: {
+      x: 0,
       rotate: 0,
-      y: 0,
-      transition: { duration: 0.5, ease: "backOut" }
+      transition: {
+        duration: 2.5, // Slow roll back
+        ease: "easeInOut"
+      }
     }
   };
 
+  // Items: Drop in (active), Float up/Fade out (inactive)
   const itemVariants = {
     active: (custom) => ({
       y: [0, custom.dropDistance],
-      opacity: [0, 1, 0],
-      scale: [0.5, 1, 0],
+      opacity: [0, 1],
+      scale: [0.5, 1],
       transition: {
         duration: 1.5,
         delay: custom.delay,
         repeat: loop ? Infinity : 0,
-        ease: "easeIn",
+        repeatType: "reverse",
+        ease: "bounceOut",
       }
     }),
     inactive: {
-      y: 0,
+      y: -10, // Float up
       opacity: 0,
-      scale: 0,
-      transition: { duration: 0.3 }
+      scale: 0.5,
+      transition: {
+        duration: 2, // Slow fade out
+        ease: "easeInOut"
+      }
     }
   };
 
@@ -73,7 +82,7 @@ const OrderIcon = ({ isActive, size = 24, strokeWidth = 2, loop = false }) => {
         fill={isActive ? activeStroke : "none"}
         stroke="none"
         variants={itemVariants}
-        custom={{ dropDistance: 10, delay: 0 }}
+        custom={{ dropDistance: 10, delay: 0.2 }}
         animate={isActive ? "active" : "inactive"}
       />
 
@@ -85,7 +94,7 @@ const OrderIcon = ({ isActive, size = 24, strokeWidth = 2, loop = false }) => {
         fill={isActive ? activeStroke : "none"}
         stroke="none"
         variants={itemVariants}
-        custom={{ dropDistance: 12, delay: 0.3 }}
+        custom={{ dropDistance: 12, delay: 0.5 }}
         animate={isActive ? "active" : "inactive"}
       />
 

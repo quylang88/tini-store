@@ -11,13 +11,17 @@ const ProductIcon = ({ isActive, size = 24, strokeWidth = 2, loop = false }) => 
       scale: [1, 0],
       opacity: [1, 0],
       rotate: [0, 180],
-      transition: { duration: 1, ease: "easeInOut" }
+      transition: { duration: 1.5, ease: "easeInOut" }
     },
     inactive: {
       scale: 1,
       opacity: 1,
       rotate: 0,
-      transition: { duration: 0.8, ease: "backOut", delay: 0.2 } // Wait for star to disappear
+      transition: {
+        duration: 2.5, // Slow reverse
+        ease: "easeInOut",
+        delay: 0.2
+      }
     }
   };
 
@@ -27,17 +31,21 @@ const ProductIcon = ({ isActive, size = 24, strokeWidth = 2, loop = false }) => 
       opacity: [0, 1, 1],
       rotate: [0, 180, 360],
       transition: {
-        duration: 3,
+        duration: 2.5,
         repeat: loop ? Infinity : 0,
+        repeatType: "reverse",
         ease: "easeInOut",
-        delay: 0.5 // Start after box disappears
+        delay: 1 // Wait for box
       }
     },
     inactive: {
       scale: 0,
       opacity: 0,
       rotate: 0,
-      transition: { duration: 0.6, ease: "easeIn" }
+      transition: {
+        duration: 2.5, // Slow reverse
+        ease: "easeInOut"
+      }
     }
   };
 

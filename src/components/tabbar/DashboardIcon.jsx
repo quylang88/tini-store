@@ -4,34 +4,47 @@ import { motion } from "framer-motion";
 const DashboardIcon = ({ isActive, size = 24, strokeWidth = 2, loop = false }) => {
   const gradientId = useId().replace(/:/g, "");
   const activeStroke = `url(#${gradientId})`;
-  const inactiveStroke = "currentColor"; // Inherits Amber-500 from parent
+  const inactiveStroke = "currentColor";
 
-  // Grid items explode out when active, come back when inactive
+  // Grid items: Active = Explode out; Inactive = Slow gather back
   const itemVariants = {
     active: (i) => ({
-      x: [0, i % 2 === 0 ? -6 : 6, 0],
-      y: [0, i < 2 ? -6 : 6, 0],
-      rotate: [0, 90, 0],
-      scale: [1, 0.8, 1],
+      x: [0, i % 2 === 0 ? -8 : 8],
+      y: [0, i < 2 ? -8 : 8],
+      rotate: [0, 90],
+      scale: [1, 0.8],
       opacity: 1,
       transition: {
-        duration: 3,
+        duration: 2, // Slower active phase
         repeat: loop ? Infinity : 0,
+        repeatType: "reverse", // Yo-yo effect if looping
         ease: "easeInOut",
-        delay: i * 0.1,
+        delay: 0.5, // Wait for initial rotation
       },
     }),
-    inactive: (i) => ({
+    inactive: {
       x: 0,
       y: 0,
       rotate: 0,
       scale: 1,
       opacity: 1,
       transition: {
-        duration: 0.8, // Smooth return
-        ease: "backOut", // Nice "snap" effect
+        duration: 2.5, // Slow reverse!
+        ease: "easeInOut", // Smooth slow landing
       },
-    }),
+    },
+  };
+
+  // Whole Group Rotation
+  const groupVariants = {
+    active: {
+      rotate: 360,
+      transition: { duration: 1, ease: "circOut" }
+    },
+    inactive: {
+      rotate: 0,
+      transition: { duration: 2.5, ease: "easeInOut" } // Unwind slowly or just settle
+    }
   };
 
   return (
@@ -56,57 +69,59 @@ const DashboardIcon = ({ isActive, size = 24, strokeWidth = 2, loop = false }) =
         </linearGradient>
       </defs>
 
-      {/* Item 1 (Top Left) */}
-      <motion.rect
-        x="3"
-        y="3"
-        width="7"
-        height="9"
-        rx="1"
-        variants={itemVariants}
-        custom={0}
+      <motion.g
+        variants={groupVariants}
         animate={isActive ? "active" : "inactive"}
-        style={{ transformOrigin: "6.5px 7.5px" }}
-      />
+        style={{ transformOrigin: "12px 12px" }}
+      >
+        {/* Item 1 (Top Left) */}
+        <motion.rect
+          x="3"
+          y="3"
+          width="7"
+          height="9"
+          rx="1"
+          variants={itemVariants}
+          custom={0}
+          style={{ transformOrigin: "6.5px 7.5px" }}
+        />
 
-      {/* Item 2 (Top Right) */}
-      <motion.rect
-        x="14"
-        y="3"
-        width="7"
-        height="5"
-        rx="1"
-        variants={itemVariants}
-        custom={1}
-        animate={isActive ? "active" : "inactive"}
-        style={{ transformOrigin: "17.5px 5.5px" }}
-      />
+        {/* Item 2 (Top Right) */}
+        <motion.rect
+          x="14"
+          y="3"
+          width="7"
+          height="5"
+          rx="1"
+          variants={itemVariants}
+          custom={1}
+          style={{ transformOrigin: "17.5px 5.5px" }}
+        />
 
-      {/* Item 3 (Bottom Right) */}
-      <motion.rect
-        x="14"
-        y="12"
-        width="7"
-        height="9"
-        rx="1"
-        variants={itemVariants}
-        custom={2}
-        animate={isActive ? "active" : "inactive"}
-        style={{ transformOrigin: "17.5px 16.5px" }}
-      />
+        {/* Item 3 (Bottom Right) */}
+        <motion.rect
+          x="14"
+          y="12"
+          width="7"
+          height="9"
+          rx="1"
+          variants={itemVariants}
+          custom={2}
+          style={{ transformOrigin: "17.5px 16.5px" }}
+        />
 
-      {/* Item 4 (Bottom Left) */}
-      <motion.rect
-        x="3"
-        y="16"
-        width="7"
-        height="5"
-        rx="1"
-        variants={itemVariants}
-        custom={3}
-        animate={isActive ? "active" : "inactive"}
-        style={{ transformOrigin: "6.5px 18.5px" }}
-      />
+        {/* Item 4 (Bottom Left) */}
+        <motion.rect
+          x="3"
+          y="16"
+          width="7"
+          height="5"
+          rx="1"
+          variants={itemVariants}
+          custom={3}
+          style={{ transformOrigin: "6.5px 18.5px" }}
+        />
+      </motion.g>
     </svg>
   );
 };
