@@ -15,7 +15,7 @@ const useLoginLogic = ({ onLogin }) => {
         setUsername(user);
         setPassword(pass);
         setRemember(true); // Tự động tích vào ô ghi nhớ
-      } catch (e) {
+      } catch {
         localStorage.removeItem("tini_saved_creds");
       }
     }
@@ -25,7 +25,10 @@ const useLoginLogic = ({ onLogin }) => {
     e.preventDefault();
 
     // Kiểm tra tài khoản cứng
-    if (username === "tiny-shop" && password === "Believe93") {
+    if (
+      username === import.meta.env.VITE_APP_USERNAME &&
+      password === import.meta.env.VITE_APP_PASSWORD
+    ) {
       // Xử lý Ghi nhớ Tài khoản/Mật khẩu
       if (remember) {
         // Nếu chọn Ghi nhớ: Lưu vào bộ nhớ máy
