@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 import { Bot, Palette, Eraser } from "lucide-react";
 import { motion } from "framer-motion";
 import ChatBubble from "../components/assistant/ChatBubble";
@@ -31,34 +31,6 @@ const Assistant = ({
 
   const [isInputFocused, setIsInputFocused] = React.useState(false);
 
-  // --- FIX: Visual Viewport Logic for iOS ---
-  // Dùng state để lưu chiều cao thực tế của vùng hiển thị
-  const [viewportHeight, setViewportHeight] = useState("100dvh");
-
-  useEffect(() => {
-    // Chỉ chạy logic này nếu trình duyệt hỗ trợ visualViewport (iOS Safari/Chrome)
-    if (!window.visualViewport) return;
-
-    const handleResize = () => {
-      // Cập nhật chiều cao container bằng đúng chiều cao nhìn thấy được
-      setViewportHeight(`${window.visualViewport.height}px`);
-      // Scroll window về 0 để tránh header bị đẩy lên trên
-      window.scrollTo(0, 0);
-    };
-
-    window.visualViewport.addEventListener("resize", handleResize);
-    window.visualViewport.addEventListener("scroll", handleResize);
-
-    // Set chiều cao ban đầu
-    handleResize();
-
-    return () => {
-      window.visualViewport.removeEventListener("resize", handleResize);
-      window.visualViewport.removeEventListener("scroll", handleResize);
-    };
-  }, []);
-  // ------------------------------------------
-
   const handleInputFocus = () => {
     setIsInputFocused(true);
     setTabBarVisible(false);
@@ -66,7 +38,10 @@ const Assistant = ({
 
   const handleInputBlur = () => {
     setIsInputFocused(false);
-    setTabBarVisible(true);
+    // Delay một chút để tránh layout bị giật trước khi bàn phím đóng hẳn
+    setTimeout(() => {
+      setTabBarVisible(true);
+    }, 100);
   };
 
   // 2. Mode Logic
@@ -106,11 +81,15 @@ const Assistant = ({
   // 5. Scroll Logic
   const messagesEndRef = useAutoScroll([messages, loadingText]);
 
+  // Chiều cao TabBar mặc định (ước lượng 60px + safe area)
+  // Bạn có thể chỉnh số 60px này cho khớp với chiều cao thực tế của TabBar app bạn
+  const TABBAR_HEIGHT_SPACER = "calc(60px + env(safe-area-inset-bottom))";
+
   return (
     <motion.div
-      // --- FIX: Áp dụng chiều cao cứng từ visualViewport ---
-      style={{ height: viewportHeight }}
-      className="flex flex-col w-full relative overflow-hidden"
+      // FIX 1: Dùng 100dvh (Dynamic Viewport Height) chuẩn cho mobile
+      // FIX 2: overscroll-none ngăn chặn việc kéo cả trang web xuống (lỗi header rời vị trí)
+      className="flex flex-col w-full h-[100dvh] relative overflow-hidden overscroll-none"
       animate={{
         backgroundColor: activeTheme.bgGradient,
       }}
@@ -120,9 +99,7 @@ const Assistant = ({
         ease: "linear",
       }}
     >
-      {/* HEADER: Chuyển từ absolute sang flex-none (static). 
-        Điều này giúp layout cứng cáp hơn, header không bao giờ bị scroll mất.
-      */}
+      {/* HEADER: Flex-none để không bị co giãn */}
       <div
         className={`flex-none pt-[env(safe-area-inset-top)] flex items-center gap-3 px-4 py-3 border-b border-white/50 backdrop-blur-sm z-20 shadow-sm ${activeTheme.headerBg}`}
       >
@@ -186,10 +163,8 @@ const Assistant = ({
         </button>
       </div>
 
-      {/* Message List: flex-1 để chiếm toàn bộ khoảng trống còn lại.
-        Bỏ padding-top cứng (80px) vì header không còn là absolute nữa.
-      */}
-      <div className="flex-1 overflow-y-auto p-4 bg-transparent relative scroll-smooth">
+      {/* Message List */}
+      <div className="flex-1 overflow-y-auto p-4 bg-transparent relative scroll-smooth overscroll-contain">
         {messages.length === 0 ? (
           <div className="h-full flex flex-col items-center justify-center text-gray-400 text-sm italic">
             <p>Màn hình trống.</p>
@@ -241,8 +216,9 @@ const Assistant = ({
         theme={activeTheme}
       />
 
-      {/* Input Area */}
-      <div className="flex-none z-30 bg-white">
+      {/* Input Area + Spacer Container */}
+      {/* Container này sẽ nằm đè lên vị trí của TabBar khi bàn phím tắt */}
+      <div className="flex-none bg-white z-30 pb-0">
         <ChatInput
           onSend={handleSendMessage}
           disabled={isTyping}
@@ -253,21 +229,19 @@ const Assistant = ({
           onInputBlur={handleInputBlur}
           isFocused={isInputFocused}
         />
-      </div>
 
-      {/* Spacer cho TabBar: 
-        Khi input focus (bàn phím hiện), spacer = 0.
-        Khi input blur (bàn phím ẩn), spacer = chiều cao TabBar + Safe area.
-      */}
-      <motion.div
-        animate={{
-          height: isInputFocused
-            ? 0
-            : "calc(52px + env(safe-area-inset-bottom))",
-        }}
-        transition={{ duration: 0.2 }}
-        className="flex-none bg-white"
-      />
+        {/* SPACER QUAN TRỌNG: 
+            - Khi focus (phím hiện): Chiều cao = 0 (để input sát phím).
+            - Khi blur (phím ẩn): Chiều cao = TabBar (để đẩy input lên trên TabBar).
+        */}
+        <div
+          style={{
+            height: isInputFocused ? 0 : TABBAR_HEIGHT_SPACER,
+            transition: "height 0.2s ease-out",
+          }}
+          className="w-full bg-white"
+        />
+      </div>
     </motion.div>
   );
 };
