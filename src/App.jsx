@@ -21,6 +21,7 @@ import useImagePreloader from "./hooks/ui/useImagePreloader";
 import { exportDataToJSON } from "./utils/file/fileUtils";
 import { sendNotification } from "./utils/common/notificationUtils";
 import useDailyGreeting from "./hooks/core/useDailyGreeting";
+import { getRandomGreeting } from "./constants/assistantGreetings";
 
 // Định nghĩa thứ tự tab để xác định hướng chuyển cảnh
 const TAB_ORDER = {
@@ -44,16 +45,7 @@ const App = () => {
   const [backupReminderOpen, setBackupReminderOpen] = useState(false);
 
   // --- 1b. TRẠNG THÁI CHAT ASSISTANT ---
-  const [chatMessages, setChatMessages] = useState([
-    {
-      id: "welcome",
-      type: "text",
-      sender: "assistant",
-      content:
-        "Chào bạn! Mình là trợ lý ảo Misa. Mình có thể giúp gì cho bạn hôm nay?",
-      timestamp: new Date(),
-    },
-  ]);
+  const [chatMessages, setChatMessages] = useState(() => [getRandomGreeting()]);
   const [isChatTyping, setIsChatTyping] = useState(false);
 
   // --- 2. KHỞI TẠO DỮ LIỆU TỪ LOCALSTORAGE ---
