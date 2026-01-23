@@ -6,7 +6,7 @@ import { Copy, Type } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { triggerHaptic, HAPTIC_PATTERNS } from "../../utils/common/haptics";
 
-const ChatBubble = ({ message, theme }) => {
+const ChatBubble = ({ message, theme, swipeX }) => {
   const isUser = message.sender === "user";
   const scrollRef = useRef(null);
   const textRef = useRef(null);
@@ -15,8 +15,10 @@ const ChatBubble = ({ message, theme }) => {
   // Default theme fallback if not provided
   const currentTheme = theme || {
     userBubbleBg: "bg-rose-500",
+    userTailFill: "fill-rose-500", // Fallback
     userBubbleText: "text-white",
     botBubbleBorder: "border-gray-100",
+    botTailStroke: "stroke-gray-100", // Fallback
     botStatsBg: "bg-rose-50",
     botStatsBorder: "border-rose-100",
     botStatsText: "text-rose-500",
@@ -147,17 +149,20 @@ const ChatBubble = ({ message, theme }) => {
   }, [enableSelection]);
 
   // Design: iMessage Style Border Radius
-  // User: Bo tròn hết, trừ góc dưới phải nhọn
-  // Bot: Bo tròn hết, trừ góc dưới trái nhọn
+  // User: Bo tròn hết, trừ góc dưới phải nhọn (để gắn đuôi)
+  // Bot: Bo tròn hết, trừ góc dưới trái nhọn (để gắn đuôi)
   const borderRadiusClass = isUser
-    ? "rounded-[18px] rounded-br-[2px]"
-    : "rounded-[18px] rounded-bl-[2px]";
+    ? "rounded-[18px] rounded-br-sm"
+    : "rounded-[18px] rounded-bl-sm";
+
+  // Motion style cho hiệu ứng swipe
+  const rowStyle = swipeX ? { x: swipeX } : {};
 
   return (
-    <div
+    <motion.div
       ref={scrollRef}
-      style={{ zIndex: showMenu ? 50 : "auto" }} // Fix z-index overlap issue
-      className={`flex w-full mb-4 relative ${isUser ? "justify-end" : "justify-start"}`}
+      style={{ zIndex: showMenu ? 50 : "auto", ...rowStyle }} // Fix z-index overlap issue
+      className={`flex w-full mb-4 relative items-end ${isUser ? "justify-end" : "justify-start"}`}
     >
       <motion.div
         ref={bubbleRef}
@@ -172,10 +177,35 @@ const ChatBubble = ({ message, theme }) => {
             : `bg-white text-gray-800 border ${currentTheme.botBubbleBorder} shadow-sm`
         } ${enableSelection ? "select-text cursor-text" : "select-none cursor-default touch-manipulation"}`}
       >
+        {/* --- TAIL (ĐUÔI TIN NHẮN) --- */}
+        {isUser ? (
+          <svg
+            viewBox="0 0 11 20"
+            className={`absolute bottom-0 -right-[7px] w-[11px] h-[20px] ${currentTheme.userTailFill}`}
+          >
+            <path d="M0 0v20h11c-6 0-11-6-11-20z" fill="currentColor" />
+          </svg>
+        ) : (
+          <svg
+            viewBox="0 0 11 20"
+            className={`absolute bottom-[-1px] -left-[8px] w-[11px] h-[21px] fill-white ${currentTheme.botTailStroke}`}
+          >
+            {/* Bot Tail with Border Stroke */}
+            <path
+              d="M11 0v20H0C6 20 11 14 11 0z"
+              stroke="currentColor"
+              strokeWidth="1"
+              fill="white"
+            />
+            {/* Che viền bên phải để nối liền với bong bóng */}
+            <path d="M10 0v20" stroke="white" strokeWidth="2" />
+          </svg>
+        )}
+
         {/* Nội dung văn bản */}
         <p
           ref={textRef}
-          className="whitespace-pre-wrap text-[15px] leading-relaxed"
+          className="whitespace-pre-wrap text-[15px] leading-relaxed relative z-10"
         >
           {message.content}
         </p>
@@ -316,14 +346,15 @@ const ChatBubble = ({ message, theme }) => {
             </div>
           )}
 
-        {/* Thời gian */}
-        <div
-          className={`text-[10px] mt-1 text-right select-none ${isUser ? "text-white/80" : "text-gray-400"}`}
-        >
-          {message.timestamp && format(new Date(message.timestamp), "HH:mm")}
-        </div>
       </motion.div>
-    </div>
+
+      {/* Thời gian - Hiện khi vuốt sang trái (như iMessage) */}
+      <div className="absolute right-[-60px] flex items-center h-full top-0">
+        <span className="text-xs text-gray-400 font-medium select-none">
+          {message.timestamp && format(new Date(message.timestamp), "HH:mm")}
+        </span>
+      </div>
+    </motion.div>
   );
 };
 
