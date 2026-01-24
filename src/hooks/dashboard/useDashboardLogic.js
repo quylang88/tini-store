@@ -41,13 +41,14 @@ const useDashboardLogic = ({ products, orders, rangeMode = "dashboard" }) => {
   );
 
   // Map giá vốn theo sản phẩm để tính lợi nhuận ổn định
-  const costMap = useMemo(
-    () =>
-      new Map(
-        products.map((product) => [product.id, getLatestUnitCost(product)]),
-      ),
-    [products],
-  );
+  const costMap = useMemo(() => {
+    // Optimization: Use for...of to avoid intermediate array allocation from map()
+    const map = new Map();
+    for (const product of products) {
+      map.set(product.id, getLatestUnitCost(product));
+    }
+    return map;
+  }, [products]);
 
   // Chỉ lấy đơn đã thanh toán để tránh lệch doanh thu/lợi nhuận
   const paidOrders = useMemo(
@@ -195,10 +196,14 @@ const useDashboardLogic = ({ products, orders, rangeMode = "dashboard" }) => {
 
   // --- Kết thúc Logic mới ---
 
-  const productMeta = useMemo(
-    () => new Map(products.map((product) => [product.id, product])),
-    [products],
-  );
+  const productMeta = useMemo(() => {
+    // Optimization: Use for...of to avoid intermediate array allocation from map()
+    const map = new Map();
+    for (const product of products) {
+      map.set(product.id, product);
+    }
+    return map;
+  }, [products]);
 
   const productStats = useMemo(() => {
     const stats = new Map();
