@@ -346,7 +346,7 @@ const ChatBubble = ({ message, theme, swipeX }) => {
           )}
       </motion.div>
 
-      {/* Thời gian - Hiện khi vuốt sang trái (như iMessage) */}
+      {/* Thời gian - Hiện khi vuốt sang trái */}
       <div className="absolute right-[-60px] flex items-center h-full top-0">
         <span className="text-xs text-gray-400 font-medium select-none">
           {message.timestamp && format(new Date(message.timestamp), "HH:mm")}
@@ -356,4 +356,5 @@ const ChatBubble = ({ message, theme, swipeX }) => {
   );
 };
 
-export default ChatBubble;
+// Optimization: Memoize to prevent re-renders of list items when parent updates
+export default React.memo(ChatBubble);
