@@ -102,7 +102,7 @@ const ProductListItem = memo(
           <button
             onClick={(event) => {
               event.stopPropagation();
-              onDelete(product.id);
+              onDelete(product);
             }}
             className="w-8 h-8 rounded-full bg-rose-50 text-rose-600 active:bg-rose-100 flex items-center justify-center shadow-sm border border-rose-300"
             aria-label={`Xoá ${product.name}`}
