@@ -16,18 +16,44 @@ const ProductDetailModal = ({ product, onClose, onEditLot }) => {
   const cachedProduct = useModalCache(product, Boolean(product));
   const { history } = useImportHistory();
 
+  const activeLots = cachedProduct?.purchaseLots || [];
+
   // Lọc lịch sử nhập hàng của sản phẩm này từ shop_import_history (Immutable Log)
   const productHistory = useMemo(() => {
     if (!cachedProduct) return [];
-    return history
-      .filter((h) => h.productId === cachedProduct.id)
+
+    // 1. Lấy lịch sử từ log chính
+    const historyFromLog = history
+      .filter((h) => h.productId === cachedProduct.id);
+
+    // 2. Tìm các lô hàng "Legacy" (có trong kho hiện tại nhưng chưa có log history)
+    // Điều này xảy ra với dữ liệu cũ trước khi tính năng history được bật.
+    const legacyLots = activeLots.filter(lot =>
+      !historyFromLog.some(h => h.lotId === lot.id)
+    ).map(lot => ({
+      // Map structure activeLot -> historyRecord
+      id: `legacy-${lot.id}`, // Fake ID cho list key
+      lotId: lot.id,
+      productId: cachedProduct.id,
+      productName: cachedProduct.name,
+      quantity: Number(lot.quantity) || 0, // Legacy thì coi sl nhập = sl tồn hiện tại (vì ko biết sl nhập gốc)
+      costVND: Number(lot.cost) || 0,
+      costJPY: 0, // Legacy ko lưu giá yên
+      warehouse: lot.warehouse,
+      timestamp: lot.createdAt || new Date(0).toISOString(),
+      shippingFeeVND: Number(lot.shipping?.perUnitVnd || lot.shipping?.feeVnd) || 0,
+      shippingFeeJPY: Number(lot.shipping?.feeJpy) || 0,
+      isLegacy: true, // Marker để debug nếu cần
+    }));
+
+    // 3. Gộp và sort
+    return [...historyFromLog, ...legacyLots]
       .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-  }, [history, cachedProduct]);
+  }, [history, cachedProduct, activeLots]);
 
   if (!cachedProduct) return null;
 
   const latestCost = getLatestCost(cachedProduct);
-  const activeLots = cachedProduct.purchaseLots || [];
 
   const footer = (
     <Button variant="sheetClose" size="sm" onClick={onClose}>

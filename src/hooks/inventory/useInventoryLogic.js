@@ -28,7 +28,7 @@ const useInventoryLogic = ({ products, setProducts, settings }) => {
   const initialFormDataRef = useRef(null);
 
   // Hook lưu lịch sử nhập hàng
-  const { addHistoryRecord } = useImportHistory();
+  const { addHistoryRecord, updateHistoryRecord } = useImportHistory();
 
   // State quản lý danh mục đang xem (cho phép chọn nhiều danh mục).
   const [activeCategory, setActiveCategory] = useState("Tất cả");
@@ -113,7 +113,7 @@ const useInventoryLogic = ({ products, setProducts, settings }) => {
       const { shippingWeight, exchangeRateValue, feeJpy, feeVnd } =
         calculateImportCosts({ formData, settings });
 
-      addHistoryRecord({
+      const historyData = {
         lotId: targetLotId, // Link history to inventory lot
         productId: nextProduct.id,
         productName: formData.name,
@@ -128,7 +128,15 @@ const useInventoryLogic = ({ products, setProducts, settings }) => {
         warehouse: formData.warehouse || "daLat",
         note: formData.note || "",
         isEdit: Boolean(editingLotId),
-      });
+      };
+
+      if (editingLotId) {
+        // Nếu đang sửa lô, cập nhật record cũ thay vì tạo mới
+        updateHistoryRecord(targetLotId, historyData);
+      } else {
+        // Nếu nhập mới (tạo sản phẩm hoặc nhập thêm hàng), tạo record mới
+        addHistoryRecord(historyData);
+      }
     }
     // ------------------------------------
 

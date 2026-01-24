@@ -70,9 +70,54 @@ const useImportHistory = () => {
     }
   }, []);
 
+  // Hàm update history dựa trên lotId
+  const updateHistoryRecord = useCallback((lotId, updates) => {
+    if (!lotId) return;
+
+    try {
+      const stored = localStorage.getItem(HISTORY_KEY);
+      const currentHistory = stored ? JSON.parse(stored) : [];
+
+      const recordIndex = currentHistory.findIndex(item => item.lotId === lotId);
+
+      let nextHistory;
+
+      if (recordIndex !== -1) {
+        // Nếu tìm thấy, update record đó
+        const updatedRecord = {
+          ...currentHistory[recordIndex],
+          ...updates,
+          // Giữ nguyên timestamp gốc để bảo toàn "Ngày nhập", update ngày sửa
+          lastEditedAt: new Date().toISOString(),
+        };
+
+        nextHistory = [...currentHistory];
+        nextHistory[recordIndex] = updatedRecord;
+      } else {
+        // Nếu không tìm thấy (Legacy Data chưa có history), tạo mới (Upsert)
+        // Điều này giúp migrate dần dữ liệu cũ sang hệ thống mới ngay khi user edit
+        const newRecord = {
+          id: crypto.randomUUID(),
+          lotId, // Đảm bảo link đúng lotId
+          timestamp: new Date().toISOString(), // Timestamp tạo history record này
+          ...updates,
+        };
+        nextHistory = [newRecord, ...currentHistory];
+      }
+
+      localStorage.setItem(HISTORY_KEY, JSON.stringify(nextHistory));
+      window.dispatchEvent(new Event(HISTORY_CHANGE_EVENT));
+      setHistory(nextHistory);
+
+    } catch (error) {
+      console.error("Failed to update import history:", error);
+    }
+  }, []);
+
   return {
     history,
     addHistoryRecord,
+    updateHistoryRecord,
   };
 };
 
