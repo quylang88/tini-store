@@ -3,6 +3,7 @@ import { Send, Settings2 } from "lucide-react";
 import AssistantIcon from "./AssistantIcon";
 import FlashIcon from "./FlashIcon";
 import DeepIcon from "./DeepIcon";
+import EnhancedInput from "../common/EnhancedInput";
 
 const PLACEHOLDERS = [
   "Hôm nay cửa hàng thế nào...",
@@ -180,8 +181,7 @@ const ChatInput = ({
             </div>
           )}
 
-          <input
-            type="text"
+          <EnhancedInput
             value={text}
             onChange={(e) => setText(e.target.value)}
             onFocus={() => {
@@ -192,9 +192,18 @@ const ChatInput = ({
               setIsFocused(false);
               if (onInputBlur) onInputBlur();
             }}
+            onClear={() => setText("")}
             disabled={disabled}
             aria-label="Nhập câu hỏi cho trợ lý ảo"
-            className={`w-full pl-10 pr-4 py-3 ${currentTheme.inputFieldBg} border border-gray-200 rounded-full text-sm focus:outline-none focus:ring-2 ${currentTheme.inputRing} transition-all text-gray-800`}
+            className="w-full"
+            inputClassName={`w-full pl-10 pr-10 py-3 ${currentTheme.inputFieldBg} border border-gray-200 rounded-full text-sm focus:outline-none focus:ring-2 ${currentTheme.inputRing} transition-all text-gray-800`}
+            // Attributes requested by user to be exactly like SearchInput
+            inputMode="text"
+            enterKeyHint="send"
+            autoComplete="off"
+            autoCorrect="off"
+            autoCapitalize="none"
+            spellCheck="false"
           />
         </div>
 
