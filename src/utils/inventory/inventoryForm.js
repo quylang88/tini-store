@@ -1,4 +1,4 @@
-import { getLatestCost } from "./purchaseUtils";
+import { getLatestCost } from "./purchaseUtils.js";
 
 const buildBaseFormData = (settings) => ({
   name: "",
@@ -58,11 +58,15 @@ export const createFormDataForLot = ({ product, lot, settings }) => {
   const exchangeRateValue =
     Number(lot.shipping?.exchangeRate || settings.exchangeRate) || 0;
   const lotCostValue = Number(lot.cost) || 0;
+  const lotCostJpy = Number(lot.costJpy) || 0;
   // Nếu lô nhập bằng Yên thì nội suy lại giá Yên từ giá VNĐ để hiển thị cho user chỉnh sửa.
+  // Ưu tiên dùng giá Yên đã lưu (costJpy), nếu không có (data cũ) thì mới tính ngược.
   const costJPYValue =
-    inferredShippingMethod === "jp" && exchangeRateValue > 0
-      ? Math.round(lotCostValue / exchangeRateValue)
-      : "";
+    lotCostJpy > 0
+      ? lotCostJpy
+      : inferredShippingMethod === "jp" && exchangeRateValue > 0
+        ? Math.round(lotCostValue / exchangeRateValue)
+        : "";
 
   return {
     ...buildBaseFormData(settings),

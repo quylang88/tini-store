@@ -119,7 +119,7 @@ export const syncProductsStock = (
 
         // If returning stock (delta > 0), calculate what to restore
         if (delta > 0) {
-          const { kept, returned } = splitAllocations(
+          const { returned } = splitAllocations(
             previousItem?.lotAllocations,
             delta,
           );

@@ -1,10 +1,10 @@
-import { normalizeString } from "../formatters/formatUtils";
-import { normalizeWarehouseStock } from "./warehouseUtils";
+import { normalizeString } from "../formatters/formatUtils.js";
+import { normalizeWarehouseStock } from "./warehouseUtils.js";
 import {
   addPurchaseLot,
   getLatestCost,
   normalizePurchaseLots,
-} from "./purchaseUtils";
+} from "./purchaseUtils.js";
 
 // Gom validation vào 1 chỗ để dễ test và dễ review.
 export const getInventoryValidationError = ({
@@ -113,6 +113,8 @@ export const buildNextProductFromForm = ({
   settings,
 }) => {
   const costValue = Number(formData.cost) || 0;
+  const costJpyValue =
+    formData.costCurrency === "JPY" ? Number(formData.costJPY) || 0 : 0;
   const quantityValue = Number(formData.quantity) || 0;
   const warehouseKey = formData.warehouse || "lamDong";
 
@@ -180,6 +182,7 @@ export const buildNextProductFromForm = ({
           return {
             ...lot,
             cost: costValue,
+            costJpy: costJpyValue,
             quantity: newRemaining,
             originalQuantity: newOriginal,
             warehouse: warehouseKey,
@@ -218,6 +221,7 @@ export const buildNextProductFromForm = ({
     } else {
       nextProduct = addPurchaseLot(nextProduct, {
         cost: costValue,
+        costJpy: costJpyValue,
         quantity: quantityValue,
         warehouse: warehouseKey,
         shipping: shippingInfo,
