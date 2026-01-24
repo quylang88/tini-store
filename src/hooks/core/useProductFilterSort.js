@@ -40,27 +40,35 @@ const useProductFilterSort = ({
 
     // 2. Sorting
     if (sortConfig) {
-      result.sort((a, b) => {
+      // ⚡ Bolt: Schwartzian transform optimization
+      // Pre-calculate sort keys to avoid expensive recalculations (e.g. getProductDate) during sort.
+      // This reduces complexity from O(n * log n * cost_of_get) to O(n * cost_of_get + n * log n).
+
+      const getSortValue = (product) => {
         if (sortConfig.key === "date") {
-          const dateA = getProductDate(a);
-          const dateB = getProductDate(b);
-          if (sortConfig.direction === "desc") {
-            return dateB - dateA;
-          } else {
-            return dateA - dateB;
-          }
+          return getProductDate(product);
         }
         if (sortConfig.key === "price") {
-          const priceA = Number(a.price) || 0;
-          const priceB = Number(b.price) || 0;
-          if (sortConfig.direction === "asc") {
-            return priceA - priceB;
-          } else {
-            return priceB - priceA;
-          }
+          return Number(product.price) || 0;
         }
         return 0;
+      };
+
+      const withValues = result.map((product) => ({
+        product,
+        value: getSortValue(product),
+      }));
+
+      withValues.sort((a, b) => {
+        if (sortConfig.direction === "asc") {
+          return a.value - b.value;
+        } else {
+          return b.value - a.value;
+        }
       });
+
+      // Unwrap
+      result = withValues.map((item) => item.product);
     }
 
     return result;
