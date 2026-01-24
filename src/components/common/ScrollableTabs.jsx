@@ -45,12 +45,14 @@ const ScrollableTabs = ({
       ref={containerRef}
       className={`overflow-x-auto no-scrollbar ${className}`}
     >
-      <div className="flex gap-2 min-w-max px-3">
+      <div className="flex gap-2 min-w-max px-3" role="tablist">
         {tabs.map((tab) => {
           const isActive = activeTab === tab.key;
           return (
             <button
               key={tab.key}
+              role="tab"
+              aria-selected={isActive}
               ref={isActive ? activeTabRef : null}
               onClick={() => onTabChange(tab.key)}
               className={`relative px-3 py-2 text-sm font-medium transition-colors z-0 outline-none select-none ${
