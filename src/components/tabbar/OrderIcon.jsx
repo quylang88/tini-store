@@ -144,27 +144,57 @@ const ShoppingCartIcon = ({
     },
   };
 
-  // Item falling in
-  const itemVariants = {
+  // Item 1: Bottom Left
+  const item1Variants = {
     active: {
       y: 0,
-      x: 0,
-      scale: 1,
       opacity: 1,
+      scale: 1,
       rotate: 0,
-      transition: {
-        duration: 0.5,
-        ease: "backOut",
-        delay: 0.2,
-      },
+      transition: { duration: 0.5, ease: "backOut", delay: 0.1 },
     },
     inactive: {
       y: -15,
-      x: -5,
-      scale: 0.5,
       opacity: 0,
-      rotate: -45,
-      transition: { duration: 2.0, ease: "easeInOut" },
+      scale: 0.5,
+      rotate: -15,
+      transition: { duration: 1.5, ease: "easeInOut" },
+    },
+  };
+
+  // Item 2: Bottom Right
+  const item2Variants = {
+    active: {
+      y: 0,
+      opacity: 1,
+      scale: 1,
+      rotate: 0,
+      transition: { duration: 0.5, ease: "backOut", delay: 0.2 },
+    },
+    inactive: {
+      y: -18,
+      opacity: 0,
+      scale: 0.5,
+      rotate: 15,
+      transition: { duration: 1.6, ease: "easeInOut" },
+    },
+  };
+
+  // Item 3: Top Center (Stacked)
+  const item3Variants = {
+    active: {
+      y: 0,
+      opacity: 1,
+      scale: 1,
+      rotate: 0,
+      transition: { duration: 0.5, ease: "backOut", delay: 0.3 },
+    },
+    inactive: {
+      y: -20,
+      opacity: 0,
+      scale: 0.5,
+      rotate: 45,
+      transition: { duration: 1.7, ease: "easeInOut" },
     },
   };
 
@@ -192,14 +222,34 @@ const ShoppingCartIcon = ({
         </linearGradient>
       </defs>
 
-      {/* Item (Box) falling in */}
+      {/* Item 1: Bottom Left */}
+      <motion.rect
+        x="7"
+        y="10"
+        width="4"
+        height="4"
+        rx="0.5"
+        variants={item1Variants}
+      />
+
+      {/* Item 2: Bottom Right */}
       <motion.rect
         x="13"
-        y="4"
-        width="6"
-        height="6"
-        rx="1"
-        variants={itemVariants}
+        y="10"
+        width="4"
+        height="4"
+        rx="0.5"
+        variants={item2Variants}
+      />
+
+      {/* Item 3: Top Center */}
+      <motion.rect
+        x="10"
+        y="6"
+        width="4"
+        height="4"
+        rx="0.5"
+        variants={item3Variants}
       />
 
       {/* Cart Frame */}

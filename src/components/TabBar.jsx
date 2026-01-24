@@ -43,11 +43,17 @@ const TabBar = ({ activeTab, setActiveTab, isVisible = true }) => {
               key={tab.id}
               onClick={handleTabClick}
               className={`relative flex flex-col items-center justify-center w-full h-full gap-0.5 ${
-                isActive ? "text-rose-600 z-10" : "text-amber-500 z-0"
+                isActive ? "z-10" : "text-amber-500 z-0"
               }`}
             >
               <IconComponent isActive={isActive} size={24} loop={false} />
-              <span className="text-[10px] font-medium uppercase">
+              <span
+                className={`text-[10px] font-medium uppercase ${
+                  isActive
+                    ? "bg-[linear-gradient(90deg,#eab308_0%,#ec4899_35%,#3b82f6_65%,#22c55e_100%)] bg-clip-text text-transparent"
+                    : ""
+                }`}
+              >
                 {tab.label}
               </span>
             </button>
