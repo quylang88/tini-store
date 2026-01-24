@@ -64,6 +64,7 @@ const AssistantHeader = ({
           onClick={handleClearScreen}
           className={`p-2.5 mr-1 rounded-full transition-all shadow-sm active:scale-90 ring-1 ${activeTheme.themeBtnBg} ${activeTheme.themeBtnRing}`}
           title="Dọn màn hình (AI vẫn nhớ)"
+          aria-label="Xóa lịch sử trò chuyện trên màn hình"
         >
           <Eraser size={20} className={activeTheme.themeBtnText} />
         </button>
@@ -72,6 +73,7 @@ const AssistantHeader = ({
       <button
         onClick={handleCycleTheme}
         className={`p-2.5 rounded-full transition-all shadow-sm active:scale-90 ring-1 ${activeTheme.themeBtnBg} ${activeTheme.themeBtnRing}`}
+        aria-label="Đổi màu giao diện"
       >
         <Palette size={20} className={activeTheme.themeBtnText} />
       </button>

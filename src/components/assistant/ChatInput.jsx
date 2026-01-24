@@ -147,6 +147,7 @@ const ChatInput = ({
           type="button"
           onClick={onOpenModelSelector}
           disabled={disabled}
+          aria-label="Cài đặt chế độ AI"
           className={`p-3 ${currentTheme.settingsButtonBg} ${currentTheme.settingsButtonText} rounded-full active:scale-90 transition-all flex items-center justify-center`}
         >
           <Settings2 size={20} />
@@ -169,7 +170,10 @@ const ChatInput = ({
 
           {/* Placeholder có hiệu ứng */}
           {!text && (
-            <div className="absolute inset-0 flex items-center pl-10 pointer-events-none overflow-hidden">
+            <div
+              className="absolute inset-0 flex items-center pl-10 pointer-events-none overflow-hidden"
+              aria-hidden="true"
+            >
               <span className="text-sm text-gray-400 truncate w-full">
                 {isFocused ? "Hỏi Misa về bất kỳ điều gì..." : displayedText}
               </span>
@@ -189,6 +193,7 @@ const ChatInput = ({
               if (onInputBlur) onInputBlur();
             }}
             disabled={disabled}
+            aria-label="Nhập câu hỏi cho trợ lý ảo"
             className={`w-full pl-10 pr-4 py-3 ${currentTheme.inputFieldBg} border border-gray-200 rounded-full text-sm focus:outline-none focus:ring-2 ${currentTheme.inputRing} transition-all text-gray-800`}
           />
         </div>
@@ -196,6 +201,7 @@ const ChatInput = ({
         <button
           type="submit"
           disabled={!text.trim() || disabled}
+          aria-label="Gửi tin nhắn"
           className={`p-3 ${currentTheme.sendButtonBg} text-white rounded-full disabled:opacity-50 disabled:cursor-not-allowed active:scale-90 transition-all shadow-sm ${currentTheme.sendButtonShadow}`}
         >
           <Send size={20} />
