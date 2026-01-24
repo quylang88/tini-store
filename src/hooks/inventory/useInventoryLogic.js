@@ -9,8 +9,10 @@ import useInventoryFilters from "./useInventoryFilters";
 import {
   buildNextProductFromForm,
   getInventoryValidationError,
+  calculateImportCosts,
 } from "../../utils/inventory/inventorySaveUtils";
 import useHighlightFields from "../ui/useHighlightFields";
+import useImportHistory from "./useImportHistory";
 
 const useInventoryLogic = ({ products, setProducts, settings }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -24,6 +26,9 @@ const useInventoryLogic = ({ products, setProducts, settings }) => {
   const [errorModal, setErrorModal] = useState(null);
   // Lưu lại snapshot form khi mở modal để so sánh thay đổi khi bấm huỷ.
   const initialFormDataRef = useRef(null);
+
+  // Hook lưu lịch sử nhập hàng
+  const { addHistoryRecord } = useImportHistory();
 
   // State quản lý danh mục đang xem (cho phép chọn nhiều danh mục).
   const [activeCategory, setActiveCategory] = useState("Tất cả");
@@ -93,6 +98,30 @@ const useInventoryLogic = ({ products, setProducts, settings }) => {
       editingLotId,
       settings,
     });
+
+    // --- LOGIC LƯU LỊCH SỬ NHẬP HÀNG ---
+    const quantityValue = Number(formData.quantity) || 0;
+    if (quantityValue > 0) {
+      const { shippingWeight, exchangeRateValue, feeJpy, feeVnd } =
+        calculateImportCosts({ formData, settings });
+
+      addHistoryRecord({
+        productId: nextProduct.id,
+        productName: formData.name,
+        quantity: quantityValue,
+        costVND: Number(formData.cost) || 0,
+        costJPY: Number(formData.costJPY) || 0,
+        exchangeRate: exchangeRateValue,
+        shippingMethod: formData.shippingMethod,
+        shippingWeight,
+        shippingFeeJPY: feeJpy,
+        shippingFeeVND: feeVnd,
+        warehouse: formData.warehouse || "daLat",
+        note: formData.note || "",
+        isEdit: Boolean(editingLotId),
+      });
+    }
+    // ------------------------------------
 
     if (editingProduct) {
       setProducts(

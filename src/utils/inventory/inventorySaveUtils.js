@@ -6,6 +6,26 @@ import {
   normalizePurchaseLots,
 } from "./purchaseUtils";
 
+// Helper tính toán chi phí nhập hàng để tái sử dụng
+export const calculateImportCosts = ({ formData, settings }) => {
+  const shippingWeight = Number(formData.shippingWeightKg) || 0;
+  const exchangeRateValue =
+    Number(formData.exchangeRate || settings.exchangeRate) || 0;
+  const feeJpy =
+    formData.shippingMethod === "jp" ? Math.round(shippingWeight * 900) : 0;
+  const feeVnd =
+    formData.shippingMethod === "jp"
+      ? Math.round(feeJpy * exchangeRateValue)
+      : Number(formData.shippingFeeVnd) || 0;
+
+  return {
+    shippingWeight,
+    exchangeRateValue,
+    feeJpy,
+    feeVnd,
+  };
+};
+
 // Gom validation vào 1 chỗ để dễ test và dễ review.
 export const getInventoryValidationError = ({
   formData,
@@ -116,15 +136,8 @@ export const buildNextProductFromForm = ({
   const quantityValue = Number(formData.quantity) || 0;
   const warehouseKey = formData.warehouse || "daLat";
 
-  const shippingWeight = Number(formData.shippingWeightKg) || 0;
-  const exchangeRateValue =
-    Number(formData.exchangeRate || settings.exchangeRate) || 0;
-  const feeJpy =
-    formData.shippingMethod === "jp" ? Math.round(shippingWeight * 900) : 0;
-  const feeVnd =
-    formData.shippingMethod === "jp"
-      ? Math.round(feeJpy * exchangeRateValue)
-      : Number(formData.shippingFeeVnd) || 0;
+  const { shippingWeight, exchangeRateValue, feeJpy, feeVnd } =
+    calculateImportCosts({ formData, settings });
 
   const baseProduct = editingProduct
     ? normalizePurchaseLots(editingProduct)
