@@ -61,12 +61,7 @@ export const createFormDataForLot = ({ product, lot, settings }) => {
   const lotCostJpy = Number(lot.costJpy) || 0;
   // Nếu lô nhập bằng Yên thì nội suy lại giá Yên từ giá VNĐ để hiển thị cho user chỉnh sửa.
   // Ưu tiên dùng giá Yên đã lưu (costJpy), nếu không có (data cũ) thì mới tính ngược.
-  const costJPYValue =
-    lotCostJpy > 0
-      ? lotCostJpy
-      : inferredShippingMethod === "jp" && exchangeRateValue > 0
-        ? Math.round(lotCostValue / exchangeRateValue)
-        : "";
+  const costJPYValue = lotCostJpy > 0 ? lotCostJpy : "";
 
   return {
     ...buildBaseFormData(settings),
