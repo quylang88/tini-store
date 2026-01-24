@@ -4,9 +4,12 @@ export const getProductDate = (product) => {
   if (product.purchaseLots && Array.isArray(product.purchaseLots) && product.purchaseLots.length > 0) {
     // Lots are usually appended, so the last one is likely the newest,
     // but let's sort to be safe or use reduce.
+
+    // Optimization: Compare ISO strings directly to avoid creating Date objects in the loop
     const latestLot = product.purchaseLots.reduce((latest, current) => {
-      const latestDate = new Date(latest.createdAt || 0);
-      const currentDate = new Date(current.createdAt || 0);
+      const latestDate = latest.createdAt || "";
+      const currentDate = current.createdAt || "";
+      // ISO strings are lexicographically comparable
       return currentDate > latestDate ? current : latest;
     }, product.purchaseLots[0]);
 
