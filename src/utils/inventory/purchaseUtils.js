@@ -2,6 +2,7 @@ import {
   normalizeWarehouseStock,
   getAllWarehouseKeys,
   getDefaultWarehouse,
+  resolveWarehouseKey,
 } from "./warehouseUtils.js";
 
 const generateLotId = () =>
@@ -10,15 +11,23 @@ const generateLotId = () =>
 export const normalizePurchaseLots = (product = {}) => {
   if (Array.isArray(product.purchaseLots)) {
     const normalizedLots = product.purchaseLots.map((lot) => {
-      if (!lot?.shipping || lot.shipping?.perUnitVnd) {
-        return lot;
-      }
-      const feeVnd = Number(lot.shipping.feeVnd) || 0;
-      return {
+      // Map legacy warehouse keys to current ones
+      const currentWarehouse = resolveWarehouseKey(lot.warehouse);
+      const normalizedLot = {
         ...lot,
-        originalQuantity: lot.originalQuantity || lot.quantity,
+        warehouse: currentWarehouse || lot.warehouse, // Keep original if cannot resolve (though resolve returns fallback)
+      };
+
+      if (!normalizedLot.shipping || normalizedLot.shipping?.perUnitVnd) {
+        return normalizedLot;
+      }
+      const feeVnd = Number(normalizedLot.shipping.feeVnd) || 0;
+      return {
+        ...normalizedLot,
+        originalQuantity:
+          normalizedLot.originalQuantity || normalizedLot.quantity,
         shipping: {
-          ...lot.shipping,
+          ...normalizedLot.shipping,
           perUnitVnd: feeVnd,
         },
       };
@@ -82,13 +91,17 @@ export const getLatestUnitCost = (product = {}) => {
 export const addPurchaseLot = (product, lot) => {
   const quantity = Number(lot.quantity) || 0;
   const shippingFeeVnd = Number(lot.shipping?.feeVnd) || 0;
+  // Use resolved key or default if not provided
+  const targetWarehouse =
+    resolveWarehouseKey(lot.warehouse) || getDefaultWarehouse().key;
+
   const nextLot = {
     id: lot.id || generateLotId(),
     cost: Number(lot.cost) || 0,
     costJpy: Number(lot.costJpy) || 0,
     quantity,
     originalQuantity: quantity,
-    warehouse: lot.warehouse || getDefaultWarehouse().key,
+    warehouse: targetWarehouse,
     createdAt: lot.createdAt || new Date().toISOString(),
     priceAtPurchase: Number(lot.priceAtPurchase) || 0,
     shipping: lot.shipping
@@ -116,12 +129,17 @@ export const consumePurchaseLots = (product, warehouseKey, quantity) => {
   const allocations = [];
 
   // Lọc các lot thuộc kho cần xuất
+  // Use resolveWarehouseKey to match both primary and legacy keys
+  const targetKey = resolveWarehouseKey(warehouseKey);
+
   const availableLots = lots
     .map((lot, index) => ({ ...lot, originalIndex: index })) // Giữ index gốc để cập nhật lại
-    .filter(
-      (lot) =>
-        lot.warehouse === warehouseKey && (Number(lot.quantity) || 0) > 0,
-    );
+    .filter((lot) => {
+      const lotWarehouse = resolveWarehouseKey(lot.warehouse);
+      return (
+        lotWarehouse === targetKey && (Number(lot.quantity) || 0) > 0
+      );
+    });
 
   // Sắp xếp theo giá nhập (cost) TĂNG DẦN (thấp nhất xuất trước)
   // Nếu giá bằng nhau, ưu tiên lô cũ hơn (createdAt hoặc index nhỏ hơn)
@@ -183,12 +201,15 @@ export const restockPurchaseLots = (product, warehouseKey, quantity, cost) => {
   const restockQty = Math.max(0, Number(quantity) || 0);
   if (restockQty === 0) return product;
 
+  // Resolve warehouse key to ensure we use the current primary key
+  const targetKey = resolveWarehouseKey(warehouseKey) || getDefaultWarehouse().key;
+
   const nextLot = {
     id: generateLotId(),
     cost: Number(cost) || Number(product.cost) || 0,
     quantity: restockQty,
     originalQuantity: restockQty,
-    warehouse: warehouseKey,
+    warehouse: targetKey,
     createdAt: new Date().toISOString(),
     shipping: null,
   };
