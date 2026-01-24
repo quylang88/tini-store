@@ -1,5 +1,5 @@
 import React from "react";
-import { Lock, User, ArrowRight, CheckSquare } from "lucide-react";
+import { Lock, User, ArrowRight, CheckSquare, Eye, EyeOff } from "lucide-react";
 import useLoginLogic from "../hooks/auth/useLoginLogic";
 import SplashScreen from "./login/SplashScreen";
 import useImagePreloader from "../hooks/ui/useImagePreloader";
@@ -13,6 +13,9 @@ const AuthField = ({
   placeholder,
 }) => {
   const id = React.useId();
+  const [showPassword, setShowPassword] = React.useState(false);
+  const isPassword = type === "password";
+
   return (
     <div>
       <label
@@ -27,12 +30,24 @@ const AuthField = ({
         </span>
         <input
           id={id}
-          type={type}
-          className="w-full bg-white/90 border border-rose-200 rounded-xl py-3 pl-10 pr-4 outline-none focus:bg-white focus:border-rose-400 focus:ring-2 focus:ring-rose-100 transition text-amber-900"
+          type={isPassword ? (showPassword ? "text" : "password") : type}
+          className={`w-full bg-white/90 border border-rose-200 rounded-xl py-3 pl-10 ${
+            isPassword ? "pr-12" : "pr-4"
+          } outline-none focus:bg-white focus:border-rose-400 focus:ring-2 focus:ring-rose-100 transition text-amber-900`}
           placeholder={placeholder}
           value={value}
           onChange={onChange}
         />
+        {isPassword && (
+          <button
+            type="button"
+            onClick={() => setShowPassword(!showPassword)}
+            className="absolute right-3 top-3 text-amber-400 hover:text-amber-600 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-400 rounded-md"
+            aria-label={showPassword ? "Ẩn mật khẩu" : "Hiển thị mật khẩu"}
+          >
+            {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+          </button>
+        )}
       </div>
     </div>
   );
