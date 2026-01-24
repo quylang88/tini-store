@@ -92,7 +92,7 @@ const ProductListItem = memo(
                   : `Lâm Đồng: ${stockByWarehouse.daLat} sp`}
               </div>
 
-              <div className="text-[10px] text-amber-500">
+              <div className="text-amber-500">
                 Giá nhập mới nhất: {formatNumber(latestCost)}đ
               </div>
             </div>
