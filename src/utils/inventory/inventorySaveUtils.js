@@ -131,6 +131,7 @@ export const buildNextProductFromForm = ({
   editingProduct,
   editingLotId,
   settings,
+  targetLotId, // Nhận ID lô hàng để xử lý
 }) => {
   const costValue = Number(formData.cost) || 0;
   const quantityValue = Number(formData.quantity) || 0;
@@ -221,6 +222,7 @@ export const buildNextProductFromForm = ({
       };
     } else {
       nextProduct = addPurchaseLot(nextProduct, {
+        id: targetLotId, // Sử dụng ID đã được gen từ trước
         cost: costValue,
         quantity: quantityValue,
         warehouse: warehouseKey,

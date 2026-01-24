@@ -82,8 +82,12 @@ export const getLatestUnitCost = (product = {}) => {
 export const addPurchaseLot = (product, lot) => {
   const quantity = Number(lot.quantity) || 0;
   const shippingFeeVnd = Number(lot.shipping?.feeVnd) || 0;
+
+  // Use provided ID or generate a new one
+  const lotId = lot.id || generateLotId();
+
   const nextLot = {
-    id: lot.id || generateLotId(),
+    id: lotId,
     cost: Number(lot.cost) || 0,
     quantity,
     warehouse: lot.warehouse || "daLat",

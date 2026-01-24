@@ -92,11 +92,19 @@ const useInventoryLogic = ({ products, setProducts, settings }) => {
       return false;
     }
 
+    // --- LOGIC GEN LOT ID ---
+    // Nếu đang sửa lô, dùng ID cũ.
+    // Nếu nhập mới (hoặc nhập thêm hàng), tạo ID mới để link history với lot.
+    const targetLotId =
+      editingLotId ||
+      `${Date.now()}-${Math.random().toString(16).slice(2, 8)}`;
+
     const nextProduct = buildNextProductFromForm({
       formData,
       editingProduct,
       editingLotId,
       settings,
+      targetLotId, // Pass explicitly
     });
 
     // --- LOGIC LƯU LỊCH SỬ NHẬP HÀNG ---
@@ -106,6 +114,7 @@ const useInventoryLogic = ({ products, setProducts, settings }) => {
         calculateImportCosts({ formData, settings });
 
       addHistoryRecord({
+        lotId: targetLotId, // Link history to inventory lot
         productId: nextProduct.id,
         productName: formData.name,
         quantity: quantityValue,
