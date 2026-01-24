@@ -72,7 +72,7 @@ const OrderListView = ({
           />
         ))}
         {orders.length === 0 && (
-          <div className="flex flex-col items-center justify-center mt-20 text-gray-400">
+          <div className="flex flex-col items-center justify-center mt-20 text-gray-500">
             <ShoppingCart size={48} className="mb-2 opacity-20" />
             <p>Chưa có đơn hàng nào</p>
           </div>
