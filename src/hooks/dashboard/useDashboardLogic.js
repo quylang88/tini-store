@@ -153,31 +153,35 @@ const useDashboardLogic = ({ products, orders, rangeMode = "dashboard" }) => {
   const slowMovingProducts = useMemo(() => {
     if (!currentDate) return [];
     const warningDays = 60;
+    const nowTime = currentDate.getTime();
 
     return products
       .filter((p) => (p.stock || 0) > 0)
       .map((p) => {
-        let dateToCheck = new Date(p.createdAt || currentDate.getTime());
+        let dateToCheckTime = new Date(p.createdAt || nowTime).getTime();
 
         // Tìm lô cũ nhất còn hàng (quantity > 0)
+        // Optimization: Single pass O(M) instead of Sort O(M log M) + String comparison instead of new Date()
         if (p.purchaseLots && p.purchaseLots.length > 0) {
-          // Lọc các lô còn hàng
-          const activeLots = p.purchaseLots.filter(
-            (l) => (Number(l.quantity) || 0) > 0,
-          );
-          if (activeLots.length > 0) {
-            // Sắp xếp theo ngày tạo (cũ nhất đầu tiên)
-            activeLots.sort(
-              (a, b) => new Date(a.createdAt) - new Date(b.createdAt),
-            );
-            const oldestLot = activeLots[0];
-            if (oldestLot.createdAt) {
-              dateToCheck = new Date(oldestLot.createdAt);
+          let oldestLot = null;
+          for (const lot of p.purchaseLots) {
+            const qty = Number(lot.quantity) || 0;
+            if (qty > 0) {
+              if (!oldestLot) {
+                oldestLot = lot;
+              } else if (lot.createdAt < oldestLot.createdAt) {
+                // Compare ISO strings directly
+                oldestLot = lot;
+              }
             }
+          }
+
+          if (oldestLot && oldestLot.createdAt) {
+            dateToCheckTime = new Date(oldestLot.createdAt).getTime();
           }
         }
 
-        const diffTime = Math.abs(currentDate - dateToCheck);
+        const diffTime = Math.abs(nowTime - dateToCheckTime);
         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
         return {
