@@ -48,9 +48,9 @@ const TabBar = ({ activeTab, setActiveTab, isVisible = true }) => {
             >
               <IconComponent isActive={isActive} size={24} loop={false} />
               <span
-                className={`text-[10px] font-medium uppercase ${
+                className={`text-[10px] font-bold uppercase ${
                   isActive
-                    ? "bg-[linear-gradient(90deg,#eab308_0%,#ec4899_35%,#3b82f6_65%,#22c55e_100%)] bg-clip-text text-transparent"
+                    ? "bg-[linear-gradient(90deg,#ca8a04_0%,#db2777_35%,#2563eb_65%,#16a34a_100%)] bg-clip-text text-transparent"
                     : ""
                 }`}
               >

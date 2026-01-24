@@ -151,7 +151,7 @@ const ShoppingCartIcon = ({
       opacity: 1,
       scale: 1,
       rotate: 0,
-      transition: { duration: 0.5, ease: "backOut", delay: 0.1 },
+      transition: { duration: 0.8, ease: "backOut", delay: 0.1 },
     },
     inactive: {
       y: -15,
@@ -169,7 +169,7 @@ const ShoppingCartIcon = ({
       opacity: 1,
       scale: 1,
       rotate: 0,
-      transition: { duration: 0.5, ease: "backOut", delay: 0.2 },
+      transition: { duration: 0.8, ease: "backOut", delay: 0.2 },
     },
     inactive: {
       y: -18,
@@ -187,7 +187,7 @@ const ShoppingCartIcon = ({
       opacity: 1,
       scale: 1,
       rotate: 0,
-      transition: { duration: 0.5, ease: "backOut", delay: 0.3 },
+      transition: { duration: 0.8, ease: "backOut", delay: 0.3 },
     },
     inactive: {
       y: -20,
@@ -224,7 +224,7 @@ const ShoppingCartIcon = ({
 
       {/* Item 1: Bottom Left */}
       <motion.rect
-        x="7"
+        x="9"
         y="10"
         width="4"
         height="4"
@@ -234,7 +234,7 @@ const ShoppingCartIcon = ({
 
       {/* Item 2: Bottom Right */}
       <motion.rect
-        x="13"
+        x="15"
         y="10"
         width="4"
         height="4"
@@ -244,7 +244,7 @@ const ShoppingCartIcon = ({
 
       {/* Item 3: Top Center */}
       <motion.rect
-        x="10"
+        x="12"
         y="6"
         width="4"
         height="4"
