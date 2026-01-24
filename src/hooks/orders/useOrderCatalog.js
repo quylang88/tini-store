@@ -1,5 +1,10 @@
 import { useCallback, useMemo } from "react";
-import { normalizeWarehouseStock } from "../../utils/inventory/warehouseUtils";
+import {
+  normalizeWarehouseStock,
+  getAllWarehouseKeys,
+  getDefaultWarehouse,
+  getTotalStock,
+} from "../../utils/inventory/warehouseUtils";
 import { getLatestUnitCost } from "../../utils/inventory/purchaseUtils";
 import useProductFilterSort from "../core/useProductFilterSort";
 
@@ -37,18 +42,17 @@ const useOrderCatalog = ({
 
   const getAvailableStock = useCallback(
     (product, warehouseKey) => {
-      const warehouseStock = normalizeWarehouseStock(product);
       let baseStock = 0;
       if (warehouseKey === "all") {
-        baseStock = warehouseStock.vinhPhuc + warehouseStock.lamDong;
-      } else if (warehouseKey === "vinhPhuc") {
-        baseStock = warehouseStock.vinhPhuc;
+        baseStock = getTotalStock(product);
       } else {
-        baseStock = warehouseStock.lamDong;
+        const warehouseStock = normalizeWarehouseStock(product);
+        baseStock = warehouseStock[warehouseKey] || 0;
       }
 
       if (!orderBeingEdited) return baseStock;
-      const orderWarehouse = orderBeingEdited.warehouse || DEFAULT_WAREHOUSE;
+      const orderWarehouse =
+        orderBeingEdited.warehouse || getDefaultWarehouse().key;
       // Nếu đang sửa đơn, và kho hiện tại trùng với kho của đơn cũ, thì cộng lại số lượng cũ để tính available
       // Nếu warehouseKey là "all", ta hiển thị tổng stock, không cần cộng previousQty (hoặc có thể cộng nếu muốn hiển thị chính xác những gì available nếu edit?)
       // Tuy nhiên logic edit thường gắn với 1 kho cụ thể.

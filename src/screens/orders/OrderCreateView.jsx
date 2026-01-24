@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import BarcodeScanner from "../../components/BarcodeScanner";
-import { WAREHOUSES } from "../../utils/inventory/warehouseUtils";
+import { getWarehouses } from "../../utils/inventory/warehouseUtils";
 
 import OrderCreateHeader from "../../components/orders/OrderCreateHeader";
 import OrderCreateProductList from "../../components/orders/OrderCreateProductList";
@@ -58,15 +58,10 @@ const OrderCreateView = ({
   });
 
   const categories = settings?.categories || ["Chung"];
-  const warehouseTabs = WAREHOUSES.map((w) => ({
+  const warehouseTabs = getWarehouses().map((w) => ({
     key: w.key,
     label: w.label,
-  })).sort((a, b) => {
-    // Reorder to match "Vĩnh Phúc Lâm đồng" (Vĩnh Phúc first)
-    if (a.key === "vinhPhuc") return -1;
-    if (b.key === "vinhPhuc") return 1;
-    return 0;
-  });
+  }));
 
   // Heights for Layout
   // Title Header: ~45px (compact)

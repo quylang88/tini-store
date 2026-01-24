@@ -16,11 +16,8 @@ const useInventoryFilters = ({
   const checkWarehouseStock = useCallback(
     (product) => {
       const stockByWarehouse = normalizeWarehouseStock(product);
-      return (
-        warehouseFilter === "all" ||
-        (warehouseFilter === "lamDong" && stockByWarehouse.lamDong > 0) ||
-        (warehouseFilter === "vinhPhuc" && stockByWarehouse.vinhPhuc > 0)
-      );
+      if (warehouseFilter === "all") return true;
+      return (stockByWarehouse[warehouseFilter] || 0) > 0;
     },
     [warehouseFilter],
   );

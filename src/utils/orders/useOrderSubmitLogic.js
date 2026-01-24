@@ -1,9 +1,11 @@
 // Hook xử lý logic tạo/cập nhật đơn hàng
 import { syncProductsStock } from "./orderStock";
+import {
+  getDefaultWarehouse,
+  getWarehouses,
+} from "../inventory/warehouseUtils";
 
 const DEFAULT_STATUS = "shipping";
-const DEFAULT_WAREHOUSE = "vinhPhuc";
-const DEFAULT_ORDER_TYPE = "delivery";
 
 const useOrderSubmitLogic = ({
   products,
@@ -102,10 +104,11 @@ const useOrderSubmitLogic = ({
 
     // Logic tên khách mặc định cho đơn bán tại kho nếu bỏ trống
     if (payload.orderType === "warehouse" && !payload.customerName) {
-      if (payload.warehouse === "vinhPhuc") {
-        payload.customerName = "Mẹ Hương";
-      } else if (payload.warehouse === "lamDong") {
-        payload.customerName = "Mẹ Nguyệt";
+      const warehouseConfig = getWarehouses().find(
+        (w) => w.key === payload.warehouse,
+      );
+      if (warehouseConfig && warehouseConfig.defaultCustomerName) {
+        payload.customerName = warehouseConfig.defaultCustomerName;
       }
     }
 
@@ -114,7 +117,7 @@ const useOrderSubmitLogic = ({
     // Lấy danh sách sản phẩm cũ nếu đang sửa đơn để sync stock
     const previousItems = isUpdate ? orderBeingEdited.items : [];
     const previousWarehouse = isUpdate
-      ? orderBeingEdited.warehouse || DEFAULT_WAREHOUSE
+      ? orderBeingEdited.warehouse || getDefaultWarehouse().key
       : null;
 
     // syncProductsStock will mutate 'items' to add lotAllocations

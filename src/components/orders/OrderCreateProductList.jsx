@@ -2,7 +2,12 @@ import React, { useState } from "react";
 import { Plus, Minus, ShoppingCart, Image as ImageIcon } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { formatInputNumber } from "../../utils/formatters/formatUtils";
-import { getWarehouseLabel } from "../../utils/inventory/warehouseUtils";
+import {
+  getWarehouseLabel,
+  normalizeWarehouseStock,
+  getDefaultWarehouse,
+  getWarehouseShortLabel,
+} from "../../utils/inventory/warehouseUtils";
 import ProductFilterSection from "../../components/common/ProductFilterSection";
 import useLongPress from "../../hooks/ui/useLongPress";
 import ExpandableProductName from "../../components/common/ExpandableProductName";
@@ -92,7 +97,8 @@ const ProductItem = ({
   // Khi đang sửa đơn, cộng lại số lượng cũ để hiển thị tồn kho chính xác
   const getAvailableStock = (productId, stock) => {
     if (!orderBeingEdited) return stock;
-    const orderWarehouse = orderBeingEdited.warehouse || "lamDong";
+    const orderWarehouse =
+      orderBeingEdited.warehouse || getDefaultWarehouse().key;
     if (orderWarehouse !== selectedWarehouse) return stock;
     const previousQty =
       orderBeingEdited.items.find((item) => item.productId === productId)
@@ -106,21 +112,13 @@ const ProductItem = ({
   // Nếu rawQty là "" thì giữ nguyên để input rỗng.
   const displayQty = isAdded ? rawQty : 0;
 
-  const warehouseStock =
-    selectedWarehouse === "vinhPhuc"
-      ? (p.stockByWarehouse?.vinhPhuc ?? 0)
-      : (p.stockByWarehouse?.lamDong ?? p.stock ?? 0);
+  const stockByWarehouse = normalizeWarehouseStock(p);
+  const warehouseStock = stockByWarehouse[selectedWarehouse] || 0;
+
   const availableStock = getAvailableStock(p.id, warehouseStock);
   const isOutOfStock = availableStock <= 0;
 
-  // Determine text label based on state
-  // Custom logic: use short labels for list items only
-  const getShortWarehouseLabel = (key) => {
-    if (key === "vinhPhuc") return "Kho VP";
-    if (key === "lamDong") return "Kho LĐ";
-    return getWarehouseLabel(key);
-  };
-  const warehouseLabel = getShortWarehouseLabel(selectedWarehouse);
+  const warehouseLabel = getWarehouseShortLabel(selectedWarehouse);
 
   // Logic:
   // "Trong TH đang mở thanh tăng giảm số lượng (isAdded) mà tên dài quá user chạm expand name (isExpanded)

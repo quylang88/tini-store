@@ -3,7 +3,10 @@ import {
   formatInputNumber,
   formatNumber,
 } from "../../utils/formatters/formatUtils";
-import { getWarehouseLabel } from "../../utils/inventory/warehouseUtils";
+import {
+  getWarehouseLabel,
+  getWarehouses,
+} from "../../utils/inventory/warehouseUtils";
 import SheetModal from "../../components/modals/SheetModal";
 import Button from "../../components/button/Button";
 import useModalCache from "../../hooks/ui/useModalCache";
@@ -323,10 +326,7 @@ const ProductModal = ({
               Tồn kho nhập về
             </div>
             <div className="flex gap-2">
-              {[
-                { key: "vinhPhuc", label: "Vĩnh Phúc" },
-                { key: "lamDong", label: "Lâm Đồng" },
-              ].map((warehouse) => (
+              {getWarehouses().map((warehouse) => (
                 <button
                   key={warehouse.key}
                   type="button"

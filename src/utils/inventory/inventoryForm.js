@@ -1,4 +1,5 @@
 import { getLatestCost } from "./purchaseUtils.js";
+import { getDefaultWarehouse } from "./warehouseUtils.js";
 
 const buildBaseFormData = (settings) => ({
   name: "",
@@ -12,7 +13,7 @@ const buildBaseFormData = (settings) => ({
   costVNDInput: "",
   price: "",
   quantity: "",
-  warehouse: "vinhPhuc",
+  warehouse: getDefaultWarehouse().key,
   shippingMethod: "jp",
   shippingWeightKg: "",
   shippingFeeVnd: "",
@@ -72,7 +73,7 @@ export const createFormDataForLot = ({ product, lot, settings }) => {
     costVNDInput: inferredShippingMethod === "vn" ? lot.cost || "" : "", // Populate VND input if VN
     price: lot.priceAtPurchase ?? product.price,
     quantity: lot.quantity || "",
-    warehouse: lot.warehouse || "vinhPhuc",
+    warehouse: lot.warehouse || getDefaultWarehouse().key,
     shippingMethod: inferredShippingMethod,
     shippingWeightKg: lot.shipping?.weightKg || "",
     shippingFeeVnd: lot.shipping?.feeVnd || "",

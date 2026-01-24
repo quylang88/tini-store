@@ -1,4 +1,8 @@
-import { normalizeWarehouseStock } from "./warehouseUtils.js";
+import {
+  normalizeWarehouseStock,
+  getAllWarehouseKeys,
+  getDefaultWarehouse,
+} from "./warehouseUtils.js";
 
 const generateLotId = () =>
   `${Date.now()}-${Math.random().toString(16).slice(2, 8)}`;
@@ -21,34 +25,27 @@ export const normalizePurchaseLots = (product = {}) => {
     });
     return { ...product, purchaseLots: normalizedLots };
   }
-  const { lamDong, vinhPhuc } = normalizeWarehouseStock(product);
+
+  const warehouseStock = normalizeWarehouseStock(product);
   const baseCost = Number(product.cost) || 0;
   const createdAt = product.createdAt || new Date().toISOString();
   const lots = [];
 
-  if (lamDong > 0) {
-    lots.push({
-      id: generateLotId(),
-      cost: baseCost,
-      quantity: lamDong,
-      originalQuantity: lamDong,
-      warehouse: "lamDong",
-      createdAt,
-      shipping: null,
-    });
-  }
-
-  if (vinhPhuc > 0) {
-    lots.push({
-      id: generateLotId(),
-      cost: baseCost,
-      quantity: vinhPhuc,
-      originalQuantity: vinhPhuc,
-      warehouse: "vinhPhuc",
-      createdAt,
-      shipping: null,
-    });
-  }
+  const keys = getAllWarehouseKeys();
+  keys.forEach((key) => {
+    const qty = warehouseStock[key];
+    if (qty > 0) {
+      lots.push({
+        id: generateLotId(),
+        cost: baseCost,
+        quantity: qty,
+        originalQuantity: qty,
+        warehouse: key,
+        createdAt,
+        shipping: null,
+      });
+    }
+  });
 
   return {
     ...product,
@@ -91,7 +88,7 @@ export const addPurchaseLot = (product, lot) => {
     costJpy: Number(lot.costJpy) || 0,
     quantity,
     originalQuantity: quantity,
-    warehouse: lot.warehouse || "lamDong",
+    warehouse: lot.warehouse || getDefaultWarehouse().key,
     createdAt: lot.createdAt || new Date().toISOString(),
     priceAtPurchase: Number(lot.priceAtPurchase) || 0,
     shipping: lot.shipping

@@ -1,4 +1,7 @@
-import { normalizeWarehouseStock } from "../inventory/warehouseUtils";
+import {
+  normalizeWarehouseStock,
+  getAllWarehouseKeys,
+} from "../inventory/warehouseUtils";
 import {
   consumePurchaseLots,
   normalizePurchaseLots,
@@ -15,15 +18,20 @@ const updateWarehouseStock = (
 ) => {
   const current = normalizeWarehouseStock(product);
   const nextStock = { ...current };
-  if (warehouseKey === "vinhPhuc") {
-    nextStock.vinhPhuc = Math.max(0, current.vinhPhuc + delta);
-  } else {
-    nextStock.lamDong = Math.max(0, current.lamDong + delta);
-  }
+
+  // Dynamic update ensuring key existence
+  const currentVal = nextStock[warehouseKey] || 0;
+  nextStock[warehouseKey] = Math.max(0, currentVal + delta);
+
+  // Ensure all configured keys exist (optional but good for consistency)
+  getAllWarehouseKeys().forEach((key) => {
+    if (nextStock[key] === undefined) nextStock[key] = 0;
+  });
+
   const nextProduct = {
     ...product,
     stockByWarehouse: nextStock,
-    stock: nextStock.lamDong + nextStock.vinhPhuc,
+    stock: Object.values(nextStock).reduce((sum, val) => sum + val, 0),
   };
 
   if (delta < 0) {

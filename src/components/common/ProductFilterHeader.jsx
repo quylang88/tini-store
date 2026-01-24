@@ -3,6 +3,7 @@ import SearchBarWithScanner from "./SearchBarWithScanner";
 import AnimatedFilterTabs from "./AnimatedFilterTabs";
 import ScrollableTabs from "./ScrollableTabs";
 import { motion, AnimatePresence } from "framer-motion";
+import { getWarehouses } from "../../utils/inventory/warehouseUtils";
 
 const ProductFilterHeader = ({
   // Search
@@ -32,8 +33,7 @@ const ProductFilterHeader = ({
   // Default Warehouse Configuration (if not provided)
   const defaultWarehouseTabs = [
     { key: "all", label: "Tất cả" },
-    { key: "vinhPhuc", label: "Vĩnh Phúc" },
-    { key: "lamDong", label: "Lâm Đồng" },
+    ...getWarehouses().map((w) => ({ key: w.key, label: w.label })),
   ];
 
   const finalWarehouseTabs = warehouseTabs || defaultWarehouseTabs;

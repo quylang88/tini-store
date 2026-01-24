@@ -1,5 +1,9 @@
 import { normalizeString } from "../formatters/formatUtils.js";
-import { normalizeWarehouseStock } from "./warehouseUtils.js";
+import {
+  normalizeWarehouseStock,
+  getAllWarehouseKeys,
+  getDefaultWarehouse,
+} from "./warehouseUtils.js";
 import {
   addPurchaseLot,
   getLatestCost,
@@ -116,7 +120,8 @@ export const buildNextProductFromForm = ({
   const costJpyValue =
     formData.costCurrency === "JPY" ? Number(formData.costJPY) || 0 : 0;
   const quantityValue = Number(formData.quantity) || 0;
-  const warehouseKey = formData.warehouse || "lamDong";
+  const defaultWarehouseKey = getDefaultWarehouse().key;
+  const warehouseKey = formData.warehouse || defaultWarehouseKey;
 
   const shippingWeight = Number(formData.shippingWeightKg) || 0;
   const exchangeRateValue =
@@ -128,19 +133,25 @@ export const buildNextProductFromForm = ({
       ? Math.round(feeJpy * exchangeRateValue)
       : Number(formData.shippingFeeVnd) || 0;
 
+  const allKeys = getAllWarehouseKeys();
+  const initialStock = {};
+  allKeys.forEach((key) => {
+    initialStock[key] = 0;
+  });
+
   const baseProduct = editingProduct
     ? normalizePurchaseLots(editingProduct)
     : {
         id: Date.now().toString(),
         purchaseLots: [],
-        stockByWarehouse: { lamDong: 0, vinhPhuc: 0 },
+        stockByWarehouse: { ...initialStock },
         stock: 0,
       };
 
   const existingStock = normalizeWarehouseStock(baseProduct);
   const nextStockByWarehouse = {
     ...existingStock,
-    [warehouseKey]: existingStock[warehouseKey] + quantityValue,
+    [warehouseKey]: (existingStock[warehouseKey] || 0) + quantityValue,
   };
 
   let nextProduct = {
@@ -152,7 +163,10 @@ export const buildNextProductFromForm = ({
     cost: costValue || getLatestCost(baseProduct),
     image: formData.image,
     stockByWarehouse: nextStockByWarehouse,
-    stock: nextStockByWarehouse.lamDong + nextStockByWarehouse.vinhPhuc,
+    stock: Object.values(nextStockByWarehouse).reduce(
+      (sum, val) => sum + val,
+      0,
+    ),
   };
 
   // Lưu lại từng lần nhập hàng thành "lô giá nhập" để quản lý tồn kho theo giá.
@@ -200,22 +214,25 @@ export const buildNextProductFromForm = ({
           priceAtPurchase: updatedPrice,
         };
       });
+
+      // Recalculate stock by warehouse dynamically
       const adjustedStock = nextLots.reduce(
         (acc, lot) => {
-          const nextWarehouse = lot.warehouse || "lamDong";
+          const nextWarehouse = lot.warehouse || defaultWarehouseKey;
           const lotQty = Number(lot.quantity) || 0;
           return {
             ...acc,
             [nextWarehouse]: (acc[nextWarehouse] || 0) + lotQty,
           };
         },
-        { lamDong: 0, vinhPhuc: 0 },
+        { ...initialStock },
       );
+
       nextProduct = {
         ...nextProduct,
         purchaseLots: nextLots,
         stockByWarehouse: adjustedStock,
-        stock: adjustedStock.lamDong + adjustedStock.vinhPhuc,
+        stock: Object.values(adjustedStock).reduce((sum, val) => sum + val, 0),
         cost: getLatestCost({ ...nextProduct, purchaseLots: nextLots }),
       };
     } else {

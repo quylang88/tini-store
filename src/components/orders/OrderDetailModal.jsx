@@ -1,7 +1,10 @@
 import React, { useState } from "react";
 import SheetModal from "../../components/modals/SheetModal";
 import { formatNumber } from "../../utils/formatters/formatUtils";
-import { getWarehouseLabel } from "../../utils/inventory/warehouseUtils";
+import {
+  getWarehouseLabel,
+  getDefaultWarehouse,
+} from "../../utils/inventory/warehouseUtils";
 import { getOrderDisplayName } from "../../utils/orders/orderUtils";
 import useModalCache from "../../hooks/ui/useModalCache";
 import Button from "../../components/button/Button";
@@ -21,7 +24,9 @@ const OrderDetailModal = ({ order, products, onClose, getOrderStatusInfo }) => {
     : `#${cachedOrder.id.slice(-4)}`;
   const orderName = getOrderDisplayName(cachedOrder);
   const statusInfo = getOrderStatusInfo?.(cachedOrder);
-  const warehouseLabel = getWarehouseLabel(cachedOrder.warehouse || "lamDong");
+  const warehouseLabel = getWarehouseLabel(
+    cachedOrder.warehouse || getDefaultWarehouse().key,
+  );
 
   // Tính lợi nhuận ước tính (giống logic ở OrderListView)
   const estimatedProfit =

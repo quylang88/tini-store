@@ -3,6 +3,7 @@ import AnimatedFilterTabs from "./AnimatedFilterTabs";
 import ScrollableTabs from "./ScrollableTabs";
 import { Calendar, DollarSign } from "lucide-react";
 import SortButton from "../button/SortButton";
+import { getWarehouses } from "../../utils/inventory/warehouseUtils";
 
 const ProductFilterSection = ({
   warehouseFilter,
@@ -20,8 +21,7 @@ const ProductFilterSection = ({
   // Default Warehouse Configuration
   const defaultWarehouseTabs = [
     { key: "all", label: "Tất cả" },
-    { key: "vinhPhuc", label: "Vĩnh Phúc" },
-    { key: "lamDong", label: "Lâm Đồng" },
+    ...getWarehouses().map((w) => ({ key: w.key, label: w.label })),
   ];
 
   const finalWarehouseTabs = warehouseTabs || defaultWarehouseTabs;
