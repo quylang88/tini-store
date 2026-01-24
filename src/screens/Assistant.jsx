@@ -1,13 +1,9 @@
 import React from "react";
-import { Bot, Palette, Eraser } from "lucide-react";
 import { motion } from "framer-motion";
-import ChatBubble from "../components/assistant/ChatBubble";
 import ChatInput from "../components/assistant/ChatInput";
 import ModelSelector from "../components/assistant/ModelSelector";
-import AssistantIcon from "../components/assistant/AssistantIcon";
-import FlashIcon from "../components/assistant/FlashIcon";
-import DeepIcon from "../components/assistant/DeepIcon";
-import { AI_MODES } from "../services/ai/config";
+import AssistantHeader from "../components/assistant/AssistantHeader";
+import MessageList from "../components/assistant/MessageList";
 
 // Hooks
 import { useAssistantTheme } from "../hooks/assistant/useAssistantTheme";
@@ -103,124 +99,24 @@ const Assistant = ({
         ease: "linear",
       }}
     >
-      {/* HEADER: Flex-none để không bị co giãn */}
-      <div
-        className={`flex-none pt-[env(safe-area-inset-top)] flex items-center gap-3 px-4 py-3 border-b border-white/50 backdrop-blur-sm z-20 shadow-sm ${activeTheme.headerBg}`}
-      >
-        <div
-          className={`w-10 h-10 rounded-full ${activeTheme.headerIconBg} text-white flex items-center justify-center shadow-md`}
-        >
-          <Bot size={24} />
-        </div>
-        <div className="flex-1">
-          <div className="flex items-start gap-1">
-            <h1
-              className={`font-bold text-lg relative ${activeTheme.headerText}`}
-            >
-              Trợ lý ảo Misa
-            </h1>
-          </div>
-          <div className="flex items-center gap-2">
-            <p className="text-xs text-gray-600 flex items-center gap-1">
-              <span
-                className={`w-2 h-2 rounded-full ${navigator.onLine ? "bg-green-500" : "bg-red-500"} animate-pulse`}
-              ></span>
-              {modelMode === "standard" && AI_MODES.standard.label}
-              {modelMode === "fast" && AI_MODES.fast.label}
-              {modelMode === "deep" && AI_MODES.deep.label}
-            </p>
-            {chatSummary && (
-              <span
-                className={`text-[10px] ${activeTheme.themeBtnBg} ${activeTheme.themeBtnText} px-1.5 rounded-full flex items-center gap-0.5`}
-              >
-                {modelMode === "standard" && (
-                  <AssistantIcon isActive={false} size={14} />
-                )}
-                {modelMode === "fast" && (
-                  <FlashIcon isActive={false} size={14} />
-                )}
-                {modelMode === "deep" && (
-                  <DeepIcon isActive={false} size={14} />
-                )}
-                Đang nhớ
-              </span>
-            )}
-          </div>
-        </div>
+      <AssistantHeader
+        activeTheme={activeTheme}
+        modelMode={modelMode}
+        chatSummary={chatSummary}
+        handleClearScreen={handleClearScreen}
+        handleCycleTheme={handleCycleTheme}
+        messagesLength={messages.length}
+      />
 
-        {/* Nút Dọn Màn Hình */}
-        {messages.length > 0 && (
-          <button
-            onClick={handleClearScreen}
-            className={`p-2.5 mr-1 rounded-full transition-all shadow-sm active:scale-90 ring-1 ${activeTheme.themeBtnBg} ${activeTheme.themeBtnRing}`}
-            title="Dọn màn hình (AI vẫn nhớ)"
-          >
-            <Eraser size={20} className={activeTheme.themeBtnText} />
-          </button>
-        )}
-
-        <button
-          onClick={handleCycleTheme}
-          className={`p-2.5 rounded-full transition-all shadow-sm active:scale-90 ring-1 ${activeTheme.themeBtnBg} ${activeTheme.themeBtnRing}`}
-        >
-          <Palette size={20} className={activeTheme.themeBtnText} />
-        </button>
-      </div>
-
-      {/* Message List */}
-      <div
-        // FIX: Tăng padding-bottom (pb-20) để đảm bảo tin nhắn cuối không bị che bởi spacer hoặc bàn phím
-        // touch-pan-y: Cho phép scroll dọc tự nhiên, nhưng JS xử lý scroll ngang (swipe)
-        className="flex-1 overflow-y-auto overflow-x-hidden px-4 pt-4 pb-20 bg-transparent relative scroll-smooth overscroll-contain touch-pan-y"
-        {...handlers}
-      >
-        {messages.length === 0 ? (
-          <div className="h-full flex flex-col items-center justify-center text-gray-400 text-sm italic">
-            <p>Màn hình trống.</p>
-            <p>Nhưng Misa vẫn nhớ chuyện cũ nha!</p>
-          </div>
-        ) : (
-          messages.map((msg) => (
-            <ChatBubble
-              key={msg.id}
-              message={msg}
-              theme={activeTheme}
-              swipeX={swipeX}
-            />
-          ))
-        )}
-
-        {isTyping && (
-          <div className="flex justify-start mb-4 flex-col gap-2">
-            <div
-              className={`bg-white border ${activeTheme.botBubbleBorder} px-5 py-3.5 rounded-[20px] rounded-tl-sm shadow-sm flex gap-1 items-center w-fit`}
-            >
-              <span
-                className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce"
-                style={{ animationDelay: "0ms" }}
-              ></span>
-              <span
-                className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce"
-                style={{ animationDelay: "150ms" }}
-              ></span>
-              <span
-                className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce"
-                style={{ animationDelay: "300ms" }}
-              ></span>
-            </div>
-            {loadingText && (
-              <motion.span
-                initial={{ opacity: 0, y: 5 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="text-xs text-gray-500 italic ml-2"
-              >
-                {loadingText}
-              </motion.span>
-            )}
-          </div>
-        )}
-        <div ref={messagesEndRef} />
-      </div>
+      <MessageList
+        messages={messages}
+        activeTheme={activeTheme}
+        isTyping={isTyping}
+        loadingText={loadingText}
+        messagesEndRef={messagesEndRef}
+        handlers={handlers}
+        swipeX={swipeX}
+      />
 
       <ModelSelector
         selectedModel={modelMode}

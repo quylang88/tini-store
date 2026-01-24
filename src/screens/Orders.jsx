@@ -3,7 +3,7 @@ import { AnimatePresence } from "framer-motion";
 // Tách giao diện tạo đơn/danh sách đơn để file Orders.jsx gọn hơn
 import OrderCreateView from "./orders/OrderCreateView";
 import OrderListView from "./orders/OrderListView";
-import OrderDetailModal from "./orders/OrderDetailModal";
+import OrderDetailModal from "../components/orders/OrderDetailModal";
 import ConfirmModalHost from "../components/modals/ConfirmModalHost";
 import ErrorModal from "../components/modals/ErrorModal";
 import ScreenTransition from "../components/common/ScreenTransition";

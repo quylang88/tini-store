@@ -6,7 +6,7 @@ import useDashboardLogic from "../../hooks/dashboard/useDashboardLogic";
 import { getLatestUnitCost } from "../../utils/inventory/purchaseUtils";
 import MetricCard from "../../components/stats/MetricCard";
 import TopSellingSection from "../../components/stats/TopSellingSection";
-import StatListModal from "./StatListModal";
+import StatListModal from "../../components/dashboard/StatListModal";
 import DateRangeFilter from "../../components/stats/DateRangeFilter";
 
 const StatsDetail = ({ products, orders, onBack }) => {
@@ -30,13 +30,14 @@ const StatsDetail = ({ products, orders, onBack }) => {
   const orderCount = filteredPaidOrders.length;
   const avgOrder = orderCount ? totalRevenue / orderCount : 0;
   const profitMargin = totalRevenue ? (totalProfit / totalRevenue) * 100 : 0;
-  const costMap = useMemo(
-    () =>
-      new Map(
-        products.map((product) => [product.id, getLatestUnitCost(product)]),
-      ),
-    [products],
-  );
+  const costMap = useMemo(() => {
+    // Optimization: Use for...of to avoid intermediate array allocation from map()
+    const map = new Map();
+    for (const product of products) {
+      map.set(product.id, getLatestUnitCost(product));
+    }
+    return map;
+  }, [products]);
 
   const comparisonStats = useMemo(() => {
     // So sánh kỳ hiện tại với kỳ trước theo số ngày đang chọn (mặc định 30 ngày nếu "Tất cả").
