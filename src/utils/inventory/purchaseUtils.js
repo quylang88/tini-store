@@ -157,9 +157,34 @@ export const restockPurchaseLots = (product, warehouseKey, quantity, cost) => {
   const restockQty = Math.max(0, Number(quantity) || 0);
   if (restockQty === 0) return product;
 
+  const targetCost = Number(cost) || Number(product.cost) || 0;
+  const lots = [...(product.purchaseLots || [])];
+
+  // Tìm lot tương ứng để gộp số lượng (tránh tạo lot mới khi restock/edit order)
+  // Ưu tiên lot có cùng kho và cùng giá vốn.
+  const existingLotIndex = lots.findIndex(
+    (lot) =>
+      lot.warehouse === warehouseKey &&
+      Math.abs((Number(lot.cost) || 0) - targetCost) < 1 // So sánh cost gần đúng (int safety)
+  );
+
+  if (existingLotIndex !== -1) {
+    // Nếu tìm thấy, cộng dồn vào lot đó
+    const updatedLot = {
+      ...lots[existingLotIndex],
+      quantity: (Number(lots[existingLotIndex].quantity) || 0) + restockQty,
+    };
+    lots[existingLotIndex] = updatedLot;
+    return {
+      ...product,
+      purchaseLots: lots,
+    };
+  }
+
+  // Nếu không tìm thấy (trường hợp hiếm hoặc dữ liệu cũ), tạo lot mới như cũ
   const nextLot = {
     id: generateLotId(),
-    cost: Number(cost) || Number(product.cost) || 0,
+    cost: targetCost,
     quantity: restockQty,
     warehouse: warehouseKey,
     createdAt: new Date().toISOString(),
@@ -168,6 +193,6 @@ export const restockPurchaseLots = (product, warehouseKey, quantity, cost) => {
 
   return {
     ...product,
-    purchaseLots: [...(product.purchaseLots || []), nextLot],
+    purchaseLots: [...lots, nextLot],
   };
 };

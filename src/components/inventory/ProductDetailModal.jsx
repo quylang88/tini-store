@@ -105,19 +105,30 @@ const ProductDetailModal = ({ product, onClose, onEditLot }) => {
               // Chỉ cho sửa nếu chưa hết hàng
               const isEditable = !isSoldOut && Boolean(matchingActiveLot);
 
-              // Tính toán hiển thị
-              const costDisplay =
-                record.costVND > 0 ? record.costVND : record.costJPY;
-              const currencyLabel = record.costVND > 0 ? "đ" : "¥";
+              // Tính toán hiển thị giá
+              // Logic: Nếu có giá JPY (tức là nhập theo Yên), hiển thị "Yên (~VNĐ)"
+              // Nếu không có giá JPY (nhập theo VNĐ), hiển thị "VNĐ"
+              let costDisplayElement;
+              if (record.costJPY > 0) {
+                costDisplayElement = (
+                  <span className="font-semibold">
+                    {formatNumber(record.costJPY)}¥ <span className="text-xs text-rose-500 font-normal">(~{formatNumber(record.costVND)}đ)</span>
+                  </span>
+                );
+              } else {
+                costDisplayElement = (
+                  <span className="font-semibold">
+                    {formatNumber(record.costVND)}đ
+                  </span>
+                );
+              }
+
               const warehouseLabel = getWarehouseLabel(record.warehouse);
 
               const Content = (
                 <>
                   <div className="flex items-center justify-between text-sm text-rose-700">
-                    <span className="font-semibold">
-                      {formatNumber(costDisplay)}
-                      {currencyLabel}
-                    </span>
+                    {costDisplayElement}
                     <span className="text-xs text-rose-600">
                       {warehouseLabel}
                     </span>
