@@ -10,24 +10,15 @@ const MetricCard = ({
 }) => {
   const isInteractive = !!onClick;
 
-  const handleKeyDown = (e) => {
-    if (isInteractive && (e.key === "Enter" || e.key === " ")) {
-      e.preventDefault();
-      onClick(e);
-    }
-  };
-
   return (
     <div
       className={`text-white p-4 rounded-2xl shadow-lg relative overflow-hidden select-none ${
         isInteractive
-          ? "cursor-pointer active:scale-95 transition-transform focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent"
+          ? "cursor-pointer active:scale-95 transition-transform"
           : ""
       } ${className}`}
       onClick={onClick}
-      onKeyDown={handleKeyDown}
       role={isInteractive ? "button" : undefined}
-      tabIndex={isInteractive ? 0 : undefined}
       {...props}
     >
       <div className="flex items-center gap-2 opacity-90 mb-2">

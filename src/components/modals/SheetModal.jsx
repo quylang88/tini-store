@@ -56,7 +56,9 @@ const SheetModal = ({
           </div>
         )}
 
-        <div className="flex-1 overflow-y-auto px-5 py-2">{children}</div>
+        <div className="flex-1 overflow-y-auto px-5 py-2 overscroll-contain">
+          {children}
+        </div>
 
         {footer && (
           <div className="p-5 pt-2 pb-[calc(env(safe-area-inset-bottom)+1.25rem)]">
