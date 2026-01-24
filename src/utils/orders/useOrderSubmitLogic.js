@@ -6,6 +6,7 @@ const DEFAULT_WAREHOUSE = "vinhPhuc";
 const DEFAULT_ORDER_TYPE = "delivery";
 
 const useOrderSubmitLogic = ({
+  products,
   setProducts,
   orders,
   setOrders,
