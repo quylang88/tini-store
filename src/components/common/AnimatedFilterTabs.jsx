@@ -25,14 +25,12 @@ const AnimatedFilterTabs = ({
   }, []);
 
   return (
-    <div className={`flex flex-wrap gap-2 ${className}`} role="tablist">
+    <div className={`flex flex-wrap gap-2 ${className}`}>
       {tabs.map((tab) => {
         const isActive = activeTab === tab.key;
         return (
           <button
             key={tab.key}
-            role="tab"
-            aria-selected={isActive}
             onClick={() => onChange(tab.key)}
             className={`relative px-3 py-1.5 text-xs font-semibold rounded-full border transition-colors z-0 ${tabClassName} ${
               isActive
