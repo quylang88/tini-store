@@ -114,7 +114,7 @@ export const buildNextProductFromForm = ({
 }) => {
   const costValue = Number(formData.cost) || 0;
   const quantityValue = Number(formData.quantity) || 0;
-  const warehouseKey = formData.warehouse || "daLat";
+  const warehouseKey = formData.warehouse || "lamDong";
 
   const shippingWeight = Number(formData.shippingWeightKg) || 0;
   const exchangeRateValue =
@@ -131,7 +131,7 @@ export const buildNextProductFromForm = ({
     : {
         id: Date.now().toString(),
         purchaseLots: [],
-        stockByWarehouse: { daLat: 0, vinhPhuc: 0 },
+        stockByWarehouse: { lamDong: 0, vinhPhuc: 0 },
         stock: 0,
       };
 
@@ -150,7 +150,7 @@ export const buildNextProductFromForm = ({
     cost: costValue || getLatestCost(baseProduct),
     image: formData.image,
     stockByWarehouse: nextStockByWarehouse,
-    stock: nextStockByWarehouse.daLat + nextStockByWarehouse.vinhPhuc,
+    stock: nextStockByWarehouse.lamDong + nextStockByWarehouse.vinhPhuc,
   };
 
   // Lưu lại từng lần nhập hàng thành "lô giá nhập" để quản lý tồn kho theo giá.
@@ -169,10 +169,19 @@ export const buildNextProductFromForm = ({
         const updatedPrice = Number(formData.price) || 0;
 
         if (isCurrentLot) {
+          // Tính lại originalQuantity dựa trên delta của quantity (Remaining)
+          // quantityValue ở đây là "Tồn kho thực tế" do user nhập
+          const oldRemaining = Number(lot.quantity) || 0;
+          const newRemaining = quantityValue;
+          const delta = newRemaining - oldRemaining;
+          const oldOriginal = Number(lot.originalQuantity) || oldRemaining;
+          const newOriginal = Math.max(newRemaining, oldOriginal + delta);
+
           return {
             ...lot,
             cost: costValue,
-            quantity: quantityValue,
+            quantity: newRemaining,
+            originalQuantity: newOriginal,
             warehouse: warehouseKey,
             shipping: {
               ...shippingInfo,
@@ -190,20 +199,20 @@ export const buildNextProductFromForm = ({
       });
       const adjustedStock = nextLots.reduce(
         (acc, lot) => {
-          const nextWarehouse = lot.warehouse || "daLat";
+          const nextWarehouse = lot.warehouse || "lamDong";
           const lotQty = Number(lot.quantity) || 0;
           return {
             ...acc,
             [nextWarehouse]: (acc[nextWarehouse] || 0) + lotQty,
           };
         },
-        { daLat: 0, vinhPhuc: 0 },
+        { lamDong: 0, vinhPhuc: 0 },
       );
       nextProduct = {
         ...nextProduct,
         purchaseLots: nextLots,
         stockByWarehouse: adjustedStock,
-        stock: adjustedStock.daLat + adjustedStock.vinhPhuc,
+        stock: adjustedStock.lamDong + adjustedStock.vinhPhuc,
         cost: getLatestCost({ ...nextProduct, purchaseLots: nextLots }),
       };
     } else {

@@ -21,7 +21,7 @@ const ProductFilterSection = ({
   const defaultWarehouseTabs = [
     { key: "all", label: "Tất cả" },
     { key: "vinhPhuc", label: "Vĩnh Phúc" },
-    { key: "daLat", label: "Lâm Đồng" },
+    { key: "lamDong", label: "Lâm Đồng" },
   ];
 
   const finalWarehouseTabs = warehouseTabs || defaultWarehouseTabs;

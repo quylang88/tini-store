@@ -92,7 +92,7 @@ const ProductItem = ({
   // Khi đang sửa đơn, cộng lại số lượng cũ để hiển thị tồn kho chính xác
   const getAvailableStock = (productId, stock) => {
     if (!orderBeingEdited) return stock;
-    const orderWarehouse = orderBeingEdited.warehouse || "daLat";
+    const orderWarehouse = orderBeingEdited.warehouse || "lamDong";
     if (orderWarehouse !== selectedWarehouse) return stock;
     const previousQty =
       orderBeingEdited.items.find((item) => item.productId === productId)
@@ -109,7 +109,7 @@ const ProductItem = ({
   const warehouseStock =
     selectedWarehouse === "vinhPhuc"
       ? (p.stockByWarehouse?.vinhPhuc ?? 0)
-      : (p.stockByWarehouse?.daLat ?? p.stock ?? 0);
+      : (p.stockByWarehouse?.lamDong ?? p.stock ?? 0);
   const availableStock = getAvailableStock(p.id, warehouseStock);
   const isOutOfStock = availableStock <= 0;
 
@@ -117,7 +117,7 @@ const ProductItem = ({
   // Custom logic: use short labels for list items only
   const getShortWarehouseLabel = (key) => {
     if (key === "vinhPhuc") return "Kho VP";
-    if (key === "daLat") return "Kho LĐ";
+    if (key === "lamDong") return "Kho LĐ";
     return getWarehouseLabel(key);
   };
   const warehouseLabel = getShortWarehouseLabel(selectedWarehouse);

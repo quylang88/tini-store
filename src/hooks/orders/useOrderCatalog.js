@@ -40,11 +40,11 @@ const useOrderCatalog = ({
       const warehouseStock = normalizeWarehouseStock(product);
       let baseStock = 0;
       if (warehouseKey === "all") {
-        baseStock = warehouseStock.vinhPhuc + warehouseStock.daLat;
+        baseStock = warehouseStock.vinhPhuc + warehouseStock.lamDong;
       } else if (warehouseKey === "vinhPhuc") {
         baseStock = warehouseStock.vinhPhuc;
       } else {
-        baseStock = warehouseStock.daLat;
+        baseStock = warehouseStock.lamDong;
       }
 
       if (!orderBeingEdited) return baseStock;

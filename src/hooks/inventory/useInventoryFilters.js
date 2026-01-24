@@ -18,7 +18,7 @@ const useInventoryFilters = ({
       const stockByWarehouse = normalizeWarehouseStock(product);
       return (
         warehouseFilter === "all" ||
-        (warehouseFilter === "daLat" && stockByWarehouse.daLat > 0) ||
+        (warehouseFilter === "lamDong" && stockByWarehouse.lamDong > 0) ||
         (warehouseFilter === "vinhPhuc" && stockByWarehouse.vinhPhuc > 0)
       );
     },
