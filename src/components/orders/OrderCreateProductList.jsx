@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Plus, Minus, Search, Image as ImageIcon } from "lucide-react";
+import { Plus, Minus, ShoppingCart, Image as ImageIcon } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { formatInputNumber } from "../../utils/formatters/formatUtils";
 import { getWarehouseLabel } from "../../utils/inventory/warehouseUtils";
@@ -302,11 +302,13 @@ const OrderCreateProductList = ({
       </AnimatePresence>
 
       {filteredProducts.length === 0 && (
-        <div className="text-center text-gray-400 mt-10">
-          <div className="flex justify-center mb-2">
-            <Search size={32} className="opacity-20" />
-          </div>
-          <p>Không tìm thấy sản phẩm</p>
+        <div className="flex flex-col items-center justify-center pt-24 text-gray-500 w-full">
+          <ShoppingCart
+            size={48}
+            strokeWidth={1.5}
+            className="mb-3 opacity-20"
+          />
+          <p className="text-sm font-medium">Không có sản phẩm nào</p>
         </div>
       )}
     </div>
