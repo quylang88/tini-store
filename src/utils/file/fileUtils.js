@@ -53,7 +53,12 @@ export const shareOrDownloadFile = async (content, fileName, mimeType) => {
 
 // --- Backup Functions ---
 
-export const exportDataToJSON = async (products, orders, settings) => {
+export const exportDataToJSON = async (
+  products,
+  orders,
+  settings,
+  importHistory = [],
+) => {
   // Lấy dữ liệu tóm tắt chat từ localStorage (nếu có)
   const aiChatSummary = localStorage.getItem("ai_chat_summary") || "";
 
@@ -62,6 +67,7 @@ export const exportDataToJSON = async (products, orders, settings) => {
     orders,
     settings,
     aiChatSummary,
+    importHistory,
   });
 
   const fileName = `tiny_shop_${new Date().toISOString().slice(0, 10)}.json`;

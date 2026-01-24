@@ -160,8 +160,20 @@ const useSettingsLogic = ({
     const newSettings = { ...settings, lastBackupDate: now };
     setSettings(newSettings);
 
+    // Đọc lịch sử nhập hàng trực tiếp từ localStorage để đảm bảo dữ liệu mới nhất
+    // vì hook có thể không re-render đủ nhanh hoặc không cần thiết subscribe.
+    let importHistory = [];
+    try {
+      const storedHistory = localStorage.getItem("shop_import_history");
+      if (storedHistory) {
+        importHistory = JSON.parse(storedHistory);
+      }
+    } catch (e) {
+      console.error("Failed to load history for backup:", e);
+    }
+
     // Xuất dữ liệu (dùng newSettings để file backup có thời gian cập nhật mới nhất)
-    exportDataToJSON(products, orders, newSettings);
+    exportDataToJSON(products, orders, newSettings, importHistory);
   };
 
   // Khôi phục dữ liệu (Restore)
@@ -188,6 +200,17 @@ const useSettingsLogic = ({
           // Khôi phục bộ nhớ AI (nếu có trong file backup)
           if (typeof data.aiChatSummary === "string") {
             localStorage.setItem("ai_chat_summary", data.aiChatSummary);
+          }
+
+          // Khôi phục lịch sử nhập hàng (nếu có)
+          // Nếu file backup cũ chưa có history, set về mảng rỗng để đồng bộ với state mới của products
+          if (Array.isArray(data.importHistory)) {
+            localStorage.setItem(
+              "shop_import_history",
+              JSON.stringify(data.importHistory),
+            );
+          } else {
+            localStorage.setItem("shop_import_history", JSON.stringify([]));
           }
 
           // Thông báo sau khi khôi phục thành công.
