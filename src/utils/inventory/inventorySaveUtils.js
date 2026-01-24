@@ -114,7 +114,7 @@ export const buildNextProductFromForm = ({
 }) => {
   const costValue = Number(formData.cost) || 0;
   const quantityValue = Number(formData.quantity) || 0;
-  const warehouseKey = formData.warehouse || "daLat";
+  const warehouseKey = formData.warehouse || "lamDong";
 
   const shippingWeight = Number(formData.shippingWeightKg) || 0;
   const exchangeRateValue =
@@ -131,7 +131,7 @@ export const buildNextProductFromForm = ({
     : {
         id: Date.now().toString(),
         purchaseLots: [],
-        stockByWarehouse: { daLat: 0, vinhPhuc: 0 },
+        stockByWarehouse: { lamDong: 0, vinhPhuc: 0 },
         stock: 0,
       };
 
@@ -140,6 +140,9 @@ export const buildNextProductFromForm = ({
     ...existingStock,
     [warehouseKey]: existingStock[warehouseKey] + quantityValue,
   };
+
+  // Calculate costJpy if applicable
+  const costJpy = formData.costCurrency === "JPY" ? Number(formData.costJPY) : undefined;
 
   let nextProduct = {
     ...baseProduct,
@@ -150,7 +153,7 @@ export const buildNextProductFromForm = ({
     cost: costValue || getLatestCost(baseProduct),
     image: formData.image,
     stockByWarehouse: nextStockByWarehouse,
-    stock: nextStockByWarehouse.daLat + nextStockByWarehouse.vinhPhuc,
+    stock: nextStockByWarehouse.lamDong + nextStockByWarehouse.vinhPhuc,
   };
 
   // Lưu lại từng lần nhập hàng thành "lô giá nhập" để quản lý tồn kho theo giá.
@@ -172,6 +175,7 @@ export const buildNextProductFromForm = ({
           return {
             ...lot,
             cost: costValue,
+            costJpy: costJpy !== undefined ? costJpy : lot.costJpy, // Update or keep existing
             quantity: quantityValue,
             warehouse: warehouseKey,
             shipping: {
@@ -190,25 +194,26 @@ export const buildNextProductFromForm = ({
       });
       const adjustedStock = nextLots.reduce(
         (acc, lot) => {
-          const nextWarehouse = lot.warehouse || "daLat";
+          const nextWarehouse = lot.warehouse || "lamDong";
           const lotQty = Number(lot.quantity) || 0;
           return {
             ...acc,
             [nextWarehouse]: (acc[nextWarehouse] || 0) + lotQty,
           };
         },
-        { daLat: 0, vinhPhuc: 0 },
+        { lamDong: 0, vinhPhuc: 0 },
       );
       nextProduct = {
         ...nextProduct,
         purchaseLots: nextLots,
         stockByWarehouse: adjustedStock,
-        stock: adjustedStock.daLat + adjustedStock.vinhPhuc,
+        stock: adjustedStock.lamDong + adjustedStock.vinhPhuc,
         cost: getLatestCost({ ...nextProduct, purchaseLots: nextLots }),
       };
     } else {
       nextProduct = addPurchaseLot(nextProduct, {
         cost: costValue,
+        costJpy: costJpy, // Pass new JPY cost
         quantity: quantityValue,
         warehouse: warehouseKey,
         shipping: shippingInfo,

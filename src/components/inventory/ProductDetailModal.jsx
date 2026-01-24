@@ -1,113 +1,149 @@
-import React from "react";
-import { formatNumber } from "../../utils/formatters/formatUtils";
-import {
-  getLatestCost,
-  getLatestLot,
-} from "../../utils/inventory/purchaseUtils";
-import { getWarehouseLabel } from "../../utils/inventory/warehouseUtils";
-import SheetModal from "../../components/modals/SheetModal";
-import useModalCache from "../../hooks/ui/useModalCache";
-import Button from "../../components/button/Button";
+import React, { useMemo } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { X, Edit, Trash2, Clock, History } from "lucide-react";
+import { formatNumber, formatDate } from "../../utils/formatters/formatUtils";
+import { getTotalStock } from "../../utils/inventory/warehouseUtils";
 
-// ProductDetailModal: Hiển thị lịch sử nhập hàng (View Only)
-const ProductDetailModal = ({ product, onClose, onEditLot }) => {
-  // Logic giữ dữ liệu (Cached Data) để phục vụ animation exit.
-  const cachedProduct = useModalCache(product, Boolean(product));
+const ProductDetailModal = ({ product, onClose, onEditLot, onShowHistory }) => {
+  if (!product) return null;
 
-  // Nếu chưa từng có sản phẩm nào được chọn thì không render gì cả.
-  if (!cachedProduct) return null;
-
-  const latestLot = getLatestLot(cachedProduct);
-  const latestCost = getLatestCost(cachedProduct);
-  // Sort lots by newest date first
-  const lots = [...(cachedProduct.purchaseLots || [])].sort(
-    (a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0),
-  );
-
-  const footer = (
-    <Button variant="sheetClose" size="sm" onClick={onClose}>
-      Đóng
-    </Button>
-  );
+  // Use normalized lots for display
+  const lots = product.purchaseLots || [];
+  const totalStock = getTotalStock(product);
 
   return (
-    <SheetModal
-      open={Boolean(product)} // open phụ thuộc vào prop product hiện tại
-      onClose={onClose}
-      title={`${cachedProduct.name}`}
-      showCloseIcon={false}
-      footer={footer}
-    >
-      <div className="space-y-4">
-        <div className="flex flex-col border-b border-rose-100 pb-4">
-          <div className="text-sm font-semibold text-amber-600">
-            Giá bán: {formatNumber(cachedProduct.price)}đ
+    <AnimatePresence>
+      <div className="fixed inset-0 z-40 flex items-end sm:items-center justify-center pointer-events-none">
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          onClick={onClose}
+          className="absolute inset-0 bg-black/40 backdrop-blur-sm pointer-events-auto"
+        />
+        <motion.div
+          initial={{ y: "100%" }}
+          animate={{ y: 0 }}
+          exit={{ y: "100%" }}
+          transition={{ type: "spring", damping: 25, stiffness: 300 }}
+          className="relative w-full max-w-lg bg-white rounded-t-3xl sm:rounded-2xl shadow-xl max-h-[90vh] overflow-hidden pointer-events-auto flex flex-col"
+        >
+          {/* Header Image & Close */}
+          <div className="relative h-48 bg-gray-100 shrink-0">
+            {product.image ? (
+              <img
+                src={product.image}
+                alt={product.name}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center text-gray-300">
+                <span className="text-4xl">📦</span>
+              </div>
+            )}
+            <button
+              onClick={onClose}
+              className="absolute top-4 right-4 p-2 bg-black/20 hover:bg-black/40 backdrop-blur-md rounded-full text-white transition-colors"
+            >
+              <X size={20} />
+            </button>
           </div>
-          <div className="text-xs text-gray-600 mt-1">
-            Giá nhập mới nhất: {formatNumber(latestCost)}đ
-            {latestLot
-              ? ` • Kho: ${getWarehouseLabel(latestLot.warehouse)}`
-              : ""}
-          </div>
-        </div>
 
-        <div className="space-y-3">
-          {lots.length === 0 ? (
-            <div className="text-xs text-gray-500 text-center">
-              Chưa có lịch sử nhập kho.
+          {/* Content */}
+          <div className="flex-1 overflow-y-auto p-6">
+            <div className="mb-6">
+              <h2 className="text-2xl font-bold text-gray-800 mb-1">
+                {product.name}
+              </h2>
+              <div className="flex items-center gap-2 text-gray-500">
+                <span className="text-sm">{product.category}</span>
+                {product.barcode && (
+                  <>
+                    <span>•</span>
+                    <span className="text-sm font-mono bg-gray-100 px-1.5 py-0.5 rounded">
+                      {product.barcode}
+                    </span>
+                  </>
+                )}
+              </div>
             </div>
-          ) : (
-            lots.map((lot) => {
-              const salePrice = Number(cachedProduct.price) || 0;
-              const shippingPerUnit =
-                Number(lot.shipping?.perUnitVnd ?? lot.shipping?.feeVnd) || 0;
-              const unitCost = (Number(lot.cost) || 0) + shippingPerUnit;
-              const profitAtCurrentPrice = salePrice - unitCost;
-              return (
-                <button
-                  key={lot.id}
-                  type="button"
-                  onClick={() => onEditLot?.(lot)}
-                  className="w-full text-left border border-rose-100 rounded-xl p-3 space-y-1 active:border-rose-200 bg-rose-50 transition"
-                >
-                  <div className="flex items-center justify-between text-sm text-rose-700">
-                    <span className="font-semibold">
-                      {formatNumber(lot.cost)}đ
-                    </span>
-                    <span className="text-xs text-rose-600">
-                      {getWarehouseLabel(lot.warehouse)}
-                    </span>
+
+            <div className="grid grid-cols-2 gap-4 mb-8">
+              <div className="p-4 bg-rose-50 rounded-2xl border border-rose-100">
+                <div className="text-sm text-rose-600 mb-1">Giá bán</div>
+                <div className="text-xl font-bold text-rose-700">
+                  {formatNumber(product.price)}đ
+                </div>
+              </div>
+              <div className="p-4 bg-emerald-50 rounded-2xl border border-emerald-100">
+                <div className="text-sm text-emerald-600 mb-1">Tổng tồn kho</div>
+                <div className="text-xl font-bold text-emerald-700">
+                  {formatNumber(totalStock)}
+                </div>
+              </div>
+            </div>
+
+            {/* History Button */}
+            <button
+              onClick={onShowHistory}
+              className="w-full mb-6 py-3 px-4 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center gap-2 font-medium hover:bg-indigo-100 transition-colors"
+            >
+              <History size={18} />
+              Xem lịch sử nhập hàng
+            </button>
+
+            {/* Lots List (Current Inventory) */}
+            <div>
+              <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
+                <Clock size={18} className="text-gray-400" />
+                Lô hàng hiện có
+              </h3>
+              <div className="space-y-3">
+                {lots.length === 0 ? (
+                  <div className="text-center py-4 text-gray-400 bg-gray-50 rounded-xl border border-dashed border-gray-200">
+                    Chưa có lô hàng nào
                   </div>
-                  <div className="text-xs text-amber-600">
-                    Số lượng:{" "}
-                    <span className="font-semibold">{lot.quantity}</span>
-                  </div>
-                  <div className="text-xs text-emerald-700">
-                    Lợi nhuận theo giá hiện tại:{" "}
-                    <span className="font-semibold">
-                      {formatNumber(profitAtCurrentPrice)}đ
-                    </span>
-                  </div>
-                  {lot.shipping && (
-                    <div className="text-xs text-gray-600">
-                      Phí gửi: {formatNumber(lot.shipping.feeVnd || 0)}đ
-                      {lot.shipping.method === "jp"
-                        ? ` (${formatNumber(lot.shipping.feeJpy || 0)}¥)`
-                        : ""}
+                ) : (
+                  lots.map((lot, index) => (
+                    <div
+                      key={lot.id || index}
+                      className="p-3 rounded-xl border border-gray-100 bg-white shadow-sm flex items-center justify-between"
+                    >
+                      <div>
+                        <div className="text-sm font-medium text-gray-700">
+                          {formatDate(lot.createdAt)}
+                        </div>
+                        <div className="text-xs text-gray-500 mt-0.5">
+                          {lot.warehouse === "vinhPhuc"
+                            ? "Kho Vĩnh Phúc"
+                            : "Kho Lâm Đồng"}
+                        </div>
+                        {Number(lot.cost) > 0 && (
+                          <div className="text-xs text-gray-400 mt-1">
+                            Vốn: {formatNumber(lot.cost)}đ
+                          </div>
+                        )}
+                      </div>
+                      <div className="text-right">
+                        <div className="text-lg font-bold text-emerald-600">
+                          {lot.quantity}
+                        </div>
+                        <button
+                          onClick={() => onEditLot(lot)}
+                          className="mt-1 text-xs px-2 py-1 bg-gray-100 text-gray-600 rounded hover:bg-gray-200 transition-colors"
+                        >
+                          Sửa nhanh
+                        </button>
+                      </div>
                     </div>
-                  )}
-                  <div className="text-[10px] text-gray-400">
-                    {lot.createdAt
-                      ? new Date(lot.createdAt).toLocaleString()
-                      : ""}
-                  </div>
-                </button>
-              );
-            })
-          )}
-        </div>
+                  ))
+                )}
+              </div>
+            </div>
+          </div>
+        </motion.div>
       </div>
-    </SheetModal>
+    </AnimatePresence>
   );
 };
 

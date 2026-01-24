@@ -1,9 +1,12 @@
 export const WAREHOUSES = [
-  { key: "daLat", label: "Lâm Đồng" },
+  { key: "lamDong", label: "Lâm Đồng" },
   { key: "vinhPhuc", label: "Vĩnh Phúc" },
 ];
 
 export const getWarehouseLabel = (key) => {
+  // Support legacy key 'daLat' by mapping it to 'lamDong' label logic
+  if (key === "daLat") key = "lamDong";
+
   const warehouse = WAREHOUSES.find((item) => item.key === key);
   return warehouse ? warehouse.label : key;
 };
@@ -11,19 +14,20 @@ export const getWarehouseLabel = (key) => {
 export const normalizeWarehouseStock = (product = {}) => {
   if (product.stockByWarehouse) {
     return {
-      daLat: Number(product.stockByWarehouse.daLat) || 0,
+      // Prioritize new key 'lamDong', fallback to legacy 'daLat'
+      lamDong: Number(product.stockByWarehouse.lamDong || product.stockByWarehouse.daLat) || 0,
       vinhPhuc: Number(product.stockByWarehouse.vinhPhuc) || 0,
     };
   }
 
   const fallbackStock = Number(product.stock) || 0;
   return {
-    daLat: fallbackStock,
+    lamDong: fallbackStock,
     vinhPhuc: 0,
   };
 };
 
 export const getTotalStock = (product = {}) => {
-  const { daLat, vinhPhuc } = normalizeWarehouseStock(product);
-  return daLat + vinhPhuc;
+  const { lamDong, vinhPhuc } = normalizeWarehouseStock(product);
+  return lamDong + vinhPhuc;
 };

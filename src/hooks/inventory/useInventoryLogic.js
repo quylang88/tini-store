@@ -11,6 +11,8 @@ import {
   getInventoryValidationError,
 } from "../../utils/inventory/inventorySaveUtils";
 import useHighlightFields from "../ui/useHighlightFields";
+import { logImportTransaction, updateImportHistoryRecord } from "../../utils/inventory/historyUtils";
+import { normalizeWarehouseStock } from "../../utils/inventory/warehouseUtils";
 
 const useInventoryLogic = ({ products, setProducts, settings }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -24,6 +26,10 @@ const useInventoryLogic = ({ products, setProducts, settings }) => {
   const [errorModal, setErrorModal] = useState(null);
   // Lưu lại snapshot form khi mở modal để so sánh thay đổi khi bấm huỷ.
   const initialFormDataRef = useRef(null);
+
+  // History Modals State
+  const [historyProduct, setHistoryProduct] = useState(null);
+  const [editingHistoryRecord, setEditingHistoryRecord] = useState(null);
 
   // State quản lý danh mục đang xem (cho phép chọn nhiều danh mục).
   const [activeCategory, setActiveCategory] = useState("Tất cả");
@@ -94,6 +100,33 @@ const useInventoryLogic = ({ products, setProducts, settings }) => {
       settings,
     });
 
+    // History Logging Logic
+    const quantityValue = Number(formData.quantity) || 0;
+    if (quantityValue > 0) {
+      if (editingLotId) {
+        // Edit existing lot
+        const updatedLot = nextProduct.purchaseLots.find(l => l.id === editingLotId);
+        if (updatedLot) {
+          updateImportHistoryRecord({
+            id: updatedLot.id,
+            productId: nextProduct.id,
+            productName: nextProduct.name, // In case name changed
+            cost: Number(updatedLot.cost) || 0,
+            priceAtPurchase: Number(updatedLot.priceAtPurchase) || 0,
+            remainingQuantity: Number(updatedLot.quantity) || 0,
+            warehouse: updatedLot.warehouse,
+            shipping: updatedLot.shipping
+          });
+        }
+      } else {
+        // New Lot
+        const newLot = nextProduct.purchaseLots[nextProduct.purchaseLots.length - 1];
+        if (newLot) {
+           logImportTransaction(nextProduct, newLot);
+        }
+      }
+    }
+
     if (editingProduct) {
       setProducts(
         products.map((p) => (p.id === editingProduct.id ? nextProduct : p)),
@@ -103,6 +136,51 @@ const useInventoryLogic = ({ products, setProducts, settings }) => {
     }
     closeModal();
     return true;
+  };
+
+  // History Handling
+  const handleSaveHistory = (updatedRecord) => {
+      // 1. Update History in LocalStorage
+      updateImportHistoryRecord(updatedRecord);
+
+      // 2. Sync Product State (Remaining Quantity)
+      const targetProduct = products.find(p => p.id === updatedRecord.productId);
+      if (targetProduct) {
+          const nextLots = (targetProduct.purchaseLots || []).map(lot => {
+              if (lot.id === updatedRecord.id) {
+                  return {
+                      ...lot,
+                      quantity: Number(updatedRecord.remainingQuantity) || 0,
+                      cost: Number(updatedRecord.cost) || 0,
+                      // Sync other fields if editable in modal
+                  };
+              }
+              return lot;
+          });
+
+          // Re-calculate warehouse totals
+          const nextStockByWarehouse = nextLots.reduce((acc, lot) => {
+              const w = lot.warehouse === 'daLat' ? 'lamDong' : (lot.warehouse || 'lamDong');
+              acc[w] = (acc[w] || 0) + (Number(lot.quantity) || 0);
+              return acc;
+          }, { lamDong: 0, vinhPhuc: 0 });
+
+          const nextProduct = {
+              ...targetProduct,
+              purchaseLots: nextLots,
+              stockByWarehouse: nextStockByWarehouse,
+              stock: nextStockByWarehouse.lamDong + nextStockByWarehouse.vinhPhuc
+          };
+
+          setProducts(prev => prev.map(p => p.id === targetProduct.id ? nextProduct : p));
+
+          // Update local historyProduct state to reflect changes in modal immediately if needed
+          if (historyProduct && historyProduct.id === targetProduct.id) {
+              setHistoryProduct(nextProduct);
+          }
+      }
+
+      setEditingHistoryRecord(null);
   };
 
   const buildComparableFormData = (data) => {
@@ -256,6 +334,12 @@ const useInventoryLogic = ({ products, setProducts, settings }) => {
     sortConfig,
     setSortConfig,
     highlightOps,
+    // History Exports
+    historyProduct,
+    setHistoryProduct,
+    editingHistoryRecord,
+    setEditingHistoryRecord,
+    handleSaveHistory
   };
 };
 

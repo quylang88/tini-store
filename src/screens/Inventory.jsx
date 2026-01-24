@@ -8,6 +8,8 @@ import ProductList from "../components/inventory/ProductList";
 import ProductDetailModal from "../components/inventory/ProductDetailModal";
 import ProductModal from "../components/inventory/ProductModal";
 import ProductBasicInfoModal from "../components/inventory/ProductBasicInfoModal";
+import ImportHistoryModal from "../components/inventory/ImportHistoryModal";
+import EditImportModal from "../components/inventory/EditImportModal";
 import ConfirmModalHost from "../components/modals/ConfirmModalHost";
 import ErrorModal from "../components/modals/ErrorModal";
 import FloatingActionButton from "../components/button/FloatingActionButton";
@@ -69,6 +71,12 @@ const Inventory = ({
     sortConfig,
     setSortConfig,
     highlightOps,
+    // History
+    historyProduct,
+    setHistoryProduct,
+    editingHistoryRecord,
+    setEditingHistoryRecord,
+    handleSaveHistory
   } = useInventoryLogic({ products, setProducts, orders, setOrders, settings });
 
   // Đã loại bỏ useFilterTransition để tránh remount list gây khựng.
@@ -209,6 +217,22 @@ const Inventory = ({
         onEditLot={(lot) => {
           openEditLot(detailProduct, lot);
         }}
+        onShowHistory={() => setHistoryProduct(detailProduct)}
+      />
+
+      {/* History Modals */}
+      <ImportHistoryModal
+        isOpen={Boolean(historyProduct)}
+        onClose={() => setHistoryProduct(null)}
+        product={historyProduct}
+        onEditImport={setEditingHistoryRecord}
+      />
+
+      <EditImportModal
+        isOpen={Boolean(editingHistoryRecord)}
+        onClose={() => setEditingHistoryRecord(null)}
+        record={editingHistoryRecord}
+        onSave={handleSaveHistory}
       />
 
       {/* Modal xác nhận xoá để thay thế popup mặc định */}

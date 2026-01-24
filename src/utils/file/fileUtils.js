@@ -1,4 +1,5 @@
 import { formatNumber } from "../formatters/formatUtils";
+import { getImportHistory } from "../inventory/historyUtils";
 
 /**
  * Handles file export by prioritizing Web Share API (for Mobile/PWA)
@@ -56,12 +57,14 @@ export const shareOrDownloadFile = async (content, fileName, mimeType) => {
 export const exportDataToJSON = async (products, orders, settings) => {
   // Lấy dữ liệu tóm tắt chat từ localStorage (nếu có)
   const aiChatSummary = localStorage.getItem("ai_chat_summary") || "";
+  const importHistory = getImportHistory();
 
   const data = JSON.stringify({
     products,
     orders,
     settings,
     aiChatSummary,
+    importHistory,
   });
 
   const fileName = `tiny_shop_${new Date().toISOString().slice(0, 10)}.json`;
