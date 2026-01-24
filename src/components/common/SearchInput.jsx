@@ -1,7 +1,8 @@
 import React from "react";
-import { Search, X } from "lucide-react";
+import { Search } from "lucide-react";
+import EnhancedInput from "./EnhancedInput";
 
-// Component dùng chung cho ô tìm kiếm để tránh lặp logic hiển thị icon + nút xoá.
+// Component dùng chung cho ô tìm kiếm
 const SearchInput = ({
   value,
   onChange,
@@ -10,31 +11,23 @@ const SearchInput = ({
   className = "",
   inputClassName = "",
 }) => {
-  const hasValue = Boolean(value);
-
   return (
-    <div className={`relative ${className}`}>
-      {/* Icon kính lúp để nhận biết đây là ô tìm kiếm */}
-      <Search className="absolute left-3 top-2.5 text-amber-400" size={16} />
-      <input
-        type="text"
-        placeholder={placeholder}
-        className={inputClassName}
-        value={value}
-        onChange={onChange}
-      />
-      {/* Nút xoá nhanh chỉ hiển thị khi đã nhập nội dung */}
-      {hasValue && (
-        <button
-          type="button"
-          onClick={onClear}
-          className="absolute right-3 top-2.5 text-gray-400 active:text-gray-600"
-          aria-label="Xoá nội dung tìm kiếm"
-        >
-          <X size={14} />
-        </button>
-      )}
-    </div>
+    <EnhancedInput
+      value={value}
+      onChange={onChange}
+      onClear={onClear}
+      placeholder={placeholder}
+      className={className}
+      inputClassName={inputClassName}
+      type="search"
+      inputMode="search"
+      enterKeyHint="search"
+      autoComplete="off"
+      autoCorrect="off"
+      autoCapitalize="none"
+      spellCheck="false"
+      startIcon={<Search className="text-amber-400" size={16} />}
+    />
   );
 };
 
