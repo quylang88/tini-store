@@ -112,6 +112,7 @@ const useInventoryLogic = ({ products, setProducts, settings }) => {
             productId: nextProduct.id,
             productName: nextProduct.name, // In case name changed
             cost: Number(updatedLot.cost) || 0,
+            costJpy: updatedLot.costJpy ? Number(updatedLot.costJpy) : undefined, // NEW
             priceAtPurchase: Number(updatedLot.priceAtPurchase) || 0,
             remainingQuantity: Number(updatedLot.quantity) || 0,
             warehouse: updatedLot.warehouse,
@@ -143,7 +144,7 @@ const useInventoryLogic = ({ products, setProducts, settings }) => {
       // 1. Update History in LocalStorage
       updateImportHistoryRecord(updatedRecord);
 
-      // 2. Sync Product State (Remaining Quantity)
+      // 2. Sync Product State (Remaining Quantity & Metadata)
       const targetProduct = products.find(p => p.id === updatedRecord.productId);
       if (targetProduct) {
           const nextLots = (targetProduct.purchaseLots || []).map(lot => {
@@ -152,7 +153,10 @@ const useInventoryLogic = ({ products, setProducts, settings }) => {
                       ...lot,
                       quantity: Number(updatedRecord.remainingQuantity) || 0,
                       cost: Number(updatedRecord.cost) || 0,
-                      // Sync other fields if editable in modal
+                      warehouse: updatedRecord.warehouse, // Sync Warehouse
+                      shipping: updatedRecord.shipping,   // Sync Shipping
+                      // Sync CostJpy if exists in record
+                      costJpy: updatedRecord.costJpy ? Number(updatedRecord.costJpy) : lot.costJpy,
                   };
               }
               return lot;

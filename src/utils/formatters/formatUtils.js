@@ -48,3 +48,14 @@ export const formatCurrency = (value) => {
   if (!Number.isFinite(number)) return "0₫";
   return number.toLocaleString("vi-VN") + "₫";
 };
+
+export const formatDate = (isoString) => {
+  if (!isoString) return "";
+  const date = new Date(isoString);
+  if (isNaN(date.getTime())) return "";
+  return date.toLocaleDateString("vi-VN", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  });
+};

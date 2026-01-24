@@ -21,6 +21,11 @@ const saveImportHistory = (history) => {
   }
 };
 
+export const restoreImportHistory = (history) => {
+    if (!Array.isArray(history)) return;
+    saveImportHistory(history);
+};
+
 /**
  * Logs a new import transaction.
  * @param {Object} product - The product object.

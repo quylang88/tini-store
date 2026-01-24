@@ -5,6 +5,7 @@ import {
 } from "../../utils/formatters/formatUtils";
 import { normalizePurchaseLots } from "../../utils/inventory/purchaseUtils";
 import { exportDataToJSON, parseBackupFile } from "../../utils/file/fileUtils";
+import { restoreImportHistory } from "../../utils/inventory/historyUtils";
 import { requestNotificationPermission } from "../../utils/common/notificationUtils";
 
 const useSettingsLogic = ({
@@ -183,6 +184,11 @@ const useSettingsLogic = ({
           setOrders(data.orders);
           if (data.settings) {
             setSettings(data.settings);
+          }
+
+          // Restore Import History
+          if (data.importHistory) {
+              restoreImportHistory(data.importHistory);
           }
 
           // Khôi phục bộ nhớ AI (nếu có trong file backup)
