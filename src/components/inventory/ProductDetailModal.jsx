@@ -17,7 +17,6 @@ const ProductDetailModal = ({ product, onClose, onEditLot }) => {
   const { history } = useImportHistory();
 
   // Lọc lịch sử nhập hàng của sản phẩm này từ shop_import_history (Immutable Log)
-  // để đảm bảo hiển thị đúng "lịch sử vĩnh viễn" thay vì chỉ hiển thị các lô đang còn tồn.
   const productHistory = useMemo(() => {
     if (!cachedProduct) return [];
     return history
@@ -25,7 +24,6 @@ const ProductDetailModal = ({ product, onClose, onEditLot }) => {
       .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
   }, [history, cachedProduct]);
 
-  // Nếu chưa từng có sản phẩm nào được chọn thì không render gì cả.
   if (!cachedProduct) return null;
 
   const latestCost = getLatestCost(cachedProduct);
@@ -39,7 +37,7 @@ const ProductDetailModal = ({ product, onClose, onEditLot }) => {
 
   return (
     <SheetModal
-      open={Boolean(product)} // open phụ thuộc vào prop product hiện tại
+      open={Boolean(product)}
       onClose={onClose}
       title={`${cachedProduct.name}`}
       showCloseIcon={false}
@@ -66,21 +64,26 @@ const ProductDetailModal = ({ product, onClose, onEditLot }) => {
             </div>
           ) : (
             productHistory.map((record) => {
-              // Tìm lot tương ứng trong activeLots để xem có cho sửa không
-              // Logic match: record.lotId === lot.id
+              // Tìm lot tương ứng trong activeLots
               const matchingActiveLot = activeLots.find(
                 (lot) => lot.id === record.lotId,
               );
-              const isEditable = Boolean(matchingActiveLot);
+
+              const currentQty = matchingActiveLot ? (Number(matchingActiveLot.quantity) || 0) : 0;
+              const initialQty = Number(record.quantity) || 0;
+
+              // Logic trạng thái
+              const isSoldOut = currentQty === 0;
+              // Sắp hết nếu còn hàng nhưng < 15% tổng nhập
+              const isLowStock = !isSoldOut && (currentQty < initialQty * 0.15);
+              // Chỉ cho sửa nếu chưa hết hàng
+              const isEditable = !isSoldOut && Boolean(matchingActiveLot);
 
               // Tính toán hiển thị
               const costDisplay =
                 record.costVND > 0 ? record.costVND : record.costJPY;
               const currencyLabel = record.costVND > 0 ? "đ" : "¥";
               const warehouseLabel = getWarehouseLabel(record.warehouse);
-
-              // Nếu record là bản edit (isEdit = true), ta có thể hiển thị icon hoặc note
-              // Tuy nhiên user muốn xem lịch sử, nên cứ render thẳng.
 
               const Content = (
                 <>
@@ -93,32 +96,44 @@ const ProductDetailModal = ({ product, onClose, onEditLot }) => {
                       {warehouseLabel}
                     </span>
                   </div>
-                  <div className="text-xs text-amber-600">
-                    Số lượng nhập:{" "}
-                    <span className="font-semibold">{record.quantity}</span>
+
+                  {/* Grid hiển thị Số lượng nhập vs Tồn kho */}
+                  <div className="grid grid-cols-2 gap-4 mt-1">
+                    <div className="text-xs text-amber-600">
+                      Nhập: <span className="font-semibold">{initialQty}</span>
+                    </div>
+                    <div className="text-xs text-emerald-600">
+                      Tồn: <span className="font-semibold">{currentQty}</span>
+                    </div>
                   </div>
+
                   {record.shippingFeeVND > 0 && (
-                    <div className="text-xs text-gray-600">
+                    <div className="text-xs text-gray-600 mt-1">
                       Phí gửi: {formatNumber(record.shippingFeeVND)}đ
                       {record.shippingFeeJPY > 0
                         ? ` (${formatNumber(record.shippingFeeJPY)}¥)`
                         : ""}
                     </div>
                   )}
-                  <div className="flex justify-between items-end mt-1">
+
+                  <div className="flex justify-between items-center mt-2">
                     <div className="text-[10px] text-gray-400">
                       {new Date(record.timestamp).toLocaleString("vi-VN")}
-                      {record.isEdit && <span className="ml-1 italic">(Đã sửa)</span>}
                     </div>
-                    {isEditable ? (
-                      <span className="text-[10px] font-medium text-blue-600 bg-blue-50 px-2 py-0.5 rounded">
-                        Sửa
-                      </span>
-                    ) : (
-                      <span className="text-[10px] text-gray-400 italic">
-                        Đã hết/Gộp
-                      </span>
-                    )}
+
+                    <div className="flex gap-2">
+                      {isSoldOut && (
+                        <span className="text-[10px] font-bold text-gray-500 bg-gray-100 px-2 py-0.5 rounded border border-gray-200">
+                          Đã hết
+                        </span>
+                      )}
+
+                      {isLowStock && (
+                        <span className="text-[10px] font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded border border-amber-100">
+                          Sắp hết
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </>
               );
@@ -136,10 +151,11 @@ const ProductDetailModal = ({ product, onClose, onEditLot }) => {
                 );
               }
 
+              // Disabled State (Sold Out)
               return (
                 <div
                   key={record.id}
-                  className="w-full text-left border border-gray-100 rounded-xl p-3 space-y-1 bg-gray-50 opacity-80"
+                  className="w-full text-left border border-gray-100 rounded-xl p-3 space-y-1 bg-gray-50 opacity-70 select-none"
                 >
                   {Content}
                 </div>
