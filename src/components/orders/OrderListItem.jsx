@@ -20,7 +20,7 @@ const OrderListItem = memo(
       : `#${order.id.slice(-4)}`;
     // Hiển thị tên đơn theo tên khách + địa chỉ rút gọn hoặc "Tại kho".
     const orderName = getOrderDisplayName(order);
-    const warehouseLabel = getWarehouseLabel(order.warehouse || "daLat");
+    const warehouseLabel = getWarehouseLabel(order.warehouse || "lamDong");
     // Với đơn gửi khách, cần hiển thị kho xuất ở hàng trạng thái bên phải.
     const shouldShowWarehouseOnStatus = order.orderType !== "warehouse";
     // Lợi nhuận = (giá bán - giá vốn) - phí gửi để xem nhanh hiệu quả đơn hàng.

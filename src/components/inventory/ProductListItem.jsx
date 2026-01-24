@@ -89,7 +89,7 @@ const ProductListItem = memo(
               <div className="text-amber-600">
                 {activeWarehouse === "vinhPhuc"
                   ? `Vĩnh Phúc: ${stockByWarehouse.vinhPhuc} sp`
-                  : `Lâm Đồng: ${stockByWarehouse.daLat} sp`}
+                  : `Lâm Đồng: ${stockByWarehouse.lamDong} sp`}
               </div>
 
               <div className="text-amber-500">

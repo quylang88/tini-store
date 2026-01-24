@@ -103,27 +103,29 @@ const useOrderSubmitLogic = ({
     if (payload.orderType === "warehouse" && !payload.customerName) {
       if (payload.warehouse === "vinhPhuc") {
         payload.customerName = "Mẹ Hương";
-      } else if (payload.warehouse === "daLat") {
+      } else if (payload.warehouse === "lamDong") {
         payload.customerName = "Mẹ Nguyệt";
       }
     }
 
-    // Giờ chỉ sync stock, không sync price.
-    setProducts((prevProducts) => {
-      // Lấy danh sách sản phẩm cũ nếu đang sửa đơn để sync stock
-      const previousItems = isUpdate ? orderBeingEdited.items : [];
-      const previousWarehouse = isUpdate
-        ? orderBeingEdited.warehouse || DEFAULT_WAREHOUSE
-        : null;
+    // Calculate new products state synchronously to ensure order items are updated with allocations
+    // BEFORE we save the order.
+    // Lấy danh sách sản phẩm cũ nếu đang sửa đơn để sync stock
+    const previousItems = isUpdate ? orderBeingEdited.items : [];
+    const previousWarehouse = isUpdate
+      ? orderBeingEdited.warehouse || DEFAULT_WAREHOUSE
+      : null;
 
-      return syncProductsStock(
-        prevProducts,
-        items,
-        previousItems,
-        warehouse,
-        previousWarehouse,
-      );
-    });
+    // syncProductsStock will mutate 'items' to add lotAllocations
+    const nextProducts = syncProductsStock(
+      products, // Using prop products (assumed fresh enough)
+      items,
+      previousItems,
+      warehouse,
+      previousWarehouse,
+    );
+
+    setProducts(nextProducts);
 
     if (isUpdate) {
       // Khi update, giữ status cũ. Nếu muốn reset status theo loại đơn thì logic phức tạp hơn

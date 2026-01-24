@@ -325,7 +325,7 @@ const ProductModal = ({
             <div className="flex gap-2">
               {[
                 { key: "vinhPhuc", label: "Vĩnh Phúc" },
-                { key: "daLat", label: "Lâm Đồng" },
+                { key: "lamDong", label: "Lâm Đồng" },
               ].map((warehouse) => (
                 <button
                   key={warehouse.key}

@@ -12,6 +12,7 @@ export const normalizePurchaseLots = (product = {}) => {
       const feeVnd = Number(lot.shipping.feeVnd) || 0;
       return {
         ...lot,
+        originalQuantity: lot.originalQuantity || lot.quantity,
         shipping: {
           ...lot.shipping,
           perUnitVnd: feeVnd,
@@ -20,17 +21,18 @@ export const normalizePurchaseLots = (product = {}) => {
     });
     return { ...product, purchaseLots: normalizedLots };
   }
-  const { daLat, vinhPhuc } = normalizeWarehouseStock(product);
+  const { lamDong, vinhPhuc } = normalizeWarehouseStock(product);
   const baseCost = Number(product.cost) || 0;
   const createdAt = product.createdAt || new Date().toISOString();
   const lots = [];
 
-  if (daLat > 0) {
+  if (lamDong > 0) {
     lots.push({
       id: generateLotId(),
       cost: baseCost,
-      quantity: daLat,
-      warehouse: "daLat",
+      quantity: lamDong,
+      originalQuantity: lamDong,
+      warehouse: "lamDong",
       createdAt,
       shipping: null,
     });
@@ -41,6 +43,7 @@ export const normalizePurchaseLots = (product = {}) => {
       id: generateLotId(),
       cost: baseCost,
       quantity: vinhPhuc,
+      originalQuantity: vinhPhuc,
       warehouse: "vinhPhuc",
       createdAt,
       shipping: null,
@@ -86,7 +89,8 @@ export const addPurchaseLot = (product, lot) => {
     id: lot.id || generateLotId(),
     cost: Number(lot.cost) || 0,
     quantity,
-    warehouse: lot.warehouse || "daLat",
+    originalQuantity: quantity,
+    warehouse: lot.warehouse || "lamDong",
     createdAt: lot.createdAt || new Date().toISOString(),
     priceAtPurchase: Number(lot.priceAtPurchase) || 0,
     shipping: lot.shipping
@@ -107,10 +111,11 @@ export const addPurchaseLot = (product, lot) => {
 
 export const consumePurchaseLots = (product, warehouseKey, quantity) => {
   let remaining = Math.max(0, Number(quantity) || 0);
-  if (remaining === 0) return product;
+  if (remaining === 0) return { product, allocations: [] };
 
   // Clone lots để tránh mutation trực tiếp
   const lots = (product.purchaseLots || []).map((lot) => ({ ...lot }));
+  const allocations = [];
 
   // Lọc các lot thuộc kho cần xuất
   const availableLots = lots
@@ -141,6 +146,32 @@ export const consumePurchaseLots = (product, warehouseKey, quantity) => {
     // Cập nhật lại số lượng trong mảng gốc
     lots[lot.originalIndex].quantity = available - used;
     remaining -= used;
+    allocations.push({ lotId: lot.id, quantity: used });
+  }
+
+  return {
+    product: {
+      ...product,
+      purchaseLots: lots,
+    },
+    allocations,
+  };
+};
+
+export const restorePurchaseLots = (product, allocations) => {
+  if (!allocations || allocations.length === 0) return product;
+
+  // Clone lots
+  const lots = (product.purchaseLots || []).map((lot) => ({ ...lot }));
+
+  for (const alloc of allocations) {
+    const lotIndex = lots.findIndex((l) => l.id === alloc.lotId);
+    if (lotIndex !== -1) {
+      lots[lotIndex].quantity =
+        (Number(lots[lotIndex].quantity) || 0) + (Number(alloc.quantity) || 0);
+    }
+    // Nếu không tìm thấy lot, ta có thể bỏ qua hoặc log error.
+    // Theo yêu cầu "không tạo lot mới", ta chỉ restore vào lot cũ.
   }
 
   return {
@@ -157,6 +188,7 @@ export const restockPurchaseLots = (product, warehouseKey, quantity, cost) => {
     id: generateLotId(),
     cost: Number(cost) || Number(product.cost) || 0,
     quantity: restockQty,
+    originalQuantity: restockQty,
     warehouse: warehouseKey,
     createdAt: new Date().toISOString(),
     shipping: null,

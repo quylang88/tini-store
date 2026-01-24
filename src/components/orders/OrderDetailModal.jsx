@@ -21,7 +21,7 @@ const OrderDetailModal = ({ order, products, onClose, getOrderStatusInfo }) => {
     : `#${cachedOrder.id.slice(-4)}`;
   const orderName = getOrderDisplayName(cachedOrder);
   const statusInfo = getOrderStatusInfo?.(cachedOrder);
-  const warehouseLabel = getWarehouseLabel(cachedOrder.warehouse || "daLat");
+  const warehouseLabel = getWarehouseLabel(cachedOrder.warehouse || "lamDong");
 
   // Tính lợi nhuận ước tính (giống logic ở OrderListView)
   const estimatedProfit =
