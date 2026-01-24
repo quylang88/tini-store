@@ -302,7 +302,7 @@ const OrderCreateProductList = ({
       </AnimatePresence>
 
       {filteredProducts.length === 0 && (
-        <div className="flex flex-col items-center justify-center mt-24 text-gray-500">
+        <div className="flex flex-col items-center justify-center pt-24 text-gray-500 w-full">
           <ShoppingCart size={48} strokeWidth={1.5} className="mb-3 opacity-20" />
           <p className="text-sm font-medium">Không tìm thấy sản phẩm</p>
         </div>
