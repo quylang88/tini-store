@@ -1,5 +1,6 @@
 import React from "react";
 import { AnimatePresence } from "framer-motion";
+import { Package } from "lucide-react";
 import ProductListItem from "./ProductListItem";
 
 const ProductList = ({
@@ -36,8 +37,9 @@ const ProductList = ({
         Không cần props animation hay key.
       */}
       {products.length === 0 && (
-        <div className="text-center text-gray-400 mt-10 text-sm">
-          Không có sản phẩm nào
+        <div className="flex flex-col items-center justify-center mt-20 text-gray-500">
+          <Package size={48} strokeWidth={1.5} className="mb-3 opacity-20" />
+          <p className="text-sm font-medium">Không có sản phẩm nào</p>
         </div>
       )}
     </div>

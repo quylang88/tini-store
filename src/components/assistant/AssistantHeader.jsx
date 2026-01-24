@@ -46,12 +46,8 @@ const AssistantHeader = ({
               {modelMode === "standard" && (
                 <AssistantIcon isActive={false} size={14} />
               )}
-              {modelMode === "fast" && (
-                <FlashIcon isActive={false} size={14} />
-              )}
-              {modelMode === "deep" && (
-                <DeepIcon isActive={false} size={14} />
-              )}
+              {modelMode === "fast" && <FlashIcon isActive={false} size={14} />}
+              {modelMode === "deep" && <DeepIcon isActive={false} size={14} />}
               Đang nhớ
             </span>
           )}
@@ -64,6 +60,7 @@ const AssistantHeader = ({
           onClick={handleClearScreen}
           className={`p-2.5 mr-1 rounded-full transition-all shadow-sm active:scale-90 ring-1 ${activeTheme.themeBtnBg} ${activeTheme.themeBtnRing}`}
           title="Dọn màn hình (AI vẫn nhớ)"
+          aria-label="Dọn màn hình"
         >
           <Eraser size={20} className={activeTheme.themeBtnText} />
         </button>
@@ -72,6 +69,8 @@ const AssistantHeader = ({
       <button
         onClick={handleCycleTheme}
         className={`p-2.5 rounded-full transition-all shadow-sm active:scale-90 ring-1 ${activeTheme.themeBtnBg} ${activeTheme.themeBtnRing}`}
+        aria-label="Đổi màu giao diện"
+        title="Đổi màu giao diện"
       >
         <Palette size={20} className={activeTheme.themeBtnText} />
       </button>
