@@ -356,4 +356,5 @@ const ChatBubble = ({ message, theme, swipeX }) => {
   );
 };
 
-export default ChatBubble;
+// ⚡ Bolt Optimization: Memoize to prevent re-renders of list items when parent updates
+export default React.memo(ChatBubble);
