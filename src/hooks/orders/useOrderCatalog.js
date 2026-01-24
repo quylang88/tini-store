@@ -15,16 +15,24 @@ const useOrderCatalog = ({
   orderBeingEdited,
   sortConfig = { key: "date", direction: "desc" },
 }) => {
-  const productMap = useMemo(
-    () => new Map(products.map((product) => [product.id, product])),
-    [products],
-  );
+  const productMap = useMemo(() => {
+    // Optimization: Use for...of to avoid intermediate array allocation from map()
+    const map = new Map();
+    for (const product of products) {
+      map.set(product.id, product);
+    }
+    return map;
+  }, [products]);
 
   const orderItemsQuantityMap = useMemo(() => {
-    if (!orderBeingEdited?.items) return new Map();
-    return new Map(
-      orderBeingEdited.items.map((item) => [item.productId, item.quantity]),
-    );
+    // Optimization: Use for...of to avoid intermediate array allocation from map()
+    const map = new Map();
+    if (orderBeingEdited?.items) {
+      for (const item of orderBeingEdited.items) {
+        map.set(item.productId, item.quantity);
+      }
+    }
+    return map;
   }, [orderBeingEdited]);
 
   const getAvailableStock = useCallback(
