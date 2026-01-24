@@ -12,7 +12,7 @@ const MetricCard = ({
 
   return (
     <div
-      className={`text-white p-4 rounded-2xl shadow-lg relative overflow-hidden ${
+      className={`text-white p-4 rounded-2xl shadow-lg relative overflow-hidden select-none ${
         isInteractive
           ? "cursor-pointer active:scale-95 transition-transform"
           : ""
