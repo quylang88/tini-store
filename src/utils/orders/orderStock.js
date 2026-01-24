@@ -159,7 +159,7 @@ export const syncProductsStock = (
       if (previousQty) {
         // Returning ALL previousQty
         const previousCost = previousItem?.cost;
-        const { kept, returned } = splitAllocations(
+        const { returned } = splitAllocations(
           previousItem?.lotAllocations,
           previousQty,
         );

@@ -1,4 +1,4 @@
-import { normalizeWarehouseStock } from "./warehouseUtils";
+import { normalizeWarehouseStock } from "./warehouseUtils.js";
 
 const generateLotId = () =>
   `${Date.now()}-${Math.random().toString(16).slice(2, 8)}`;
@@ -88,6 +88,7 @@ export const addPurchaseLot = (product, lot) => {
   const nextLot = {
     id: lot.id || generateLotId(),
     cost: Number(lot.cost) || 0,
+    costJpy: Number(lot.costJpy) || 0,
     quantity,
     originalQuantity: quantity,
     warehouse: lot.warehouse || "lamDong",
