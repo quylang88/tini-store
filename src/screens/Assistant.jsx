@@ -89,6 +89,7 @@ const Assistant = ({
     products,
     setProducts,
     setOrders,
+    settings,
   });
 
   const handleConfirmTool = async (message) => {
