@@ -1,6 +1,7 @@
 import {
   normalizeWarehouseStock,
   getAllWarehouseKeys,
+  resolveWarehouseKey,
 } from "../inventory/warehouseUtils";
 import {
   consumePurchaseLots,
@@ -19,11 +20,12 @@ const updateWarehouseStock = (
   const current = normalizeWarehouseStock(product);
   const nextStock = { ...current };
 
-  // Dynamic update ensuring key existence
-  const currentVal = nextStock[warehouseKey] || 0;
-  nextStock[warehouseKey] = Math.max(0, currentVal + delta);
+  // Cập nhật động đảm bảo key tồn tại
+  const resolvedKey = resolveWarehouseKey(warehouseKey);
+  const currentVal = nextStock[resolvedKey] || 0;
+  nextStock[resolvedKey] = Math.max(0, currentVal + delta);
 
-  // Ensure all configured keys exist (optional but good for consistency)
+  // Đảm bảo tất cả các key cấu hình đều tồn tại (tuỳ chọn nhưng tốt cho tính nhất quán)
   getAllWarehouseKeys().forEach((key) => {
     if (nextStock[key] === undefined) nextStock[key] = 0;
   });
@@ -35,10 +37,10 @@ const updateWarehouseStock = (
   };
 
   if (delta < 0) {
-    // consumePurchaseLots now returns { product, allocations }
+    // consumePurchaseLots hiện trả về { product, allocations }
     return consumePurchaseLots(
       normalizePurchaseLots(nextProduct),
-      warehouseKey,
+      resolvedKey,
       Math.abs(delta),
     );
   }
@@ -55,7 +57,7 @@ const updateWarehouseStock = (
     // Fallback: Nếu không có allocations (Nhập mới / Restock thường)
     const p = restockPurchaseLots(
       normalizePurchaseLots(nextProduct),
-      warehouseKey,
+      resolvedKey,
       delta,
       restockCost,
     );
@@ -69,19 +71,19 @@ const splitAllocations = (sourceAllocations, amountToRemove) => {
   const returned = [];
   let remaining = amountToRemove;
 
-  // Iterate from end (LIFO return)
+  // Duyệt từ cuối (trả về LIFO)
   for (let i = kept.length - 1; i >= 0; i--) {
     if (remaining <= 0) break;
     const alloc = kept[i];
     const available = alloc.quantity;
 
     if (available <= remaining) {
-      // Remove entire allocation
+      // Xoá toàn bộ allocation
       returned.push({ lotId: alloc.lotId, quantity: available });
       remaining -= available;
       kept.splice(i, 1);
     } else {
-      // Partial remove
+      // Xoá một phần
       alloc.quantity -= remaining;
       returned.push({ lotId: alloc.lotId, quantity: remaining });
       remaining = 0;
@@ -99,7 +101,7 @@ export const syncProductsStock = (
 ) => {
   const nextMap = new Map();
   for (const item of orderItems) {
-    // Store the item object to mutate it with allocations
+    // Lưu object item để mutate nó với allocations
     nextMap.set(item.productId, { qty: item.quantity, itemRef: item });
   }
 
@@ -119,20 +121,24 @@ export const syncProductsStock = (
 
     let resultProduct = product;
 
-    if (previousWarehouseKey === nextWarehouseKey) {
+    // Resolve keys để so sánh chính xác
+    const rPrevKey = resolveWarehouseKey(previousWarehouseKey);
+    const rNextKey = resolveWarehouseKey(nextWarehouseKey);
+
+    if (rPrevKey === rNextKey) {
       const delta = previousQty - nextQty;
       if (delta !== 0) {
         const previousCost = previousItem?.cost;
         let allocationsToRestore = [];
 
-        // If returning stock (delta > 0), calculate what to restore
+        // Nếu trả hàng (delta > 0), tính toán phần cần restore
         if (delta > 0) {
           const { kept, returned } = splitAllocations(
             previousItem?.lotAllocations,
             delta,
           );
           allocationsToRestore = returned;
-          // Update the next item (which is staying) with the kept allocations
+          // Cập nhật item tiếp theo (item giữ lại) với các allocation được giữ
           if (nextItemRef) {
             nextItemRef.lotAllocations = kept;
           }
@@ -140,41 +146,41 @@ export const syncProductsStock = (
 
         const { product: p, allocations } = updateWarehouseStock(
           product,
-          nextWarehouseKey,
+          rNextKey,
           delta,
           previousCost,
           allocationsToRestore,
         );
         resultProduct = p;
 
-        // If we consumed stock (delta < 0), add allocations to the new item
-        // We need to merge with existing allocations of previous item (which became the base for next item)
-        // Actually, logic: nextItem starts fresh?
-        // No, nextItem IS previousItem modified.
-        // If delta < 0: we kept ALL previous allocations, and ADDED new ones.
+        // Nếu tiêu thụ hàng (delta < 0), thêm allocations vào item mới
+        // Chúng ta cần gộp với các allocation hiện có của item trước đó (đã trở thành nền tảng cho item tiếp theo)
+        // Thực tế, logic: nextItem bắt đầu mới?
+        // Không, nextItem LÀ previousItem được sửa đổi.
+        // Nếu delta < 0: ta giữ TẤT CẢ allocations trước đó, và THÊM allocations mới.
         if (delta < 0 && nextItemRef) {
           const baseAllocations = previousItem?.lotAllocations || [];
           nextItemRef.lotAllocations = [...baseAllocations, ...allocations];
         }
       } else {
-        // Delta = 0, no stock change, but preserve allocations
+        // Delta = 0, không thay đổi tồn kho, nhưng bảo toàn allocations
         if (nextItemRef) {
           nextItemRef.lotAllocations = previousItem?.lotAllocations || [];
         }
       }
     } else {
-      // Different warehouses: Restock old (delta > 0), Consume new (delta < 0 implied by logic)
+      // Khác kho: Restock kho cũ (delta > 0), Consume kho mới (delta < 0 theo logic)
       if (previousQty) {
-        // Returning ALL previousQty
+        // Trả lại TOÀN BỘ previousQty
         const previousCost = previousItem?.cost;
         const { returned } = splitAllocations(
           previousItem?.lotAllocations,
           previousQty,
         );
-        // kept should be empty ideally, returned = all
+        // kept nên rỗng, returned = all
         const { product: p } = updateWarehouseStock(
           resultProduct,
-          previousWarehouseKey,
+          rPrevKey,
           previousQty,
           previousCost,
           returned,
@@ -182,10 +188,10 @@ export const syncProductsStock = (
         resultProduct = p;
       }
       if (nextQty) {
-        // Consume new quantity from new warehouse
+        // Tiêu thụ số lượng mới từ kho mới
         const { product: p, allocations } = updateWarehouseStock(
           resultProduct,
-          nextWarehouseKey,
+          rNextKey,
           -nextQty,
         );
         resultProduct = p;

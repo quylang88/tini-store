@@ -11,11 +11,11 @@ const generateLotId = () =>
 export const normalizePurchaseLots = (product = {}) => {
   if (Array.isArray(product.purchaseLots)) {
     const normalizedLots = product.purchaseLots.map((lot) => {
-      // Map legacy warehouse keys to current ones
+      // Ánh xạ các key kho cũ sang key hiện tại
       const currentWarehouse = resolveWarehouseKey(lot.warehouse);
       const normalizedLot = {
         ...lot,
-        warehouse: currentWarehouse || lot.warehouse, // Keep original if cannot resolve (though resolve returns fallback)
+        warehouse: currentWarehouse || lot.warehouse, // Giữ nguyên nếu không resolve được (mặc dù hàm resolve sẽ trả về fallback)
       };
 
       if (!normalizedLot.shipping || normalizedLot.shipping?.perUnitVnd) {
@@ -91,7 +91,7 @@ export const getLatestUnitCost = (product = {}) => {
 export const addPurchaseLot = (product, lot) => {
   const quantity = Number(lot.quantity) || 0;
   const shippingFeeVnd = Number(lot.shipping?.feeVnd) || 0;
-  // Use resolved key or default if not provided
+  // Sử dụng key đã resolve hoặc mặc định nếu không có
   const targetWarehouse =
     resolveWarehouseKey(lot.warehouse) || getDefaultWarehouse().key;
 
@@ -129,7 +129,7 @@ export const consumePurchaseLots = (product, warehouseKey, quantity) => {
   const allocations = [];
 
   // Lọc các lot thuộc kho cần xuất
-  // Use resolveWarehouseKey to match both primary and legacy keys
+  // Sử dụng resolveWarehouseKey để khớp cả key chính và key cũ
   const targetKey = resolveWarehouseKey(warehouseKey);
 
   const availableLots = lots
@@ -201,7 +201,7 @@ export const restockPurchaseLots = (product, warehouseKey, quantity, cost) => {
   const restockQty = Math.max(0, Number(quantity) || 0);
   if (restockQty === 0) return product;
 
-  // Resolve warehouse key to ensure we use the current primary key
+  // Resolve warehouse key để đảm bảo dùng key chính hiện tại
   const targetKey = resolveWarehouseKey(warehouseKey) || getDefaultWarehouse().key;
 
   const nextLot = {

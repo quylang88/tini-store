@@ -3,6 +3,7 @@ import {
   normalizeWarehouseStock,
   getAllWarehouseKeys,
   getDefaultWarehouse,
+  resolveWarehouseKey,
 } from "./warehouseUtils.js";
 import {
   addPurchaseLot,
@@ -28,7 +29,7 @@ export const getInventoryValidationError = ({
     };
   }
 
-  // Check trùng tên sản phẩm (không tính sản phẩm đang sửa)
+  // Kiểm tra trùng tên sản phẩm (không tính sản phẩm đang sửa)
   const duplicateName = products.find(
     (product) =>
       normalizeString(product.name) === normalizeString(formData.name) &&
@@ -53,7 +54,7 @@ export const getInventoryValidationError = ({
     };
   }
 
-  // Check trùng Barcode
+  // Kiểm tra trùng Barcode
   if (formData.barcode) {
     const duplicateBarcode = products.find(
       (p) =>
@@ -149,9 +150,12 @@ export const buildNextProductFromForm = ({
       };
 
   const existingStock = normalizeWarehouseStock(baseProduct);
+  const resolvedWarehouseKey = resolveWarehouseKey(warehouseKey);
+
   const nextStockByWarehouse = {
     ...existingStock,
-    [warehouseKey]: (existingStock[warehouseKey] || 0) + quantityValue,
+    [resolvedWarehouseKey]:
+      (existingStock[resolvedWarehouseKey] || 0) + quantityValue,
   };
 
   let nextProduct = {
@@ -199,7 +203,7 @@ export const buildNextProductFromForm = ({
             costJpy: costJpyValue,
             quantity: newRemaining,
             originalQuantity: newOriginal,
-            warehouse: warehouseKey,
+            warehouse: resolvedWarehouseKey,
             shipping: {
               ...shippingInfo,
               perUnitVnd: feeVnd,
@@ -215,10 +219,11 @@ export const buildNextProductFromForm = ({
         };
       });
 
-      // Recalculate stock by warehouse dynamically
+      // Tính toán lại tồn kho theo kho một cách động
       const adjustedStock = nextLots.reduce(
         (acc, lot) => {
-          const nextWarehouse = lot.warehouse || defaultWarehouseKey;
+          const nextWarehouse =
+            resolveWarehouseKey(lot.warehouse) || defaultWarehouseKey;
           const lotQty = Number(lot.quantity) || 0;
           return {
             ...acc,
@@ -240,7 +245,7 @@ export const buildNextProductFromForm = ({
         cost: costValue,
         costJpy: costJpyValue,
         quantity: quantityValue,
-        warehouse: warehouseKey,
+        warehouse: resolvedWarehouseKey,
         shipping: shippingInfo,
         priceAtPurchase: Number(formData.price) || 0,
       });

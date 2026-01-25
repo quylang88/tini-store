@@ -9,6 +9,7 @@ import {
 import {
   normalizeWarehouseStock,
   getWarehouses,
+  resolveWarehouseKey,
 } from "../../utils/inventory/warehouseUtils";
 
 // Sử dụng React.memo để ngăn component render lại không cần thiết
@@ -94,9 +95,11 @@ const ProductListItem = memo(
                 })
               ) : (
                 <div className="text-amber-600">
-                  {warehouses.find((w) => w.key === activeWarehouse)?.label ||
-                    activeWarehouse}
-                  : {stockByWarehouse[activeWarehouse] || 0} sp
+                  {warehouses.find(
+                    (w) => w.key === resolveWarehouseKey(activeWarehouse),
+                  )?.label || activeWarehouse}
+                  : {stockByWarehouse[resolveWarehouseKey(activeWarehouse)] || 0}{" "}
+                  sp
                 </div>
               )}
 

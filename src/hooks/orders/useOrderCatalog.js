@@ -4,6 +4,7 @@ import {
   getAllWarehouseKeys,
   getDefaultWarehouse,
   getTotalStock,
+  resolveWarehouseKey,
 } from "../../utils/inventory/warehouseUtils";
 import { getLatestUnitCost } from "../../utils/inventory/purchaseUtils";
 import useProductFilterSort from "../core/useProductFilterSort";
@@ -21,7 +22,7 @@ const useOrderCatalog = ({
   sortConfig = { key: "date", direction: "desc" },
 }) => {
   const productMap = useMemo(() => {
-    // Optimization: Use for...of to avoid intermediate array allocation from map()
+    // Tối ưu hóa: Sử dụng vòng lặp for...of để tránh tạo mảng trung gian từ map()
     const map = new Map();
     for (const product of products) {
       map.set(product.id, product);
@@ -30,7 +31,7 @@ const useOrderCatalog = ({
   }, [products]);
 
   const orderItemsQuantityMap = useMemo(() => {
-    // Optimization: Use for...of to avoid intermediate array allocation from map()
+    // Tối ưu hóa: Sử dụng vòng lặp for...of để tránh tạo mảng trung gian từ map()
     const map = new Map();
     if (orderBeingEdited?.items) {
       for (const item of orderBeingEdited.items) {
@@ -43,27 +44,31 @@ const useOrderCatalog = ({
   const getAvailableStock = useCallback(
     (product, warehouseKey) => {
       let baseStock = 0;
+      // Resolve warehouse key
+      const resolvedKey = resolveWarehouseKey(warehouseKey);
+
       if (warehouseKey === "all") {
         baseStock = getTotalStock(product);
       } else {
         const warehouseStock = normalizeWarehouseStock(product);
-        baseStock = warehouseStock[warehouseKey] || 0;
+        baseStock = warehouseStock[resolvedKey] || 0;
       }
 
       if (!orderBeingEdited) return baseStock;
       const orderWarehouse =
-        orderBeingEdited.warehouse || getDefaultWarehouse().key;
-      // Nếu đang sửa đơn, và kho hiện tại trùng với kho của đơn cũ, thì cộng lại số lượng cũ để tính available
-      // Nếu warehouseKey là "all", ta hiển thị tổng stock, không cần cộng previousQty (hoặc có thể cộng nếu muốn hiển thị chính xác những gì available nếu edit?)
-      // Tuy nhiên logic edit thường gắn với 1 kho cụ thể.
-      if (orderWarehouse !== warehouseKey) return baseStock;
+        resolveWarehouseKey(orderBeingEdited.warehouse) ||
+        getDefaultWarehouse().key;
+      // Nếu đang sửa đơn, và kho hiện tại trùng với kho của đơn cũ, thì cộng lại số lượng cũ để tính số lượng khả dụng
+      // Nếu warehouseKey là "all", ta hiển thị tổng tồn kho, không cần cộng previousQty (hoặc có thể cộng nếu muốn hiển thị chính xác những gì khả dụng nếu sửa?)
+      // Tuy nhiên logic sửa thường gắn với 1 kho cụ thể.
+      if (orderWarehouse !== resolvedKey) return baseStock;
       const previousQty = orderItemsQuantityMap.get(product.id) || 0;
       return baseStock + previousQty;
     },
     [orderBeingEdited, orderItemsQuantityMap],
   );
 
-  // Define custom filter for availability
+  // Định nghĩa bộ lọc tùy chỉnh cho tính khả dụng
   const checkAvailability = useCallback(
     (product) => {
       const availableStock = getAvailableStock(product, selectedWarehouse);
@@ -72,7 +77,7 @@ const useOrderCatalog = ({
     [getAvailableStock, selectedWarehouse],
   );
 
-  // Use shared hook for logic
+  // Sử dụng hook chia sẻ cho logic
   const filteredProducts = useProductFilterSort({
     products,
     filterConfig: { searchTerm, activeCategory },

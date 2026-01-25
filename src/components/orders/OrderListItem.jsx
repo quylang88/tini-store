@@ -4,6 +4,7 @@ import { formatNumber } from "../../utils/formatters/formatUtils";
 import {
   getWarehouseLabel,
   getDefaultWarehouse,
+  resolveWarehouseKey,
 } from "../../utils/inventory/warehouseUtils";
 import { getOrderDisplayName } from "../../utils/orders/orderUtils";
 
@@ -24,7 +25,7 @@ const OrderListItem = memo(
     // Hiển thị tên đơn theo tên khách + địa chỉ rút gọn hoặc "Tại kho".
     const orderName = getOrderDisplayName(order);
     const warehouseLabel = getWarehouseLabel(
-      order.warehouse || getDefaultWarehouse().key,
+      resolveWarehouseKey(order.warehouse) || getDefaultWarehouse().key,
     );
     // Với đơn gửi khách, cần hiển thị kho xuất ở hàng trạng thái bên phải.
     const shouldShowWarehouseOnStatus = order.orderType !== "warehouse";

@@ -63,14 +63,14 @@ const OrderCreateView = ({
     label: w.label,
   }));
 
-  // Heights for Layout
-  // Title Header: ~45px (compact)
-  // When editing, Title Header is taller (~74px) due to extra status text
-  // Search Header: ~56px
-  // We calculate dynamic top/padding based on orderBeingEdited
+  // Chiều cao cho Layout
+  // Header tiêu đề: ~45px (compact)
+  // Khi chỉnh sửa, Header tiêu đề cao hơn (~74px) do có thêm văn bản trạng thái
+  // Header tìm kiếm: ~56px
+  // Chúng ta tính toán top/padding động dựa trên orderBeingEdited
 
-  const headerHeight = orderBeingEdited ? 68 : 52; // Reduced 53 -> 52 to close gap
-  const searchBarHeight = 60; // Slightly more than 56 to avoid overlap
+  const headerHeight = orderBeingEdited ? 68 : 52; // Giảm 53 -> 52 để đóng khoảng cách
+  const searchBarHeight = 60; // Hơi nhiều hơn 56 để tránh chồng chéo
   const listPaddingTop = headerHeight + searchBarHeight;
 
   return (
@@ -87,7 +87,7 @@ const OrderCreateView = ({
         <OrderCreateHeader orderBeingEdited={orderBeingEdited} />
       </div>
 
-      {/* 2. Search Header (Animated, Z-10) - Ẩn khi scroll */}
+      {/* 2. Header Tìm Kiếm (Animated, Z-10) - Ẩn khi scroll */}
       {/* Nó nằm ngay dưới Header Tiêu đề (top ~ 53px hoặc ~78px). 
           Khi ẩn, nó trượt lên trên (Y negative) để chui xuống dưới Header Tiêu đề. */}
       <motion.div

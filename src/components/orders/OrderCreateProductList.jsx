@@ -7,6 +7,7 @@ import {
   normalizeWarehouseStock,
   getDefaultWarehouse,
   getWarehouseShortLabel,
+  resolveWarehouseKey,
 } from "../../utils/inventory/warehouseUtils";
 import ProductFilterSection from "../../components/common/ProductFilterSection";
 import useLongPress from "../../hooks/ui/useLongPress";
@@ -19,7 +20,7 @@ const QuantityStepper = ({
   handleQuantityChange,
   id,
 }) => {
-  // Long press for +
+  // Nhấn giữ để tăng
   const addProps = useLongPress(() => adjustQuantity(id, 1, availableStock), {
     enabled: qty < availableStock,
     speed: 150,
@@ -27,7 +28,7 @@ const QuantityStepper = ({
     accelerate: true,
   });
 
-  // Long press for -
+  // Nhấn giữ để giảm
   const subtractProps = useLongPress(
     () => adjustQuantity(id, -1, availableStock),
     {
@@ -82,13 +83,13 @@ const ProductItem = ({
 
   const handleExpandToggle = (targetState) => {
     if (targetState) {
-      // Opening: Hide info first -> then expand text
+      // Mở rộng: Ẩn thông tin trước -> sau đó mở rộng text
       // FIX: Bỏ setTimeout để hiệu ứng mượt hơn (concurrent animations)
       // ExpandableProductName đã được tối ưu với layout prop và line-clamp
       setIsInfoHidden(true);
       setIsNameExpanded(true);
     } else {
-      // Closing: Collapse text first -> then show info
+      // Thu gọn: Thu gọn text trước -> sau đó hiện thông tin
       setIsNameExpanded(false);
       setIsInfoHidden(false);
     }
@@ -98,8 +99,9 @@ const ProductItem = ({
   const getAvailableStock = (productId, stock) => {
     if (!orderBeingEdited) return stock;
     const orderWarehouse =
-      orderBeingEdited.warehouse || getDefaultWarehouse().key;
-    if (orderWarehouse !== selectedWarehouse) return stock;
+      resolveWarehouseKey(orderBeingEdited.warehouse) ||
+      getDefaultWarehouse().key;
+    if (orderWarehouse !== resolveWarehouseKey(selectedWarehouse)) return stock;
     const previousQty =
       orderBeingEdited.items.find((item) => item.productId === productId)
         ?.quantity || 0;
@@ -113,7 +115,8 @@ const ProductItem = ({
   const displayQty = isAdded ? rawQty : 0;
 
   const stockByWarehouse = normalizeWarehouseStock(p);
-  const warehouseStock = stockByWarehouse[selectedWarehouse] || 0;
+  const resolvedWarehouseKey = resolveWarehouseKey(selectedWarehouse);
+  const warehouseStock = stockByWarehouse[resolvedWarehouseKey] || 0;
 
   const availableStock = getAvailableStock(p.id, warehouseStock);
   const isOutOfStock = availableStock <= 0;
@@ -151,7 +154,7 @@ const ProductItem = ({
       </div>
 
       <motion.div layout className="flex-1 min-w-0 flex gap-2 text-[10px]">
-        {/* Cột 1: Tên + Giá bán - Use Flex grow to take space */}
+        {/* Cột 1: Tên + Giá bán - Sử dụng Flex grow để chiếm khoảng trống */}
         <div className="space-y-1 flex-1 min-w-0">
           <ExpandableProductName
             name={p.name}
@@ -160,8 +163,8 @@ const ProductItem = ({
             isExpanded={isNameExpanded}
           >
             {/* 
-              Use layout="position" to prevent squashing/stretching during parent width change,
-              but allows it to move vertically when name expands.
+              Sử dụng layout="position" để ngăn việc bóp méo/kéo giãn trong quá trình thay đổi chiều rộng cha,
+              nhưng cho phép nó di chuyển theo chiều dọc khi tên mở rộng.
             */}
             <motion.div layout="position" className="flex items-center">
               <span className="font-bold text-rose-700 text-sm">
@@ -172,7 +175,7 @@ const ProductItem = ({
           </ExpandableProductName>
         </div>
 
-        {/* Cột 2: Danh mục + Kho hàng - Hide completely when needed */}
+        {/* Cột 2: Danh mục + Kho hàng - Ẩn hoàn toàn khi cần thiết */}
         <AnimatePresence>
           {!shouldHideInfo && (
             <motion.div
@@ -251,7 +254,7 @@ const OrderCreateProductList = ({
   adjustQuantity,
   handleQuantityChange,
   activeCategory,
-  // Filter Props
+  // Props bộ lọc
   setSelectedWarehouse,
   setActiveCategory,
   categories,
@@ -268,7 +271,7 @@ const OrderCreateProductList = ({
       style={style}
       onScroll={handleScroll}
     >
-      {/* Filter Section rendered inside the scroll view */}
+      {/* Phần bộ lọc được render bên trong scroll view */}
       <ProductFilterSection
         warehouseFilter={selectedWarehouse}
         onWarehouseChange={setSelectedWarehouse}
@@ -278,11 +281,11 @@ const OrderCreateProductList = ({
         warehouseTabs={warehouseTabs}
         warehouseLabel={warehouseLabel}
         namespace="order-create"
-        className="-mx-3 -mt-3 mb-0 pt-5 pb-0" // Not sticky, scrolls with list
+        className="-mx-3 -mt-3 mb-0 pt-5 pb-0" // Không sticky, cuộn theo danh sách
         sortConfig={sortConfig}
         onSortChange={onSortChange}
       />
-      {/* Re-adding -mx-3 to compensate for parent padding */}
+      {/* Thêm lại -mx-3 để bù cho padding của cha */}
 
       <AnimatePresence mode="popLayout">
         {filteredProducts.map((p) => (

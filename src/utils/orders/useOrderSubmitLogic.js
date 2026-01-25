@@ -3,6 +3,7 @@ import { syncProductsStock } from "./orderStock";
 import {
   getDefaultWarehouse,
   getWarehouses,
+  resolveWarehouseKey,
 } from "../inventory/warehouseUtils";
 
 const DEFAULT_STATUS = "shipping";
@@ -87,7 +88,7 @@ const useOrderSubmitLogic = ({
     return {
       items: orderItems,
       total: totalAmount,
-      warehouse: selectedWarehouse,
+      warehouse: resolveWarehouseKey(selectedWarehouse),
       orderType,
       customerName: customerName.trim(),
       customerAddress: customerAddress.trim(),
@@ -112,17 +113,18 @@ const useOrderSubmitLogic = ({
       }
     }
 
-    // Calculate new products state synchronously to ensure order items are updated with allocations
-    // BEFORE we save the order.
+    // Tính toán trạng thái sản phẩm mới đồng bộ để đảm bảo các item trong đơn được cập nhật với allocations
+    // TRƯỚC KHI lưu đơn.
     // Lấy danh sách sản phẩm cũ nếu đang sửa đơn để sync stock
     const previousItems = isUpdate ? orderBeingEdited.items : [];
     const previousWarehouse = isUpdate
-      ? orderBeingEdited.warehouse || getDefaultWarehouse().key
+      ? resolveWarehouseKey(orderBeingEdited.warehouse) ||
+        getDefaultWarehouse().key
       : null;
 
-    // syncProductsStock will mutate 'items' to add lotAllocations
+    // syncProductsStock sẽ thay đổi trực tiếp 'items' để thêm lotAllocations
     const nextProducts = syncProductsStock(
-      products, // Using prop products (assumed fresh enough)
+      products, // Sử dụng prop products (giả định là đủ mới)
       items,
       previousItems,
       warehouse,
