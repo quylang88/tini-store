@@ -1,9 +1,5 @@
 import React from "react";
 import { formatNumber } from "../../utils/formatters/formatUtils";
-import {
-  getLatestCost,
-  getLatestLot,
-} from "../../utils/inventory/purchaseUtils";
 import { getWarehouseLabel } from "../../utils/inventory/warehouseUtils";
 import SheetModal from "../../components/modals/SheetModal";
 import useModalCache from "../../hooks/ui/useModalCache";
@@ -17,8 +13,6 @@ const ProductDetailModal = ({ product, onClose, onEditLot }) => {
   // Nếu chưa từng có sản phẩm nào được chọn thì không render gì cả.
   if (!cachedProduct) return null;
 
-  const latestLot = getLatestLot(cachedProduct);
-  const latestCost = getLatestCost(cachedProduct);
   // Sort lots by newest date first
   const lots = [...(cachedProduct.purchaseLots || [])].sort(
     (a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0),
@@ -42,12 +36,6 @@ const ProductDetailModal = ({ product, onClose, onEditLot }) => {
         <div className="flex flex-col border-b border-rose-100 pb-4">
           <div className="text-sm font-semibold text-amber-600">
             Giá bán: {formatNumber(cachedProduct.price)}đ
-          </div>
-          <div className="text-xs text-gray-600 mt-1">
-            Giá nhập mới nhất: {formatNumber(latestCost)}đ
-            {latestLot
-              ? ` • Kho: ${getWarehouseLabel(latestLot.warehouse)}`
-              : ""}
           </div>
         </div>
 
