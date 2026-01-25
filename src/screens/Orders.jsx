@@ -65,6 +65,9 @@ const Orders = ({
     isCreateView,
     sortConfig,
     setSortConfig,
+    customers,
+    isCustomerNameTaken,
+    setPriceOverrides,
   } = useOrdersLogic({
     products,
     setProducts,
@@ -113,6 +116,9 @@ const Orders = ({
           handleCloseReview={() => setIsReviewOpen(false)}
           sortConfig={sortConfig}
           setSortConfig={setSortConfig}
+          customers={customers}
+          isCustomerNameTaken={isCustomerNameTaken}
+          setPriceOverrides={setPriceOverrides}
           handleConfirmOrder={() => {
             let success = false;
             if (orderBeingEdited) {

@@ -25,6 +25,7 @@ const useOrderSubmitLogic = ({
   clearDraft,
   setView,
   setErrorModal,
+  processOrderForCustomer,
 }) => {
   const getNextOrderNumber = () => {
     // Tạo số đơn 4 chữ số ngẫu nhiên để thay thế STT tuần tự.
@@ -146,6 +147,11 @@ const useOrderSubmitLogic = ({
           order.id === orderBeingEdited.id ? updatedOrder : order,
         ),
       );
+
+      // Update customer stats
+      if (processOrderForCustomer) {
+        processOrderForCustomer(updatedOrder, true);
+      }
     } else {
       // Xác định trạng thái ban đầu: Tại kho -> Chờ thanh toán, Gửi hàng -> Đang giao
       const initialStatus =
@@ -160,6 +166,11 @@ const useOrderSubmitLogic = ({
         comment: orderComment.trim(),
       };
       setOrders([...orders, newOrder]);
+
+      // Update customer stats
+      if (processOrderForCustomer) {
+        processOrderForCustomer(newOrder, false);
+      }
     }
 
     clearDraft();

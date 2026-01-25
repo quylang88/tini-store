@@ -50,6 +50,9 @@ const OrderCreateView = ({
   setTabBarVisible,
   sortConfig,
   setSortConfig,
+  customers,
+  isCustomerNameTaken,
+  setPriceOverrides,
 }) => {
   // State scroll animation
   const { isSearchVisible, handleScroll } = useScrollHandling({
@@ -170,6 +173,9 @@ const OrderCreateView = ({
         setShippingFee={setShippingFee}
         orderComment={orderComment}
         setOrderComment={setOrderComment}
+        customers={customers}
+        isCustomerNameTaken={isCustomerNameTaken}
+        setPriceOverrides={setPriceOverrides}
       />
     </div>
   );
