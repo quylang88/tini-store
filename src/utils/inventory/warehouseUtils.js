@@ -60,7 +60,7 @@ export const normalizeWarehouseStock = (product = {}) => {
       const targetKey = resolveWarehouseKey(sourceKey);
 
       // Chỉ cộng dồn nếu key đích hợp lệ trong config
-      if (stock.hasOwnProperty(targetKey)) {
+      if (Object.prototype.hasOwnProperty.call(stock, targetKey)) {
         stock[targetKey] += value;
       } else {
         // Nếu có dữ liệu cho key không có trong config (và không được alias),
