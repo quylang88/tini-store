@@ -110,7 +110,7 @@ const Inventory = ({
 
         {/* Product List cuộn bên dưới InventoryHeader */}
         <div
-          className="flex-1 overflow-y-auto min-h-0 pt-[56px]"
+          className="flex-1 overflow-y-auto min-h-0 pt-[56px] overscroll-y-contain"
           onScroll={handleScroll}
         >
           {/* Filter Section nằm trong luồng scroll */}

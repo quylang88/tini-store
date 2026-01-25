@@ -1,6 +1,6 @@
 import React from "react";
 import { createPortal } from "react-dom";
-import { X } from "lucide-react";
+import { motion, useDragControls } from "framer-motion";
 import useMountTransition from "../../hooks/ui/useMountTransition";
 
 // SheetModal: Modal dạng trượt từ dưới lên (Bottom Sheet).
@@ -12,10 +12,10 @@ const SheetModal = ({
   children,
   title,
   footer,
-  showCloseIcon = false,
   className = "",
 }) => {
   const { shouldRender, active } = useMountTransition(open, 300);
+  const controls = useDragControls();
 
   if (!shouldRender) return null;
 
@@ -26,33 +26,38 @@ const SheetModal = ({
       }`}
       onClick={onClose}
     >
-      {/* Animation: 
-          - Enter: translate-y-0 (Slide Up), ease-out
-          - Exit: translate-y-full (Slide Down), ease-in
-      */}
-      <div
-        className={`bg-white w-full sm:w-96 rounded-t-2xl sm:rounded-2xl flex flex-col max-h-[90vh] transition-transform duration-300 transform ${
-          active
-            ? "translate-y-0 sm:scale-100 ease-out"
-            : "translate-y-full sm:scale-95 ease-in"
-        } ${className}`}
+      <motion.div
+        initial={{ y: "100%" }}
+        animate={{ y: active ? 0 : "100%" }}
+        transition={{ type: "spring", damping: 25, stiffness: 300 }}
+        drag="y"
+        dragListener={false}
+        dragControls={controls}
+        dragConstraints={{ top: 0 }}
+        dragElastic={{ top: 0, bottom: 0.5 }}
+        onDragEnd={(e, { offset, velocity }) => {
+          if (offset.y > 100 || velocity.y > 500) {
+            onClose();
+          }
+        }}
+        className={`bg-white w-full sm:w-96 rounded-t-2xl sm:rounded-2xl flex flex-col max-h-[90vh] ${className}`}
         onClick={(e) => e.stopPropagation()}
       >
-        {(title || showCloseIcon) && (
-          <div className="flex justify-between items-center p-5 pb-0">
-            {title ? (
-              <h3 className="font-bold text-lg text-rose-900">{title}</h3>
-            ) : (
-              <div />
-            )}
-            {showCloseIcon && (
-              <button
-                onClick={onClose}
-                className="bg-rose-100 text-rose-900 p-1.5 rounded-full hover:bg-rose-200 active:scale-95 transition-all"
-              >
-                <X size={18} />
-              </button>
-            )}
+        {/* Drag Handle Visual Cue */}
+        <div
+          className="w-full flex justify-center pt-3 pb-1 cursor-grab active:cursor-grabbing touch-none"
+          aria-hidden="true"
+          onPointerDown={(e) => controls.start(e)}
+        >
+          <div className="w-12 h-1.5 bg-gray-200 rounded-full" />
+        </div>
+
+        {title && (
+          <div
+            className="flex justify-between items-center px-5 pb-2 cursor-grab active:cursor-grabbing touch-none"
+            onPointerDown={(e) => controls.start(e)}
+          >
+            <h3 className="font-bold text-lg text-rose-900">{title}</h3>
           </div>
         )}
 
@@ -65,7 +70,7 @@ const SheetModal = ({
             {footer}
           </div>
         )}
-      </div>
+      </motion.div>
     </div>,
     document.body,
   );
