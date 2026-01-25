@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { syncProductsStock } from "../../utils/orders/orderStock";
 import useOrderCatalog from "./useOrderCatalog";
 import { buildCartFromItems } from "../../utils/orders/orderDraftUtils";
@@ -13,6 +13,30 @@ import {
 const DEFAULT_STATUS = "shipping";
 const DEFAULT_ORDER_TYPE = "delivery";
 
+// Move pure function outside to prevent recreation
+const getOrderStatusInfo = (order) => {
+  if (order.status === "paid") {
+    return {
+      label: "Đã thanh toán",
+      badgeClass: "border-emerald-300 bg-emerald-50 text-emerald-600",
+      dotClass: "bg-emerald-500",
+    };
+  }
+  if (order.status === "pending") {
+    return {
+      label: "Đang chờ thanh toán",
+      badgeClass: "border-orange-300 bg-orange-50 text-orange-600",
+      dotClass: "bg-orange-500",
+    };
+  }
+  return {
+    // Trạng thái mặc định là đang giao hàng theo yêu cầu mới.
+    label: "Đang giao hàng",
+    badgeClass: "border-sky-200 bg-sky-50 text-sky-600",
+    dotClass: "bg-sky-500",
+  };
+};
+
 const useOrdersLogic = ({
   products,
   setProducts,
@@ -22,12 +46,16 @@ const useOrdersLogic = ({
 }) => {
   const [view, setView] = useState("list");
   // Hàm helper để đồng bộ hiển thị TabBar với trạng thái View
-  const updateView = (newView) => {
-    setView(newView);
-    if (setTabBarVisible) {
-      setTabBarVisible(newView === "list");
-    }
-  };
+  const updateView = useCallback(
+    (newView) => {
+      setView(newView);
+      if (setTabBarVisible) {
+        setTabBarVisible(newView === "list");
+      }
+    },
+    [setTabBarVisible],
+  );
+
   const [showScanner, setShowScanner] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [isReviewOpen, setIsReviewOpen] = useState(false);
@@ -80,7 +108,7 @@ const useOrdersLogic = ({
       sortConfig,
     });
 
-  const clearDraft = () => {
+  const clearDraft = useCallback(() => {
     clearCart();
     clearOrderForm();
     setOrderBeingEdited(null);
@@ -89,7 +117,7 @@ const useOrdersLogic = ({
     setIsReviewOpen(false);
     setSelectedWarehouse(getDefaultWarehouse().key);
     setSortConfig({ key: "date", direction: "desc" });
-  };
+  }, [clearCart, clearOrderForm]);
 
   const { handleCreateOrder, handleUpdateOrder, finishCreateOrder } =
     useOrderSubmitLogic({
@@ -140,11 +168,11 @@ const useOrdersLogic = ({
     adjustQuantity(product.id, 1, availableStock);
   };
 
-  const handleStartCreate = () => {
+  const handleStartCreate = useCallback(() => {
     clearDraft();
     setSelectedOrder(null);
     updateView("create");
-  };
+  }, [clearDraft, updateView]);
 
   // So sánh giỏ hiện tại với đơn gốc để biết user đã chỉnh sửa gì chưa.
   const hasDraftChanges = () => {
@@ -218,107 +246,99 @@ const useOrdersLogic = ({
     });
   };
 
-  const handleEditOrder = (order) => {
-    setCart(buildCartFromItems(order.items));
-    setOrderBeingEdited(order);
-    setOrderComment(order.comment || "");
-    setSelectedWarehouse(
-      resolveWarehouseKey(order.warehouse) || getDefaultWarehouse().key,
-    );
-    // Ưu tiên orderType đã lưu, nếu thiếu thì đoán theo thông tin giao hàng.
-    const inferredOrderType =
-      order.orderType ||
-      (order.customerName || order.customerAddress || order.shippingFee
-        ? "delivery"
-        : "warehouse");
-    setOrderTypeRaw(inferredOrderType);
-    setCustomerName(order.customerName || "");
-    setCustomerAddress(order.customerAddress || "");
-    setShippingFeeRaw(order.shippingFee ? String(order.shippingFee) : "");
-    setSelectedOrder(null);
-    setSearchTerm("");
-    setActiveCategory("Tất cả");
-    setIsReviewOpen(false);
-    updateView("create");
-  };
+  const handleEditOrder = useCallback(
+    (order) => {
+      setCart(buildCartFromItems(order.items));
+      setOrderBeingEdited(order);
+      setOrderComment(order.comment || "");
+      setSelectedWarehouse(
+        resolveWarehouseKey(order.warehouse) || getDefaultWarehouse().key,
+      );
+      // Ưu tiên orderType đã lưu, nếu thiếu thì đoán theo thông tin giao hàng.
+      const inferredOrderType =
+        order.orderType ||
+        (order.customerName || order.customerAddress || order.shippingFee
+          ? "delivery"
+          : "warehouse");
+      setOrderTypeRaw(inferredOrderType);
+      setCustomerName(order.customerName || "");
+      setCustomerAddress(order.customerAddress || "");
+      setShippingFeeRaw(order.shippingFee ? String(order.shippingFee) : "");
+      setSelectedOrder(null);
+      setSearchTerm("");
+      setActiveCategory("Tất cả");
+      setIsReviewOpen(false);
+      updateView("create");
+    },
+    [
+      setCart,
+      setOrderTypeRaw,
+      setCustomerName,
+      setCustomerAddress,
+      setShippingFeeRaw,
+      setOrderComment,
+      updateView,
+    ],
+  );
 
-  const handleTogglePaid = (orderId) => {
-    const order = orders.find((item) => item.id === orderId);
-    if (!order) return;
-    const isPaid = order.status === "paid";
+  const handleTogglePaid = useCallback(
+    (order) => {
+      if (!order) return;
+      const isPaid = order.status === "paid";
 
-    // Hiển thị popup xác nhận trước khi đổi trạng thái thanh toán.
-    setConfirmModal({
-      title: isPaid ? "Huỷ thanh toán?" : "Xác nhận thanh toán?",
-      message: isPaid
-        ? "Bạn có chắc muốn huỷ trạng thái đã thanh toán cho đơn hàng này không?"
-        : "Bạn có chắc đơn hàng này đã được thanh toán đầy đủ chưa?",
-      confirmLabel: isPaid ? "Huỷ thanh toán" : "Đã thanh toán",
-      tone: isPaid ? "danger" : "rose",
-      onConfirm: () => {
-        setOrders((prev) =>
-          prev.map((item) => {
-            if (item.id !== orderId) return item;
-            let nextStatus = "paid";
-            if (item.status === "paid") {
-              // Khi huỷ thanh toán, trả về trạng thái ban đầu dựa trên loại đơn
-              nextStatus =
-                item.orderType === "warehouse" ? "pending" : DEFAULT_STATUS;
-            }
-            return { ...item, status: nextStatus };
-          }),
-        );
-      },
-    });
-  };
+      // Hiển thị popup xác nhận trước khi đổi trạng thái thanh toán.
+      setConfirmModal({
+        title: isPaid ? "Huỷ thanh toán?" : "Xác nhận thanh toán?",
+        message: isPaid
+          ? "Bạn có chắc muốn huỷ trạng thái đã thanh toán cho đơn hàng này không?"
+          : "Bạn có chắc đơn hàng này đã được thanh toán đầy đủ chưa?",
+        confirmLabel: isPaid ? "Huỷ thanh toán" : "Đã thanh toán",
+        tone: isPaid ? "danger" : "rose",
+        onConfirm: () => {
+          setOrders((prev) =>
+            prev.map((item) => {
+              if (item.id !== order.id) return item;
+              let nextStatus = "paid";
+              if (item.status === "paid") {
+                // Khi huỷ thanh toán, trả về trạng thái ban đầu dựa trên loại đơn
+                nextStatus =
+                  item.orderType === "warehouse" ? "pending" : DEFAULT_STATUS;
+              }
+              return { ...item, status: nextStatus };
+            }),
+          );
+        },
+      });
+    },
+    [setOrders, setConfirmModal],
+  );
 
-  const handleCancelOrder = (orderId) => {
-    const order = orders.find((item) => item.id === orderId);
-    if (!order) return;
-    setConfirmModal({
-      title: "Huỷ đơn?",
-      message: `Bạn có chắc muốn huỷ đơn ${
-        order.orderNumber ? `#${order.orderNumber}` : ""
-      }?`,
-      confirmLabel: "Huỷ đơn",
-      tone: "danger",
-      onConfirm: () => {
-        setProducts((prevProducts) =>
-          syncProductsStock(
-            prevProducts,
-            [],
-            order.items,
-            getDefaultWarehouse().key,
-            resolveWarehouseKey(order.warehouse) || getDefaultWarehouse().key,
-          ),
-        );
-        setOrders(orders.filter((item) => item.id !== orderId));
-      },
-    });
-  };
-
-  const getOrderStatusInfo = (order) => {
-    if (order.status === "paid") {
-      return {
-        label: "Đã thanh toán",
-        badgeClass: "border-emerald-300 bg-emerald-50 text-emerald-600",
-        dotClass: "bg-emerald-500",
-      };
-    }
-    if (order.status === "pending") {
-      return {
-        label: "Đang chờ thanh toán",
-        badgeClass: "border-orange-300 bg-orange-50 text-orange-600",
-        dotClass: "bg-orange-500",
-      };
-    }
-    return {
-      // Trạng thái mặc định là đang giao hàng theo yêu cầu mới.
-      label: "Đang giao hàng",
-      badgeClass: "border-sky-200 bg-sky-50 text-sky-600",
-      dotClass: "bg-sky-500",
-    };
-  };
+  const handleCancelOrder = useCallback(
+    (order) => {
+      if (!order) return;
+      setConfirmModal({
+        title: "Huỷ đơn?",
+        message: `Bạn có chắc muốn huỷ đơn ${
+          order.orderNumber ? `#${order.orderNumber}` : ""
+        }?`,
+        confirmLabel: "Huỷ đơn",
+        tone: "danger",
+        onConfirm: () => {
+          setProducts((prevProducts) =>
+            syncProductsStock(
+              prevProducts,
+              [],
+              order.items,
+              getDefaultWarehouse().key,
+              resolveWarehouseKey(order.warehouse) || getDefaultWarehouse().key,
+            ),
+          );
+          setOrders((prev) => prev.filter((item) => item.id !== order.id));
+        },
+      });
+    },
+    [setOrders, setProducts, setConfirmModal],
+  );
 
   return {
     cart,

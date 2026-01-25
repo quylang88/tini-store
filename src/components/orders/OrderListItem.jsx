@@ -95,7 +95,7 @@ const OrderListItem = memo(
           <button
             onClick={(event) => {
               event.stopPropagation();
-              handleTogglePaid(order.id);
+              handleTogglePaid(order);
             }}
             className={`text-xs font-semibold px-3 py-1.5 rounded-full border transition active:scale-95 ${
               isPaid
@@ -117,7 +117,7 @@ const OrderListItem = memo(
           <button
             onClick={(event) => {
               event.stopPropagation();
-              handleCancelOrder(order.id);
+              handleCancelOrder(order);
             }}
             className="text-xs font-semibold text-red-600 bg-red-50 border border-red-300 px-3 py-1.5 rounded-full active:scale-95 transition"
           >
