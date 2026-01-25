@@ -31,6 +31,7 @@ const SheetModal = ({
         animate={{ y: active ? 0 : "100%" }}
         transition={{ type: "spring", damping: 25, stiffness: 300 }}
         drag="y"
+        dragListener={false}
         dragControls={controls}
         dragConstraints={{ top: 0 }}
         dragElastic={{ top: 0, bottom: 0.5 }}
@@ -39,12 +40,12 @@ const SheetModal = ({
             onClose();
           }
         }}
-        className={`bg-white w-full sm:w-96 rounded-t-2xl sm:rounded-2xl flex flex-col max-h-[90vh] touch-pan-y ${className}`}
+        className={`bg-white w-full sm:w-96 rounded-t-2xl sm:rounded-2xl flex flex-col max-h-[90vh] ${className}`}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Drag Handle Visual Cue */}
         <div
-          className="w-full flex justify-center pt-3 pb-1 cursor-grab active:cursor-grabbing"
+          className="w-full flex justify-center pt-3 pb-1 cursor-grab active:cursor-grabbing touch-none"
           aria-hidden="true"
           onPointerDown={(e) => controls.start(e)}
         >
@@ -52,7 +53,10 @@ const SheetModal = ({
         </div>
 
         {title && (
-          <div className="flex justify-between items-center px-5 pb-2">
+          <div
+            className="flex justify-between items-center px-5 pb-2 cursor-grab active:cursor-grabbing touch-none"
+            onPointerDown={(e) => controls.start(e)}
+          >
             <h3 className="font-bold text-lg text-rose-900">{title}</h3>
           </div>
         )}
