@@ -12,10 +12,13 @@ import { useAssistantMemory } from "../hooks/assistant/useAssistantMemory";
 import { useAssistantChat } from "../hooks/assistant/useAssistantChat";
 import { useAutoScroll } from "../hooks/assistant/useAutoScroll";
 import { useSwipeToReveal } from "../hooks/assistant/useSwipeToReveal";
+import { useToolExecution } from "../hooks/assistant/useToolExecution";
 
 const Assistant = ({
   products,
+  setProducts,
   orders,
+  setOrders,
   settings,
   messages,
   setMessages,
@@ -81,6 +84,51 @@ const Assistant = ({
   // 6. Swipe Logic
   const { swipeX, handlers } = useSwipeToReveal();
 
+  // 7. Tool Execution Logic
+  const { executeTool } = useToolExecution({
+    products,
+    setProducts,
+    setOrders,
+  });
+
+  const handleConfirmTool = async (message) => {
+    const { toolCallId, functionName, functionArgs } = message.data;
+    const result = await executeTool(toolCallId, functionName, functionArgs);
+
+    // Update status của message cũ
+    setMessages((prev) =>
+      prev.map((msg) =>
+        msg.id === message.id ? { ...msg, status: "completed" } : msg
+      )
+    );
+
+    // Thêm message kết quả
+    const resultMsg = {
+      id: Date.now().toString(),
+      type: "text",
+      sender: "assistant",
+      content: result.message,
+      timestamp: new Date(),
+    };
+    setMessages((prev) => [...prev, resultMsg]);
+  };
+
+  const handleCancelTool = (message) => {
+    setMessages((prev) =>
+      prev.map((msg) =>
+        msg.id === message.id ? { ...msg, status: "cancelled" } : msg
+      )
+    );
+    const cancelMsg = {
+      id: Date.now().toString(),
+      type: "text",
+      sender: "assistant",
+      content: "Đã huỷ thao tác theo yêu cầu của mẹ.",
+      timestamp: new Date(),
+    };
+    setMessages((prev) => [...prev, cancelMsg]);
+  };
+
   // Chiều cao TabBar mặc định (ước lượng 60px + safe area)
   // Bạn có thể chỉnh số 60px này cho khớp với chiều cao thực tế của TabBar app bạn
   const TABBAR_HEIGHT_SPACER = "calc(60px + env(safe-area-inset-bottom))";
@@ -116,6 +164,8 @@ const Assistant = ({
         messagesEndRef={messagesEndRef}
         handlers={handlers}
         swipeX={swipeX}
+        onConfirmTool={handleConfirmTool}
+        onCancelTool={handleCancelTool}
       />
 
       <ModelSelector
