@@ -1,6 +1,6 @@
 /**
- * utils.js
- * Các hàm tiện ích hỗ trợ cho AI Service (lấy vị trí, format phản hồi).
+ * locationUtils.js
+ * Các hàm tiện ích hỗ trợ định vị và reverse geocoding.
  */
 
 /**
@@ -59,21 +59,4 @@ export const getAddressFromCoordinates = async (coordsString) => {
     console.warn("Lỗi Reverse Geocoding:", error);
     return null;
   }
-};
-
-/**
- * Tạo object phản hồi chuẩn cho ứng dụng.
- * @param {string} type - Loại phản hồi (ví dụ: 'text')
- * @param {string} content - Nội dung phản hồi
- * @param {any} data - Dữ liệu kèm theo (tùy chọn)
- */
-export const createResponse = (type, content, data = null) => {
-  return {
-    id: Date.now().toString(),
-    sender: "assistant",
-    type,
-    content,
-    data,
-    timestamp: new Date(),
-  };
 };
