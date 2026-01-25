@@ -3,42 +3,42 @@ import SearchBarWithScanner from "./SearchBarWithScanner";
 import AnimatedFilterTabs from "./AnimatedFilterTabs";
 import ScrollableTabs from "./ScrollableTabs";
 import { motion, AnimatePresence } from "framer-motion";
+import { getWarehouses } from "../../utils/inventory/warehouseUtils";
 
 const ProductFilterHeader = ({
-  // Search
+  // Tìm kiếm
   searchTerm,
   onSearchChange,
   onClearSearch,
   onShowScanner,
 
-  // Warehouse Filter
+  // Bộ lọc kho
   warehouseFilter,
   onWarehouseChange,
-  warehouseTabs, // Optional prop
-  warehouseLabel, // Optional prop for label text
+  warehouseTabs, // Prop tùy chọn
+  warehouseLabel, // Prop tùy chọn cho nhãn văn bản
 
-  // Category Filter
+  // Bộ lọc danh mục
   activeCategory,
   setActiveCategory,
-  categories = [], // Array of strings (names)
+  categories = [], // Mảng chuỗi (tên)
 
-  // Configuration
+  // Cấu hình
   isExpanded = true,
-  enableFilters = true, // New prop to toggle filter section rendering
+  enableFilters = true, // Prop mới để bật tắt hiển thị phần bộ lọc
   className = "",
-  namespace = "common", // for layoutId uniqueness
+  namespace = "common", // để đảm bảo tính duy nhất của layoutId
   placeholder = "Nhập tên hoặc quét mã sản phẩm...",
 }) => {
-  // Default Warehouse Configuration (if not provided)
+  // Cấu hình kho mặc định (nếu không được cung cấp)
   const defaultWarehouseTabs = [
     { key: "all", label: "Tất cả" },
-    { key: "vinhPhuc", label: "Vĩnh Phúc" },
-    { key: "lamDong", label: "Lâm Đồng" },
+    ...getWarehouses().map((w) => ({ key: w.key, label: w.label })),
   ];
 
   const finalWarehouseTabs = warehouseTabs || defaultWarehouseTabs;
 
-  // Category Configuration (Unified)
+  // Cấu hình danh mục (Thống nhất)
   const categoryTabs = [
     { key: "Tất cả", label: "Tất cả" },
     ...categories.map((cat) => ({ key: cat, label: cat })),
@@ -46,7 +46,7 @@ const ProductFilterHeader = ({
 
   return (
     <div className={`bg-rose-50/90 backdrop-blur ${className}`}>
-      {/* Search Bar Row */}
+      {/* Hàng thanh tìm kiếm */}
       <div className="px-3 pt-3 pb-1">
         <SearchBarWithScanner
           searchTerm={searchTerm}
@@ -57,7 +57,7 @@ const ProductFilterHeader = ({
         />
       </div>
 
-      {/* Expandable Filter Area (Warehouse + Categories) */}
+      {/* Khu vực bộ lọc mở rộng (Kho + Danh mục) */}
       {enableFilters && (
         <AnimatePresence initial={false}>
           {isExpanded && (
@@ -69,7 +69,7 @@ const ProductFilterHeader = ({
               className="overflow-hidden"
             >
               <div className="px-3 pb-3 pt-3 space-y-3">
-                {/* Warehouse Tabs */}
+                {/* Tab kho */}
                 <div className="flex items-center gap-2">
                   {warehouseLabel && (
                     <span className="text-xs font-semibold text-rose-700 shrink-0">
@@ -85,13 +85,13 @@ const ProductFilterHeader = ({
                   />
                 </div>
 
-                {/* Category Tabs (Scrollable) */}
+                {/* Tab danh mục (Cuộn được) */}
                 <ScrollableTabs
                   tabs={categoryTabs}
                   activeTab={activeCategory}
                   onTabChange={setActiveCategory}
                   layoutIdPrefix={`${namespace}-category`}
-                  className="-mx-3" // Negative margin to align with padding of parent
+                  className="-mx-3" // Margin âm để căn chỉnh với padding của cha
                 />
               </div>
             </motion.div>

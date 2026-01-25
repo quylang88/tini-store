@@ -5,9 +5,12 @@ import { buildCartFromItems } from "../../utils/orders/orderDraftUtils";
 import useCartLogic from "./useCartLogic";
 import useOrderFormLogic from "./useOrderFormLogic";
 import useOrderSubmitLogic from "../../utils/orders/useOrderSubmitLogic";
+import {
+  getDefaultWarehouse,
+  resolveWarehouseKey,
+} from "../../utils/inventory/warehouseUtils";
 
 const DEFAULT_STATUS = "shipping";
-const DEFAULT_WAREHOUSE = "vinhPhuc";
 const DEFAULT_ORDER_TYPE = "delivery";
 
 const useOrdersLogic = ({
@@ -18,7 +21,7 @@ const useOrdersLogic = ({
   setTabBarVisible,
 }) => {
   const [view, setView] = useState("list");
-  // Helper to sync TabBar visibility with View state
+  // Hàm helper để đồng bộ hiển thị TabBar với trạng thái View
   const updateView = (newView) => {
     setView(newView);
     if (setTabBarVisible) {
@@ -31,7 +34,9 @@ const useOrdersLogic = ({
   const [confirmModal, setConfirmModal] = useState(null);
   // Modal cảnh báo khi thiếu thông tin hoặc thao tác chưa hợp lệ.
   const [errorModal, setErrorModal] = useState(null);
-  const [selectedWarehouse, setSelectedWarehouse] = useState(DEFAULT_WAREHOUSE);
+  const [selectedWarehouse, setSelectedWarehouse] = useState(
+    getDefaultWarehouse().key,
+  );
   const [activeCategory, setActiveCategory] = useState("Tất cả");
   const [searchTerm, setSearchTerm] = useState("");
   const [orderBeingEdited, setOrderBeingEdited] = useState(null);
@@ -82,7 +87,7 @@ const useOrdersLogic = ({
     setSearchTerm("");
     setActiveCategory("Tất cả");
     setIsReviewOpen(false);
-    setSelectedWarehouse(DEFAULT_WAREHOUSE);
+    setSelectedWarehouse(getDefaultWarehouse().key);
     setSortConfig({ key: "date", direction: "desc" });
   };
 
@@ -217,7 +222,9 @@ const useOrdersLogic = ({
     setCart(buildCartFromItems(order.items));
     setOrderBeingEdited(order);
     setOrderComment(order.comment || "");
-    setSelectedWarehouse(order.warehouse || DEFAULT_WAREHOUSE);
+    setSelectedWarehouse(
+      resolveWarehouseKey(order.warehouse) || getDefaultWarehouse().key,
+    );
     // Ưu tiên orderType đã lưu, nếu thiếu thì đoán theo thông tin giao hàng.
     const inferredOrderType =
       order.orderType ||
@@ -281,8 +288,8 @@ const useOrdersLogic = ({
             prevProducts,
             [],
             order.items,
-            DEFAULT_WAREHOUSE,
-            order.warehouse || DEFAULT_WAREHOUSE,
+            getDefaultWarehouse().key,
+            resolveWarehouseKey(order.warehouse) || getDefaultWarehouse().key,
           ),
         );
         setOrders(orders.filter((item) => item.id !== orderId));

@@ -3,6 +3,7 @@ import AnimatedFilterTabs from "./AnimatedFilterTabs";
 import ScrollableTabs from "./ScrollableTabs";
 import { Calendar, DollarSign } from "lucide-react";
 import SortButton from "../button/SortButton";
+import { getWarehouses } from "../../utils/inventory/warehouseUtils";
 
 const ProductFilterSection = ({
   warehouseFilter,
@@ -17,16 +18,15 @@ const ProductFilterSection = ({
   sortConfig,
   onSortChange,
 }) => {
-  // Default Warehouse Configuration
+  // Cấu hình kho mặc định
   const defaultWarehouseTabs = [
     { key: "all", label: "Tất cả" },
-    { key: "vinhPhuc", label: "Vĩnh Phúc" },
-    { key: "lamDong", label: "Lâm Đồng" },
+    ...getWarehouses().map((w) => ({ key: w.key, label: w.label })),
   ];
 
   const finalWarehouseTabs = warehouseTabs || defaultWarehouseTabs;
 
-  // Category Configuration
+  // Cấu hình danh mục
   const categoryTabs = [
     { key: "Tất cả", label: "Tất cả" },
     ...categories.map((cat) => ({ key: cat, label: cat })),
@@ -34,33 +34,33 @@ const ProductFilterSection = ({
 
   const handleDateSort = () => {
     if (sortConfig?.key === "date") {
-      // Toggle direction
+      // Đảo ngược hướng
       onSortChange({
         key: "date",
         direction: sortConfig.direction === "desc" ? "asc" : "desc",
       });
     } else {
-      // Set to date desc (Newest first)
+      // Đặt thành ngày giảm dần (Mới nhất trước)
       onSortChange({ key: "date", direction: "desc" });
     }
   };
 
   const handlePriceSort = () => {
     if (sortConfig?.key === "price") {
-      // Toggle direction
+      // Đảo ngược hướng
       onSortChange({
         key: "price",
         direction: sortConfig.direction === "asc" ? "desc" : "asc",
       });
     } else {
-      // Set to price asc (Low to High)
+      // Đặt thành giá tăng dần (Thấp đến Cao)
       onSortChange({ key: "price", direction: "asc" });
     }
   };
 
   return (
     <div className={`px-3 pt-5 pb-3 space-y-3 bg-rose-50 ${className}`}>
-      {/* Warehouse Tabs and Sort Buttons */}
+      {/* Tab kho và Nút sắp xếp */}
       <div className="flex items-center gap-2">
         {warehouseLabel && (
           <span className="text-sm font-semibold text-rose-700 shrink-0">
@@ -68,7 +68,7 @@ const ProductFilterSection = ({
           </span>
         )}
 
-        {/* Wrap AnimatedFilterTabs in a scrolling container */}
+        {/* Bọc AnimatedFilterTabs trong container cuộn */}
         <div className="flex-1 overflow-x-auto scrollbar-hide">
           <AnimatedFilterTabs
             tabs={finalWarehouseTabs}
@@ -79,7 +79,7 @@ const ProductFilterSection = ({
           />
         </div>
 
-        {/* Sort Buttons */}
+        {/* Nút sắp xếp */}
         {onSortChange && (
           <div className="flex items-center gap-2 ml-1 shrink-0">
             <SortButton
@@ -102,7 +102,7 @@ const ProductFilterSection = ({
         )}
       </div>
 
-      {/* Category Tabs (Scrollable) */}
+      {/* Tab danh mục (Cuộn được) */}
       <ScrollableTabs
         tabs={categoryTabs}
         activeTab={activeCategory}

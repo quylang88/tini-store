@@ -6,7 +6,11 @@ import {
   getLatestCost,
   getLatestUnitCost,
 } from "../../utils/inventory/purchaseUtils";
-import { normalizeWarehouseStock } from "../../utils/inventory/warehouseUtils";
+import {
+  normalizeWarehouseStock,
+  getWarehouses,
+  resolveWarehouseKey,
+} from "../../utils/inventory/warehouseUtils";
 
 // Sử dụng React.memo để ngăn component render lại không cần thiết
 // khi props (như product) không thay đổi. Điều này giúp tối ưu hiệu năng
@@ -25,6 +29,7 @@ const ProductListItem = memo(
     const expectedProfit = (Number(product.price) || 0) - latestUnitCost;
     const hasProfitData = Number(product.price) > 0 && latestUnitCost > 0;
     const stockByWarehouse = normalizeWarehouseStock(product);
+    const warehouses = getWarehouses();
 
     return (
       <motion.div
@@ -78,19 +83,26 @@ const ProductListItem = memo(
               </div>
 
               {/* Logic hiển thị kho dựa trên activeWarehouse */}
-              <div
-                className={`text-amber-600 ${
-                  activeWarehouse !== "all" ? "invisible" : ""
-                }`}
-              >
-                Vĩnh Phúc: {stockByWarehouse.vinhPhuc} sp
-              </div>
-
-              <div className="text-amber-600">
-                {activeWarehouse === "vinhPhuc"
-                  ? `Vĩnh Phúc: ${stockByWarehouse.vinhPhuc} sp`
-                  : `Lâm Đồng: ${stockByWarehouse.lamDong} sp`}
-              </div>
+              {activeWarehouse === "all" ? (
+                warehouses.map((w) => {
+                  const qty = stockByWarehouse[w.key] || 0;
+                  if (qty <= 0) return null;
+                  return (
+                    <div key={w.key} className="text-amber-600">
+                      {w.label}: {qty} sp
+                    </div>
+                  );
+                })
+              ) : (
+                <div className="text-amber-600">
+                  {warehouses.find(
+                    (w) => w.key === resolveWarehouseKey(activeWarehouse),
+                  )?.label || activeWarehouse}
+                  :{" "}
+                  {stockByWarehouse[resolveWarehouseKey(activeWarehouse)] || 0}{" "}
+                  sp
+                </div>
+              )}
 
               <div className="text-amber-500">
                 Giá nhập mới nhất: {formatNumber(latestCost)}đ

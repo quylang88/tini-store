@@ -1,14 +1,18 @@
 import React, { useState } from "react";
 import SheetModal from "../../components/modals/SheetModal";
 import { formatNumber } from "../../utils/formatters/formatUtils";
-import { getWarehouseLabel } from "../../utils/inventory/warehouseUtils";
+import {
+  getWarehouseLabel,
+  getDefaultWarehouse,
+  resolveWarehouseKey,
+} from "../../utils/inventory/warehouseUtils";
 import { getOrderDisplayName } from "../../utils/orders/orderUtils";
 import useModalCache from "../../hooks/ui/useModalCache";
 import Button from "../../components/button/Button";
 import { exportOrderToHTML } from "../../utils/file/fileUtils";
 import LoadingOverlay from "../../components/common/LoadingOverlay";
 
-// OrderDetailModal: Xem chi tiết đơn hàng (View Only) -> showCloseIcon={false}
+// OrderDetailModal: Xem chi tiết đơn hàng (Chỉ xem) -> showCloseIcon={false}
 const OrderDetailModal = ({ order, products, onClose, getOrderStatusInfo }) => {
   const [isExporting, setIsExporting] = useState(false);
   // Giữ lại dữ liệu cũ để animation đóng vẫn hiển thị nội dung
@@ -21,7 +25,9 @@ const OrderDetailModal = ({ order, products, onClose, getOrderStatusInfo }) => {
     : `#${cachedOrder.id.slice(-4)}`;
   const orderName = getOrderDisplayName(cachedOrder);
   const statusInfo = getOrderStatusInfo?.(cachedOrder);
-  const warehouseLabel = getWarehouseLabel(cachedOrder.warehouse || "lamDong");
+  const warehouseLabel = getWarehouseLabel(
+    resolveWarehouseKey(cachedOrder.warehouse) || getDefaultWarehouse().key,
+  );
 
   // Tính lợi nhuận ước tính (giống logic ở OrderListView)
   const estimatedProfit =
@@ -71,10 +77,10 @@ const OrderDetailModal = ({ order, products, onClose, getOrderStatusInfo }) => {
       onClose={onClose}
       title={`Chi tiết đơn hàng ${orderLabel}`}
       footer={footer}
-      showCloseIcon={false} // View Only
+      showCloseIcon={false} // Chỉ xem
     >
       <div className="space-y-4">
-        {/* Header Info */}
+        {/* Thông tin Header */}
         <div className="border-b border-rose-100 pb-4">
           <div className="flex items-center justify-between mb-2">
             <div className="text-xs font-semibold text-rose-600">
@@ -104,7 +110,7 @@ const OrderDetailModal = ({ order, products, onClose, getOrderStatusInfo }) => {
         {/* Loading Overlay */}
         {isExporting && <LoadingOverlay text="Đang tạo hoá đơn..." />}
 
-        {/* List Items */}
+        {/* Danh sách sản phẩm */}
         <div className="space-y-3">
           {cachedOrder.items.map((item, index) => {
             const product = products?.find(
@@ -135,7 +141,7 @@ const OrderDetailModal = ({ order, products, onClose, getOrderStatusInfo }) => {
           })}
         </div>
 
-        {/* Summary */}
+        {/* Tổng kết */}
         <div className="border-t border-rose-100 pt-3 bg-rose-50 -mx-5 px-5 -mb-2 pb-2 mt-2 space-y-2">
           {cachedOrder.orderType !== "warehouse" && (
             <div className="flex justify-between text-sm text-gray-500">

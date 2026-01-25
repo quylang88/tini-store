@@ -1,9 +1,15 @@
-import { getWarehouseLabel } from "../inventory/warehouseUtils";
+import {
+  getWarehouseLabel,
+  getDefaultWarehouse,
+  resolveWarehouseKey,
+} from "../inventory/warehouseUtils";
 
 export const getOrderDisplayName = (order) => {
   // Nếu là bán tại kho thì hiển thị rõ "Tại kho: <địa điểm>" để nhận biết nhanh.
   if (order?.orderType === "warehouse") {
-    const warehouseLabel = getWarehouseLabel(order?.warehouse || "lamDong");
+    const warehouseLabel = getWarehouseLabel(
+      resolveWarehouseKey(order?.warehouse) || getDefaultWarehouse().key,
+    );
     return `Tại kho: ${warehouseLabel}`;
   }
   const name = (order?.customerName || "").trim();
