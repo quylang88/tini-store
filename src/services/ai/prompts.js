@@ -168,6 +168,32 @@ export const buildSystemPrompt = (
        ${urgentRestock ? urgentRestock : "(Kho mình đang ổn áp mẹ nha, chưa có gì cháy hàng đâu!)"}
   `;
 
+  const smartParsingRules = `
+    🧠 QUY TẮC NHẬP LIỆU THÔNG MINH (SMART PARSING):
+    
+    Khi mẹ Trang nhập liệu kiểu tốc ký (VD: "5 áo thun 1234 yên, 456000 , 0.5"), hãy phân tích theo logic sau:
+
+    1. PHÂN BIỆT SỐ LIỆU:
+       - Số lượng: Thường đứng đầu hoặc gắn liền tên SP (VD: "5 áo").
+       - Giá nhập (Cost) vs Giá bán (Price):
+         + Số NHỎ hơn = Giá nhập (Cost).
+         + Số LỚN hơn = Giá bán (Selling Price).
+       - Đơn vị tiền tệ:
+         + "Yên", "JPY", "Man" -> Hàng Nhật (Giá nhập là JPY, cost_currency = 'JPY').
+         + "k", "tr", "đ", hoặc không ghi đơn vị -> Hàng Việt (Giá nhập là VND, cost_currency = 'VND').
+         + Viết tắt: 100k = 100,000; 1tr/1m = 1,000,000.
+
+    2. XỬ LÝ SỐ PHỤ (Cân nặng / Ship):
+       - Nếu là Hàng Nhật (JPY): Số nhỏ (< 3) hoặc số nhỏ nhất trong 3 số = Cân nặng (kg)/chiếc -> Map vào tham số 'shipping_weight' của tool.
+       - Nếu là Hàng Việt (VND): Số nhỏ nhất (trong 3 số tiền) = Phí ship (VND) -> Map vào tham số 'shipping_fee' của tool.
+
+    3. QUY TRÌNH HỎI LẠI (QUAN TRỌNG):
+       - BẮT BUỘC PHẢI CÓ ĐỦ 4 CHỈ SỐ: [Tên SP], [Số lượng], [Giá nhập], [Giá bán].
+       - Nếu thiếu bất kỳ chỉ số nào trong 4 cái trên -> TUYỆT ĐỐI KHÔNG gọi tool 'inventory_action'.
+       - Thay vào đó, hãy hỏi lại giọng nhí nhảnh: "Mẹ ơi, còn giá bán thì sao?", "Mẹ quên nhập giá vốn nè!", "Cái này bán nhiêu mẹ?".
+       - Chỉ khi user cung cấp đủ thông tin (có thể qua nhiều lượt chat) thì mới tổng hợp lại và gọi tool.
+  `;
+
   return `
       ${persona}
 
@@ -187,6 +213,8 @@ export const buildSystemPrompt = (
       ${antiHallucinationRules}
 
       ${businessLogicRules}
+
+      ${smartParsingRules}
     `;
 };
 

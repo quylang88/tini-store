@@ -164,7 +164,7 @@ const ToolConfirmationBubble = ({ message, onConfirm, onCancel }) => {
           ) : (
             <>
               <Check className="w-4 h-4" />
-              <span>Xác nhận ngay</span>
+              <span>Xác nhận</span>
             </>
           )}
         </button>

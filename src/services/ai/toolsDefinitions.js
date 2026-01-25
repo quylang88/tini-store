@@ -50,6 +50,11 @@ export const INVENTORY_TOOLS = [
             description:
               "(Chỉ Import) Phí vận chuyển (VND) phân bổ cho lô hàng này (nếu có).",
           },
+          shipping_weight: {
+            type: "number",
+            description:
+              "(Chỉ Import) Cân nặng (kg) của 1 sản phẩm (nếu là hàng Nhật).",
+          },
           selling_price: {
             type: "number",
             description:

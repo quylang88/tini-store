@@ -6,7 +6,12 @@ import {
   resolveWarehouseKey,
 } from "../../utils/inventory/warehouseUtils";
 
-export const useToolExecution = ({ products, setProducts, setOrders }) => {
+export const useToolExecution = ({
+  products,
+  setProducts,
+  setOrders,
+  settings,
+}) => {
   const executeTool = useCallback(
     async (toolCallId, functionName, args) => {
       // Return format: { success: boolean, message: string }
@@ -23,6 +28,7 @@ export const useToolExecution = ({ products, setProducts, setOrders }) => {
         cost_price,
         cost_currency, // 'VND' | 'JPY'
         shipping_fee,
+        shipping_weight, // Cân nặng (kg) nếu là hàng Nhật
         selling_price,
         note,
       } = args;
@@ -64,12 +70,33 @@ export const useToolExecution = ({ products, setProducts, setOrders }) => {
         let updatedProduct = null;
         let isNewProduct = false;
 
+        // Xử lý phí vận chuyển và cân nặng
+        let finalShipping = shipping_fee
+          ? { feeVnd: Number(shipping_fee) }
+          : null;
+
+        // Logic tự động tính cước nếu là hàng Nhật (JPY) và có cân nặng
+        if (cost_currency === "JPY" && shipping_weight) {
+          const weight = Number(shipping_weight);
+          const rate = Number(settings?.exchangeRate) || 170; // Fallback 170 nếu chưa config
+          const feeJpy = Math.round(weight * 900); // 900 JPY/kg (Hardcode theo rule shop)
+          const feeVnd = Math.round(feeJpy * rate);
+
+          finalShipping = {
+            method: "jp",
+            weightKg: weight,
+            feeJpy,
+            feeVnd,
+            exchangeRate: rate,
+          };
+        }
+
         const lotData = {
           quantity: qty,
           cost: Number(cost_price) || 0,
           costJpy: cost_currency === "JPY" ? Number(cost_price) || 0 : 0,
           warehouse: targetWarehouse,
-          shipping: shipping_fee ? { feeVnd: Number(shipping_fee) } : null,
+          shipping: finalShipping,
           createdAt: new Date().toISOString(),
         };
 
@@ -187,7 +214,7 @@ export const useToolExecution = ({ products, setProducts, setOrders }) => {
 
       return { success: false, message: "Hành động không hợp lệ." };
     },
-    [products, setProducts, setOrders],
+    [products, setProducts, setOrders, settings],
   );
 
   return { executeTool };
