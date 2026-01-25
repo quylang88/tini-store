@@ -21,7 +21,7 @@ import useImagePreloader from "./hooks/ui/useImagePreloader";
 import { exportDataToJSON } from "./utils/file/fileUtils";
 import { sendNotification } from "./utils/common/notificationUtils";
 import useDailyGreeting from "./hooks/core/useDailyGreeting";
-import { getRandomGreeting } from "./constants/assistantGreetings";
+import { getRandomGreeting } from "./services/ai/chatHelpers";
 
 // Định nghĩa thứ tự tab để xác định hướng chuyển cảnh
 const TAB_ORDER = {

@@ -13,9 +13,9 @@ import { callGeminiAPI, callGroqAPI, searchWeb } from "./ai/providers";
 import { buildSystemPrompt, buildSummarizePrompt } from "./ai/prompts";
 import {
   getCurrentLocation,
-  createResponse,
   getAddressFromCoordinates,
-} from "./ai/utils";
+} from "./ai/locationUtils";
+import { createResponse } from "./ai/chatHelpers";
 
 // --- CẤU HÌNH MEMORY ---
 const SLIDING_WINDOW_SIZE = 6;
