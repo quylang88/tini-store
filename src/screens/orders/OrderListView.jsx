@@ -25,9 +25,19 @@ const OrderListView = ({
 
   // Memoize sorted orders to avoid re-sorting on every render
   const sortedOrders = useMemo(() => {
-    return [...orders].sort(
-      (a, b) => new Date(b.date || 0) - new Date(a.date || 0),
-    );
+    return [...orders].sort((a, b) => {
+      const dateA = a.date || "";
+      const dateB = b.date || "";
+
+      // Optimize for ISO strings (common case)
+      if (typeof dateA === "string" && typeof dateB === "string") {
+        if (dateB === dateA) return 0;
+        return dateB > dateA ? 1 : -1;
+      }
+
+      // Fallback for legacy/numeric timestamps
+      return new Date(dateB || 0) - new Date(dateA || 0);
+    });
   }, [orders]);
 
   return (
