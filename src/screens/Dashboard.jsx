@@ -67,7 +67,7 @@ const Dashboard = ({ products, orders, onOpenDetail }) => {
 
       {/* Nội dung cuộn */}
       <div
-        className="h-full overflow-y-auto min-h-0 p-4 pt-[calc(80px+env(safe-area-inset-top))] space-y-4 pb-24 animate-fade-in"
+        className="h-full overflow-y-auto min-h-0 p-4 pt-[calc(80px+env(safe-area-inset-top))] space-y-4 pb-24 animate-fade-in overscroll-contain"
         onScroll={handleScroll}
       >
         {/* Nhãn tiêu đề */}
@@ -114,7 +114,7 @@ const Dashboard = ({ products, orders, onOpenDetail }) => {
               icon={ArchiveX}
               label="Hết hàng"
               value={outOfStockProducts.length}
-              className="bg-slate-400 shadow-slate-200 cursor-pointer active:scale-95 transition-transform"
+              className="bg-slate-400 shadow-slate-200"
               onClick={() => setShowOutOfStockModal(true)}
             />
           )}
@@ -124,7 +124,7 @@ const Dashboard = ({ products, orders, onOpenDetail }) => {
               icon={AlertTriangle}
               label="Hàng tồn"
               value={slowMovingProducts.length}
-              className="bg-violet-400 shadow-violet-200 cursor-pointer active:scale-95 transition-transform"
+              className="bg-violet-400 shadow-violet-200"
               onClick={() => setShowInventoryWarningModal(true)}
             />
           )}

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { processQuery } from "../../services/aiAssistantService";
-import { getRandomGreeting } from "../../constants/assistantGreetings";
+import { getRandomGreeting } from "../../services/ai/chatHelpers";
 
 export const useAssistantChat = ({
   messages,

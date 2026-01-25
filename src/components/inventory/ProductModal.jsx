@@ -3,7 +3,11 @@ import {
   formatInputNumber,
   formatNumber,
 } from "../../utils/formatters/formatUtils";
-import { getWarehouseLabel } from "../../utils/inventory/warehouseUtils";
+import {
+  getWarehouseLabel,
+  getWarehouses,
+  resolveWarehouseKey,
+} from "../../utils/inventory/warehouseUtils";
 import SheetModal from "../../components/modals/SheetModal";
 import Button from "../../components/button/Button";
 import useModalCache from "../../hooks/ui/useModalCache";
@@ -323,10 +327,7 @@ const ProductModal = ({
               Tồn kho nhập về
             </div>
             <div className="flex gap-2">
-              {[
-                { key: "vinhPhuc", label: "Vĩnh Phúc" },
-                { key: "daLat", label: "Lâm Đồng" },
-              ].map((warehouse) => (
+              {getWarehouses().map((warehouse) => (
                 <button
                   key={warehouse.key}
                   type="button"
@@ -334,7 +335,7 @@ const ProductModal = ({
                     setFormData({ ...formData, warehouse: warehouse.key })
                   }
                   className={`px-2 py-1 text-[10px] font-semibold rounded border transition ${
-                    formData.warehouse === warehouse.key
+                    formData.warehouse === resolveWarehouseKey(warehouse.key)
                       ? "bg-rose-500 text-white border-rose-500"
                       : "bg-transparent text-rose-700 border-rose-200 active:border-rose-400"
                   }`}

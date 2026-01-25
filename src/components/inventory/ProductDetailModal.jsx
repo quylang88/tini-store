@@ -1,9 +1,5 @@
 import React from "react";
 import { formatNumber } from "../../utils/formatters/formatUtils";
-import {
-  getLatestCost,
-  getLatestLot,
-} from "../../utils/inventory/purchaseUtils";
 import { getWarehouseLabel } from "../../utils/inventory/warehouseUtils";
 import SheetModal from "../../components/modals/SheetModal";
 import useModalCache from "../../hooks/ui/useModalCache";
@@ -17,8 +13,6 @@ const ProductDetailModal = ({ product, onClose, onEditLot }) => {
   // Nếu chưa từng có sản phẩm nào được chọn thì không render gì cả.
   if (!cachedProduct) return null;
 
-  const latestLot = getLatestLot(cachedProduct);
-  const latestCost = getLatestCost(cachedProduct);
   // Sort lots by newest date first
   const lots = [...(cachedProduct.purchaseLots || [])].sort(
     (a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0),
@@ -43,12 +37,6 @@ const ProductDetailModal = ({ product, onClose, onEditLot }) => {
           <div className="text-sm font-semibold text-amber-600">
             Giá bán: {formatNumber(cachedProduct.price)}đ
           </div>
-          <div className="text-xs text-gray-600 mt-1">
-            Giá nhập mới nhất: {formatNumber(latestCost)}đ
-            {latestLot
-              ? ` • Kho: ${getWarehouseLabel(latestLot.warehouse)}`
-              : ""}
-          </div>
         </div>
 
         <div className="space-y-3">
@@ -58,47 +46,85 @@ const ProductDetailModal = ({ product, onClose, onEditLot }) => {
             </div>
           ) : (
             lots.map((lot) => {
-              const salePrice = Number(cachedProduct.price) || 0;
-              const shippingPerUnit =
-                Number(lot.shipping?.perUnitVnd ?? lot.shipping?.feeVnd) || 0;
-              const unitCost = (Number(lot.cost) || 0) + shippingPerUnit;
-              const profitAtCurrentPrice = salePrice - unitCost;
+              const originalQty =
+                Number(lot.originalQuantity) || Number(lot.quantity);
+              const currentQty = Number(lot.quantity) || 0;
+
+              // Status Logic
+              const isSoldOut = currentQty === 0;
+              const isLowStock = !isSoldOut && currentQty < originalQty * 0.15;
+
+              // Cost Display Logic
+              const exchangeRate = Number(lot.shipping?.exchangeRate) || 0;
+              const isJpImport = lot.shipping?.method === "jp";
+
+              let costDisplay = `${formatNumber(lot.cost)}đ`;
+              if (isJpImport && exchangeRate > 0) {
+                const costJpy = Math.round(lot.cost / exchangeRate);
+                costDisplay = `${formatNumber(costJpy)}¥ (~${formatNumber(
+                  lot.cost,
+                )}đ)`;
+              }
+
+              // Shipping Display Logic
+              let shippingDisplay = null;
+              if (lot.shipping) {
+                if (isJpImport) {
+                  const weight = lot.shipping.weightKg || 0;
+                  const feeJpy = lot.shipping.feeJpy || 0;
+                  shippingDisplay = `${weight}kg (${formatNumber(feeJpy)}¥)`;
+                } else {
+                  shippingDisplay = `${formatNumber(lot.shipping.feeVnd)}đ`;
+                }
+              }
+
               return (
                 <button
                   key={lot.id}
                   type="button"
-                  onClick={() => onEditLot?.(lot)}
-                  className="w-full text-left border border-rose-100 rounded-xl p-3 space-y-1 active:border-rose-200 bg-rose-50 transition"
+                  disabled={isSoldOut}
+                  onClick={() => !isSoldOut && onEditLot?.(lot)}
+                  className={`w-full text-left border rounded-xl p-3 space-y-1 transition ${
+                    isSoldOut
+                      ? "border-gray-200 bg-gray-50 opacity-70 cursor-not-allowed"
+                      : "border-rose-100 bg-rose-50 active:border-rose-200"
+                  }`}
                 >
                   <div className="flex items-center justify-between text-sm text-rose-700">
-                    <span className="font-semibold">
-                      {formatNumber(lot.cost)}đ
-                    </span>
-                    <span className="text-xs text-rose-600">
+                    <span className="font-semibold">{costDisplay}</span>
+                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-white border border-rose-200 text-rose-600">
                       {getWarehouseLabel(lot.warehouse)}
                     </span>
                   </div>
-                  <div className="text-xs text-amber-600">
-                    Số lượng:{" "}
-                    <span className="font-semibold">{lot.quantity}</span>
-                  </div>
-                  <div className="text-xs text-emerald-700">
-                    Lợi nhuận theo giá hiện tại:{" "}
-                    <span className="font-semibold">
-                      {formatNumber(profitAtCurrentPrice)}đ
-                    </span>
-                  </div>
-                  {lot.shipping && (
+
+                  {shippingDisplay && (
                     <div className="text-xs text-gray-600">
-                      Phí gửi: {formatNumber(lot.shipping.feeVnd || 0)}đ
-                      {lot.shipping.method === "jp"
-                        ? ` (${formatNumber(lot.shipping.feeJpy || 0)}¥)`
-                        : ""}
+                      Phí gửi: {shippingDisplay}
                     </div>
                   )}
-                  <div className="text-[10px] text-gray-400">
+
+                  <div className="flex items-center justify-between mt-2 pt-2 border-t border-rose-100/50">
+                    <div className="text-xs text-amber-700 font-medium">
+                      Nhập <span className="font-bold">{originalQty}</span> -
+                      Tồn <span className="font-bold">{currentQty}</span>
+                    </div>
+                    <div className="flex gap-1">
+                      {isLowStock && (
+                        <span className="text-[10px] font-bold text-orange-600 bg-orange-100 px-2 py-0.5 rounded-full border border-orange-200">
+                          Sắp hết
+                        </span>
+                      )}
+                      {isSoldOut && (
+                        <span className="text-[10px] font-bold text-gray-500 bg-gray-200 px-2 py-0.5 rounded-full border border-gray-300">
+                          Đã hết
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="text-[10px] text-gray-400 mt-1">
                     {lot.createdAt
-                      ? new Date(lot.createdAt).toLocaleString()
+                      ? new Date(lot.createdAt).toLocaleString("vi-VN")
                       : ""}
                   </div>
                 </button>

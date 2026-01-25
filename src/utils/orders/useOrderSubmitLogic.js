@@ -1,11 +1,15 @@
 // Hook xử lý logic tạo/cập nhật đơn hàng
 import { syncProductsStock } from "./orderStock";
+import {
+  getDefaultWarehouse,
+  getWarehouses,
+  resolveWarehouseKey,
+} from "../inventory/warehouseUtils";
 
 const DEFAULT_STATUS = "shipping";
-const DEFAULT_WAREHOUSE = "vinhPhuc";
-const DEFAULT_ORDER_TYPE = "delivery";
 
 const useOrderSubmitLogic = ({
+  products,
   setProducts,
   orders,
   setOrders,
@@ -84,7 +88,7 @@ const useOrderSubmitLogic = ({
     return {
       items: orderItems,
       total: totalAmount,
-      warehouse: selectedWarehouse,
+      warehouse: resolveWarehouseKey(selectedWarehouse),
       orderType,
       customerName: customerName.trim(),
       customerAddress: customerAddress.trim(),
@@ -101,29 +105,33 @@ const useOrderSubmitLogic = ({
 
     // Logic tên khách mặc định cho đơn bán tại kho nếu bỏ trống
     if (payload.orderType === "warehouse" && !payload.customerName) {
-      if (payload.warehouse === "vinhPhuc") {
-        payload.customerName = "Mẹ Hương";
-      } else if (payload.warehouse === "daLat") {
-        payload.customerName = "Mẹ Nguyệt";
+      const warehouseConfig = getWarehouses().find(
+        (w) => w.key === payload.warehouse,
+      );
+      if (warehouseConfig && warehouseConfig.defaultCustomerName) {
+        payload.customerName = warehouseConfig.defaultCustomerName;
       }
     }
 
-    // Giờ chỉ sync stock, không sync price.
-    setProducts((prevProducts) => {
-      // Lấy danh sách sản phẩm cũ nếu đang sửa đơn để sync stock
-      const previousItems = isUpdate ? orderBeingEdited.items : [];
-      const previousWarehouse = isUpdate
-        ? orderBeingEdited.warehouse || DEFAULT_WAREHOUSE
-        : null;
+    // Tính toán trạng thái sản phẩm mới đồng bộ để đảm bảo các item trong đơn được cập nhật với allocations
+    // TRƯỚC KHI lưu đơn.
+    // Lấy danh sách sản phẩm cũ nếu đang sửa đơn để sync stock
+    const previousItems = isUpdate ? orderBeingEdited.items : [];
+    const previousWarehouse = isUpdate
+      ? resolveWarehouseKey(orderBeingEdited.warehouse) ||
+        getDefaultWarehouse().key
+      : null;
 
-      return syncProductsStock(
-        prevProducts,
-        items,
-        previousItems,
-        warehouse,
-        previousWarehouse,
-      );
-    });
+    // syncProductsStock sẽ thay đổi trực tiếp 'items' để thêm lotAllocations
+    const nextProducts = syncProductsStock(
+      products, // Sử dụng prop products (giả định là đủ mới)
+      items,
+      previousItems,
+      warehouse,
+      previousWarehouse,
+    );
+
+    setProducts(nextProducts);
 
     if (isUpdate) {
       // Khi update, giữ status cũ. Nếu muốn reset status theo loại đơn thì logic phức tạp hơn

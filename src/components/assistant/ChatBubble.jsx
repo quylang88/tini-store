@@ -2,7 +2,7 @@ import React, { useRef, useEffect, useState } from "react";
 import { formatCurrency } from "../../utils/formatters/formatUtils";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
-import { Copy, Type } from "lucide-react";
+import { Copy, Type, Check } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { triggerHaptic, HAPTIC_PATTERNS } from "../../utils/common/haptics";
 
@@ -31,7 +31,9 @@ const ChatBubble = ({ message, theme, swipeX }) => {
   const [showMenu, setShowMenu] = useState(false);
   const [menuPosition, setMenuPosition] = useState("bottom"); // "top" or "bottom"
   const [enableSelection, setEnableSelection] = useState(false);
+  const [copied, setCopied] = useState(false);
   const pressTimer = useRef(null);
+  const copyTimeoutRef = useRef(null);
 
   // Cuộn xuống cuối khi có tin nhắn mới
   useEffect(() => {
@@ -87,9 +89,23 @@ const ChatBubble = ({ message, theme, swipeX }) => {
   // --- MENU ACTIONS ---
   const handleCopy = () => {
     navigator.clipboard.writeText(message.content);
-    setShowMenu(false);
-    setIsPressed(false);
+    setCopied(true);
+    triggerHaptic(HAPTIC_PATTERNS.success);
+
+    if (copyTimeoutRef.current) clearTimeout(copyTimeoutRef.current);
+
+    copyTimeoutRef.current = setTimeout(() => {
+      setCopied(false);
+      setShowMenu(false);
+      setIsPressed(false);
+    }, 1000);
   };
+
+  useEffect(() => {
+    return () => {
+      if (copyTimeoutRef.current) clearTimeout(copyTimeoutRef.current);
+    };
+  }, []);
 
   const handleSelectText = () => {
     setEnableSelection(true);
@@ -237,8 +253,12 @@ const ChatBubble = ({ message, theme, swipeX }) => {
                 onClick={handleCopy}
                 className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 active:bg-gray-100 text-left text-sm font-medium transition-colors"
               >
-                <Copy size={16} className={currentTheme.inputIconColor} /> Sao
-                chép
+                {copied ? (
+                  <Check size={16} className="text-green-500" />
+                ) : (
+                  <Copy size={16} className={currentTheme.inputIconColor} />
+                )}
+                {copied ? "Đã sao chép" : "Sao chép"}
               </button>
               <div className="h-[1px] bg-gray-100 mx-2"></div>
               <button
@@ -346,7 +366,7 @@ const ChatBubble = ({ message, theme, swipeX }) => {
           )}
       </motion.div>
 
-      {/* Thời gian - Hiện khi vuốt sang trái (như iMessage) */}
+      {/* Thời gian - Hiện khi vuốt sang trái */}
       <div className="absolute right-[-60px] flex items-center h-full top-0">
         <span className="text-xs text-gray-400 font-medium select-none">
           {message.timestamp && format(new Date(message.timestamp), "HH:mm")}
@@ -356,4 +376,5 @@ const ChatBubble = ({ message, theme, swipeX }) => {
   );
 };
 
-export default ChatBubble;
+// Optimization: Memoize to prevent re-renders of list items when parent updates
+export default React.memo(ChatBubble);

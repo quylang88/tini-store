@@ -5,8 +5,13 @@ import { formatNumber } from "../../utils/formatters/formatUtils";
 import {
   getLatestCost,
   getLatestUnitCost,
+  getLatestLot,
 } from "../../utils/inventory/purchaseUtils";
-import { normalizeWarehouseStock } from "../../utils/inventory/warehouseUtils";
+import {
+  normalizeWarehouseStock,
+  getWarehouses,
+  resolveWarehouseKey,
+} from "../../utils/inventory/warehouseUtils";
 
 // Sử dụng React.memo để ngăn component render lại không cần thiết
 // khi props (như product) không thay đổi. Điều này giúp tối ưu hiệu năng
@@ -21,10 +26,14 @@ const ProductListItem = memo(
     onEditBasicInfo,
   }) => {
     const latestCost = getLatestCost(product);
+    const latestLot = getLatestLot(product);
+    const isJpy = latestLot && Number(latestLot.costJpy) > 0;
+
     const latestUnitCost = getLatestUnitCost(product);
     const expectedProfit = (Number(product.price) || 0) - latestUnitCost;
     const hasProfitData = Number(product.price) > 0 && latestUnitCost > 0;
     const stockByWarehouse = normalizeWarehouseStock(product);
+    const warehouses = getWarehouses();
 
     return (
       <motion.div
@@ -35,7 +44,7 @@ const ProductListItem = memo(
         whileTap={{ scale: 0.96 }}
         transition={{ duration: 0.2 }}
         onClick={() => onOpenDetail(product)}
-        className="bg-amber-50 p-3 rounded-xl shadow-sm border border-amber-100 flex gap-3 items-start cursor-pointer hover:shadow-md transition-shadow"
+        className="bg-amber-50 p-3 rounded-xl shadow-sm border border-amber-100 flex gap-3 items-start cursor-pointer hover:shadow-md transition-shadow select-none"
       >
         <div className="w-16 h-16 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0 border border-gray-200 relative">
           {product.image ? (
@@ -78,22 +87,32 @@ const ProductListItem = memo(
               </div>
 
               {/* Logic hiển thị kho dựa trên activeWarehouse */}
-              <div
-                className={`text-amber-600 ${
-                  activeWarehouse !== "all" ? "invisible" : ""
-                }`}
-              >
-                Vĩnh Phúc: {stockByWarehouse.vinhPhuc} sp
-              </div>
+              {activeWarehouse === "all" ? (
+                warehouses.map((w) => {
+                  const qty = stockByWarehouse[w.key] || 0;
+                  if (qty <= 0) return null;
+                  return (
+                    <div key={w.key} className="text-amber-600">
+                      {w.label}: {qty} sp
+                    </div>
+                  );
+                })
+              ) : (
+                <div className="text-amber-600">
+                  {warehouses.find(
+                    (w) => w.key === resolveWarehouseKey(activeWarehouse),
+                  )?.label || activeWarehouse}
+                  :{" "}
+                  {stockByWarehouse[resolveWarehouseKey(activeWarehouse)] || 0}{" "}
+                  sp
+                </div>
+              )}
 
-              <div className="text-amber-600">
-                {activeWarehouse === "vinhPhuc"
-                  ? `Vĩnh Phúc: ${stockByWarehouse.vinhPhuc} sp`
-                  : `Lâm Đồng: ${stockByWarehouse.daLat} sp`}
-              </div>
-
-              <div className="text-[10px] text-amber-500">
-                Giá nhập mới nhất: {formatNumber(latestCost)}đ
+              <div className="text-amber-500">
+                Giá nhập mới nhất:{" "}
+                {isJpy
+                  ? `${formatNumber(latestLot.costJpy)}¥`
+                  : `${formatNumber(latestCost)}đ`}
               </div>
             </div>
           </div>
@@ -102,7 +121,7 @@ const ProductListItem = memo(
           <button
             onClick={(event) => {
               event.stopPropagation();
-              onDelete(product.id);
+              onDelete(product);
             }}
             className="w-8 h-8 rounded-full bg-rose-50 text-rose-600 active:bg-rose-100 flex items-center justify-center shadow-sm border border-rose-300"
             aria-label={`Xoá ${product.name}`}

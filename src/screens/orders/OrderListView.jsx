@@ -25,9 +25,19 @@ const OrderListView = ({
 
   // Memoize sorted orders to avoid re-sorting on every render
   const sortedOrders = useMemo(() => {
-    return [...orders].sort(
-      (a, b) => new Date(b.date || 0) - new Date(a.date || 0),
-    );
+    return [...orders].sort((a, b) => {
+      const dateA = a.date || "";
+      const dateB = b.date || "";
+
+      // Optimize for ISO strings (common case)
+      if (typeof dateA === "string" && typeof dateB === "string") {
+        if (dateB === dateA) return 0;
+        return dateB > dateA ? 1 : -1;
+      }
+
+      // Fallback for legacy/numeric timestamps
+      return new Date(dateB || 0) - new Date(dateA || 0);
+    });
   }, [orders]);
 
   return (
@@ -57,7 +67,7 @@ const OrderListView = ({
       </AnimatePresence>
 
       <div
-        className="h-full overflow-y-auto p-3 pt-[calc(80px+env(safe-area-inset-top))] pb-24 space-y-3 min-h-0"
+        className="h-full overflow-y-auto p-3 pt-[calc(80px+env(safe-area-inset-top))] pb-24 space-y-3 min-h-0 overscroll-y-contain"
         onScroll={handleScroll}
       >
         {sortedOrders.map((order) => (
@@ -72,7 +82,7 @@ const OrderListView = ({
           />
         ))}
         {orders.length === 0 && (
-          <div className="flex flex-col items-center justify-center mt-20 text-gray-400">
+          <div className="flex flex-col items-center justify-center mt-20 text-gray-500">
             <ShoppingCart size={48} className="mb-2 opacity-20" />
             <p>Chưa có đơn hàng nào</p>
           </div>

@@ -1,10 +1,15 @@
-import { normalizeString } from "../formatters/formatUtils";
-import { normalizeWarehouseStock } from "./warehouseUtils";
+import { normalizeString } from "../formatters/formatUtils.js";
+import {
+  normalizeWarehouseStock,
+  getAllWarehouseKeys,
+  getDefaultWarehouse,
+  resolveWarehouseKey,
+} from "./warehouseUtils.js";
 import {
   addPurchaseLot,
   getLatestCost,
   normalizePurchaseLots,
-} from "./purchaseUtils";
+} from "./purchaseUtils.js";
 
 // Gom validation vào 1 chỗ để dễ test và dễ review.
 export const getInventoryValidationError = ({
@@ -24,7 +29,7 @@ export const getInventoryValidationError = ({
     };
   }
 
-  // Check trùng tên sản phẩm (không tính sản phẩm đang sửa)
+  // Kiểm tra trùng tên sản phẩm (không tính sản phẩm đang sửa)
   const duplicateName = products.find(
     (product) =>
       normalizeString(product.name) === normalizeString(formData.name) &&
@@ -49,7 +54,7 @@ export const getInventoryValidationError = ({
     };
   }
 
-  // Check trùng Barcode
+  // Kiểm tra trùng Barcode
   if (formData.barcode) {
     const duplicateBarcode = products.find(
       (p) =>
@@ -113,8 +118,11 @@ export const buildNextProductFromForm = ({
   settings,
 }) => {
   const costValue = Number(formData.cost) || 0;
+  const costJpyValue =
+    formData.costCurrency === "JPY" ? Number(formData.costJPY) || 0 : 0;
   const quantityValue = Number(formData.quantity) || 0;
-  const warehouseKey = formData.warehouse || "daLat";
+  const defaultWarehouseKey = getDefaultWarehouse().key;
+  const warehouseKey = formData.warehouse || defaultWarehouseKey;
 
   const shippingWeight = Number(formData.shippingWeightKg) || 0;
   const exchangeRateValue =
@@ -126,19 +134,28 @@ export const buildNextProductFromForm = ({
       ? Math.round(feeJpy * exchangeRateValue)
       : Number(formData.shippingFeeVnd) || 0;
 
+  const allKeys = getAllWarehouseKeys();
+  const initialStock = {};
+  allKeys.forEach((key) => {
+    initialStock[key] = 0;
+  });
+
   const baseProduct = editingProduct
     ? normalizePurchaseLots(editingProduct)
     : {
         id: Date.now().toString(),
         purchaseLots: [],
-        stockByWarehouse: { daLat: 0, vinhPhuc: 0 },
+        stockByWarehouse: { ...initialStock },
         stock: 0,
       };
 
   const existingStock = normalizeWarehouseStock(baseProduct);
+  const resolvedWarehouseKey = resolveWarehouseKey(warehouseKey);
+
   const nextStockByWarehouse = {
     ...existingStock,
-    [warehouseKey]: existingStock[warehouseKey] + quantityValue,
+    [resolvedWarehouseKey]:
+      (existingStock[resolvedWarehouseKey] || 0) + quantityValue,
   };
 
   let nextProduct = {
@@ -150,7 +167,10 @@ export const buildNextProductFromForm = ({
     cost: costValue || getLatestCost(baseProduct),
     image: formData.image,
     stockByWarehouse: nextStockByWarehouse,
-    stock: nextStockByWarehouse.daLat + nextStockByWarehouse.vinhPhuc,
+    stock: Object.values(nextStockByWarehouse).reduce(
+      (sum, val) => sum + val,
+      0,
+    ),
   };
 
   // Lưu lại từng lần nhập hàng thành "lô giá nhập" để quản lý tồn kho theo giá.
@@ -169,11 +189,21 @@ export const buildNextProductFromForm = ({
         const updatedPrice = Number(formData.price) || 0;
 
         if (isCurrentLot) {
+          // Tính lại originalQuantity dựa trên delta của quantity (Remaining)
+          // quantityValue ở đây là "Tồn kho thực tế" do user nhập
+          const oldRemaining = Number(lot.quantity) || 0;
+          const newRemaining = quantityValue;
+          const delta = newRemaining - oldRemaining;
+          const oldOriginal = Number(lot.originalQuantity) || oldRemaining;
+          const newOriginal = Math.max(newRemaining, oldOriginal + delta);
+
           return {
             ...lot,
             cost: costValue,
-            quantity: quantityValue,
-            warehouse: warehouseKey,
+            costJpy: costJpyValue,
+            quantity: newRemaining,
+            originalQuantity: newOriginal,
+            warehouse: resolvedWarehouseKey,
             shipping: {
               ...shippingInfo,
               perUnitVnd: feeVnd,
@@ -188,29 +218,34 @@ export const buildNextProductFromForm = ({
           priceAtPurchase: updatedPrice,
         };
       });
+
+      // Tính toán lại tồn kho theo kho một cách động
       const adjustedStock = nextLots.reduce(
         (acc, lot) => {
-          const nextWarehouse = lot.warehouse || "daLat";
+          const nextWarehouse =
+            resolveWarehouseKey(lot.warehouse) || defaultWarehouseKey;
           const lotQty = Number(lot.quantity) || 0;
           return {
             ...acc,
             [nextWarehouse]: (acc[nextWarehouse] || 0) + lotQty,
           };
         },
-        { daLat: 0, vinhPhuc: 0 },
+        { ...initialStock },
       );
+
       nextProduct = {
         ...nextProduct,
         purchaseLots: nextLots,
         stockByWarehouse: adjustedStock,
-        stock: adjustedStock.daLat + adjustedStock.vinhPhuc,
+        stock: Object.values(adjustedStock).reduce((sum, val) => sum + val, 0),
         cost: getLatestCost({ ...nextProduct, purchaseLots: nextLots }),
       };
     } else {
       nextProduct = addPurchaseLot(nextProduct, {
         cost: costValue,
+        costJpy: costJpyValue,
         quantity: quantityValue,
-        warehouse: warehouseKey,
+        warehouse: resolvedWarehouseKey,
         shipping: shippingInfo,
         priceAtPurchase: Number(formData.price) || 0,
       });

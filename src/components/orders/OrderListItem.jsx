@@ -1,7 +1,11 @@
 import React, { memo } from "react";
 import { motion } from "framer-motion";
 import { formatNumber } from "../../utils/formatters/formatUtils";
-import { getWarehouseLabel } from "../../utils/inventory/warehouseUtils";
+import {
+  getWarehouseLabel,
+  getDefaultWarehouse,
+  resolveWarehouseKey,
+} from "../../utils/inventory/warehouseUtils";
 import { getOrderDisplayName } from "../../utils/orders/orderUtils";
 
 const OrderListItem = memo(
@@ -20,7 +24,9 @@ const OrderListItem = memo(
       : `#${order.id.slice(-4)}`;
     // Hiển thị tên đơn theo tên khách + địa chỉ rút gọn hoặc "Tại kho".
     const orderName = getOrderDisplayName(order);
-    const warehouseLabel = getWarehouseLabel(order.warehouse || "daLat");
+    const warehouseLabel = getWarehouseLabel(
+      resolveWarehouseKey(order.warehouse) || getDefaultWarehouse().key,
+    );
     // Với đơn gửi khách, cần hiển thị kho xuất ở hàng trạng thái bên phải.
     const shouldShowWarehouseOnStatus = order.orderType !== "warehouse";
     // Lợi nhuận = (giá bán - giá vốn) - phí gửi để xem nhanh hiệu quả đơn hàng.
@@ -89,7 +95,7 @@ const OrderListItem = memo(
           <button
             onClick={(event) => {
               event.stopPropagation();
-              handleTogglePaid(order.id);
+              handleTogglePaid(order);
             }}
             className={`text-xs font-semibold px-3 py-1.5 rounded-full border transition active:scale-95 ${
               isPaid
@@ -111,7 +117,7 @@ const OrderListItem = memo(
           <button
             onClick={(event) => {
               event.stopPropagation();
-              handleCancelOrder(order.id);
+              handleCancelOrder(order);
             }}
             className="text-xs font-semibold text-red-600 bg-red-50 border border-red-300 px-3 py-1.5 rounded-full active:scale-95 transition"
           >

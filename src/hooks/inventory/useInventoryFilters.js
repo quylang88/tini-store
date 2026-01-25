@@ -1,6 +1,9 @@
 import { useMemo, useCallback } from "react";
 import { normalizeString } from "../../utils/formatters/formatUtils";
-import { normalizeWarehouseStock } from "../../utils/inventory/warehouseUtils";
+import {
+  normalizeWarehouseStock,
+  resolveWarehouseKey,
+} from "../../utils/inventory/warehouseUtils";
 import useProductFilterSort from "../core/useProductFilterSort";
 
 const useInventoryFilters = ({
@@ -12,20 +15,18 @@ const useInventoryFilters = ({
   formDataName,
   sortConfig = { key: "date", direction: "desc" },
 }) => {
-  // Define custom filter function for Warehouse availability
+  // Định nghĩa hàm lọc tùy chỉnh cho tính khả dụng của kho
   const checkWarehouseStock = useCallback(
     (product) => {
       const stockByWarehouse = normalizeWarehouseStock(product);
-      return (
-        warehouseFilter === "all" ||
-        (warehouseFilter === "daLat" && stockByWarehouse.daLat > 0) ||
-        (warehouseFilter === "vinhPhuc" && stockByWarehouse.vinhPhuc > 0)
-      );
+      if (warehouseFilter === "all") return true;
+      const resolvedKey = resolveWarehouseKey(warehouseFilter);
+      return (stockByWarehouse[resolvedKey] || 0) > 0;
     },
     [warehouseFilter],
   );
 
-  // Use shared hook for logic
+  // Sử dụng hook chia sẻ cho logic
   const filteredProducts = useProductFilterSort({
     products,
     filterConfig: { searchTerm, activeCategory },

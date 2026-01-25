@@ -1,4 +1,9 @@
-import { normalizeWarehouseStock } from "./warehouseUtils";
+import {
+  normalizeWarehouseStock,
+  getAllWarehouseKeys,
+  getDefaultWarehouse,
+  resolveWarehouseKey,
+} from "./warehouseUtils.js";
 
 const generateLotId = () =>
   `${Date.now()}-${Math.random().toString(16).slice(2, 8)}`;
@@ -6,46 +11,50 @@ const generateLotId = () =>
 export const normalizePurchaseLots = (product = {}) => {
   if (Array.isArray(product.purchaseLots)) {
     const normalizedLots = product.purchaseLots.map((lot) => {
-      if (!lot?.shipping || lot.shipping?.perUnitVnd) {
-        return lot;
-      }
-      const feeVnd = Number(lot.shipping.feeVnd) || 0;
-      return {
+      // Ánh xạ các key kho cũ sang key hiện tại
+      const currentWarehouse = resolveWarehouseKey(lot.warehouse);
+      const normalizedLot = {
         ...lot,
+        warehouse: currentWarehouse || lot.warehouse, // Giữ nguyên nếu không resolve được (mặc dù hàm resolve sẽ trả về fallback)
+      };
+
+      if (!normalizedLot.shipping || normalizedLot.shipping?.perUnitVnd) {
+        return normalizedLot;
+      }
+      const feeVnd = Number(normalizedLot.shipping.feeVnd) || 0;
+      return {
+        ...normalizedLot,
+        originalQuantity:
+          normalizedLot.originalQuantity || normalizedLot.quantity,
         shipping: {
-          ...lot.shipping,
+          ...normalizedLot.shipping,
           perUnitVnd: feeVnd,
         },
       };
     });
     return { ...product, purchaseLots: normalizedLots };
   }
-  const { daLat, vinhPhuc } = normalizeWarehouseStock(product);
+
+  const warehouseStock = normalizeWarehouseStock(product);
   const baseCost = Number(product.cost) || 0;
   const createdAt = product.createdAt || new Date().toISOString();
   const lots = [];
 
-  if (daLat > 0) {
-    lots.push({
-      id: generateLotId(),
-      cost: baseCost,
-      quantity: daLat,
-      warehouse: "daLat",
-      createdAt,
-      shipping: null,
-    });
-  }
-
-  if (vinhPhuc > 0) {
-    lots.push({
-      id: generateLotId(),
-      cost: baseCost,
-      quantity: vinhPhuc,
-      warehouse: "vinhPhuc",
-      createdAt,
-      shipping: null,
-    });
-  }
+  const keys = getAllWarehouseKeys();
+  keys.forEach((key) => {
+    const qty = warehouseStock[key];
+    if (qty > 0) {
+      lots.push({
+        id: generateLotId(),
+        cost: baseCost,
+        quantity: qty,
+        originalQuantity: qty,
+        warehouse: key,
+        createdAt,
+        shipping: null,
+      });
+    }
+  });
 
   return {
     ...product,
@@ -82,11 +91,17 @@ export const getLatestUnitCost = (product = {}) => {
 export const addPurchaseLot = (product, lot) => {
   const quantity = Number(lot.quantity) || 0;
   const shippingFeeVnd = Number(lot.shipping?.feeVnd) || 0;
+  // Sử dụng key đã resolve hoặc mặc định nếu không có
+  const targetWarehouse =
+    resolveWarehouseKey(lot.warehouse) || getDefaultWarehouse().key;
+
   const nextLot = {
     id: lot.id || generateLotId(),
     cost: Number(lot.cost) || 0,
+    costJpy: Number(lot.costJpy) || 0,
     quantity,
-    warehouse: lot.warehouse || "daLat",
+    originalQuantity: quantity,
+    warehouse: targetWarehouse,
     createdAt: lot.createdAt || new Date().toISOString(),
     priceAtPurchase: Number(lot.priceAtPurchase) || 0,
     shipping: lot.shipping
@@ -107,17 +122,22 @@ export const addPurchaseLot = (product, lot) => {
 
 export const consumePurchaseLots = (product, warehouseKey, quantity) => {
   let remaining = Math.max(0, Number(quantity) || 0);
-  if (remaining === 0) return product;
+  if (remaining === 0) return { product, allocations: [] };
 
   // Clone lots để tránh mutation trực tiếp
   const lots = (product.purchaseLots || []).map((lot) => ({ ...lot }));
+  const allocations = [];
 
   // Lọc các lot thuộc kho cần xuất
+  // Sử dụng resolveWarehouseKey để khớp cả key chính và key cũ
+  const targetKey = resolveWarehouseKey(warehouseKey);
+
   const availableLots = lots
     .map((lot, index) => ({ ...lot, originalIndex: index })) // Giữ index gốc để cập nhật lại
-    .filter(
-      (lot) => lot.warehouse === warehouseKey && (Number(lot.quantity) || 0) > 0
-    );
+    .filter((lot) => {
+      const lotWarehouse = resolveWarehouseKey(lot.warehouse);
+      return lotWarehouse === targetKey && (Number(lot.quantity) || 0) > 0;
+    });
 
   // Sắp xếp theo giá nhập (cost) TĂNG DẦN (thấp nhất xuất trước)
   // Nếu giá bằng nhau, ưu tiên lô cũ hơn (createdAt hoặc index nhỏ hơn)
@@ -141,6 +161,32 @@ export const consumePurchaseLots = (product, warehouseKey, quantity) => {
     // Cập nhật lại số lượng trong mảng gốc
     lots[lot.originalIndex].quantity = available - used;
     remaining -= used;
+    allocations.push({ lotId: lot.id, quantity: used });
+  }
+
+  return {
+    product: {
+      ...product,
+      purchaseLots: lots,
+    },
+    allocations,
+  };
+};
+
+export const restorePurchaseLots = (product, allocations) => {
+  if (!allocations || allocations.length === 0) return product;
+
+  // Clone lots
+  const lots = (product.purchaseLots || []).map((lot) => ({ ...lot }));
+
+  for (const alloc of allocations) {
+    const lotIndex = lots.findIndex((l) => l.id === alloc.lotId);
+    if (lotIndex !== -1) {
+      lots[lotIndex].quantity =
+        (Number(lots[lotIndex].quantity) || 0) + (Number(alloc.quantity) || 0);
+    }
+    // Nếu không tìm thấy lot, ta có thể bỏ qua hoặc log error.
+    // Theo yêu cầu "không tạo lot mới", ta chỉ restore vào lot cũ.
   }
 
   return {
@@ -153,11 +199,16 @@ export const restockPurchaseLots = (product, warehouseKey, quantity, cost) => {
   const restockQty = Math.max(0, Number(quantity) || 0);
   if (restockQty === 0) return product;
 
+  // Resolve warehouse key để đảm bảo dùng key chính hiện tại
+  const targetKey =
+    resolveWarehouseKey(warehouseKey) || getDefaultWarehouse().key;
+
   const nextLot = {
     id: generateLotId(),
     cost: Number(cost) || Number(product.cost) || 0,
     quantity: restockQty,
-    warehouse: warehouseKey,
+    originalQuantity: restockQty,
+    warehouse: targetKey,
     createdAt: new Date().toISOString(),
     shipping: null,
   };

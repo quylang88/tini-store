@@ -40,15 +40,103 @@ const useDashboardLogic = ({ products, orders, rangeMode = "dashboard" }) => {
     [rangeMode, currentDate],
   );
 
-  // Map giá vốn theo sản phẩm để tính lợi nhuận ổn định
-  const costMap = useMemo(() => {
-    // Optimization: Use for...of to avoid intermediate array allocation from map()
-    const map = new Map();
+  // Unified Inventory Stats Calculation
+  // Consolidates multiple iterations over `products` into a single pass (O(N)).
+  const {
+    costMap,
+    productMeta,
+    totalCapital,
+    slowMovingProducts,
+    outOfStockProducts,
+  } = useMemo(() => {
+    const costMap = new Map();
+    const productMeta = new Map();
+    const slowMoving = [];
+    const outOfStock = [];
+    let capital = 0;
+
+    const warningDays = 60;
+    const nowTime = currentDate.getTime();
+
     for (const product of products) {
-      map.set(product.id, getLatestUnitCost(product));
+      // 1. Cost Map
+      const unitCost = getLatestUnitCost(product);
+      costMap.set(product.id, unitCost);
+
+      // 2. Product Meta
+      productMeta.set(product.id, product);
+
+      const stock = product.stock || 0;
+
+      // 3. Out of Stock
+      if (stock <= 0) {
+        outOfStock.push(product);
+        // Continue is removed because we still want to process costMap and productMeta
+        // But capital and slow moving require stock > 0
+      } else {
+        // 4. Total Capital
+        if (product.purchaseLots && product.purchaseLots.length > 0) {
+          // Use for...of loop for slightly better performance than reduce
+          let lotSum = 0;
+          for (const lot of product.purchaseLots) {
+            const qty = Number(lot.quantity) || 0;
+            const cost = Number(lot.cost) || 0;
+            lotSum += qty * cost;
+          }
+          capital += lotSum;
+        } else {
+          // Fallback to latest unit cost
+          capital += stock * unitCost;
+        }
+
+        // 5. Slow Moving Products
+        if (currentDate) {
+          let dateToCheckTime = nowTime;
+          // If createdAt exists, start with it
+          if (product.createdAt) {
+            dateToCheckTime = new Date(product.createdAt).getTime();
+          }
+
+          if (product.purchaseLots && product.purchaseLots.length > 0) {
+            let oldestLot = null;
+            for (const lot of product.purchaseLots) {
+              const qty = Number(lot.quantity) || 0;
+              if (qty > 0) {
+                if (!oldestLot) {
+                  oldestLot = lot;
+                } else if (lot.createdAt < oldestLot.createdAt) {
+                  // Direct string comparison is efficient for ISO dates
+                  oldestLot = lot;
+                }
+              }
+            }
+
+            if (oldestLot && oldestLot.createdAt) {
+              dateToCheckTime = new Date(oldestLot.createdAt).getTime();
+            }
+          }
+
+          const diffTime = Math.abs(nowTime - dateToCheckTime);
+          const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+          if (diffDays > warningDays) {
+            slowMoving.push({ ...product, daysNoSale: diffDays });
+          }
+        }
+      }
     }
-    return map;
-  }, [products]);
+
+    // Sort slow moving products
+    slowMoving.sort((a, b) => b.daysNoSale - a.daysNoSale);
+
+    return {
+      costMap,
+      productMeta,
+      totalCapital: capital,
+      slowMovingProducts: slowMoving,
+      outOfStockProducts: outOfStock,
+    };
+  }, [products, currentDate]);
 
   // Chỉ lấy đơn đã thanh toán để tránh lệch doanh thu/lợi nhuận
   const paidOrders = useMemo(
@@ -121,89 +209,6 @@ const useDashboardLogic = ({ products, orders, rangeMode = "dashboard" }) => {
       }, 0),
     [filteredPaidOrders, costMap],
   );
-
-  // --- Logic mới cho Vốn & Hàng tồn lâu ---
-
-  // Tính Tổng Vốn Tồn Kho
-  // Logic CŨ: Tổng của (tồn kho * giá nhập mới nhất) cho tất cả sản phẩm
-  // Logic MỚI: Tính theo từng lô (purchaseLots)
-  const totalCapital = useMemo(() => {
-    return products.reduce((sum, product) => {
-      const stock = product.stock || 0;
-      if (stock <= 0) return sum;
-
-      // Nếu có purchaseLots, tính chính xác từng lô
-      if (product.purchaseLots && product.purchaseLots.length > 0) {
-        const lotSum = product.purchaseLots.reduce((lSum, lot) => {
-          const qty = Number(lot.quantity) || 0;
-          const cost = Number(lot.cost) || 0;
-          return lSum + qty * cost;
-        }, 0);
-        return sum + lotSum;
-      }
-
-      // Fallback nếu chưa có lots: dùng giá nhập mới nhất (costMap)
-      const cost = costMap.get(product.id) || 0;
-      return sum + stock * cost;
-    }, 0);
-  }, [products, costMap]);
-
-  // Tính Hàng Tồn Kho Lâu (Slow Moving)
-  // Logic MỚI: "tính từ ngày nhập hàng xa nhất mà hàng đó còn tồn + 60 ngày"
-  const slowMovingProducts = useMemo(() => {
-    if (!currentDate) return [];
-    const warningDays = 60;
-
-    return products
-      .filter((p) => (p.stock || 0) > 0)
-      .map((p) => {
-        let dateToCheck = new Date(p.createdAt || currentDate.getTime());
-
-        // Tìm lô cũ nhất còn hàng (quantity > 0)
-        if (p.purchaseLots && p.purchaseLots.length > 0) {
-          // Lọc các lô còn hàng
-          const activeLots = p.purchaseLots.filter(
-            (l) => (Number(l.quantity) || 0) > 0,
-          );
-          if (activeLots.length > 0) {
-            // Sắp xếp theo ngày tạo (cũ nhất đầu tiên)
-            activeLots.sort(
-              (a, b) => new Date(a.createdAt) - new Date(b.createdAt),
-            );
-            const oldestLot = activeLots[0];
-            if (oldestLot.createdAt) {
-              dateToCheck = new Date(oldestLot.createdAt);
-            }
-          }
-        }
-
-        const diffTime = Math.abs(currentDate - dateToCheck);
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-        return {
-          ...p,
-          daysNoSale: diffDays,
-        };
-      })
-      .filter((p) => p.daysNoSale > warningDays)
-      .sort((a, b) => b.daysNoSale - a.daysNoSale);
-  }, [products, currentDate]);
-
-  // Tính Hàng Hết Hàng (Out of Stock)
-  const outOfStockProducts = useMemo(() => {
-    return products.filter((p) => (p.stock || 0) <= 0);
-  }, [products]);
-
-  // --- Kết thúc Logic mới ---
-
-  const productMeta = useMemo(() => {
-    // Optimization: Use for...of to avoid intermediate array allocation from map()
-    const map = new Map();
-    for (const product of products) {
-      map.set(product.id, product);
-    }
-    return map;
-  }, [products]);
 
   const productStats = useMemo(() => {
     const stats = new Map();

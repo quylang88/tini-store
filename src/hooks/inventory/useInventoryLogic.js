@@ -189,8 +189,7 @@ const useInventoryLogic = ({ products, setProducts, settings }) => {
   // Điều này rất quan trọng để React.memo trong ProductListItem hoạt động hiệu quả,
   // tránh việc các item trong danh sách bị render lại khi cha render (ví dụ khi scroll).
   const handleDelete = useCallback(
-    (id) => {
-      const product = products.find((p) => p.id === id);
+    (product) => {
       setConfirmModal({
         title: "Xoá sản phẩm?",
         message: product
@@ -198,10 +197,11 @@ const useInventoryLogic = ({ products, setProducts, settings }) => {
           : "Bạn có chắc muốn xoá sản phẩm này?",
         confirmLabel: "Xoá sản phẩm",
         tone: "danger",
-        onConfirm: () => setProducts(products.filter((p) => p.id !== id)),
+        onConfirm: () =>
+          setProducts((prev) => prev.filter((p) => p.id !== product.id)),
       });
     },
-    [products, setProducts],
+    [setProducts],
   );
 
   const { filteredProducts, nameSuggestions } = useInventoryFilters({
