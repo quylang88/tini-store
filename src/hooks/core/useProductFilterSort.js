@@ -60,10 +60,23 @@ const useProductFilterSort = ({
       }));
 
       withValues.sort((a, b) => {
+        const valA = a.value;
+        const valB = b.value;
+
+        // Handle string comparison (for dates)
+        if (typeof valA === "string" && typeof valB === "string") {
+          if (valA === valB) return 0;
+          if (sortConfig.direction === "asc") {
+            return valA > valB ? 1 : -1;
+          } else {
+            return valB > valA ? 1 : -1;
+          }
+        }
+
         if (sortConfig.direction === "asc") {
-          return a.value - b.value;
+          return valA - valB;
         } else {
-          return b.value - a.value;
+          return valB - valA;
         }
       });
 
