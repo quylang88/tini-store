@@ -17,13 +17,13 @@ export const getProductDate = (product) => {
     }, product.purchaseLots[0]);
 
     if (latestLot && latestLot.createdAt) {
-      return new Date(latestLot.createdAt).getTime();
+      return latestLot.createdAt;
     }
   }
 
   // Fallback to product creation date
   if (product.createdAt) {
-    return new Date(product.createdAt).getTime();
+    return product.createdAt;
   }
 
   // Fallback to ID if it's timestamp-like (numeric or starts with timestamp)
@@ -31,8 +31,9 @@ export const getProductDate = (product) => {
   const idTimestamp = Number(product.id);
   if (!isNaN(idTimestamp) && idTimestamp > 1600000000000) {
     // Basic sanity check for recent timestamp
-    return idTimestamp;
+    // Convert to ISO string to maintain comparable type
+    return new Date(idTimestamp).toISOString();
   }
 
-  return 0; // Unknown date, push to bottom
+  return ""; // Unknown date, push to bottom
 };
