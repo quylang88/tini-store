@@ -43,12 +43,6 @@ const ProductDetailModal = ({ product, onClose, onEditLot }) => {
           <div className="text-sm font-semibold text-amber-600">
             Giá bán: {formatNumber(cachedProduct.price)}đ
           </div>
-          <div className="text-xs text-gray-600 mt-1">
-            Giá nhập mới nhất: {formatNumber(latestCost)}đ
-            {latestLot
-              ? ` • Kho: ${getWarehouseLabel(latestLot.warehouse)}`
-              : ""}
-          </div>
         </div>
 
         <div className="space-y-3">

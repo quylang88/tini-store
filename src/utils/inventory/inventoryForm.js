@@ -1,4 +1,4 @@
-import { getLatestCost } from "./purchaseUtils.js";
+import { getLatestCost, getLatestLot } from "./purchaseUtils.js";
 import { getDefaultWarehouse } from "./warehouseUtils.js";
 
 const buildBaseFormData = (settings) => ({
@@ -28,21 +28,27 @@ export const createFormDataForNewProduct = ({ settings, activeCategory }) => ({
     activeCategory && activeCategory !== "Tất cả" ? activeCategory : "Chung",
 });
 
-export const createFormDataForProduct = ({ product, settings }) => ({
-  ...buildBaseFormData(settings),
-  name: product.name,
-  barcode: product.barcode || "",
-  category: product.category || "Chung",
-  costCurrency: "VND",
-  costJPY: "",
-  cost: getLatestCost(product) || "",
-  costVNDInput: getLatestCost(product) || "",
-  price: product.price,
-  shippingMethod: "vn",
-  shippingFeeVnd: "",
-  shippingFeeVndInput: "",
-  image: product.image || "",
-});
+export const createFormDataForProduct = ({ product, settings }) => {
+  const latestLot = getLatestLot(product);
+  const isJpy = latestLot && Number(latestLot.costJpy) > 0;
+  const currentCost = getLatestCost(product) || "";
+
+  return {
+    ...buildBaseFormData(settings),
+    name: product.name,
+    barcode: product.barcode || "",
+    category: product.category || "Chung",
+    costCurrency: isJpy ? "JPY" : "VND",
+    costJPY: isJpy ? String(latestLot.costJpy) : "",
+    cost: currentCost,
+    costVNDInput: isJpy ? "" : currentCost,
+    price: product.price,
+    shippingMethod: "vn",
+    shippingFeeVnd: "",
+    shippingFeeVndInput: "",
+    image: product.image || "",
+  };
+};
 
 export const createFormDataForLot = ({ product, lot, settings }) => {
   const inferredShippingMethod = (() => {

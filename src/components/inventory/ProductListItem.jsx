@@ -5,6 +5,7 @@ import { formatNumber } from "../../utils/formatters/formatUtils";
 import {
   getLatestCost,
   getLatestUnitCost,
+  getLatestLot,
 } from "../../utils/inventory/purchaseUtils";
 import {
   normalizeWarehouseStock,
@@ -25,6 +26,9 @@ const ProductListItem = memo(
     onEditBasicInfo,
   }) => {
     const latestCost = getLatestCost(product);
+  const latestLot = getLatestLot(product);
+  const isJpy = latestLot && Number(latestLot.costJpy) > 0;
+
     const latestUnitCost = getLatestUnitCost(product);
     const expectedProfit = (Number(product.price) || 0) - latestUnitCost;
     const hasProfitData = Number(product.price) > 0 && latestUnitCost > 0;
@@ -105,7 +109,7 @@ const ProductListItem = memo(
               )}
 
               <div className="text-amber-500">
-                Giá nhập mới nhất: {formatNumber(latestCost)}đ
+                Giá nhập mới nhất: {isJpy ? `${formatNumber(latestLot.costJpy)}¥` : `${formatNumber(latestCost)}đ`}
               </div>
             </div>
           </div>
