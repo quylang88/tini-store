@@ -12,6 +12,8 @@ const ModalShell = ({
   containerClassName = "",
   paddingClassName = "px-4 py-6",
   panelClassName = "",
+  ariaLabelledBy,
+  ariaDescribedBy,
 }) => {
   const { shouldRender, active } = useMountTransition(open, 300);
 
@@ -38,6 +40,10 @@ const ModalShell = ({
               : "scale-95 opacity-0 ease-in"
           } ${panelClassName}`}
           onClick={(e) => e.stopPropagation()}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby={ariaLabelledBy}
+          aria-describedby={ariaDescribedBy}
         >
           {children}
         </div>
