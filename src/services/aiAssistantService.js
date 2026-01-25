@@ -17,33 +17,10 @@ import {
 } from "./ai/locationUtils";
 import { createResponse } from "./ai/chatHelpers";
 import { INVENTORY_TOOLS } from "./ai/toolsDefinitions";
+import { checkDuplicateQuery } from "./ai/textAnalysisUtils";
 
 // --- CẤU HÌNH MEMORY ---
 const SLIDING_WINDOW_SIZE = 6;
-
-// --- UTILS ---
-const getBigrams = (str) => {
-  const s = str.toLowerCase().replace(/[^\w\s\u00C0-\u1EF9]/g, "");
-  return s.split(/\s+/).filter((w) => w.length > 0);
-};
-
-const calculateSimilarity = (str1, str2) => {
-  const words1 = getBigrams(str1);
-  const words2 = getBigrams(str2);
-  if (words1.length === 0 || words2.length === 0) return 0.0;
-  const set1 = new Set(words1);
-  const set2 = new Set(words2);
-  const intersection = new Set([...set1].filter((x) => set2.has(x)));
-  return (2.0 * intersection.size) / (set1.size + set2.size);
-};
-
-const checkDuplicateQuery = (currentQuery, lastQuery) => {
-  if (!lastQuery) return false;
-  if (currentQuery.trim().toLowerCase() === lastQuery.trim().toLowerCase())
-    return true;
-  const similarity = calculateSimilarity(currentQuery, lastQuery);
-  return similarity >= 0.85;
-};
 
 // --- XỬ LÝ CHÍNH ---
 
@@ -126,10 +103,8 @@ export const processQuery = async (
         msg.type !== "error",
     )
     .map((msg) => ({
-      role: msg.sender === "user" ? "user" : "assistant", // Map chuẩn
+      role: msg.sender === "user" ? "user" : "assistant",
       content: msg.content,
-      // Nếu msg cũ là tool_request thì cần logic khôi phục history phức tạp hơn
-      // Ở đây ta chấp nhận đơn giản hóa history cho app nhỏ
     }));
 
   const recentHistory = cleanHistory.slice(-SLIDING_WINDOW_SIZE);
@@ -144,7 +119,7 @@ export const processQuery = async (
 
   // 5. Gọi AI với Tools
   try {
-    const availableTools = INVENTORY_TOOLS; // Load tools definition
+    const availableTools = INVENTORY_TOOLS;
 
     const result = await processQueryWithFailover(
       modeConfig.model,
@@ -160,13 +135,13 @@ export const processQuery = async (
       try {
         const args = JSON.parse(toolCall.function.arguments);
         return createResponse(
-          "tool_request", // Loại message đặc biệt
+          "tool_request",
           result.content || "Đợi Misa một xíu nha...",
           {
             toolCallId: toolCall.id,
             functionName: toolCall.function.name,
             functionArgs: args,
-            rawToolCallMessage: result.raw_message, // Cần cái này để nối history
+            // Không cần rawToolCallMessage nữa vì đã parse xong
           },
         );
       } catch (e) {
@@ -194,36 +169,30 @@ export const processToolResult = async (
   originalQuery,
   context,
   history,
-  toolCallData, // { id, name, args, result }
+  toolCallData, // { toolCallId, functionName, functionArgs }
   toolOutputString,
   modeKey = "standard",
 ) => {
   const modeConfig = getModeConfig(modeKey);
   const systemInstruction = buildSystemPrompt(context, null, "", false);
 
-  // Xây dựng history đặc biệt cho turn này
-  // 1. System Prompt
-  // 2. History cũ
-  // 3. User Query hiện tại
-  // 4. Assistant Message (chứa tool_calls) -> Phải giả lập cái này
-  // 5. Tool Message (chứa result)
+  // Xây dựng history đặc biệt cho turn này theo chuẩn OpenAI/Groq:
+  // 1. History cũ
+  // 2. User Query (câu lệnh dẫn đến việc gọi tool)
+  // 3. Assistant Message (chứa tool_calls)
+  // 4. Tool Message (chứa kết quả tool)
 
-  // Lưu ý: Ở bản đơn giản, ta chỉ cần gửi:
-  // User: "Nhập kho..."
-  // System: "Đã thực hiện nhập kho thành công: {toolOutputString}. Hãy thông báo cho user."
+  const cleanHistory = history.map((m) => ({
+    role: m.sender === "user" ? "user" : "assistant",
+    content: m.content,
+  }));
 
-  // Nhưng để AI thông minh nhất, ta gửi đúng luồng:
-  const messages = [
-    { role: "system", content: systemInstruction },
-    ...history.map((m) => ({
-      role: m.sender === "user" ? "user" : "assistant",
-      content: m.content,
-    })),
+  const conversation = [
+    ...cleanHistory,
     { role: "user", content: originalQuery },
-    // Assistant Message (Turn 1 - Invisible in UI but needed for Logic)
     {
       role: "assistant",
-      content: null,
+      content: null, // Message gọi tool thường không có content
       tool_calls: [
         {
           id: toolCallData.toolCallId,
@@ -235,7 +204,6 @@ export const processToolResult = async (
         },
       ],
     },
-    // Tool Result Message (Turn 2)
     {
       role: "tool",
       tool_call_id: toolCallData.toolCallId,
@@ -244,36 +212,20 @@ export const processToolResult = async (
   ];
 
   try {
-    // Gọi trực tiếp Groq (vì chỉ Groq support flow này tốt nhất hiện tại trong setup này)
-    // Lấy model Groq từ config
-    const groqModel =
-      modeConfig.model.find((m) => m.provider === PROVIDERS.GROQ)?.model ||
-      "llama3-70b-8192";
-
-    // Gọi hàm cấp thấp, bypass processQueryWithFailover để custom messages
-    const response = await callGroqAPI(
-      groqModel,
-      [], // History để trống vì ta đã build full messages ở trên
-      systemInstruction, // Cái này provider sẽ gắn vào đầu, nhưng ta đã custom message list.
-      // Cần sửa provider một xíu hoặc trick ở đây.
-      // Tốt nhất là dùng hàm callGroqAPI và pass messages đã build vào tham số history,
-      // và sửa provider để không duplicate system prompt.
-      // NHƯNG ĐỂ AN TOÀN VÀ NHANH: Ta dùng trick "System Message" cuối cùng.
-      0.5,
+    // Sử dụng chung luồng failover, đảm bảo tính nhất quán
+    // Các provider đã được update để xử lý message có role='tool' và tool_calls
+    const result = await processQueryWithFailover(
+      modeConfig.model,
+      conversation,
+      systemInstruction,
+      modeConfig.temperature,
       INVENTORY_TOOLS,
     );
 
-    // Với cấu trúc provider hiện tại, nó sẽ prepend systemInstruction.
-    // Nên ta chỉ cần pass đoạn tool conversation vào history.
-    // Provider.js line 65: ...history.map...
-    // Ta cần truyền mảng object đúng format mà provider mong đợi.
-
-    // Update: Code provider bên trên đã support msg.role === 'tool'.
-    // Ta gọi lại hàm processQueryWithFailover nhưng với history đã nối thêm 2 message (Assistant Call + Tool Result)
-
-    return createResponse("text", response.content);
+    return createResponse("text", result.content);
   } catch (e) {
     console.error("Tool Result processing failed", e);
+    // Fallback nếu AI chết
     return createResponse(
       "text",
       `Xong rồi nha! (Chi tiết: ${toolOutputString})`,
@@ -281,12 +233,10 @@ export const processToolResult = async (
   }
 };
 
-// ... giữ nguyên summarizeChatHistory ...
 export const summarizeChatHistory = async (
   currentSummary,
   messagesToSummarize,
 ) => {
-  // ... (như cũ)
   if (!messagesToSummarize || messagesToSummarize.length === 0)
     return currentSummary;
   const fastModel = [
@@ -309,7 +259,6 @@ export const summarizeChatHistory = async (
   }
 };
 
-// ... giữ nguyên processQueryWithFailover ...
 const processQueryWithFailover = async (
   candidates,
   chatHistory,

@@ -75,11 +75,26 @@ export const callGroqAPI = async (
           content: msg.content,
         };
       }
-      return {
+      // Xử lý message Tool Result
+      if (msg.role === "tool") {
+        return {
+          role: "tool",
+          tool_call_id: msg.tool_call_id,
+          content: msg.content,
+        };
+      }
+
+      const formattedMsg = {
         role: msg.role === "user" ? "user" : "assistant",
         content: msg.content,
-        // Nếu lịch sử có tool_calls, cần map lại đúng format (tùy chỉnh nâng cao sau)
       };
+
+      // Nếu message có tool_calls, cần giữ nguyên để model hiểu ngữ cảnh
+      if (msg.tool_calls) {
+        formattedMsg.tool_calls = msg.tool_calls;
+      }
+
+      return formattedMsg;
     }),
   ];
 
