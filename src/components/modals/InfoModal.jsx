@@ -4,9 +4,6 @@ import useModalCache from "../../hooks/ui/useModalCache";
 
 // Modal thông tin nhẹ: không có nút, chỉ chạm ra ngoài để đóng.
 const InfoModal = ({ open, title, message, onClose }) => {
-  const titleId = React.useId();
-  const messageId = React.useId();
-
   // Gom nhóm dữ liệu cần cache
   const dataToCache = useMemo(() => ({ title, message }), [title, message]);
 
@@ -17,21 +14,13 @@ const InfoModal = ({ open, title, message, onClose }) => {
   if (!cachedData?.title && !cachedData?.message) return null;
 
   return (
-    <ModalShell
-      open={open}
-      onClose={onClose}
-      ariaLabelledBy={titleId}
-      ariaDescribedBy={cachedData.message ? messageId : undefined}
-    >
+    <ModalShell open={open} onClose={onClose}>
       <div className="p-4 border-b border-amber-100 bg-amber-50">
-        <div id={titleId} className="text-lg font-bold text-amber-900">
+        <div className="text-lg font-bold text-amber-900">
           {cachedData.title}
         </div>
       </div>
-      <div
-        id={messageId}
-        className="p-4 text-sm text-gray-600 leading-relaxed"
-      >
+      <div className="p-4 text-sm text-gray-600 leading-relaxed">
         {cachedData.message}
       </div>
     </ModalShell>

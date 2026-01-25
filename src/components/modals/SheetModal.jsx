@@ -38,8 +38,13 @@ const SheetModal = ({
         } ${className}`}
         onClick={(e) => e.stopPropagation()}
       >
+        {/* Drag Handle Visual Cue */}
+        <div className="w-full flex justify-center pt-3 pb-1" aria-hidden="true">
+          <div className="w-12 h-1.5 bg-gray-200 rounded-full" />
+        </div>
+
         {(title || showCloseIcon) && (
-          <div className="flex justify-between items-center p-5 pb-0">
+          <div className="flex justify-between items-center px-5 pb-2">
             {title ? (
               <h3 className="font-bold text-lg text-rose-900">{title}</h3>
             ) : (

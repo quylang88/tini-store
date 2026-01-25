@@ -14,25 +14,11 @@ const ConfirmModal = ({
   onConfirm,
   onCancel,
 }) => {
-  const titleId = React.useId();
-  const messageId = React.useId();
-
   return (
-    <ModalShell
-      open={open}
-      onClose={onCancel}
-      ariaLabelledBy={titleId}
-      ariaDescribedBy={message ? messageId : undefined}
-    >
+    <ModalShell open={open} onClose={onCancel}>
       <div className="p-5 text-center">
-        <h3 id={titleId} className="text-lg font-bold text-rose-900 mb-2">
-          {title}
-        </h3>
-        {message && (
-          <p id={messageId} className="text-sm text-gray-600 mb-6">
-            {message}
-          </p>
-        )}
+        <h3 className="text-lg font-bold text-rose-900 mb-2">{title}</h3>
+        {message && <p className="text-sm text-gray-600 mb-6">{message}</p>}
 
         <div className="flex gap-3">
           <Button variant="secondary" size="sm" onClick={onCancel}>
