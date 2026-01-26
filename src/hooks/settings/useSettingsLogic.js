@@ -185,6 +185,18 @@ const useSettingsLogic = ({
             setSettings(data.settings);
           }
 
+          // Khôi phục dữ liệu khách hàng
+          if (Array.isArray(data.customers)) {
+            try {
+              localStorage.setItem(
+                "shop_customers_v1",
+                JSON.stringify(data.customers),
+              );
+            } catch (e) {
+              console.error("Failed to restore customers", e);
+            }
+          }
+
           // Khôi phục bộ nhớ AI (nếu có trong file backup)
           if (typeof data.aiChatSummary === "string") {
             localStorage.setItem("ai_chat_summary", data.aiChatSummary);

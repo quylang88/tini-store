@@ -59,61 +59,68 @@ const ProductListItem = memo(
             </div>
           )}
         </div>
-        <div className="flex-1 min-w-0">
-          <div className="grid grid-cols-2 gap-2 text-[10px]">
-            <div className="space-y-1">
-              <div className="font-bold text-amber-900 text-sm truncate">
-                {product.name}
-              </div>
-              <div className="text-gray-400 font-mono">
-                {product.barcode || "---"}
-              </div>
-              <div className="text-rose-700 font-bold text-sm">
-                {formatNumber(product.price)}đ
-              </div>
-              {hasProfitData && (
-                <div className="text-[10px] text-emerald-600">
-                  Lợi nhuận: {formatNumber(expectedProfit)}đ
-                </div>
-              )}
+        <div className="flex-1 min-w-0 flex flex-col gap-0.5">
+          {/* Row 1: Name & Category */}
+          <div className="flex justify-between items-start gap-2">
+            <div className="font-bold text-amber-900 text-sm truncate">
+              {product.name}
             </div>
-            <div className="text-right space-y-1">
-              <div
-                className={`text-[10px] bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded inline-block ${
-                  activeCategory !== "Tất cả" ? "invisible" : ""
-                }`}
-              >
-                {product.category}
-              </div>
+            <div
+              className={`text-[10px] bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded whitespace-nowrap flex-shrink-0 ${
+                activeCategory !== "Tất cả" ? "invisible" : ""
+              }`}
+            >
+              {product.category}
+            </div>
+          </div>
 
-              {/* Logic hiển thị kho dựa trên activeWarehouse */}
+          {/* Row 2: Barcode */}
+          <div className="text-gray-400 font-mono text-[10px]">
+            {product.barcode || "---"}
+          </div>
+
+          {/* Row 3: Price & Stock (aligned) */}
+          <div className="flex justify-between items-baseline mt-1.5">
+            <div className="text-rose-700 font-bold text-sm">
+              {formatNumber(product.price)}đ
+            </div>
+            <div className="text-amber-700 text-[10px] font-medium text-right">
               {activeWarehouse === "all" ? (
-                warehouses.map((w) => {
-                  const qty = stockByWarehouse[w.key] || 0;
-                  if (qty <= 0) return null;
-                  return (
-                    <div key={w.key} className="text-amber-600">
-                      {w.label}: {qty} sp
-                    </div>
-                  );
-                })
+                <span>
+                  {warehouses
+                    .map((w) => {
+                      const qty = stockByWarehouse[w.key] || 0;
+                      return `${w.shortLabel}: ${qty}`;
+                    })
+                    .join(" | ")}
+                </span>
               ) : (
-                <div className="text-amber-600">
+                <span>
                   {warehouses.find(
                     (w) => w.key === resolveWarehouseKey(activeWarehouse),
                   )?.label || activeWarehouse}
                   :{" "}
                   {stockByWarehouse[resolveWarehouseKey(activeWarehouse)] || 0}{" "}
                   sp
-                </div>
+                </span>
               )}
+            </div>
+          </div>
 
-              <div className="text-amber-500">
-                Giá nhập mới nhất:{" "}
-                {isJpy
-                  ? `${formatNumber(latestLot.costJpy)}¥`
-                  : `${formatNumber(latestCost)}đ`}
+          {/* Row 4: Profit & Import Cost (aligned) */}
+          <div className="flex justify-between items-baseline">
+            {hasProfitData ? (
+              <div className="text-[10px] text-emerald-600">
+                Lợi nhuận: {formatNumber(expectedProfit)}đ
               </div>
+            ) : (
+              <div></div>
+            )}
+            <div className="text-gray-600 text-[10px] text-right">
+              Giá nhập mới nhất:{" "}
+              {isJpy
+                ? `${formatNumber(latestLot.costJpy)}¥`
+                : `${formatNumber(latestCost)}đ`}
             </div>
           </div>
         </div>

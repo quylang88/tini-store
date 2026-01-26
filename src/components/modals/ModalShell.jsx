@@ -19,8 +19,8 @@ const ModalShell = ({
 
   return createPortal(
     <div
-      className={`fixed inset-0 z-[90] bg-black/40 backdrop-blur-sm transition-opacity duration-300 ${
-        active ? "opacity-100" : "opacity-0"
+      className={`fixed inset-0 z-[100] bg-black/40 backdrop-blur-sm transition-opacity duration-300 ${
+        active ? "opacity-100" : "opacity-0 pointer-events-none"
       }`}
       onClick={onClose}
     >

@@ -57,11 +57,21 @@ export const exportDataToJSON = async (products, orders, settings) => {
   // Lấy dữ liệu tóm tắt chat từ localStorage (nếu có)
   const aiChatSummary = localStorage.getItem("ai_chat_summary") || "";
 
+  // Lấy dữ liệu khách hàng
+  let customers = [];
+  try {
+    const customersStr = localStorage.getItem("shop_customers_v1");
+    customers = customersStr ? JSON.parse(customersStr) : [];
+  } catch (e) {
+    console.error("Failed to load customers for backup", e);
+  }
+
   const data = JSON.stringify({
     products,
     orders,
     settings,
     aiChatSummary,
+    customers,
   });
 
   const fileName = `tiny_shop_${new Date().toISOString().slice(0, 10)}.json`;

@@ -9,6 +9,7 @@ import {
   getDefaultWarehouse,
   resolveWarehouseKey,
 } from "../../utils/inventory/warehouseUtils";
+import useCustomerLogic from "../customer/useCustomerLogic";
 
 const DEFAULT_STATUS = "shipping";
 const DEFAULT_ORDER_TYPE = "delivery";
@@ -71,7 +72,15 @@ const useOrdersLogic = ({
     direction: "desc",
   });
 
-  // Sub-hooks
+  const [priceOverrides, setPriceOverrides] = useState({});
+
+  // Các hook con
+  const {
+    customers,
+    processOrderForCustomer,
+    isCustomerNameTaken,
+    EXCLUDED_CUSTOMERS,
+  } = useCustomerLogic();
   const { cart, setCart, handleQuantityChange, adjustQuantity, clearCart } =
     useCartLogic();
 
@@ -99,6 +108,7 @@ const useOrdersLogic = ({
     useOrderCatalog({
       products,
       cart,
+      priceOverrides,
       searchTerm,
       activeCategory,
       selectedWarehouse,
@@ -108,6 +118,7 @@ const useOrdersLogic = ({
 
   const clearDraft = () => {
     clearCart();
+    setPriceOverrides({});
     clearOrderForm();
     setOrderBeingEdited(null);
     setSearchTerm("");
@@ -137,6 +148,7 @@ const useOrdersLogic = ({
       setView: updateView,
       setConfirmModal,
       setErrorModal,
+      processOrderForCustomer,
     });
 
   const handleScanForSale = (decodedText) => {
@@ -247,6 +259,16 @@ const useOrdersLogic = ({
   const handleEditOrder = useCallback(
     (order) => {
       setCart(buildCartFromItems(order.items));
+
+      // Khôi phục giá ghi đè từ các item trong đơn hàng
+      const overrides = {};
+      if (order.items) {
+        order.items.forEach((item) => {
+          overrides[item.productId || item.id] = item.price;
+        });
+      }
+      setPriceOverrides(overrides);
+
       setOrderBeingEdited(order);
       setOrderComment(order.comment || "");
       setSelectedWarehouse(
@@ -392,6 +414,11 @@ const useOrdersLogic = ({
     shouldShowDetailModal,
     sortConfig,
     setSortConfig,
+    priceOverrides,
+    setPriceOverrides,
+    customers,
+    isCustomerNameTaken,
+    EXCLUDED_CUSTOMERS,
   };
 };
 
