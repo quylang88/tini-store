@@ -14,6 +14,8 @@ import FloatingActionButton from "../components/button/FloatingActionButton";
 import useInventoryLogic from "../hooks/inventory/useInventoryLogic";
 import useScrollHandling from "../hooks/ui/useScrollHandling";
 import AppHeader from "../components/common/AppHeader";
+import usePagination from "../hooks/ui/usePagination";
+import { isScrollNearBottom } from "../utils/ui/scrollUtils";
 
 const Inventory = ({
   products,
@@ -71,7 +73,14 @@ const Inventory = ({
     highlightOps,
   } = useInventoryLogic({ products, setProducts, orders, setOrders, settings });
 
-  // Đã loại bỏ useFilterTransition để tránh remount list gây khựng.
+  const {
+    visibleData: visibleProducts,
+    loadMore,
+    hasMore,
+  } = usePagination(filteredProducts, {
+    pageSize: 20,
+    resetDeps: [searchTerm, activeCategory, warehouseFilter, sortConfig],
+  });
 
   return (
     <div className="relative h-full bg-transparent flex flex-col">
@@ -111,7 +120,12 @@ const Inventory = ({
         {/* Product List cuộn bên dưới InventoryHeader */}
         <div
           className="flex-1 overflow-y-auto min-h-0 pt-[56px] overscroll-y-contain"
-          onScroll={handleScroll}
+          onScroll={(e) => {
+            handleScroll(e);
+            if (isScrollNearBottom(e.target) && hasMore) {
+              loadMore();
+            }
+          }}
         >
           {/* Filter Section nằm trong luồng scroll */}
           <ProductFilterSection
@@ -125,7 +139,7 @@ const Inventory = ({
             onSortChange={setSortConfig}
           />
           <ProductList
-            products={filteredProducts}
+            products={visibleProducts}
             onDelete={handleDelete}
             onOpenDetail={setDetailProduct}
             activeCategory={activeCategory}
