@@ -27,6 +27,7 @@ export const processQuery = async (
   history = [],
   currentSummary = "",
   onStatusUpdate = () => {},
+  explicitIntent = null,
 ) => {
   if (!navigator.onLine) {
     return createResponse("text", "Mất mạng rồi mẹ Trang ơi 🥺");
@@ -35,12 +36,14 @@ export const processQuery = async (
   const modeConfig = getModeConfig(modeKey);
 
   // 0. Xác định Ý định (Intent Detection) - New!
-  let intent = "CHAT";
-  try {
-    onStatusUpdate("Misa đang suy nghĩ...");
-    intent = await detectIntent(query);
-  } catch (err) {
-    console.warn("Intent check failed, fallback to CHAT:", err);
+  let intent = explicitIntent || "CHAT";
+  if (!explicitIntent) {
+    try {
+      onStatusUpdate("Misa đang suy nghĩ...");
+      intent = await detectIntent(query);
+    } catch (err) {
+      console.warn("Intent check failed, fallback to CHAT:", err);
+    }
   }
 
   // 1. Xác định vị trí
