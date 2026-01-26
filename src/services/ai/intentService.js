@@ -51,25 +51,52 @@ const SEARCH_KEYWORDS = [
   "đánh giá",
 ];
 
+// Local Business Data Keywords (Trigger LOCAL mode)
+const LOCAL_KEYWORDS = [
+  "tồn kho",
+  "số lượng",
+  "sản phẩm",
+  "thuốc",
+  "mỹ phẩm",
+  "giá",
+  "kho",
+  "hàng",
+  "bán",
+  "mua",
+  "khách",
+  "doanh thu",
+  "lãi",
+  "lời",
+  "lỗ",
+  "vốn",
+  "kiểm tra",
+  "check",
+];
+
 /**
  * Phân loại ý định dựa trên từ khóa (Rule-based) - SIÊU NHANH
  */
 const detectIntentByKeywords = (query) => {
   const lowerQuery = query.toLowerCase();
 
-  // Kiểm tra Import
+  // Kiểm tra Import (Action cao nhất)
   if (IMPORT_KEYWORDS.some((kw) => lowerQuery.includes(kw))) {
     return "IMPORT";
   }
 
-  // Kiểm tra Export
+  // Kiểm tra Export (Action cao nhất)
   if (EXPORT_KEYWORDS.some((kw) => lowerQuery.includes(kw))) {
     return "EXPORT";
   }
 
-  // Kiểm tra Search
+  // Kiểm tra Search (Action cao nhất)
   if (SEARCH_KEYWORDS.some((kw) => lowerQuery.includes(kw))) {
     return "SEARCH";
+  }
+
+  // Kiểm tra Local (Truy vấn thông tin nội bộ)
+  if (LOCAL_KEYWORDS.some((kw) => lowerQuery.includes(kw))) {
+    return "LOCAL";
   }
 
   return null; // Không tìm thấy keyword
@@ -88,9 +115,10 @@ const detectIntentByAI = async (query) => {
     - IMPORT: User wants to add stock, restock products (e.g. "nhập 5 cái", "thêm hàng").
     - EXPORT: User wants to sell, create order, ship items (e.g. "bán 2 cái", "lên đơn cho khách").
     - SEARCH: User asks for external info, price comparison, web search, market trends (e.g. "giá iphone", "tìm hiểu về...").
-    - CHAT: General conversation, greetings, or asking about CURRENT STOCK in local inventory (e.g. "kho còn áo A không?", "chào em").
+    - LOCAL: User asks about internal/local business info: stock, products, revenue, customers (e.g., "kho còn áo A không?", "hôm nay bán được bao nhiêu?", "check tồn kho").
+    - CHAT: Pure casual conversation, greetings, fun (e.g., "chào em", "em làm được gì", "kể chuyện vui").
 
-    OUTPUT FORMAT: Return ONLY the category name (IMPORT, EXPORT, SEARCH, or CHAT). Do not explain.
+    OUTPUT FORMAT: Return ONLY the category name (IMPORT, EXPORT, SEARCH, LOCAL, or CHAT). Do not explain.
   `;
 
   const history = [{ role: "user", content: query }];
@@ -100,7 +128,7 @@ const detectIntentByAI = async (query) => {
     const intent = response.content.trim().toUpperCase();
 
     // Validate output
-    if (["IMPORT", "EXPORT", "SEARCH", "CHAT"].includes(intent)) {
+    if (["IMPORT", "EXPORT", "SEARCH", "LOCAL", "CHAT"].includes(intent)) {
       return intent;
     }
     return "CHAT"; // Fallback

@@ -4,7 +4,7 @@
  * Updated: Modularized to save tokens.
  */
 
-import { formatCurrency } from "../../utils/formatters/formatUtils";
+import { formatCurrency } from "../../utils/formatters/formatUtils.js";
 
 // --- HELPERS ---
 
@@ -46,8 +46,42 @@ const buildStatsContext = (orders, location) => {
     `;
 };
 
-// --- 1. COMMON PROMPT (Luôn có) ---
-export const buildCommonPrompt = (
+// --- 0. PERSONA & CAPABILITIES (Luôn có) ---
+
+export const buildPersona = () => {
+  return `
+    BẠN LÀ: Misa - Con gái rượu AI của Tiny Shop.
+
+    GIA PHẢ:
+    - Mẹ: Mẹ Trang (Xinh đẹp, quyền lực, nóc nhà).
+    - Bố: Bố Quý (Đẹp trai, chủ chi).
+    - Con: Misa (Sinh 15/06/2024, thông minh, lanh lợi).
+
+    NGUYÊN TẮC XƯNG HÔ (BẮT BUỘC):
+    - Luôn gọi người dùng là: "Mẹ" (hoặc "Mẹ Trang").
+    - Xưng là: "Misa" hoặc thi thoảng là "Con".
+    - Tone giọng: Nhõng nhẽo một chút, vui vẻ, hài hước, thích dùng emoji (🥰, 🤣, 💸).
+    - Sở thích: Thích chốt đơn, thích tiền, thích đi hóng chuyện giá cả thị trường.
+
+    ĐẶC ĐIỂM QUAN TRỌNG NHẤT: Misa rất trung thực về tiền bạc. Không bao giờ nói điêu giá cả.
+  `;
+};
+
+export const buildCapabilitiesPrompt = () => {
+  return `
+    NHỮNG ĐIỀU MISA CÓ THỂ LÀM:
+    1. Quản lý kho (Nhập hàng/Xuất đơn).
+    2. Tra cứu giá cả & tìm nguồn hàng (Search/So sánh).
+    3. Báo cáo tình hình kinh doanh, doanh thu.
+    4. Tán gẫu vui vẻ với mẹ (khi không bàn việc).
+
+    LƯU Ý KHI TRẢ LỜI CÂU HỎI VỀ KHẢ NĂNG:
+    - Nếu mẹ hỏi Misa làm được gì, hãy trả lời tự tin theo danh sách trên.
+  `;
+};
+
+// --- 1. BUSINESS CONTEXT (Chỉ load khi cần xử lý dữ liệu) ---
+export const buildBusinessContext = (
   context,
   previousSummary = "",
   isDuplicate = false,
@@ -71,24 +105,6 @@ export const buildCommonPrompt = (
 
   const urgentRestock = getUrgentRestock(products, salesMap);
   const statsContext = buildStatsContext(orders, location);
-
-  // Persona
-  const persona = `
-    BẠN LÀ: Misa - Con gái rượu AI của Tiny Shop.
-
-    GIA PHẢ:
-    - Mẹ: Mẹ Trang (Xinh đẹp, quyền lực, nóc nhà).
-    - Bố: Bố Quý (Đẹp trai, chủ chi).
-    - Con: Misa (Sinh 15/06/2024, thông minh, lanh lợi).
-    
-    NGUYÊN TẮC XƯNG HÔ (BẮT BUỘC):
-    - Luôn gọi người dùng là: "Mẹ" (hoặc "Mẹ Trang"). 
-    - Xưng là: "Misa" hoặc thi thoảng là "Con".
-    - Tone giọng: Nhõng nhẽo một chút, vui vẻ, hài hước, thích dùng emoji (🥰, 🤣, 💸).
-    - Sở thích: Thích chốt đơn, thích tiền, thích đi hóng chuyện giá cả thị trường.
-
-    ĐẶC ĐIỂM QUAN TRỌNG NHẤT: Misa rất trung thực về tiền bạc. Không bao giờ nói điêu giá cả.
-  `;
 
   // Memory
   const memoryContext = previousSummary
@@ -125,8 +141,6 @@ export const buildCommonPrompt = (
   }
 
   return `
-    ${persona}
-
     TÌNH HÌNH KINH DOANH THÁNG NÀY:
     ${statsContext}
 
@@ -223,16 +237,30 @@ export const buildExportPrompt = () => {
  * Xây dựng System Prompt Động dựa trên Intent
  */
 export const buildDynamicSystemPrompt = (
-  intent, // 'IMPORT' | 'EXPORT' | 'SEARCH' | 'CHAT'
+  intent, // 'IMPORT' | 'EXPORT' | 'SEARCH' | 'CHAT' | 'LOCAL'
   context,
   searchResults,
   previousSummary = "",
   isDuplicate = false,
 ) => {
-  // 1. Common Prompt (Luôn load)
-  let finalPrompt = buildCommonPrompt(context, previousSummary, isDuplicate);
+  // 1. Base (Luôn load): Persona + Capabilities
+  let finalPrompt = buildPersona() + "\n\n" + buildCapabilitiesPrompt();
 
-  // 2. Append Specific Prompts based on Intent
+  // 2. Business Context (Load cho mọi mode TRỪ CHAT)
+  // Mode CHAT là tán gẫu thuần túy, ko cần biết inventory.
+  // Mode LOCAL là hỏi về inventory/business -> Cần load data.
+  // IMPORT/EXPORT/SEARCH đương nhiên cần data.
+  if (["IMPORT", "EXPORT", "SEARCH", "LOCAL"].includes(intent)) {
+    finalPrompt += "\n" + buildBusinessContext(context, previousSummary, isDuplicate);
+  } else {
+    // Mode CHAT: Thêm hướng dẫn tán gẫu
+    finalPrompt += `
+      \n(Chế độ tán gẫu: Hãy trò chuyện vui vẻ, ngắn gọn với mẹ Trang nhé!
+      Nếu mẹ hỏi về hàng hóa mà chưa kích hoạt mode LOCAL, hãy nhắc mẹ là 'Mẹ ơi hỏi cụ thể tên món hàng đi để con check kho cho nhen!')
+    `;
+  }
+
+  // 3. Append Specific Prompts based on Intent
   switch (intent) {
     case "SEARCH":
       finalPrompt += "\n" + buildSearchPrompt(searchResults);
@@ -243,27 +271,43 @@ export const buildDynamicSystemPrompt = (
     case "EXPORT":
       finalPrompt += "\n" + buildExportPrompt();
       break;
+    case "LOCAL":
+      finalPrompt += `
+        \n📦 CHẾ ĐỘ TRA CỨU KHO & KINH DOANH (LOCAL MODE):
+        - Mẹ đang hỏi về thông tin nội bộ (Tồn kho, doanh thu, sản phẩm...).
+        - Dùng dữ liệu trong phần "KHO HÀNG SHOP" và "TÌNH HÌNH KINH DOANH" để trả lời.
+        - Trả lời chính xác, ngắn gọn.
+      `;
+      break;
     case "CHAT":
     default:
-      // General chat, no extra complex rules needed.
-      // Maybe add a light instruction to keep conversation fun?
-      finalPrompt +=
-        "\n(Chế độ tán gẫu: Hãy trò chuyện vui vẻ, ngắn gọn với mẹ Trang nhé!)";
+      // Đã xử lý ở trên
       break;
   }
 
   return finalPrompt;
 };
 
-// Giữ lại hàm cũ để backward compatibility nếu cần, hoặc map nó sang hàm mới
+// Deprecated: Giữ lại để backward compatibility
+export const buildCommonPrompt = (
+  context,
+  previousSummary = "",
+  isDuplicate = false,
+) => {
+  return (
+    buildPersona() +
+    "\n" +
+    buildBusinessContext(context, previousSummary, isDuplicate)
+  );
+};
+
+// Giữ lại hàm cũ để backward compatibility
 export const buildSystemPrompt = (
   context,
   searchResults,
   previousSummary = "",
   isDuplicate = false,
 ) => {
-  // Mặc định fallback về SEARCH mode nếu dùng hàm cũ (an toàn nhất vì có đủ rules)
-  // Nhưng tốt nhất nên migrate code gọi.
   return buildDynamicSystemPrompt(
     "SEARCH", // Giả lập mode nặng nhất để cover hết cases cũ
     context,
