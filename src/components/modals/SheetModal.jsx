@@ -44,7 +44,7 @@ const SheetModal = ({
         className={`bg-white w-full sm:w-96 rounded-t-2xl sm:rounded-2xl flex flex-col max-h-[90vh] ${className}`}
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Drag Handle Visual Cue */}
+        {/* Thanh kéo trực quan (Drag Handle) */}
         <div
           className="w-full flex justify-center pt-3 pb-1 cursor-grab active:cursor-grabbing touch-none"
           aria-hidden="true"

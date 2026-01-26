@@ -25,19 +25,19 @@ const OrderListView = ({
     setTabBarVisible,
   });
 
-  // Memoize sorted orders to avoid re-sorting on every render
+  // Memoize danh sách đơn hàng đã sắp xếp để tránh sắp xếp lại mỗi lần render
   const sortedOrders = useMemo(() => {
     return [...orders].sort((a, b) => {
       const dateA = a.date || "";
       const dateB = b.date || "";
 
-      // Optimize for ISO strings (common case)
+      // Tối ưu hoá cho chuỗi ISO (trường hợp phổ biến)
       if (typeof dateA === "string" && typeof dateB === "string") {
         if (dateB === dateA) return 0;
         return dateB > dateA ? 1 : -1;
       }
 
-      // Fallback for legacy/numeric timestamps
+      // Dự phòng cho timestamp số/cũ
       return new Date(dateB || 0) - new Date(dateA || 0);
     });
   }, [orders]);
@@ -48,7 +48,8 @@ const OrderListView = ({
     hasMore,
   } = usePagination(sortedOrders, {
     pageSize: 20,
-    resetDeps: [], // Orders list preserves scroll position even if updated, unless we decide otherwise
+    // Danh sách đơn hàng giữ nguyên vị trí cuộn ngay cả khi cập nhật, trừ khi chúng ta quyết định khác
+    resetDeps: [],
   });
 
   return (

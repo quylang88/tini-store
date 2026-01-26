@@ -12,7 +12,7 @@ const ProductDetailModal = ({ product, onClose, onEditLot }) => {
   // Logic giữ dữ liệu (Cached Data) để phục vụ animation exit.
   const cachedProduct = useModalCache(product, Boolean(product));
 
-  // Sort lots by newest date first
+  // Sắp xếp các lô hàng theo thời gian mới nhất
   const sortedLots = useMemo(() => {
     if (!cachedProduct) return [];
     return [...(cachedProduct.purchaseLots || [])].sort(
