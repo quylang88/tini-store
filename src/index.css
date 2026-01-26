@@ -30,12 +30,18 @@ body {
   -webkit-tap-highlight-color: transparent;
   /* Optimized scrolling */
   -webkit-overflow-scrolling: touch;
+  /* Prevent context menu (Save Image / Copy Link) */
+  -webkit-touch-callout: none;
+  /* Native font rendering */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 /* Allow text selection in inputs */
 input, textarea, [contenteditable] {
   user-select: text;
   -webkit-user-select: text;
+  -webkit-touch-callout: default;
 }
 
 /* Utilities */
