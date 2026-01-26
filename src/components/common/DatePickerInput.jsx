@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Calendar } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
 import CustomCalendar from "./CustomCalendar";
 
 const DatePickerInput = ({
@@ -85,16 +86,24 @@ const DatePickerInput = ({
         <Calendar size={16} className="text-gray-400" />
       </button>
 
-      {isOpen && (
-        <div className="absolute z-50 mt-2 left-0 w-72 max-w-[90vw]">
-          <CustomCalendar
-            mode="single"
-            selectedDate={selectedDate}
-            onDateSelect={handleSelect}
-            className="shadow-xl border-rose-200 ring-1 ring-black/5"
-          />
-        </div>
-      )}
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            initial={{ opacity: 0, y: 10, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 10, scale: 0.95 }}
+            transition={{ duration: 0.2 }}
+            className="absolute z-50 bottom-full mb-2 left-0 w-full origin-bottom"
+          >
+            <CustomCalendar
+              mode="single"
+              selectedDate={selectedDate}
+              onDateSelect={handleSelect}
+              className="shadow-xl border-rose-200 ring-1 ring-black/5"
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
