@@ -3,21 +3,21 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 
 const CustomCalendar = ({
   mode = "single", // 'single' | 'range'
-  selectedDate, // Date | null (for single)
-  startDate, // Date | null (for range)
-  endDate, // Date | null (for range)
+  selectedDate, // Date | null (cho chế độ single)
+  startDate, // Date | null (cho chế độ range)
+  endDate, // Date | null (cho chế độ range)
   onDateSelect, // (date) => void
   className = "",
 }) => {
   const [viewDate, setViewDate] = useState(() => {
-    // Start view at selected/start date or today
+    // Bắt đầu xem tại ngày được chọn hoặc ngày bắt đầu hoặc hôm nay
     const target = selectedDate || startDate || new Date();
     return new Date(target.getFullYear(), target.getMonth(), 1);
   });
 
   const [showMonthYearPicker, setShowMonthYearPicker] = useState(false);
 
-  // Normalize date comparison
+  // Chuẩn hóa so sánh ngày
   const isSameDay = (d1, d2) => {
     if (!d1 || !d2) return false;
     return (
@@ -29,12 +29,12 @@ const CustomCalendar = ({
 
   const today = new Date();
 
-  // Generate days for grid
+  // Tạo danh sách ngày cho lưới lịch
   const calendarDays = useMemo(() => {
     const year = viewDate.getFullYear();
     const month = viewDate.getMonth();
     const firstDay = new Date(year, month, 1);
-    const startOffset = (firstDay.getDay() + 6) % 7; // Start Monday
+    const startOffset = (firstDay.getDay() + 6) % 7; // Bắt đầu từ Thứ Hai
     const daysInMonth = new Date(year, month + 1, 0).getDate();
 
     const days = [];
@@ -57,27 +57,26 @@ const CustomCalendar = ({
     if (mode === "single") {
       onDateSelect?.(date);
     } else {
-      // Range logic handled by parent usually, but simple internal logic:
-      // If we provided onDateSelect (generic), we just pass the clicked date
-      // If parent handles range logic via onDateSelect, that's fine.
-      // If we want internal range logic:
+      // Logic range thường được xử lý bởi component cha, nhưng ở đây có logic đơn giản:
+      // Nếu có onDateSelect (chung), ta chỉ truyền ngày được click
+      // Nếu component cha xử lý logic range qua onDateSelect, điều đó là ổn.
       onDateSelect?.(date);
     }
   };
 
   const handleMonthSelect = (m) => {
     setViewDate(new Date(viewDate.getFullYear(), m, 1));
-    // Don't close picker yet, user might want to select year
+    // Chưa đóng picker vội, người dùng có thể muốn chọn năm
   };
 
   const handleYearSelect = (y) => {
     setViewDate(new Date(y, viewDate.getMonth(), 1));
-    setShowMonthYearPicker(false); // Close after year select (common pattern)
+    setShowMonthYearPicker(false); // Đóng sau khi chọn năm (mô hình phổ biến)
   };
 
-  // Month/Year Picker View
+  // Giao diện chọn Tháng/Năm
   if (showMonthYearPicker) {
-    // Let's make years a scrollable list from 1900 to 2100? or just +/- 50 years around viewDate
+    // Tạo danh sách năm cuộn được từ 1900 đến 2100 hoặc +/- 50 năm quanh viewDate
     const rangeYears = Array.from({ length: 101 }, (_, i) => viewDate.getFullYear() - 50 + i);
 
     return (
@@ -92,7 +91,7 @@ const CustomCalendar = ({
           </button>
         </div>
         <div className="grid grid-cols-2 gap-2 h-48">
-          {/* Months */}
+          {/* Tháng */}
           <div className="overflow-y-auto overscroll-contain border-r border-rose-100 pr-1">
              {Array.from({ length: 12 }, (_, i) => i).map((m) => (
                <button
@@ -108,7 +107,7 @@ const CustomCalendar = ({
                </button>
              ))}
           </div>
-          {/* Years */}
+          {/* Năm */}
           <div className="overflow-y-auto overscroll-contain pl-1">
             {rangeYears.map((y) => (
               <button
@@ -150,7 +149,7 @@ const CustomCalendar = ({
         </button>
       </div>
 
-      {/* Weekdays */}
+      {/* Các ngày trong tuần */}
       <div className="grid grid-cols-7 gap-1 mb-2">
         {["T2", "T3", "T4", "T5", "T6", "T7", "CN"].map((d) => (
           <div key={d} className="text-[10px] font-bold text-rose-400 text-center uppercase">
@@ -159,7 +158,7 @@ const CustomCalendar = ({
         ))}
       </div>
 
-      {/* Days Grid */}
+      {/* Lưới ngày */}
       <div className="grid grid-cols-7 gap-1">
         {calendarDays.map((date, idx) => {
           if (!date) return <div key={`empty-${idx}`} />;

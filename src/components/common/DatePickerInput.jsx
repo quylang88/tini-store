@@ -3,11 +3,11 @@ import { Calendar } from "lucide-react";
 import CustomCalendar from "./CustomCalendar";
 
 const DatePickerInput = ({
-  value, // string "yyyy-mm-dd" (native input format) or Date object?
-         // Let's assume standard date string "yyyy-mm-dd" to be compatible with native inputs logic,
-         // OR standard Date object.
-         // Requirements say format "dd/MM/YYYY".
-         // Let's accept "yyyy-mm-dd" value (for ease of storage/compatibility) but display "dd/MM/YYYY".
+  value, // chuỗi "yyyy-mm-dd" (format input native) hoặc đối tượng Date?
+         // Giả sử dùng chuỗi chuẩn "yyyy-mm-dd" để tương thích với logic input native,
+         // HOẶC đối tượng Date chuẩn.
+         // Yêu cầu hiển thị format "dd/MM/YYYY".
+         // Chấp nhận giá trị "yyyy-mm-dd" (để dễ lưu trữ/tương thích) nhưng hiển thị "dd/MM/YYYY".
   onChange, // (value: string "yyyy-mm-dd") => void
   placeholder = "Chọn ngày...",
   className = "",
@@ -17,7 +17,7 @@ const DatePickerInput = ({
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef(null);
 
-  // Helper: Parse yyyy-mm-dd string to Date
+  // Helper: Parse chuỗi yyyy-mm-dd thành Date
   const parseDate = (val) => {
     if (!val) return null;
     const parts = val.split("-");
@@ -25,7 +25,7 @@ const DatePickerInput = ({
     return new Date(parts[0], parts[1] - 1, parts[2]);
   };
 
-  // Helper: Format Date to yyyy-mm-dd (for storage/onChange)
+  // Helper: Format Date thành yyyy-mm-dd (để lưu trữ/onChange)
   const formatDateForValue = (date) => {
     if (!date) return "";
     const year = date.getFullYear();
@@ -34,7 +34,7 @@ const DatePickerInput = ({
     return `${year}-${month}-${day}`;
   };
 
-  // Helper: Format Date to dd/MM/YYYY (for display)
+  // Helper: Format Date thành dd/MM/YYYY (để hiển thị)
   const formatDateDisplay = (val) => {
     const date = typeof val === 'string' ? parseDate(val) : val;
     if (!date) return "";
@@ -48,8 +48,8 @@ const DatePickerInput = ({
 
   const handleSelect = (date) => {
     onChange(formatDateForValue(date));
-    // Do NOT close immediately per requirement ("chưa đóng modal mà hightlight ngày đó nổi bật lên")
-    // Closing is handled by clicking outside.
+    // KHÔNG đóng ngay lập tức theo yêu cầu ("chưa đóng modal mà highlight ngày đó nổi bật lên")
+    // Việc đóng được xử lý khi click ra ngoài.
   };
 
   useEffect(() => {

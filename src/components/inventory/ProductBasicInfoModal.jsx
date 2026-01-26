@@ -107,12 +107,12 @@ const ProductBasicInfoModal = ({
     >
       <div className="space-y-4">
         <ProductIdentityForm
-          // Data
+          // Dữ liệu
           image={formData.image}
           barcode={formData.barcode}
           category={formData.category}
           name={formData.name}
-          // Handlers
+          // Xử lý sự kiện
           onImageChange={handleImageFileChange}
           onBarcodeChange={(val) =>
             setFormData((prev) => ({ ...prev, barcode: val }))
@@ -123,16 +123,16 @@ const ProductBasicInfoModal = ({
           onNameChange={(val) =>
             setFormData((prev) => ({ ...prev, name: val }))
           }
-          // Config
+          // Cấu hình
           categories={categories}
           onShowScanner={onShowScanner}
           disabled={false}
           allowImageUpload={true}
-          inputColorClass="text-gray-900" // Explicitly setting color as requested
+          inputColorClass="text-gray-900" // Thiết lập màu sắc cụ thể theo yêu cầu
           highlightOps={highlightOps}
         />
 
-        {/* Expiry Date */}
+        {/* Hạn sử dụng */}
         <div>
           <label className="text-xs font-bold text-rose-700 uppercase">
             Hạn sử dụng
@@ -146,7 +146,7 @@ const ProductBasicInfoModal = ({
           />
         </div>
 
-        {/* Price Input - Manually added back */}
+        {/* Nhập giá - Thêm lại thủ công */}
         <div>
           <label className="text-xs font-bold text-rose-700 uppercase">
             Giá bán (VNĐ)
@@ -165,7 +165,7 @@ const ProductBasicInfoModal = ({
           />
         </div>
 
-        {/* Note Input */}
+        {/* Nhập ghi chú */}
         <div>
           <label className="text-xs font-bold text-rose-700 uppercase">
             Ghi chú

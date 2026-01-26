@@ -3,29 +3,29 @@ import { ScanBarcode, Upload } from "lucide-react";
 import { formatNumber } from "../../utils/formatters/formatUtils";
 
 const ProductIdentityForm = ({
-  // Data props
+  // Thuộc tính dữ liệu
   image,
   barcode,
   category,
   name,
 
-  // Handlers
+  // Xử lý sự kiện
   onImageChange, // callback(file)
   onBarcodeChange,
   onCategoryChange,
   onNameChange,
 
-  // Config/Helpers
+  // Cấu hình/Tiện ích
   categories = [],
   onShowScanner,
-  disabled = false, // Disables text inputs
-  allowImageUpload = true, // Controls visibility of upload buttons
+  disabled = false, // Vô hiệu hóa nhập liệu văn bản
+  allowImageUpload = true, // Kiểm soát hiển thị nút tải ảnh
 
-  // Suggestions (for Name)
+  // Gợi ý (cho Tên)
   nameSuggestions = [],
   onSelectExistingProduct,
 
-  // Style override
+  // Ghi đè kiểu dáng
   inputColorClass = "text-gray-900", // Mặc định màu tối theo yêu cầu
   highlightOps, // Prop mới để xử lý highlight
 }) => {
@@ -35,7 +35,7 @@ const ProductIdentityForm = ({
     const file = event.target.files?.[0];
     if (file && onImageChange) {
       onImageChange(file);
-      event.target.value = ""; // Reset input
+      event.target.value = ""; // Đặt lại input
     }
   };
 
@@ -46,7 +46,7 @@ const ProductIdentityForm = ({
 
   return (
     <div className="space-y-4">
-      {/* Image Section */}
+      {/* Phần hình ảnh */}
       <div className="flex flex-col gap-3">
         <label
           htmlFor={allowImageUpload ? "pid-image-input" : undefined}
@@ -72,7 +72,7 @@ const ProductIdentityForm = ({
           )}
         </label>
 
-        {/* Hidden Input - Consolidated */}
+        {/* Input ẩn - Gộp chung */}
         <input
           type="file"
           id="pid-image-input"
@@ -84,12 +84,12 @@ const ProductIdentityForm = ({
         />
       </div>
 
-      {/* Barcode & Category */}
+      {/* Mã vạch & Danh mục */}
       <div className="grid grid-cols-2 gap-4 items-end">
         <div className="flex flex-col gap-1">
           <label className="text-xs font-bold text-rose-700 uppercase flex justify-between">
             Mã Vạch
-            {allowImageUpload && ( // Show scanner only if we are allowed to edit identity (proxy for creating new/editing basic)
+            {allowImageUpload && ( // Chỉ hiển thị máy quét nếu được phép sửa định danh (đại diện cho tạo mới/sửa cơ bản)
               <ScanBarcode
                 size={14}
                 className="text-rose-600 cursor-pointer"
@@ -126,7 +126,7 @@ const ProductIdentityForm = ({
         </div>
       </div>
 
-      {/* Name */}
+      {/* Tên sản phẩm */}
       <div>
         <label className="text-xs font-bold text-rose-700 uppercase">
           Tên sản phẩm
@@ -141,7 +141,7 @@ const ProductIdentityForm = ({
           disabled={disabled}
           {...getHighlightProps("name", name)}
         />
-        {/* Name Suggestions (Only relevant when editing is allowed, e.g. creating new product) */}
+        {/* Gợi ý tên (Chỉ liên quan khi được phép sửa, ví dụ: tạo sản phẩm mới) */}
         {!disabled && nameSuggestions?.length > 0 && (
           <div className="mt-2 bg-white border border-rose-100 rounded-lg shadow-sm overflow-hidden">
             {nameSuggestions.map((prod) => (

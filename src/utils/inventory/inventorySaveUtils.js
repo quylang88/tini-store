@@ -190,7 +190,7 @@ export const buildNextProductFromForm = ({
         const updatedPrice = Number(formData.price) || 0;
 
         if (isCurrentLot) {
-          // Tính lại originalQuantity dựa trên delta của quantity (Remaining)
+          // Tính lại số lượng ban đầu dựa trên thay đổi của số lượng (còn lại)
           // quantityValue ở đây là "Tồn kho thực tế" do user nhập
           const oldRemaining = Number(lot.quantity) || 0;
           const newRemaining = quantityValue;
