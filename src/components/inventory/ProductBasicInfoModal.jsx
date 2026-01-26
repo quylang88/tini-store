@@ -22,6 +22,7 @@ const ProductBasicInfoModal = ({
     barcode: product?.barcode || "",
     price: product?.price || "",
     image: product?.image || null,
+    note: product?.note || "",
   });
 
   const highlightOps = useHighlightFields();
@@ -36,6 +37,7 @@ const ProductBasicInfoModal = ({
         barcode: product.barcode || "",
         price: product.price || "",
         image: product.image || null,
+        note: product.note || "",
       });
     }
   }
@@ -143,6 +145,22 @@ const ProductBasicInfoModal = ({
             onChange={handleMoneyChange}
             placeholder="0"
             {...highlightOps.getHighlightProps("price", formData.price)}
+          />
+        </div>
+
+        {/* Note Input */}
+        <div>
+          <label className="text-xs font-bold text-gray-700 uppercase">
+            Ghi chú
+          </label>
+          <textarea
+            className="w-full border border-gray-200 rounded-lg p-3 outline-none focus:border-rose-400 text-gray-900 text-sm mt-1"
+            rows={4}
+            value={formData.note}
+            onChange={(e) =>
+              setFormData((prev) => ({ ...prev, note: e.target.value }))
+            }
+            placeholder="Ghi chú về sản phẩm..."
           />
         </div>
       </div>
