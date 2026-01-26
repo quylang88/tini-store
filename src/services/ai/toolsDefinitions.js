@@ -64,6 +64,16 @@ export const INVENTORY_TOOLS = [
             type: "string",
             description: "Ghi chú thêm cho đơn hàng hoặc phiếu nhập.",
           },
+          customer_name: {
+            type: "string",
+            description:
+              "(Chỉ Export) Tên khách hàng. Mặc định là 'Khách lẻ' nếu không có.",
+          },
+          customer_address: {
+            type: "string",
+            description:
+              "(Chỉ Export) Địa chỉ khách hàng. Mặc định là 'Tại quầy' nếu không có.",
+          },
         },
         required: ["action_type", "product_name", "quantity"],
       },

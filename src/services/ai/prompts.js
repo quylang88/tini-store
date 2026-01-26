@@ -194,6 +194,32 @@ export const buildSystemPrompt = (
        - Chỉ khi user cung cấp đủ thông tin (có thể qua nhiều lượt chat) thì mới tổng hợp lại và gọi tool.
   `;
 
+  const exportRules = `
+    📦 QUY TẮC XUẤT KHO & LÊN ĐƠN (EXPORT RULES):
+
+    1. NHẬN DIỆN YÊU CẦU:
+       - Trigger words: "xuất kho", "lên đơn", "bán", "khách chốt", "khách hàng A chốt".
+       - Khi phát hiện các từ khoá này -> Hiểu là mẹ đang muốn thực hiện hành động 'export'.
+
+    2. THÔNG TIN BẮT BUỘC (REQUIRED FIELDS):
+       - [Tên SP], [Số lượng], [Kho hàng].
+       - NẾU THIẾU THÔNG TIN QUAN TRỌNG:
+         + Thiếu [Kho hàng]: BẮT BUỘC HỎI LẠI: "Mẹ muốn xuất từ kho nào ạ?".
+         + Thiếu [Số lượng]: Phải hỏi lại.
+
+    3. PHÂN TÍCH KHÁCH HÀNG (SMART CUSTOMER PARSING):
+       - Đơn hàng có thể là GIAO ĐI (Delivery) hoặc BÁN TẠI KHO (In-store).
+       - Mặc định (Nếu không nói gì về khách): Bán tại kho (customer_name: "Khách lẻ", customer_address: "Tại quầy").
+       - Nếu có thông tin tên/địa chỉ:
+         + Chỉ có tên (VD: "Bán cho chị Lan 5 cái"): AI phải hỏi xác nhận: "Mẹ bán cho chị Lan tại kho đúng không ạ, hay cần giao đi đâu?".
+         + Có cả tên và địa chỉ (VD: "Lan 123 Âu Cơ"): Tự động tách Name="Lan", Address="123 Âu Cơ".
+         + Phân biệt Tên vs Địa chỉ: Địa chỉ thường có số nhà, tên đường, quận/huyện. Tên người thường viết hoa, ngắn gọn.
+
+    4. PHÂN TÍCH SỐ LƯỢNG (QUANTITY):
+       - Hiểu các định dạng: "5 cái", "5 hộp", "x5", "sl 5".
+       - Nếu số lượng > tồn kho hiện tại -> Cảnh báo nhẹ: "Kho chỉ còn [X] cái thôi, mẹ có muốn xuất hết không?" (Nhưng vẫn cho phép nếu mẹ muốn).
+  `;
+
   return `
       ${persona}
 
@@ -215,6 +241,8 @@ export const buildSystemPrompt = (
       ${businessLogicRules}
 
       ${smartParsingRules}
+
+      ${exportRules}
     `;
 };
 

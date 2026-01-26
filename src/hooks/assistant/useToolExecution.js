@@ -31,6 +31,8 @@ export const useToolExecution = ({
         shipping_weight, // Cân nặng (kg) nếu là hàng Nhật
         selling_price,
         note,
+        customer_name,
+        customer_address,
       } = args;
 
       if (!product_name || !quantity) {
@@ -195,8 +197,8 @@ export const useToolExecution = ({
           orderNumber: `AI-${Math.floor(Math.random() * 10000)}`,
           status: "pending", // Unpaid
           orderType: "delivery",
-          customerName: "Khách lẻ (Qua Misa)",
-          customerAddress: "Tại quầy / Qua Chat",
+          customerName: customer_name || "Khách lẻ (Qua Misa)",
+          customerAddress: customer_address || "Tại quầy / Qua Chat",
           items: itemsToSync, // item đã có lotAllocations
           total: item.price * item.quantity,
           warehouse: targetWarehouse,
