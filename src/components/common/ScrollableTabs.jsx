@@ -43,7 +43,7 @@ const ScrollableTabs = ({
   return (
     <div
       ref={containerRef}
-      className={`overflow-x-auto no-scrollbar ${className}`}
+      className={`overflow-x-auto overscroll-x-contain no-scrollbar ${className}`}
     >
       <div className="flex gap-2 min-w-max px-3">
         {tabs.map((tab) => {
@@ -53,7 +53,7 @@ const ScrollableTabs = ({
               key={tab.key}
               ref={isActive ? activeTabRef : null}
               onClick={() => onTabChange(tab.key)}
-              className={`relative px-3 py-2 text-sm font-medium transition-colors z-0 outline-none select-none ${
+              className={`relative px-3 py-2 text-sm font-medium transition-colors z-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-400 rounded-lg select-none ${
                 isActive ? activeTextColor : inactiveTextColor
               }`}
             >
