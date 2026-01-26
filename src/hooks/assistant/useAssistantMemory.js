@@ -5,13 +5,10 @@ import { summarizeChatHistory } from "../../services/aiAssistantService";
 const MAX_BUFFER_SIZE = 50; // Tối đa 50 tin nhắn trong buffer
 const BUFFER_TRIGGER_SIZE = 20; // Đủ 20 tin nhắn thì tóm tắt
 
-export const useAssistantMemory = () => {
-  const [chatSummary, setChatSummary] = useState(() => {
-    if (typeof window !== "undefined") {
-      return localStorage.getItem("ai_chat_summary") || "";
-    }
-    return "";
-  });
+export const useAssistantMemory = ({ chatSummary, setChatSummary }) => {
+  // Hook này giờ đây nhận state từ bên ngoài (App.jsx -> Assistant.jsx -> ...)
+  // Không còn quản lý localStorage cho chatSummary nữa (để App.jsx lo).
+  // Tuy nhiên, pending buffer vẫn giữ ở localStorage vì nó là dữ liệu tạm thời/nhỏ.
 
   const [isSummarizing, setIsSummarizing] = useState(false);
 
@@ -33,14 +30,15 @@ export const useAssistantMemory = () => {
           );
 
           setIsSummarizing(true);
-          const currentMem = localStorage.getItem("ai_chat_summary") || "";
+          // Sử dụng chatSummary từ props
+          const currentMem = chatSummary || "";
           const newSummary = await summarizeChatHistory(
             currentMem,
             pendingMessages,
           );
 
           setChatSummary(newSummary);
-          localStorage.setItem("ai_chat_summary", newSummary);
+          // Lưu xuống DB do App.jsx handle useEffect([chatSummary])
           localStorage.removeItem("ai_pending_buffer");
           console.log("Đã dọn dẹp bộ nhớ đệm thành công!");
         } catch (e) {
@@ -51,7 +49,11 @@ export const useAssistantMemory = () => {
         }
       }
     };
+    // Chạy 1 lần khi mount, nhưng cần chatSummary để merge
+    // Nếu chatSummary chưa load xong (từ IDB), có thể chạy sai?
+    // Nhưng Assistant chỉ được render khi App loaded.
     processPendingBuffer();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Hàm thêm tin nhắn vào buffer
@@ -87,7 +89,6 @@ export const useAssistantMemory = () => {
           currentBuffer,
         );
         setChatSummary(newSummary);
-        localStorage.setItem("ai_chat_summary", newSummary);
         localStorage.removeItem("ai_pending_buffer");
         console.log("Auto summarize done & Buffer cleared.");
       } catch (err) {
@@ -111,7 +112,6 @@ export const useAssistantMemory = () => {
             pendingMessages,
           );
           setChatSummary(newSummary);
-          localStorage.setItem("ai_chat_summary", newSummary);
         }
       } catch (e) {
         console.warn("Lỗi force summarize:", e);

@@ -1,10 +1,12 @@
-const DB_NAME = "tini_store_db";
-const DB_VERSION = 1;
+const DB_NAME = "tiny_shop_db";
+const DB_VERSION = 2; // Tăng version để trigger upgrade
 
 const STORES = {
   PRODUCTS: "products",
   ORDERS: "orders",
   SETTINGS: "settings",
+  CUSTOMERS: "customers",
+  CHAT_MEMORY: "chat_memory",
 };
 
 class StorageService {
@@ -33,6 +35,13 @@ class StorageService {
           // Settings là singleton, nhưng dùng store để linh hoạt mở rộng sau này
           db.createObjectStore(STORES.SETTINGS, { keyPath: "key" });
         }
+        if (!db.objectStoreNames.contains(STORES.CUSTOMERS)) {
+          db.createObjectStore(STORES.CUSTOMERS, { keyPath: "id" });
+        }
+        if (!db.objectStoreNames.contains(STORES.CHAT_MEMORY)) {
+          // Chat memory lưu chuỗi tóm tắt
+          db.createObjectStore(STORES.CHAT_MEMORY, { keyPath: "key" });
+        }
       };
 
       request.onsuccess = (event) => {
@@ -41,7 +50,7 @@ class StorageService {
       };
 
       request.onerror = (event) => {
-        console.error("IndexedDB initialization failed:", event.target.error);
+        console.error("Khởi tạo IndexedDB thất bại:", event.target.error);
         reject(event.target.error);
       };
     });
@@ -52,65 +61,96 @@ class StorageService {
   async loadAllData() {
     await this.init();
 
-    // Thử di chuyển dữ liệu cũ nếu DB đang trống
+    // Thử di chuyển dữ liệu cũ nếu DB đang trống (hoặc migration mới)
     await this.migrateFromLocalStorageIfNeeded();
 
-    const [products, orders, settingsResult] = await Promise.all([
-      this.getAll(STORES.PRODUCTS),
-      this.getAll(STORES.ORDERS),
-      this.getAll(STORES.SETTINGS),
-    ]);
+    const [products, orders, settingsResult, customers, chatMemoryResult] =
+      await Promise.all([
+        this.getAll(STORES.PRODUCTS),
+        this.getAll(STORES.ORDERS),
+        this.getAll(STORES.SETTINGS),
+        this.getAll(STORES.CUSTOMERS),
+        this.getAll(STORES.CHAT_MEMORY),
+      ]);
 
     // Chuẩn hóa cài đặt (do lưu dạng key-value object)
-    // Cấu trúc lưu trữ: { key: "main", value: { ... } }
     let settings = null;
     if (settingsResult && settingsResult.length > 0) {
       const found = settingsResult.find((s) => s.key === "main");
       if (found) settings = found.value;
     }
 
+    // Chuẩn hóa bộ nhớ chat
+    let chatSummary = "";
+    if (chatMemoryResult && chatMemoryResult.length > 0) {
+      const found = chatMemoryResult.find((s) => s.key === "summary");
+      if (found) chatSummary = found.value;
+    }
+
     return {
       products: products || [],
       orders: orders || [],
-      settings: settings || null, // Để App quyết định giá trị mặc định nếu null
+      settings: settings || null,
+      customers: customers || [],
+      chatSummary: chatSummary || "",
     };
   }
 
   async migrateFromLocalStorageIfNeeded() {
     try {
       const productCount = await this.count(STORES.PRODUCTS);
-      // Nếu DB trống, kiểm tra LocalStorage để di chuyển dữ liệu cũ sang
+      // Logic migration cơ bản: Nếu store chính trống, thử kéo từ LocalStorage
+      // Lưu ý: Có thể cần logic phức tạp hơn nếu muốn merge, nhưng hiện tại ưu tiên case "Lần đầu chạy bản mới"
+
       if (productCount === 0) {
+        // 1. Products
         const rawProducts = localStorage.getItem("shop_products_v2");
         if (rawProducts) {
-          console.log("Migrating products from LocalStorage to IndexedDB...");
+          console.log("Đang chuyển đổi Products từ LocalStorage sang IndexedDB...");
           const products = JSON.parse(rawProducts);
           if (Array.isArray(products)) {
             await this.saveAll(STORES.PRODUCTS, products);
           }
         }
 
-        // Kiểm tra đơn hàng
+        // 2. Orders
         const rawOrders = localStorage.getItem("shop_orders_v2");
         if (rawOrders) {
-          console.log("Migrating orders from LocalStorage to IndexedDB...");
+          console.log("Đang chuyển đổi Orders từ LocalStorage sang IndexedDB...");
           const orders = JSON.parse(rawOrders);
           if (Array.isArray(orders)) {
             await this.saveAll(STORES.ORDERS, orders);
           }
         }
 
-        // Kiểm tra cài đặt
+        // 3. Settings
         const rawSettings = localStorage.getItem("shop_settings");
         if (rawSettings) {
-          console.log("Migrating settings from LocalStorage to IndexedDB...");
+          console.log("Đang chuyển đổi Settings từ LocalStorage sang IndexedDB...");
           const settings = JSON.parse(rawSettings);
           await this.saveSettings(settings);
         }
+
+        // 4. Customers
+        const rawCustomers = localStorage.getItem("shop_customers_v1");
+        if (rawCustomers) {
+          console.log("Đang chuyển đổi Customers từ LocalStorage sang IndexedDB...");
+          const customers = JSON.parse(rawCustomers);
+          if (Array.isArray(customers)) {
+            await this.saveAll(STORES.CUSTOMERS, customers);
+          }
+        }
+
+        // 5. Chat Summary
+        const rawChatSummary = localStorage.getItem("ai_chat_summary");
+        if (rawChatSummary) {
+          console.log("Đang chuyển đổi Chat Summary từ LocalStorage sang IndexedDB...");
+          await this.saveChatSummary(rawChatSummary);
+        }
       }
     } catch (e) {
-      console.error("Migration failed:", e);
-      // Tiếp tục chạy kể cả khi lỗi để không chặn app
+      console.error("Lỗi khi chuyển đổi dữ liệu cũ:", e);
+      // Tiếp tục chạy để không chặn ứng dụng
     }
   }
 
@@ -138,7 +178,8 @@ class StorageService {
     });
   }
 
-  // Hàm lưu "Ghi đè tất cả" để đồng bộ state từ React xuống DB
+  // --- Specific Savers ---
+
   async saveAllProducts(products) {
     return this.saveAll(STORES.PRODUCTS, products);
   }
@@ -147,13 +188,25 @@ class StorageService {
     return this.saveAll(STORES.ORDERS, orders);
   }
 
+  async saveAllCustomers(customers) {
+    return this.saveAll(STORES.CUSTOMERS, customers);
+  }
+
   async saveSettings(settingsObj) {
     return new Promise((resolve, reject) => {
       const transaction = this.db.transaction([STORES.SETTINGS], "readwrite");
       const store = transaction.objectStore(STORES.SETTINGS);
-      // Bọc settings trong một key cố định
       store.put({ key: "main", value: settingsObj });
+      transaction.oncomplete = () => resolve();
+      transaction.onerror = () => reject(transaction.error);
+    });
+  }
 
+  async saveChatSummary(summaryString) {
+    return new Promise((resolve, reject) => {
+      const transaction = this.db.transaction([STORES.CHAT_MEMORY], "readwrite");
+      const store = transaction.objectStore(STORES.CHAT_MEMORY);
+      store.put({ key: "summary", value: summaryString });
       transaction.oncomplete = () => resolve();
       transaction.onerror = () => reject(transaction.error);
     });
@@ -164,11 +217,9 @@ class StorageService {
       const transaction = this.db.transaction([storeName], "readwrite");
       const store = transaction.objectStore(storeName);
 
-      // Xóa dữ liệu cũ để đảm bảo các item đã bị xóa trên UI cũng biến mất trong DB
-      store.clear();
-
+      store.clear(); // Xóa cũ
       items.forEach((item) => {
-        store.put(item);
+        store.put(item); // Thêm mới
       });
 
       transaction.oncomplete = () => resolve();

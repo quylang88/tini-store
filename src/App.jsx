@@ -22,7 +22,7 @@ import { exportDataToJSON } from "./utils/file/fileUtils";
 import { sendNotification } from "./utils/common/notificationUtils";
 import useDailyGreeting from "./hooks/core/useDailyGreeting";
 import { getRandomGreeting } from "./services/ai/chatHelpers";
-import storageService from "./services/storage/StorageService";
+import storageService from "./services/storageService";
 
 // Định nghĩa thứ tự tab để xác định hướng chuyển cảnh
 const TAB_ORDER = {
@@ -57,6 +57,8 @@ const App = () => {
     exchangeRate: 170,
     categories: ["Chung", "Mỹ phẩm", "Thực phẩm", "Quần áo"],
   });
+  const [customers, setCustomers] = useState([]);
+  const [chatSummary, setChatSummary] = useState("");
 
   // Load data khi authenticated
   useEffect(() => {
@@ -69,6 +71,8 @@ const App = () => {
         if (data.settings) {
           setSettings(data.settings);
         }
+        setCustomers(data.customers);
+        setChatSummary(data.chatSummary);
         setIsDataLoaded(true);
       });
     }
@@ -93,6 +97,18 @@ const App = () => {
       storageService.saveSettings(settings);
     }
   }, [settings, isDataLoaded]);
+
+  useEffect(() => {
+    if (isDataLoaded) {
+      storageService.saveAllCustomers(customers);
+    }
+  }, [customers, isDataLoaded]);
+
+  useEffect(() => {
+    if (isDataLoaded) {
+      storageService.saveChatSummary(chatSummary);
+    }
+  }, [chatSummary, isDataLoaded]);
 
   // --- 4. HÀM XỬ LÝ NAV & AUTH ---
   const handleLoginSuccess = () => {
@@ -296,6 +312,8 @@ const App = () => {
                 isTyping={isChatTyping}
                 setIsTyping={setIsChatTyping}
                 setTabBarVisible={setIsTabBarVisible}
+                chatSummary={chatSummary}
+                setChatSummary={setChatSummary}
               />
             </motion.div>
           )}
@@ -313,6 +331,8 @@ const App = () => {
                 setOrders={setOrders}
                 settings={settings}
                 setTabBarVisible={setIsTabBarVisible}
+                customers={customers}
+                setCustomers={setCustomers}
               />
             </ScreenTransition>
           )}
@@ -357,6 +377,8 @@ const App = () => {
           setLogoutModalOpen(false);
           setProducts([]);
           setOrders([]);
+          setCustomers([]);
+          setChatSummary("");
           setIsDataLoaded(false);
         }}
       />

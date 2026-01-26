@@ -21,6 +21,8 @@ const useOrderCreateLogic = ({
   setErrorModal,
   onExit,
   onFinish,
+  customers: customersProp, // Receive prop
+  setCustomers, // Receive prop
 }) => {
   const [showScanner, setShowScanner] = useState(false);
   const [isReviewOpen, setIsReviewOpen] = useState(false);
@@ -42,7 +44,10 @@ const useOrderCreateLogic = ({
     processOrderForCustomer,
     isCustomerNameTaken,
     EXCLUDED_CUSTOMERS,
-  } = useCustomerLogic();
+  } = useCustomerLogic({
+    customers: customersProp,
+    setCustomers,
+  });
 
   const { cart, setCart, handleQuantityChange, adjustQuantity, clearCart } =
     useCartLogic();
