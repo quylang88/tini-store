@@ -48,9 +48,17 @@ export const useAssistantChat = ({
         (status) => setLoadingText(status),
       );
 
-      // Lưu câu trả lời của AI vào Buffer
-      const aiMsgForBuffer = { sender: "assistant", content: response.content };
-      appendToPendingBuffer([aiMsgForBuffer]);
+      // Nếu là Text thường -> Lưu vào Buffer
+      if (response.type !== "tool_request") {
+        const aiMsgForBuffer = {
+          sender: "assistant",
+          content: response.content,
+        };
+        appendToPendingBuffer([aiMsgForBuffer]);
+      } else {
+        // Nếu là Tool Request -> KHÔNG lưu vào Buffer ngay (đợi Confirm xong mới lưu kết quả)
+        // Hoặc có thể lưu "AI yêu cầu..." tùy logic, nhưng tạm thời để UI xử lý
+      }
 
       setMessages((prev) => [...prev, response]);
     } catch (error) {
@@ -67,6 +75,7 @@ export const useAssistantChat = ({
       ]);
     } finally {
       setIsTyping(false);
+      setLoadingText(null); // Clear loading status
     }
   };
 
