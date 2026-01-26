@@ -33,6 +33,7 @@ const MessageList = ({
               <ToolConfirmationBubble
                 key={msg.id}
                 message={msg}
+                theme={activeTheme}
                 onConfirm={onConfirmTool}
                 onCancel={onCancelTool}
               />

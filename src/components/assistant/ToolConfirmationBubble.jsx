@@ -12,7 +12,12 @@ import {
 } from "lucide-react";
 import { formatCurrency } from "../../utils/formatters/formatUtils";
 
-const ToolConfirmationBubble = ({ message, onConfirm, onCancel }) => {
+const ToolConfirmationBubble = ({
+  message,
+  onConfirm,
+  onCancel,
+  theme = {},
+}) => {
   const { data, status } = message;
   const { functionArgs } = data || {};
   const [isProcessing, setIsProcessing] = useState(false);
@@ -22,13 +27,15 @@ const ToolConfirmationBubble = ({ message, onConfirm, onCancel }) => {
   const isImport = args.action_type === "import";
   const title = isImport ? "Yêu cầu Nhập kho" : "Yêu cầu Tạo đơn";
   const icon = isImport ? (
-    <Package className="w-5 h-5 text-emerald-600" />
+    <Package className={`w-5 h-5 ${theme.inputIconColor || "text-gray-600"}`} />
   ) : (
-    <ShoppingCart className="w-5 h-5 text-blue-600" />
+    <ShoppingCart
+      className={`w-5 h-5 ${theme.inputIconColor || "text-gray-600"}`}
+    />
   );
-  const themeClass = isImport
-    ? "bg-emerald-50 border-emerald-200"
-    : "bg-blue-50 border-blue-200";
+  // Use theme colors if available, fallback to default
+  const containerClass = `${theme.botStatsBg || "bg-gray-50"} border ${theme.botBubbleBorder || "border-gray-200"}`;
+  const headerClass = theme.botStatsBg || "bg-gray-100/50";
 
   const handleConfirm = async () => {
     setIsProcessing(true);
@@ -61,11 +68,11 @@ const ToolConfirmationBubble = ({ message, onConfirm, onCancel }) => {
 
   return (
     <div
-      className={`flex flex-col max-w-[90%] md:max-w-[80%] self-start rounded-2xl rounded-tl-none overflow-hidden border ${themeClass} shadow-sm my-2`}
+      className={`flex flex-col max-w-[90%] md:max-w-[80%] self-start rounded-2xl rounded-tl-none overflow-hidden ${containerClass} shadow-sm my-2`}
     >
       {/* Header */}
       <div
-        className={`flex items-center px-4 py-3 border-b ${isImport ? "border-emerald-100 bg-emerald-100/50" : "border-blue-100 bg-blue-100/50"}`}
+        className={`flex items-center px-4 py-3 border-b ${theme.botBubbleBorder || "border-gray-200"} ${headerClass}`}
       >
         <div className="mr-3 p-2 bg-white rounded-full shadow-sm">{icon}</div>
         <div className="flex-1">
@@ -96,6 +103,23 @@ const ToolConfirmationBubble = ({ message, onConfirm, onCancel }) => {
           </span>
         </div>
 
+        {/* Customer Info (Export Only) */}
+        {!isImport && (args.customer_name || args.customer_address) && (
+          <div className="flex justify-between items-start">
+            <span className="text-gray-500 text-xs uppercase tracking-wider font-medium">
+              Khách hàng
+            </span>
+            <div className="text-right">
+              <div className="text-sm text-gray-900 font-medium">
+                {args.customer_name || "Theo mặc định"}
+              </div>
+              <div className="text-xs text-gray-500">
+                {args.customer_address || "Theo mặc định"}
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Price Info */}
         {(args.cost_price || args.selling_price) && (
           <div className="flex justify-between items-center">
@@ -110,7 +134,9 @@ const ToolConfirmationBubble = ({ message, onConfirm, onCancel }) => {
                 </div>
               )}
               {args.selling_price && (
-                <div className="text-sm text-blue-600 font-medium">
+                <div
+                  className={`text-sm font-medium ${theme.botPriceText || "text-blue-600"}`}
+                >
                   Bán: {formatCurrency(args.selling_price)}
                 </div>
               )}
@@ -153,7 +179,7 @@ const ToolConfirmationBubble = ({ message, onConfirm, onCancel }) => {
           disabled={isProcessing}
           className={`flex-1 py-2 px-4 rounded-xl text-white font-medium text-sm shadow-sm flex items-center justify-center space-x-2 transition-all active:scale-95
             ${isProcessing ? "opacity-70 cursor-wait" : ""}
-            ${isImport ? "bg-emerald-500 hover:bg-emerald-600" : "bg-blue-500 hover:bg-blue-600"}
+            ${theme.sendButtonBg || "bg-blue-500"}
           `}
         >
           {isProcessing ? (
