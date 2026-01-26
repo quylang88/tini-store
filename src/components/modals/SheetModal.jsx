@@ -13,6 +13,7 @@ const SheetModal = ({
   title,
   footer,
   className = "",
+  onScroll,
 }) => {
   const { shouldRender, active } = useMountTransition(open, 300);
   const controls = useDragControls();
@@ -61,7 +62,10 @@ const SheetModal = ({
           </div>
         )}
 
-        <div className="flex-1 overflow-y-auto px-5 py-2 overscroll-contain">
+        <div
+          className="flex-1 overflow-y-auto px-5 py-2 overscroll-contain"
+          onScroll={onScroll}
+        >
           {children}
         </div>
 

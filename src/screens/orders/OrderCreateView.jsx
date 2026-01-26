@@ -10,6 +10,8 @@ import OrderCreateFooter from "../../components/orders/OrderCreateFooter";
 import OrderCreateReviewModal from "../../components/orders/OrderCreateReviewModal";
 import useScrollHandling from "../../hooks/ui/useScrollHandling";
 import ProductFilterHeader from "../../components/common/ProductFilterHeader";
+import usePagination from "../../hooks/ui/usePagination";
+import { isScrollNearBottom } from "../../utils/ui/scrollUtils";
 
 // Giao diện tạo/sửa đơn được tách riêng để Orders.jsx gọn hơn
 const OrderCreateView = ({
@@ -59,6 +61,22 @@ const OrderCreateView = ({
     mode: "staged",
     searchHideThreshold: 140,
   });
+
+  const {
+    visibleData: visibleProducts,
+    loadMore,
+    hasMore,
+  } = usePagination(filteredProducts, {
+    pageSize: 20,
+    resetDeps: [searchTerm, activeCategory, selectedWarehouse, sortConfig],
+  });
+
+  const handleScrollCombined = (e) => {
+    handleScroll(e);
+    if (isScrollNearBottom(e.target) && hasMore) {
+      loadMore();
+    }
+  };
 
   const categories = settings?.categories || ["Chung"];
   const warehouseTabs = getWarehouses().map((w) => ({
@@ -124,8 +142,8 @@ const OrderCreateView = ({
       {/* Container chiếm full chiều cao. Padding nằm ở component con (OrderCreateProductList) */}
       <div className="flex-1 overflow-hidden flex flex-col pt-0">
         <OrderCreateProductList
-          filteredProducts={filteredProducts}
-          handleScroll={handleScroll}
+          filteredProducts={visibleProducts}
+          handleScroll={handleScrollCombined}
           style={{
             paddingTop: `calc(${listPaddingTop}px + env(safe-area-inset-top))`,
           }} // Pass dynamic style for padding

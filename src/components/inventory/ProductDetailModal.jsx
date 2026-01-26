@@ -1,22 +1,36 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { formatNumber } from "../../utils/formatters/formatUtils";
 import { getWarehouseLabel } from "../../utils/inventory/warehouseUtils";
 import SheetModal from "../../components/modals/SheetModal";
 import useModalCache from "../../hooks/ui/useModalCache";
 import Button from "../../components/button/Button";
+import usePagination from "../../hooks/ui/usePagination";
+import { isScrollNearBottom } from "../../utils/ui/scrollUtils";
 
 // ProductDetailModal: Hiển thị lịch sử nhập hàng (View Only)
 const ProductDetailModal = ({ product, onClose, onEditLot }) => {
   // Logic giữ dữ liệu (Cached Data) để phục vụ animation exit.
   const cachedProduct = useModalCache(product, Boolean(product));
 
+  // Sort lots by newest date first
+  const sortedLots = useMemo(() => {
+    if (!cachedProduct) return [];
+    return [...(cachedProduct.purchaseLots || [])].sort(
+      (a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0),
+    );
+  }, [cachedProduct]);
+
+  const {
+    visibleData: visibleLots,
+    loadMore,
+    hasMore,
+  } = usePagination(sortedLots, {
+    pageSize: 20,
+    resetDeps: [cachedProduct?.id],
+  });
+
   // Nếu chưa từng có sản phẩm nào được chọn thì không render gì cả.
   if (!cachedProduct) return null;
-
-  // Sort lots by newest date first
-  const lots = [...(cachedProduct.purchaseLots || [])].sort(
-    (a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0),
-  );
 
   const footer = (
     <Button variant="sheetClose" size="sm" onClick={onClose}>
@@ -31,6 +45,11 @@ const ProductDetailModal = ({ product, onClose, onEditLot }) => {
       title={`${cachedProduct.name}`}
       showCloseIcon={false}
       footer={footer}
+      onScroll={(e) => {
+        if (isScrollNearBottom(e.target) && hasMore) {
+          loadMore();
+        }
+      }}
     >
       <div className="space-y-4">
         <div className="flex flex-col border-b border-rose-100 pb-4">
@@ -40,12 +59,12 @@ const ProductDetailModal = ({ product, onClose, onEditLot }) => {
         </div>
 
         <div className="space-y-3">
-          {lots.length === 0 ? (
+          {sortedLots.length === 0 ? (
             <div className="text-xs text-gray-500 text-center">
               Chưa có lịch sử nhập kho.
             </div>
           ) : (
-            lots.map((lot) => {
+            visibleLots.map((lot) => {
               const originalQty =
                 Number(lot.originalQuantity) || Number(lot.quantity);
               const currentQty = Number(lot.quantity) || 0;

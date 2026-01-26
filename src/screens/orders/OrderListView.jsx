@@ -5,6 +5,8 @@ import FloatingActionButton from "../../components/button/FloatingActionButton";
 import AppHeader from "../../components/common/AppHeader";
 import useScrollHandling from "../../hooks/ui/useScrollHandling";
 import OrderListItem from "../../components/orders/OrderListItem";
+import usePagination from "../../hooks/ui/usePagination";
+import { isScrollNearBottom } from "../../utils/ui/scrollUtils";
 
 // Giao diện danh sách đơn tách riêng để dễ quản lý và thêm nút huỷ đơn
 const OrderListView = ({
@@ -40,6 +42,15 @@ const OrderListView = ({
     });
   }, [orders]);
 
+  const {
+    visibleData: visibleOrders,
+    loadMore,
+    hasMore,
+  } = usePagination(sortedOrders, {
+    pageSize: 20,
+    resetDeps: [], // Orders list preserves scroll position even if updated, unless we decide otherwise
+  });
+
   return (
     <div className="relative h-full bg-transparent">
       <AppHeader isScrolled={isScrolled} />
@@ -68,9 +79,14 @@ const OrderListView = ({
 
       <div
         className="h-full overflow-y-auto p-3 pt-[calc(80px+env(safe-area-inset-top))] pb-24 space-y-3 min-h-0 overscroll-y-contain"
-        onScroll={handleScroll}
+        onScroll={(e) => {
+          handleScroll(e);
+          if (isScrollNearBottom(e.target) && hasMore) {
+            loadMore();
+          }
+        }}
       >
-        {sortedOrders.map((order) => (
+        {visibleOrders.map((order) => (
           <OrderListItem
             key={order.id}
             order={order}
