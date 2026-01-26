@@ -143,7 +143,8 @@ const CustomCalendar = ({
               {/* Tháng */}
               <div
                 ref={monthListRef}
-                className="overflow-y-auto overscroll-contain border-r border-rose-100 pr-1 h-full"
+                className="overflow-y-auto overscroll-contain border-r border-rose-100 pr-1 h-full relative"
+                style={{ scrollBehavior: "auto" }}
               >
                 {Array.from({ length: 12 }, (_, i) => i).map((m) => (
                   <button
@@ -162,7 +163,8 @@ const CustomCalendar = ({
               {/* Năm */}
               <div
                 ref={yearListRef}
-                className="overflow-y-auto overscroll-contain pl-1 h-full"
+                className="overflow-y-auto overscroll-contain pl-1 h-full relative"
+                style={{ scrollBehavior: "auto" }}
               >
                 {rangeYears.map((y) => (
                   <button
