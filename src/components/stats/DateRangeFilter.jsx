@@ -1,14 +1,10 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import CustomCalendar from "../common/CustomCalendar";
 
 const DateRangeFilter = ({ customRange, setCustomRange }) => {
   const [quickMonth, setQuickMonth] = useState("");
   const [quickYear, setQuickYear] = useState("");
   const [calendarOpen, setCalendarOpen] = useState(false);
-  const [calendarMonth, setCalendarMonth] = useState(() => {
-    const now = new Date();
-    // Luôn khởi tạo lịch ở tháng hiện tại để dễ quan sát.
-    return new Date(now.getFullYear(), now.getMonth(), 1);
-  });
   const containerRef = useRef(null);
 
   // Chuẩn hoá ngày để lưu vào state dưới dạng yyyy-mm-dd.
@@ -25,14 +21,14 @@ const DateRangeFilter = ({ customRange, setCustomRange }) => {
 
   const startDate = useMemo(
     () => parseDateValue(customRange.start),
-    [customRange.start]
+    [customRange.start],
   );
   const endDate = useMemo(
     () => parseDateValue(customRange.end),
-    [customRange.end]
+    [customRange.end],
   );
 
-  // Hiển thị theo định dạng dd/mm/yyyy cho người dùng Việt.
+  // Hiển thị theo định dạng dd/mm/yyyy.
   const formatDateDisplay = (date) => {
     if (!date) return "";
     const day = String(date.getDate()).padStart(2, "0");
@@ -53,7 +49,7 @@ const DateRangeFilter = ({ customRange, setCustomRange }) => {
     const selected = new Date(
       date.getFullYear(),
       date.getMonth(),
-      date.getDate()
+      date.getDate(),
     );
     if (!startDate || (startDate && endDate)) {
       updateCustomRange({ start: formatDateInput(selected), end: "" });
@@ -71,23 +67,6 @@ const DateRangeFilter = ({ customRange, setCustomRange }) => {
       end: formatDateInput(selected),
     });
   };
-
-  // Tạo danh sách ngày hiển thị theo tháng hiện tại (bắt đầu từ thứ 2).
-  const calendarDays = useMemo(() => {
-    const year = calendarMonth.getFullYear();
-    const month = calendarMonth.getMonth();
-    const firstDay = new Date(year, month, 1);
-    const startOffset = (firstDay.getDay() + 6) % 7;
-    const daysInMonth = new Date(year, month + 1, 0).getDate();
-    const days = [];
-    for (let i = 0; i < startOffset; i += 1) {
-      days.push(null);
-    }
-    for (let day = 1; day <= daysInMonth; day += 1) {
-      days.push(new Date(year, month, day));
-    }
-    return days;
-  }, [calendarMonth]);
 
   // Chọn nhanh theo tháng sẽ tự set khoảng đầu/cuối tháng hiện tại.
   const handleQuickMonthChange = (event) => {
@@ -130,7 +109,6 @@ const DateRangeFilter = ({ customRange, setCustomRange }) => {
     const end = new Date(now.getFullYear(), now.getMonth() + 1, 0);
     setQuickMonth(monthValue);
     setQuickYear("");
-    setCalendarMonth(new Date(now.getFullYear(), now.getMonth(), 1));
     setCustomRange({
       start: formatDateInput(start),
       end: formatDateInput(end),
@@ -180,94 +158,14 @@ const DateRangeFilter = ({ customRange, setCustomRange }) => {
             </span>
           </button>
           {calendarOpen && (
-            <div className="absolute z-20 mt-2 w-full rounded-xl border border-amber-100 bg-white p-3 shadow-lg">
-              <div className="mb-2 flex items-center justify-between text-xs font-semibold text-rose-700">
-                <button
-                  type="button"
-                  onClick={() =>
-                    setCalendarMonth(
-                      (month) =>
-                        new Date(month.getFullYear(), month.getMonth() - 1, 1)
-                    )
-                  }
-                  className="rounded-full px-2 py-1 text-rose-500 active:bg-rose-50"
-                >
-                  ‹
-                </button>
-                <div>
-                  Tháng {String(calendarMonth.getMonth() + 1).padStart(2, "0")}{" "}
-                  {calendarMonth.getFullYear()}
-                </div>
-                <button
-                  type="button"
-                  onClick={() =>
-                    setCalendarMonth(
-                      (month) =>
-                        new Date(month.getFullYear(), month.getMonth() + 1, 1)
-                    )
-                  }
-                  className="rounded-full px-2 py-1 text-rose-500 active:bg-rose-50"
-                >
-                  ›
-                </button>
-              </div>
-              <div className="grid grid-cols-7 gap-1 text-[11px] font-semibold text-rose-400">
-                {["T2", "T3", "T4", "T5", "T6", "T7", "CN"].map((day) => (
-                  <div key={day} className="text-center">
-                    {day}
-                  </div>
-                ))}
-              </div>
-              <div className="mt-1 grid grid-cols-7 gap-1 text-xs">
-                {calendarDays.map((date, index) => {
-                  if (!date) {
-                    return <div key={`empty-${index}`} />;
-                  }
-                  const dateOnly = new Date(
-                    date.getFullYear(),
-                    date.getMonth(),
-                    date.getDate()
-                  );
-                  const today = new Date();
-                  const todayOnly = new Date(
-                    today.getFullYear(),
-                    today.getMonth(),
-                    today.getDate()
-                  );
-                  const isStart =
-                    startDate && dateOnly.getTime() === startDate.getTime();
-                  const isEnd =
-                    endDate && dateOnly.getTime() === endDate.getTime();
-                  const isToday = dateOnly.getTime() === todayOnly.getTime();
-                  const inRange =
-                    startDate && endDate
-                      ? dateOnly >= startDate && dateOnly <= endDate
-                      : false;
-                  return (
-                    <button
-                      key={date.toISOString()}
-                      type="button"
-                      onClick={() => handleDateSelect(date)}
-                      className={[
-                        "rounded-lg px-2 py-1 text-center transition",
-                        inRange
-                          ? "bg-rose-100 text-rose-900"
-                          : "text-rose-700 active:bg-rose-50",
-                        isStart || isEnd
-                          ? "bg-rose-600 text-white font-bold shadow-md scale-110 ring-2 ring-rose-300 ring-offset-1 z-10"
-                          : "",
-                        isToday && !isStart && !isEnd
-                          ? "border border-rose-400 font-semibold"
-                          : "",
-                      ]
-                        .filter(Boolean)
-                        .join(" ")}
-                    >
-                      {date.getDate()}
-                    </button>
-                  );
-                })}
-              </div>
+            <div className="absolute z-20 mt-2 w-full">
+              <CustomCalendar
+                mode="range"
+                startDate={startDate}
+                endDate={endDate}
+                onDateSelect={handleDateSelect}
+                className="w-full"
+              />
             </div>
           )}
         </div>

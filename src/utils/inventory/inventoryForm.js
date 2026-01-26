@@ -20,6 +20,7 @@ const buildBaseFormData = (settings) => ({
   // Bổ sung input cho phí gửi VNĐ
   shippingFeeVndInput: "",
   image: "",
+  expiryDate: "",
 });
 
 export const createFormDataForNewProduct = ({ settings, activeCategory }) => ({
@@ -47,6 +48,7 @@ export const createFormDataForProduct = ({ product, settings }) => {
     shippingFeeVnd: "",
     shippingFeeVndInput: "",
     image: product.image || "",
+    expiryDate: product.expiryDate || "",
   };
 };
 
@@ -76,7 +78,7 @@ export const createFormDataForLot = ({ product, lot, settings }) => {
     costJPY: costJPYValue === "" ? "" : String(costJPYValue),
     exchangeRate: String(exchangeRateValue || settings.exchangeRate),
     cost: lot.cost || "",
-    costVNDInput: inferredShippingMethod === "vn" ? lot.cost || "" : "", // Populate VND input if VN
+    costVNDInput: inferredShippingMethod === "vn" ? lot.cost || "" : "", // Điền input VNĐ nếu là VN
     price: lot.priceAtPurchase ?? product.price,
     quantity: lot.quantity || "",
     warehouse: lot.warehouse || getDefaultWarehouse().key,
@@ -84,7 +86,8 @@ export const createFormDataForLot = ({ product, lot, settings }) => {
     shippingWeightKg: lot.shipping?.weightKg || "",
     shippingFeeVnd: lot.shipping?.feeVnd || "",
     shippingFeeVndInput:
-      inferredShippingMethod === "vn" ? lot.shipping?.feeVnd || "" : "", // Populate shipping fee input
+      inferredShippingMethod === "vn" ? lot.shipping?.feeVnd || "" : "", // Điền input phí gửi
     image: product.image || "",
+    expiryDate: product.expiryDate || "",
   };
 };
