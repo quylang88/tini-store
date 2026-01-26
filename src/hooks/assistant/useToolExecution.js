@@ -4,6 +4,7 @@ import { syncProductsStock } from "../../utils/orders/orderStock";
 import {
   getDefaultWarehouse,
   resolveWarehouseKey,
+  getWarehouses,
 } from "../../utils/inventory/warehouseUtils";
 
 export const useToolExecution = ({
@@ -191,14 +192,25 @@ export const useToolExecution = ({
 
         setProducts(nextProducts);
 
+        // Logic xác định Customer Name mặc định (Mẹ Hương/Mẹ Nguyệt theo kho)
+        let finalCustomerName = customer_name;
+        let finalCustomerAddress = customer_address;
+
+        if (!finalCustomerName) {
+          const warehouseConfig = getWarehouses().find(
+            (w) => w.key === targetWarehouse,
+          );
+          finalCustomerName = warehouseConfig?.defaultCustomerName || null;
+        }
+
         // Tạo đơn hàng
         const newOrder = {
           id: Date.now().toString(),
           orderNumber: `AI-${Math.floor(Math.random() * 10000)}`,
           status: "pending", // Unpaid
           orderType: "delivery",
-          customerName: customer_name || "Khách lẻ (Qua Misa)",
-          customerAddress: customer_address || "Tại quầy / Qua Chat",
+          customerName: finalCustomerName, // Có thể null -> getOrderDisplayName sẽ hiển thị "Gửi khách" hoặc logic khác
+          customerAddress: finalCustomerAddress,
           items: itemsToSync, // item đã có lotAllocations
           total: item.price * item.quantity,
           warehouse: targetWarehouse,
