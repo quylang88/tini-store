@@ -8,7 +8,6 @@ import { triggerHaptic, HAPTIC_PATTERNS } from "../../utils/common/haptics";
 
 const ChatBubble = ({ message, theme, swipeX }) => {
   const isUser = message.sender === "user";
-  const scrollRef = useRef(null);
   const textRef = useRef(null);
   const bubbleRef = useRef(null);
 
@@ -34,13 +33,6 @@ const ChatBubble = ({ message, theme, swipeX }) => {
   const [copied, setCopied] = useState(false);
   const pressTimer = useRef(null);
   const copyTimeoutRef = useRef(null);
-
-  // Cuộn xuống cuối khi có tin nhắn mới
-  useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollIntoView({ behavior: "smooth", block: "end" });
-    }
-  }, []);
 
   // --- LONG PRESS LOGIC ---
   const handlePointerDown = () => {
@@ -176,7 +168,6 @@ const ChatBubble = ({ message, theme, swipeX }) => {
 
   return (
     <motion.div
-      ref={scrollRef}
       style={{ zIndex: showMenu ? 50 : "auto", ...rowStyle }} // Fix z-index overlap issue
       className={`flex w-full mb-4 relative items-end ${isUser ? "justify-end" : "justify-start"}`}
     >
