@@ -23,7 +23,7 @@ const TabBar = ({ activeTab, setActiveTab, isVisible = true }) => {
   return (
     <nav
       aria-label="Bottom Navigation"
-      className={`absolute bottom-0 left-0 right-0 bg-amber-50/90 border-t border-amber-200 pb-safe-area z-50 backdrop-blur transition-transform duration-300 ease-in-out ${
+      className={`fixed bottom-0 left-0 right-0 bg-amber-50/90 border-t border-amber-200 pb-safe-area z-50 backdrop-blur transition-transform duration-300 ease-in-out ${
         active ? "translate-y-0" : "translate-y-full"
       }`}
     >

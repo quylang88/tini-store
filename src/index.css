@@ -13,22 +13,19 @@
 html, body, #root {
   height: 100%;
   width: 100%;
-  overflow: hidden; /* Prevent native scroll completely */
+  overflow: hidden;
 }
 
 html {
   background-color: #fff1f2;
-  position: fixed; /* Lock viewport for iOS */
-  inset: 0;
 }
 
 body {
-  position: fixed; /* Lock viewport for iOS */
-  inset: 0;
   user-select: none;
   -webkit-user-select: none;
   -webkit-tap-highlight-color: transparent;
   -webkit-touch-callout: none;
+  overscroll-behavior-y: none; /* Prevent bounce */
 }
 
 /* Allow text selection in inputs */
