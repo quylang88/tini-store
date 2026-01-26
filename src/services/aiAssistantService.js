@@ -3,14 +3,9 @@
  * "Bộ não" xử lý logic cho Trợ lý Quản lý Tiny Shop.
  */
 
-import {
-  getModeConfig,
-  PROVIDERS,
-  STANDARD_MODE_SEARCH_TRIGGERS,
-  FORCE_WEB_SEARCH_TRIGGERS,
-} from "./ai/config";
+import { getModeConfig, PROVIDERS } from "./ai/config";
 import { callGeminiAPI, callGroqAPI, searchWeb } from "./ai/providers";
-import { buildSystemPrompt, buildSummarizePrompt } from "./ai/prompts";
+import { buildDynamicSystemPrompt, buildSummarizePrompt } from "./ai/prompts";
 import {
   getCurrentLocation,
   getAddressFromCoordinates,
@@ -18,6 +13,7 @@ import {
 import { createResponse } from "./ai/chatHelpers";
 import { INVENTORY_TOOLS } from "./ai/toolsDefinitions";
 import { checkDuplicateQuery } from "./ai/textAnalysisUtils";
+import { detectIntent } from "./ai/intentService";
 
 // --- CẤU HÌNH MEMORY ---
 const SLIDING_WINDOW_SIZE = 6;
@@ -38,6 +34,15 @@ export const processQuery = async (
 
   const modeConfig = getModeConfig(modeKey);
 
+  // 0. Xác định Ý định (Intent Detection) - New!
+  let intent = "CHAT";
+  try {
+    onStatusUpdate("Misa đang suy nghĩ...");
+    intent = await detectIntent(query);
+  } catch (err) {
+    console.warn("Intent check failed, fallback to CHAT:", err);
+  }
+
   // 1. Xác định vị trí
   const coords = await getCurrentLocation();
   let fullLocationInfo = coords ? `${coords}` : "Chưa rõ";
@@ -46,23 +51,15 @@ export const processQuery = async (
     if (locName) fullLocationInfo = `${locName} (${coords})`;
   }
 
-  // 2. Logic Tìm kiếm
-  const lowerQuery = query.toLowerCase();
-  const isForceSearch = FORCE_WEB_SEARCH_TRIGGERS.some((kw) =>
-    lowerQuery.includes(kw),
-  );
-  const isStandardSearchTrigger =
-    modeKey === "standard" &&
-    STANDARD_MODE_SEARCH_TRIGGERS.some((kw) => lowerQuery.includes(kw));
+  // 2. Logic Tìm kiếm (Simplified based on Intent)
   const shouldSearch =
-    isForceSearch ||
-    isStandardSearchTrigger ||
-    (modeKey === "deep" && query.length > 3);
+    intent === "SEARCH" || (modeKey === "deep" && query.length > 3);
 
   let searchResults = null;
 
   if (shouldSearch) {
     onStatusUpdate("Misa đang đi soi giá thị trường...");
+    const lowerQuery = query.toLowerCase();
     let searchQuery = query;
     if (
       (lowerQuery.includes("giá") || lowerQuery.includes("nhập")) &&
@@ -109,8 +106,9 @@ export const processQuery = async (
 
   const recentHistory = cleanHistory.slice(-SLIDING_WINDOW_SIZE);
 
-  // 4. Build Prompt
-  const systemInstruction = buildSystemPrompt(
+  // 4. Build Dynamic Prompt based on Intent
+  const systemInstruction = buildDynamicSystemPrompt(
+    intent,
     { ...context, location: fullLocationInfo },
     searchResults,
     currentSummary,
@@ -174,7 +172,16 @@ export const processToolResult = async (
   modeKey = "standard",
 ) => {
   const modeConfig = getModeConfig(modeKey);
-  const systemInstruction = buildSystemPrompt(context, null, "", false);
+
+  // Khi xử lý kết quả tool, thường là đã xong việc, quay về CHAT hoặc giữ context cơ bản.
+  // Ta dùng intent='CHAT' để load Common Prompt (có product list mới nhất) mà không cần rules phức tạp.
+  const systemInstruction = buildDynamicSystemPrompt(
+    "CHAT",
+    context,
+    null,
+    "",
+    false,
+  );
 
   // Xây dựng history đặc biệt cho turn này theo chuẩn OpenAI/Groq:
   // 1. History cũ

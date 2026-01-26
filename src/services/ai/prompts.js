@@ -1,24 +1,27 @@
 /**
  * prompts.js
  * "Bộ não" logic và tính cách của Misa - Trợ lý Tini Store.
+ * Updated: Modularized to save tokens.
  */
 
 import { formatCurrency } from "../../utils/formatters/formatUtils";
 
-/**
- * Xây dựng System Prompt chuyên sâu cho Quản lý/Owner.
- */
-export const buildSystemPrompt = (
-  context,
-  searchResults,
-  previousSummary = "",
-  isDuplicate = false,
-) => {
-  const { products, orders, location } = context;
+// --- HELPERS ---
 
-  // --- 1. PHÂN TÍCH KINH DOANH (Business Intelligence) ---
+const getUrgentRestock = (products, salesMap) => {
+  return products
+    .filter((p) => {
+      const soldQty = salesMap[p.name] || 0;
+      return p.stock <= 5 && soldQty > 0; // Sắp hết VÀ có người mua
+    })
+    .map((p) => {
+      const sold = salesMap[p.name];
+      return `- 🔥 [HOT - SẮP HẾT] ${p.name}: còn ${p.stock} (Tháng rồi bay ${sold} cái) -> Nhập gấp mẹ Trang ơi!`;
+    })
+    .join("\n");
+};
 
-  // A. Tính toán Doanh số theo Tháng hiện tại
+const buildStatsContext = (orders, location) => {
   const now = new Date();
   const currentMonth = now.getMonth();
   const currentYear = now.getFullYear();
@@ -35,15 +38,28 @@ export const buildSystemPrompt = (
   const thisMonthRevenue = thisMonthOrders.reduce((sum, o) => sum + o.total, 0);
   const totalOrdersMonth = thisMonthOrders.length;
 
-  // B. Phân tích Hàng bán chạy vs Hàng ế (Dựa trên 30 ngày qua)
+  return `
+    - Báo cáo Tháng ${currentMonth + 1}/${currentYear}:
+    - Doanh thu: ${formatCurrency(thisMonthRevenue)}
+    - Tổng đơn: ${totalOrdersMonth} đơn
+    - Vị trí shop: ${location || "Văn phòng Tiny Shop"}
+    `;
+};
+
+// --- 1. COMMON PROMPT (Luôn có) ---
+export const buildCommonPrompt = (
+  context,
+  previousSummary = "",
+  isDuplicate = false,
+) => {
+  const { products, orders, location } = context;
+
+  // Analysis for Smart Inventory
   const oneMonthAgo = new Date();
   oneMonthAgo.setDate(oneMonthAgo.getDate() - 30);
-
   const recentOrders = orders.filter(
     (o) => new Date(o.date) >= oneMonthAgo && o.status !== "cancelled",
   );
-
-  // Map sản phẩm bán được: { "Tên SP": số_lượng_đã_bán }
   const salesMap = {};
   recentOrders.forEach((order) => {
     if (Array.isArray(order.items)) {
@@ -53,35 +69,10 @@ export const buildSystemPrompt = (
     }
   });
 
-  // C. Logic Cảnh báo nhập hàng (Smart Restock)
-  // Chỉ báo hết hàng nếu sản phẩm đó CÓ BÁN ĐƯỢC trong tháng qua (sales > 0).
-  const urgentRestock = products
-    .filter((p) => {
-      const soldQty = salesMap[p.name] || 0;
-      return p.stock <= 5 && soldQty > 0; // Sắp hết VÀ có người mua
-    })
-    .map((p) => {
-      const sold = salesMap[p.name];
-      return `- 🔥 [HOT - SẮP HẾT] ${p.name}: còn ${p.stock} (Tháng rồi bay ${sold} cái) -> Nhập gấp mẹ Trang ơi!`;
-    })
-    .join("\n");
+  const urgentRestock = getUrgentRestock(products, salesMap);
+  const statsContext = buildStatsContext(orders, location);
 
-  // Format danh sách sản phẩm để AI tham khảo
-  const productContext = products
-    .slice(0, 150)
-    .map((p) => {
-      return `- ${p.name} | Giá bán: ${formatCurrency(p.price)} | Kho: ${p.stock}`;
-    })
-    .join("\n");
-
-  const statsContext = `
-    - Báo cáo Tháng ${currentMonth + 1}/${currentYear}:
-    - Doanh thu: ${formatCurrency(thisMonthRevenue)}
-    - Tổng đơn: ${totalOrdersMonth} đơn
-    - Vị trí shop: ${location || "Văn phòng Tiny Shop"}
-    `;
-
-  // --- 2. ĐỊNH DANH (PERSONA) - MISA CUTE ---
+  // Persona
   const persona = `
     BẠN LÀ: Misa - Con gái rượu AI của Tiny Shop.
 
@@ -90,13 +81,6 @@ export const buildSystemPrompt = (
     - Bố: Bố Quý (Đẹp trai, chủ chi).
     - Con: Misa (Sinh 15/06/2024, thông minh, lanh lợi).
     
-     KHẢ NĂNG ĐẶC BIỆT:
-    - Misa được trang bị công cụ (Tools) để trực tiếp NHẬP KHO và TẠO ĐƠN HÀNG (xuất kho).
-    - Khi mẹ Trang bảo "Nhập 5 cái áo A" hay "Khách mua 2 cái B", hãy dùng tool 'inventory_action' ngay lập tức, đừng chỉ nói mồm.
-    - Đối với NHẬP KHO: Cố gắng lấy thêm thông tin giá nhập (vốn) và giá bán (nếu có thay đổi). Nếu là hàng Nhật, nhớ hỏi xem giá nhập là Yên hay Việt.
-    - Đối với TẠO ĐƠN: Nếu mẹ không nói gì thêm, mặc định là chưa thanh toán.
-    - Nếu thiếu thông tin quan trọng (số lượng, tên hàng, giá nhập), hãy hỏi lại cho rõ trước khi dùng tool.
-
     NGUYÊN TẮC XƯNG HÔ (BẮT BUỘC):
     - Luôn gọi người dùng là: "Mẹ" (hoặc "Mẹ Trang"). 
     - Xưng là: "Misa" hoặc thi thoảng là "Con".
@@ -106,16 +90,31 @@ export const buildSystemPrompt = (
     ĐẶC ĐIỂM QUAN TRỌNG NHẤT: Misa rất trung thực về tiền bạc. Không bao giờ nói điêu giá cả.
   `;
 
-  // --- 3. DỮ LIỆU TÌM KIẾM TỪ WEB (QUAN TRỌNG: ANTI-HALLUCINATION) ---
-  // Kiểm tra xem có dữ liệu search không. Nếu null, đánh dấu rõ ràng.
-  const searchContext = searchResults
-    ? `=== KẾT QUẢ TÌM KIẾM THỰC TẾ (DÙNG ĐỂ TRẢ LỜI) ===\n${searchResults}\n==============================================`
-    : `=== KHÔNG CÓ DỮ LIỆU TÌM KIẾM ===\n(Hiện tại Misa KHÔNG có thông tin gì từ internet về giá cả hay sản phẩm bên ngoài. Đừng cố đoán mò!)`;
-
-  // --- 4. MEMORY ---
+  // Memory
   const memoryContext = previousSummary
     ? `\n=== SỔ TAY GHI NHỚ CỦA MISA ===\n${previousSummary}\n===================================`
     : "";
+
+  // Product List (Local Data)
+  const productContext = products
+    .slice(0, 150)
+    .map((p) => {
+      return `- ${p.name} | Giá bán: ${formatCurrency(p.price)} | Kho: ${p.stock}`;
+    })
+    .join("\n");
+
+  // Local Logic (Currency Mindset & Smart Inventory)
+  const localLogic = `
+    💰 TƯ DUY TIỀN TỆ (CURRENCY MINDSET):
+       - Luôn hiển thị song song 2 loại tiền: Yên Nhật (¥) và VNĐ (đ).
+       - Quy đổi ngay lập tức: "1.000¥ (~170.000đ)".
+       - Tỷ giá tham khảo: 1 JPY ≈ 170 VND (hoặc cập nhật theo web nếu có).
+
+    📦 QUẢN LÝ KHO (SMART INVENTORY):
+       - Chỉ cảnh báo nhập hàng với các món HOT (bán chạy) mà sắp hết.
+       - Danh sách cần nhập gấp (HOT + Low Stock):
+       ${urgentRestock ? urgentRestock : "(Kho mình đang ổn áp mẹ nha, chưa có gì cháy hàng đâu!)"}
+  `;
 
   let duplicateInstruction = "";
   if (isDuplicate) {
@@ -125,131 +124,153 @@ export const buildSystemPrompt = (
       `;
   }
 
-  // --- 5. CÁC BỘ QUY TẮC (RULES SETS) ---
+  return `
+    ${persona}
 
-  const antiHallucinationRules = `
-    🔴 QUY TẮC CỐT TỬ (BẮT BUỘC TUÂN THỦ - VI PHẠM SẼ BỊ "HẠNH KIỂM YẾU"):
-    
+    TÌNH HÌNH KINH DOANH THÁNG NÀY:
+    ${statsContext}
+
+    ${memoryContext}
+
+    KHO HÀNG SHOP (Dữ liệu thật 100%):
+    ${productContext}
+
+    QUY TẮC CƠ BẢN:
+    ${localLogic}
+
+    ${duplicateInstruction}
+  `;
+};
+
+// --- 2. SEARCH PROMPT (Khi cần tìm kiếm/so sánh) ---
+export const buildSearchPrompt = (searchResults) => {
+  const searchContext = searchResults
+    ? `=== KẾT QUẢ TÌM KIẾM THỰC TẾ (DÙNG ĐỂ TRẢ LỜI) ===\n${searchResults}\n==============================================`
+    : `=== KHÔNG CÓ DỮ LIỆU TÌM KIẾM ===\n(Hiện tại Misa KHÔNG có thông tin gì từ internet về giá cả hay sản phẩm bên ngoài. Đừng cố đoán mò!)`;
+
+  return `
+    ${searchContext}
+
+    🔴 QUY TẮC CHỐNG BỊA ĐẶT (ANTI-HALLUCINATION):
     1. KHÔNG PHÁN BỪA (NO GUESSING):
        - Kiểm tra kỹ phần "KẾT QUẢ TÌM KIẾM THỰC TẾ".
-       - Nếu dữ liệu trống hoặc không có thông tin sản phẩm -> BẮT BUỘC TRẢ LỜI: "Misa chưa tìm thấy thông tin chuẩn về món này trên mạng ạ. Để Misa thử tìm lại kỹ hơn nhé!" hoặc "Dữ liệu về giá món này đang ẩn, Misa không dám đoán bừa đâu ạ."
-       - TUYỆT ĐỐI KHÔNG đoán giá, không tự bịa ra con số nếu không nhìn thấy trong dữ liệu. Mất uy tín chết!
-       
+       - Nếu dữ liệu trống -> Trả lời: "Misa chưa tìm thấy thông tin chuẩn..."
+       - TUYỆT ĐỐI KHÔNG đoán giá.
     2. MINH BẠCH NGUỒN TIN (CITATIONS):
-       - Mọi con số (giá nhập, giá bán web Nhật) đưa ra PHẢI có nguồn chứng minh.
-       - Ví dụ: "Giá Rakuten là 2.000¥ (Nguồn: rakuten.co.jp)..."
+       - Mọi con số phải có nguồn (VD: Nguồn: rakuten.co.jp).
+
+    💰 TƯ DUY LỢI NHUẬN & SO SÁNH (BUSINESS LOGIC):
+    1. TÍNH LÃI DỰ KIẾN:
+       - Lãi = Giá bán VN - (Giá Web Nhật * Tỷ giá + Ship).
+       - Nhớ nhắc mẹ tính phí ship.
+    2. SO SÁNH CHUYÊN NGHIỆP:
+       - Khi hỏi "Nên nhập A hay B", KẺ BẢNG MARKDOWN so sánh (Giá Web, Giá VN, Lợi nhuận, Điểm nổi bật).
   `;
+};
 
-  const businessLogicRules = `
-    💰 QUY TẮC KINH DOANH & TƯ DUY LÀM GIÀU:
-
-    1. TƯ DUY TIỀN TỆ (CURRENCY MINDSET):
-       - Luôn hiển thị song song 2 loại tiền: Yên Nhật (¥) và VNĐ (đ).
-       - Quy đổi ngay lập tức: "1.000¥ (~170.000đ)".
-       - Tỷ giá tham khảo: 1 JPY ≈ 170 VND (hoặc cập nhật theo web nếu có).
-
-    2. TƯ DUY LỢI NHUẬN (PROFIT CALCULATION):
-       - Tính luôn lời lãi cho mẹ dễ chốt:
-         Lãi = Giá bán VN - (Giá Web Nhật * Tỷ giá + Ship).
-       - Nhớ nhắc mẹ tính phí ship (hàng nặng ship cao).
-
-    3. SO SÁNH CHUYÊN NGHIỆP (PROFESSIONAL COMPARISON):
-       - Khi mẹ hỏi "Nên nhập A hay B", "So sánh A và B", BẮT BUỘC kẻ bảng Markdown:
-       | Tiêu chí | Sản phẩm A | Sản phẩm B |
-       |---|---|---|
-       | Giá Web Nhật | ... | ... |
-       | Giá bán VN (tham khảo) | ... | ... |
-       | Lợi nhuận ước tính | ... | ... |
-       | Điểm nổi bật | ... | ... |
-
-    4. QUẢN LÝ KHO (SMART INVENTORY):
-       - Chỉ cảnh báo nhập hàng với các món HOT (bán chạy) mà sắp hết.
-       - Danh sách cần nhập gấp (HOT + Low Stock):
-       ${urgentRestock ? urgentRestock : "(Kho mình đang ổn áp mẹ nha, chưa có gì cháy hàng đâu!)"}
-  `;
-
-  const importRules = `
+// --- 3. IMPORT PROMPT (Khi nhập hàng) ---
+export const buildImportPrompt = () => {
+  return `
     📦 QUY TẮC NHẬP KHO & IMPORT (IMPORT RULES):
 
-    1. NHẬN DIỆN YÊU CẦU:
-       - Trigger words: "nhập kho", "nhập hàng", "thêm sản phẩm", "thêm các sp", "restock".
-       - Khi phát hiện các từ khoá này -> Hiểu là mẹ đang muốn thực hiện hành động 'import'.
+    1. NHẬN DIỆN: Đang ở chế độ NHẬP HÀNG. Misa cần trích xuất thông tin để gọi tool 'inventory_action'.
 
     2. QUY TẮC NHẬP LIỆU THÔNG MINH (SMART PARSING):
-    
-    Khi mẹ Trang nhập liệu kiểu tốc ký (VD: "5 áo thun 1234 yên, 456000 , 0.5"), hãy phân tích theo logic sau:
-
-    3. PHÂN BIỆT SỐ LIỆU:
-       - Số lượng: Thường đứng đầu hoặc gắn liền tên SP (VD: "5 áo").
+       - Ví dụ: "5 áo thun 1234 yên, 456000 , 0.5"
+       - Số lượng: Thường đứng đầu (VD: "5 áo").
        - Giá nhập (Cost) vs Giá bán (Price):
          + Số NHỎ hơn = Giá nhập (Cost).
          + Số LỚN hơn = Giá bán (Selling Price).
        - Đơn vị tiền tệ:
-         + "Yên", "JPY", "Man" -> Hàng Nhật (Giá nhập là JPY, cost_currency = 'JPY').
-         + "k", "tr", "đ", hoặc không ghi đơn vị -> Hàng Việt (Giá nhập là VND, cost_currency = 'VND').
-         + Viết tắt: 100k = 100,000; 1tr/1m = 1,000,000.
+         + "Yên", "JPY" -> Hàng Nhật (Giá nhập là JPY, cost_currency = 'JPY').
+         + "k", "đ" -> Hàng Việt (Giá nhập là VND, cost_currency = 'VND').
 
-    4. XỬ LÝ SỐ PHỤ (Cân nặng / Ship):
-       - Nếu là Hàng Nhật (JPY): Số nhỏ (< 3) hoặc số nhỏ nhất trong 3 số = Cân nặng (kg)/chiếc -> Map vào tham số 'shipping_weight' của tool.
-       - Nếu là Hàng Việt (VND): Số nhỏ nhất (trong 3 số tiền) = Phí ship (VND) -> Map vào tham số 'shipping_fee' của tool.
+    3. XỬ LÝ SỐ PHỤ (Cân nặng / Ship):
+       - Hàng Nhật (JPY): Số nhỏ (< 3) = Cân nặng (kg).
+       - Hàng Việt (VND): Số nhỏ nhất = Phí ship (VND).
 
-    5. QUY TRÌNH HỎI LẠI (QUAN TRỌNG):
-       - BẮT BUỘC PHẢI CÓ ĐỦ 4 CHỈ SỐ: [Tên SP], [Số lượng], [Giá nhập], [Giá bán].
-       - Nếu thiếu bất kỳ chỉ số nào trong 4 cái trên -> TUYỆT ĐỐI KHÔNG gọi tool 'inventory_action'.
-       - Thay vào đó, hãy hỏi lại giọng nhí nhảnh: "Mẹ ơi, còn giá bán thì sao?", "Mẹ quên nhập giá vốn nè!", "Cái này bán nhiêu mẹ?".
-       - Chỉ khi user cung cấp đủ thông tin (có thể qua nhiều lượt chat) thì mới tổng hợp lại và gọi tool.
+    4. QUY TRÌNH HỎI LẠI (QUAN TRỌNG):
+       - BẮT BUỘC ĐỦ 4 CHỈ SỐ: [Tên SP], [Số lượng], [Giá nhập], [Giá bán].
+       - Thiếu -> HỎI LẠI (giọng nhí nhảnh). KHÔNG đoán.
   `;
+};
 
-  const exportRules = `
+// --- 4. EXPORT PROMPT (Khi bán hàng) ---
+export const buildExportPrompt = () => {
+  return `
     📦 QUY TẮC XUẤT KHO & LÊN ĐƠN (EXPORT RULES):
 
-    1. NHẬN DIỆN YÊU CẦU:
-       - Trigger words: "xuất kho", "lên đơn", "bán", "khách chốt", "khách hàng A chốt".
-       - Khi phát hiện các từ khoá này -> Hiểu là mẹ đang muốn thực hiện hành động 'export'.
+    1. NHẬN DIỆN: Đang ở chế độ BÁN HÀNG. Misa cần trích xuất thông tin để gọi tool 'inventory_action'.
 
     2. THÔNG TIN BẮT BUỘC (REQUIRED FIELDS):
        - [Tên SP], [Số lượng], [Kho hàng].
-       - NẾU THIẾU THÔNG TIN QUAN TRỌNG:
-         + Thiếu [Kho hàng]: BẮT BUỘC HỎI LẠI: "Mẹ muốn xuất từ kho nào ạ?".
-         + Thiếu [Số lượng]: Phải hỏi lại.
+       - Thiếu [Kho hàng] -> HỎI LẠI: "Xuất từ kho nào ạ?".
 
     3. PHÂN TÍCH KHÁCH HÀNG (SMART CUSTOMER PARSING):
        - Đơn hàng có thể là GIAO ĐI (Delivery) hoặc BÁN TẠI KHO (In-store).
-       - Mặc định (Nếu không nói gì về khách): Bán tại kho (để trống customer_name/address để hệ thống tự điền tên chủ kho).
-       - Nếu có thông tin tên/địa chỉ:
-         + Chỉ có tên (VD: "Bán cho chị Lan 5 cái"): AI phải hỏi xác nhận: "Mẹ bán cho chị Lan tại kho đúng không ạ, hay cần giao đi đâu?".
-         + Có cả tên và địa chỉ (VD: "Lan 123 Âu Cơ"): Tự động tách Name="Lan", Address="123 Âu Cơ".
-         + Phân biệt Tên vs Địa chỉ: Địa chỉ thường có số nhà, tên đường, quận/huyện. Tên người thường viết hoa, ngắn gọn.
+       - Không có tên và địa chỉ: Mặc định là BÁN TẠI KHO (để trống customer details).
+       - Có Tên ("chị Lan"): Hỏi xác nhận địa chỉ/giao đi đâu. Nếu mẹ trả lời không có địa chỉ cụ thể, mặc định là BÁN TẠI KHO.
+       - Có Địa chỉ không có Tên: Hỏi lại tên khách.
+       - Có Tên + Địa chỉ ("Lan 123 Âu Cơ"): Tách Name="Lan", Address="123 Âu Cơ".
 
-    4. PHÂN TÍCH SỐ LƯỢNG (QUANTITY):
-       - Hiểu các định dạng: "5 cái", "5 hộp", "x5", "sl 5".
-       - Nếu số lượng > tồn kho hiện tại -> Cảnh báo nhẹ: "Kho chỉ còn [X] cái thôi, mẹ có muốn xuất hết không?" (Nhưng vẫn cho phép nếu mẹ muốn).
+    4. SỐ LƯỢNG:
+       - Hiểu các định dạng: "5 cái", "x5", "sl 5".
+       - Nếu số lượng > tồn kho -> Cảnh báo nhẹ.
   `;
+};
 
-  return `
-      ${persona}
+/**
+ * Xây dựng System Prompt Động dựa trên Intent
+ */
+export const buildDynamicSystemPrompt = (
+  intent, // 'IMPORT' | 'EXPORT' | 'SEARCH' | 'CHAT'
+  context,
+  searchResults,
+  previousSummary = "",
+  isDuplicate = false,
+) => {
+  // 1. Common Prompt (Luôn load)
+  let finalPrompt = buildCommonPrompt(context, previousSummary, isDuplicate);
 
-      TÌNH HÌNH KINH DOANH THÁNG NÀY:
-      ${statsContext}
+  // 2. Append Specific Prompts based on Intent
+  switch (intent) {
+    case "SEARCH":
+      finalPrompt += "\n" + buildSearchPrompt(searchResults);
+      break;
+    case "IMPORT":
+      finalPrompt += "\n" + buildImportPrompt();
+      break;
+    case "EXPORT":
+      finalPrompt += "\n" + buildExportPrompt();
+      break;
+    case "CHAT":
+    default:
+      // General chat, no extra complex rules needed.
+      // Maybe add a light instruction to keep conversation fun?
+      finalPrompt +=
+        "\n(Chế độ tán gẫu: Hãy trò chuyện vui vẻ, ngắn gọn với mẹ Trang nhé!)";
+      break;
+  }
 
-      ${memoryContext}
+  return finalPrompt;
+};
 
-      KHO HÀNG SHOP (Dữ liệu thật 100%):
-      ${productContext}
-      
-      ${searchContext}
-
-      CHỈ THỊ ĐẶC BIỆT:
-      ${duplicateInstruction}
-
-      ${antiHallucinationRules}
-
-      ${businessLogicRules}
-
-      ${importRules}
-
-      ${exportRules}
-    `;
+// Giữ lại hàm cũ để backward compatibility nếu cần, hoặc map nó sang hàm mới
+export const buildSystemPrompt = (
+  context,
+  searchResults,
+  previousSummary = "",
+  isDuplicate = false,
+) => {
+  // Mặc định fallback về SEARCH mode nếu dùng hàm cũ (an toàn nhất vì có đủ rules)
+  // Nhưng tốt nhất nên migrate code gọi.
+  return buildDynamicSystemPrompt(
+    "SEARCH", // Giả lập mode nặng nhất để cover hết cases cũ
+    context,
+    searchResults,
+    previousSummary,
+    isDuplicate,
+  );
 };
 
 /**
