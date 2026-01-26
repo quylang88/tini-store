@@ -75,14 +75,6 @@ export const callGroqAPI = async (
           content: msg.content,
         };
       }
-      // Xử lý message Tool Result
-      if (msg.role === "tool") {
-        return {
-          role: "tool",
-          tool_call_id: msg.tool_call_id,
-          content: msg.content,
-        };
-      }
 
       const formattedMsg = {
         role: msg.role === "user" ? "user" : "assistant",
