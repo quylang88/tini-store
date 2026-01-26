@@ -283,7 +283,9 @@ const App = () => {
             >
               <Assistant
                 products={products}
+                setProducts={setProducts}
                 orders={orders}
+                setOrders={setOrders}
                 settings={settings}
                 messages={chatMessages}
                 setMessages={setChatMessages}

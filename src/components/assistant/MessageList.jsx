@@ -1,6 +1,7 @@
 import React from "react";
 import { motion } from "framer-motion";
 import ChatBubble from "./ChatBubble";
+import ToolConfirmationBubble from "./ToolConfirmationBubble";
 
 const MessageList = ({
   messages,
@@ -10,6 +11,8 @@ const MessageList = ({
   messagesEndRef,
   handlers,
   swipeX,
+  onConfirmTool,
+  onCancelTool,
 }) => {
   return (
     <div
@@ -24,14 +27,27 @@ const MessageList = ({
           <p>Nhưng Misa vẫn nhớ chuyện cũ nha!</p>
         </div>
       ) : (
-        messages.map((msg) => (
-          <ChatBubble
-            key={msg.id}
-            message={msg}
-            theme={activeTheme}
-            swipeX={swipeX}
-          />
-        ))
+        messages.map((msg) => {
+          if (msg.type === "tool_request") {
+            return (
+              <ToolConfirmationBubble
+                key={msg.id}
+                message={msg}
+                theme={activeTheme}
+                onConfirm={onConfirmTool}
+                onCancel={onCancelTool}
+              />
+            );
+          }
+          return (
+            <ChatBubble
+              key={msg.id}
+              message={msg}
+              theme={activeTheme}
+              swipeX={swipeX}
+            />
+          );
+        })
       )}
 
       {isTyping && (

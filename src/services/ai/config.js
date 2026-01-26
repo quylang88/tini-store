@@ -99,33 +99,3 @@ export const geminiSafetySettings = [
 ];
 
 export const TAVILY_API_URL = "https://api.tavily.com/search";
-
-// --- KEYWORDS KÍCH HOẠT SEARCH (Updated cho Sourcing) ---
-
-// Kích hoạt tìm kiếm trong chế độ Standard
-export const STANDARD_MODE_SEARCH_TRIGGERS = [
-  "tìm",
-  "so sánh",
-  "giá nhập",
-  "giá sỉ",
-  "shopee",
-  "lazada",
-  "amazon",
-  "rakuten",
-  "cosme",
-  "rẻ",
-  "tốt",
-  "trend",
-];
-
-// BẮT BUỘC tìm kiếm (Ưu tiên cao nhất)
-export const FORCE_WEB_SEARCH_TRIGGERS = [
-  "bên nhật",
-  "tại nhật",
-  "web nhật",
-  "nguồn hàng",
-  "giá yên",
-  "check giá",
-  "review",
-  "đánh giá",
-];

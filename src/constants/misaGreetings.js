@@ -117,5 +117,5 @@ export const MISA_GREETINGS = [
   "Sếp ơi, cái nút 'Reset' cuộc đời ở đâu nhỉ? Em ấn nhầm vào nút 'Tăng độ khó' game bán hàng rồi. 🎮",
   "Hãy sống như một trái dứa: Đầu đội vương miện, dáng đứng hiên ngang và bên trong thì... ngọt ngào (với khách). 🍍",
   "Misa hứa sẽ không bao giờ phản bội sếp (trừ khi server sập). Tin em đi! 🤝",
-  "Câu cuối rồi! Chốt lại là: Chúc Tiny Shop buôn may bán đắt, tiền vào như thác lũ, tiền ra như giọt cà phê! Yêu cả nhà! ❤️❤️❤️",
+  "Chúc Tiny Shop buôn may bán đắt, tiền vào như thác lũ, tiền ra như giọt cà phê! Yêu cả nhà! ❤️❤️❤️",
 ];

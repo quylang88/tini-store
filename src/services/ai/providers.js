@@ -4,16 +4,13 @@
  */
 
 import { GoogleGenerativeAI } from "@google/generative-ai";
-import { PROVIDERS, TAVILY_API_URL, geminiSafetySettings } from "./config";
+import { TAVILY_API_URL, geminiSafetySettings } from "./config";
 
 // --- CÁC HÀM GỌI API ---
 
 /**
  * Gọi API Google Gemini
- * @param {string} modelName
- * @param {Array} history - Danh sách tin nhắn [{role: 'user'|'model', content: '...'}]
- * @param {string} systemInstruction - Prompt hệ thống
- * @param {number} temperature
+ * Return format chuẩn: { content: string, tool_calls: null }
  */
 export const callGeminiAPI = async (
   modelName,
@@ -28,15 +25,12 @@ export const callGeminiAPI = async (
   const model = genAI.getGenerativeModel({
     model: modelName,
     safetySettings: geminiSafetySettings,
-    systemInstruction: systemInstruction, // Gemini hỗ trợ systemInstruction trực tiếp
+    systemInstruction: systemInstruction,
     generationConfig: {
       temperature: temperature,
     },
   });
 
-  // Chuyển đổi format history sang format của Gemini (Content objects)
-  // Gemini expects: { role: "user" | "model", parts: [{ text: "..." }] }
-  // Lưu ý: history ở đây đã bao gồm câu hỏi mới nhất ở cuối
   const contents = history.map((msg) => ({
     role: msg.role === "user" ? "user" : "model",
     parts: [{ text: msg.content }],
@@ -45,37 +39,69 @@ export const callGeminiAPI = async (
   // Gọi generateContent với toàn bộ lịch sử hội thoại
   const result = await model.generateContent({ contents });
   const response = await result.response;
-  return response.text();
+
+  // Chuẩn hóa output object
+  return {
+    content: response.text(),
+    tool_calls: null, // Hiện tại Gemini Flash chưa implement tool call trong code này
+  };
 };
 
 /**
- * Gọi API Groq (Tương thích OpenAI)
- * @param {string} modelName
- * @param {Array} history - Danh sách tin nhắn [{role: 'user'|'model', content: '...'}]
- * @param {string} systemInstruction - Prompt hệ thống
- * @param {number} temperature
+ * Gọi API Groq (Tương thích OpenAI & Tool Use)
+ * Return format chuẩn: { content: string | null, tool_calls: array | null }
  */
 export const callGroqAPI = async (
   modelName,
   history,
   systemInstruction,
   temperature = 0.5,
+  tools = null, // Thêm tham số tools
 ) => {
   const apiKey = import.meta.env.VITE_GROQ_API_KEY;
   if (!apiKey) throw new Error("Chưa cấu hình VITE_GROQ_API_KEY");
 
-  // Chuyển đổi format history sang format của OpenAI/Groq
-  // Groq expects: { role: "user" | "assistant" | "system", content: "..." }
   const messages = [
     {
       role: "system",
       content: systemInstruction,
     },
-    ...history.map((msg) => ({
-      role: msg.role === "user" ? "user" : "assistant", // Map 'model' -> 'assistant'
-      content: msg.content,
-    })),
+    ...history.map((msg) => {
+      // Xử lý message lịch sử đặc biệt nếu là tool result (để support luồng chat tiếp theo)
+      if (msg.role === "tool") {
+        return {
+          role: "tool",
+          tool_call_id: msg.tool_call_id,
+          content: msg.content,
+        };
+      }
+
+      const formattedMsg = {
+        role: msg.role === "user" ? "user" : "assistant",
+        content: msg.content,
+      };
+
+      // Nếu message có tool_calls, cần giữ nguyên để model hiểu ngữ cảnh
+      if (msg.tool_calls) {
+        formattedMsg.tool_calls = msg.tool_calls;
+      }
+
+      return formattedMsg;
+    }),
   ];
+
+  const payload = {
+    messages: messages,
+    model: modelName,
+    temperature: temperature,
+    max_tokens: 1024,
+  };
+
+  // Chỉ gắn tools nếu model hỗ trợ và có tools truyền vào
+  if (tools && tools.length > 0) {
+    payload.tools = tools;
+    payload.tool_choice = "auto";
+  }
 
   const response = await fetch(
     "https://api.groq.com/openai/v1/chat/completions",
@@ -85,12 +111,7 @@ export const callGroqAPI = async (
         Authorization: `Bearer ${apiKey}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({
-        messages: messages,
-        model: modelName,
-        temperature: temperature,
-        max_tokens: 1024,
-      }),
+      body: JSON.stringify(payload),
     },
   );
 
@@ -102,7 +123,13 @@ export const callGroqAPI = async (
   }
 
   const data = await response.json();
-  return data.choices[0]?.message?.content || "";
+  const message = data.choices[0]?.message;
+
+  // Trả về object đầy đủ để service xử lý
+  return {
+    content: message.content || "", // Có thể null nếu AI chỉ gọi tool
+    tool_calls: message.tool_calls || null,
+  };
 };
 
 /**
