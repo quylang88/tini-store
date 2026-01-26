@@ -8,6 +8,8 @@ const useOrdersLogic = ({
   orders,
   setOrders,
   setTabBarVisible,
+  customers,
+  setCustomers,
 }) => {
   const [view, setView] = useState("list");
 
@@ -43,6 +45,8 @@ const useOrdersLogic = ({
     setErrorModal,
     onExit: () => updateView("list"),
     onFinish: () => updateView("list"),
+    customers, // Pass down
+    setCustomers, // Pass down
   });
 
   const { setSelectedOrder } = listLogic;

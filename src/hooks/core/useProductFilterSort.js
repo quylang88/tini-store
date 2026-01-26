@@ -10,35 +10,52 @@ const useProductFilterSort = ({
 }) => {
   const { searchTerm = "", activeCategory = "Tất cả" } = filterConfig;
 
+  // Tối ưu hóa: Tính toán trước các trường tìm kiếm đã được chuẩn hóa.
+  // Việc này giúp tránh gọi hàm normalizeString (sử dụng regex tốn kém) trong vòng lặp lọc.
+  // Thay vì độ phức tạp O(N * M) với M là số ký tự gõ, ta chỉ tốn O(N) một lần khi danh sách sản phẩm thay đổi.
+  const searchableProducts = useMemo(() => {
+    return products.map((product) => ({
+      original: product,
+      normalizedName: normalizeString(product.name),
+      searchableBarcode: product.barcode ? String(product.barcode) : "",
+    }));
+  }, [products]);
+
   const filteredProducts = useMemo(() => {
-    // 1. Filtering
-    // Tối ưu hóa: Tính toán từ khóa tìm kiếm đã chuẩn hóa một lần, bên ngoài vòng lặp
+    // 1. Lọc dữ liệu
     const keyword = normalizeString(searchTerm);
 
-    let result = products.filter((product) => {
-      // Search Filter
+    // Lọc dựa trên các trường đã tính toán trước
+    let result = searchableProducts.filter((item) => {
+      // Lọc theo từ khóa tìm kiếm
       if (keyword) {
-        const name = normalizeString(product.name);
-        const barcode = product.barcode ? String(product.barcode) : "";
-        if (!name.includes(keyword) && !barcode.includes(keyword)) {
+        if (
+          !item.normalizedName.includes(keyword) &&
+          !item.searchableBarcode.includes(keyword)
+        ) {
           return false;
         }
       }
 
-      // Category Filter
+      const product = item.original;
+
+      // Lọc theo danh mục
       if (activeCategory && activeCategory !== "Tất cả") {
         if (product.category !== activeCategory) {
           return false;
         }
       }
 
-      // Custom Filter (e.g. Warehouse Stock)
+      // Bộ lọc tùy chỉnh (ví dụ: Tồn kho)
       if (customFilterFn && !customFilterFn(product)) {
         return false;
       }
 
       return true;
     });
+
+    // Trả về danh sách sản phẩm gốc để sắp xếp và hiển thị
+    let resultProducts = result.map((item) => item.original);
 
     // 2. Sorting
     if (sortConfig) {
@@ -56,7 +73,7 @@ const useProductFilterSort = ({
         return 0;
       };
 
-      const withValues = result.map((product) => ({
+      const withValues = resultProducts.map((product) => ({
         product,
         value: getSortValue(product),
       }));
@@ -83,11 +100,17 @@ const useProductFilterSort = ({
       });
 
       // Unwrap
-      result = withValues.map((item) => item.product);
+      resultProducts = withValues.map((item) => item.product);
     }
 
-    return result;
-  }, [products, searchTerm, activeCategory, sortConfig, customFilterFn]);
+    return resultProducts;
+  }, [
+    searchableProducts,
+    searchTerm,
+    activeCategory,
+    sortConfig,
+    customFilterFn,
+  ]);
 
   return filteredProducts;
 };
