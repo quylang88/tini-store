@@ -60,6 +60,7 @@ const Assistant = ({
     appendToPendingBuffer,
     checkAndSummarizeBuffer,
     forceSummarizeBuffer,
+    isSummarizing,
   } = useAssistantMemory();
 
   // 4. Chat Logic
@@ -204,7 +205,7 @@ const Assistant = ({
       <AssistantHeader
         activeTheme={activeTheme}
         modelMode={modelMode}
-        chatSummary={chatSummary}
+        isSummarizing={isSummarizing}
         handleClearScreen={handleClearScreen}
         handleCycleTheme={handleCycleTheme}
         messagesLength={messages.length}
