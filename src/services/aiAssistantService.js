@@ -3,11 +3,7 @@
  * "Bộ não" xử lý logic cho Trợ lý Quản lý Tiny Shop.
  */
 
-import {
-  getModeConfig,
-  PROVIDERS,
-  FORCE_WEB_SEARCH_TRIGGERS,
-} from "./ai/config";
+import { getModeConfig, PROVIDERS } from "./ai/config";
 import { callGeminiAPI, callGroqAPI, searchWeb } from "./ai/providers";
 import { buildDynamicSystemPrompt, buildSummarizePrompt } from "./ai/prompts";
 import {
@@ -55,21 +51,15 @@ export const processQuery = async (
     if (locName) fullLocationInfo = `${locName} (${coords})`;
   }
 
-  // 2. Logic Tìm kiếm (Refined based on Intent)
-  const lowerQuery = query.toLowerCase();
-  const isForceSearch = FORCE_WEB_SEARCH_TRIGGERS.some((kw) =>
-    lowerQuery.includes(kw),
-  );
-
+  // 2. Logic Tìm kiếm (Simplified based on Intent)
   const shouldSearch =
-    intent === "SEARCH" ||
-    isForceSearch ||
-    (modeKey === "deep" && query.length > 3);
+    intent === "SEARCH" || (modeKey === "deep" && query.length > 3);
 
   let searchResults = null;
 
   if (shouldSearch) {
     onStatusUpdate("Misa đang đi soi giá thị trường...");
+    const lowerQuery = query.toLowerCase();
     let searchQuery = query;
     if (
       (lowerQuery.includes("giá") || lowerQuery.includes("nhập")) &&
@@ -190,7 +180,7 @@ export const processToolResult = async (
     context,
     null,
     "",
-    false
+    false,
   );
 
   // Xây dựng history đặc biệt cho turn này theo chuẩn OpenAI/Groq:

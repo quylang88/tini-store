@@ -5,10 +5,6 @@
  */
 
 import { callGroqAPI } from "./providers";
-import {
-  STANDARD_MODE_SEARCH_TRIGGERS,
-  FORCE_WEB_SEARCH_TRIGGERS,
-} from "./config";
 
 // --- KEYWORDS CONFIGURATION ---
 
@@ -31,10 +27,30 @@ const EXPORT_KEYWORDS = [
   "ship cho",
 ];
 
-// Combine existing search triggers
+// Unified Search Keywords (Standard + Deep + Force Search)
 const SEARCH_KEYWORDS = [
-  ...STANDARD_MODE_SEARCH_TRIGGERS,
-  ...FORCE_WEB_SEARCH_TRIGGERS,
+  // General Search Triggers
+  "tìm",
+  "so sánh",
+  "giá nhập",
+  "giá sỉ",
+  "shopee",
+  "lazada",
+  "amazon",
+  "rakuten",
+  "cosme",
+  "rẻ",
+  "tốt",
+  "trend",
+  // Force Search Triggers
+  "bên nhật",
+  "tại nhật",
+  "web nhật",
+  "nguồn hàng",
+  "giá yên",
+  "check giá",
+  "review",
+  "đánh giá",
 ];
 
 /**
