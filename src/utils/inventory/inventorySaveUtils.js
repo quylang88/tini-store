@@ -166,6 +166,7 @@ export const buildNextProductFromForm = ({
     price: Number(formData.price),
     cost: costValue || getLatestCost(baseProduct),
     image: formData.image,
+    expiryDate: formData.expiryDate || "",
     stockByWarehouse: nextStockByWarehouse,
     stock: Object.values(nextStockByWarehouse).reduce(
       (sum, val) => sum + val,

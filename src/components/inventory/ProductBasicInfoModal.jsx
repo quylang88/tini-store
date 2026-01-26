@@ -23,6 +23,7 @@ const ProductBasicInfoModal = ({
     price: product?.price || "",
     image: product?.image || null,
     note: product?.note || "",
+    expiryDate: product?.expiryDate || "",
   });
 
   const highlightOps = useHighlightFields();
@@ -38,6 +39,7 @@ const ProductBasicInfoModal = ({
         price: product.price || "",
         image: product.image || null,
         note: product.note || "",
+        expiryDate: product.expiryDate || "",
       });
     }
   }
@@ -109,6 +111,7 @@ const ProductBasicInfoModal = ({
           barcode={formData.barcode}
           category={formData.category}
           name={formData.name}
+          expiryDate={formData.expiryDate}
           // Handlers
           onImageChange={handleImageFileChange}
           onBarcodeChange={(val) =>
@@ -119,6 +122,9 @@ const ProductBasicInfoModal = ({
           }
           onNameChange={(val) =>
             setFormData((prev) => ({ ...prev, name: val }))
+          }
+          onExpiryDateChange={(val) =>
+            setFormData((prev) => ({ ...prev, expiryDate: val }))
           }
           // Config
           categories={categories}

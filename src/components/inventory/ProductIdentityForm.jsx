@@ -1,18 +1,21 @@
 import React, { useRef } from "react";
-import { ScanBarcode, Upload, Camera } from "lucide-react";
+import { ScanBarcode, Upload } from "lucide-react";
 import { formatNumber } from "../../utils/formatters/formatUtils";
+
 const ProductIdentityForm = ({
   // Data props
   image,
   barcode,
   category,
   name,
+  expiryDate,
 
   // Handlers
   onImageChange, // callback(file)
   onBarcodeChange,
   onCategoryChange,
   onNameChange,
+  onExpiryDateChange,
 
   // Config/Helpers
   categories = [],
@@ -29,7 +32,6 @@ const ProductIdentityForm = ({
   highlightOps, // Prop mới để xử lý highlight
 }) => {
   const uploadInputRef = useRef(null);
-  const cameraInputRef = useRef(null);
 
   const handleFileChange = (event) => {
     const file = event.target.files?.[0];
@@ -48,7 +50,14 @@ const ProductIdentityForm = ({
     <div className="space-y-4">
       {/* Image Section */}
       <div className="flex flex-col gap-3">
-        <div className="w-full h-32 bg-gray-50 border-2 border-dashed border-gray-300 rounded-xl flex items-center justify-center text-rose-400 overflow-hidden relative">
+        <label
+          htmlFor={allowImageUpload ? "pid-image-input" : undefined}
+          className={`w-full h-32 bg-gray-50 border-2 border-dashed border-gray-300 rounded-xl flex items-center justify-center text-rose-400 overflow-hidden relative ${
+            allowImageUpload
+              ? "cursor-pointer active:border-rose-400 active:bg-rose-50"
+              : ""
+          }`}
+        >
           {image ? (
             <img
               src={image}
@@ -58,47 +67,21 @@ const ProductIdentityForm = ({
           ) : (
             <div className="flex flex-col items-center">
               <Upload size={24} className="mb-2" />
-              <span className="text-xs">Chưa có ảnh sản phẩm</span>
+              <span className="text-xs">
+                {allowImageUpload ? "Chạm để thêm ảnh" : "Chưa có ảnh"}
+              </span>
             </div>
           )}
-        </div>
+        </label>
 
-        {/* Upload Buttons */}
-        {allowImageUpload && (
-          <div className="grid grid-cols-2 gap-3">
-            <label
-              htmlFor="pid-upload"
-              className="w-full border border-rose-200 rounded-lg py-2 text-xs font-semibold text-rose-700 flex items-center justify-center gap-2 active:border-rose-400 active:text-rose-600 cursor-pointer"
-            >
-              <Upload size={16} /> Tải ảnh
-            </label>
-            <label
-              htmlFor="pid-camera"
-              className="w-full border border-rose-200 rounded-lg py-2 text-xs font-semibold text-rose-700 flex items-center justify-center gap-2 active:border-rose-400 active:text-rose-600 cursor-pointer"
-            >
-              <Camera size={16} /> Chụp ảnh
-            </label>
-          </div>
-        )}
-
-        {/* Hidden Inputs */}
+        {/* Hidden Input - Consolidated */}
         <input
           type="file"
-          id="pid-upload"
+          id="pid-image-input"
           ref={uploadInputRef}
           onChange={handleFileChange}
           className="hidden"
           accept="image/*"
-          disabled={!allowImageUpload}
-        />
-        <input
-          type="file"
-          id="pid-camera"
-          ref={cameraInputRef}
-          onChange={handleFileChange}
-          className="hidden"
-          accept="image/*"
-          capture="environment"
           disabled={!allowImageUpload}
         />
       </div>
@@ -180,6 +163,23 @@ const ProductIdentityForm = ({
             ))}
           </div>
         )}
+      </div>
+
+      {/* Expiry Date */}
+      <div>
+        <label className="text-xs font-bold text-rose-700 uppercase">
+          Hạn sử dụng
+        </label>
+        <input
+          type="date"
+          className={`w-full border-b border-gray-200 py-2 focus:border-rose-400 outline-none font-medium disabled:text-gray-500 ${inputColorClass}`}
+          value={expiryDate || ""}
+          onChange={(e) =>
+            onExpiryDateChange && onExpiryDateChange(e.target.value)
+          }
+          placeholder="Chọn ngày..."
+          disabled={disabled}
+        />
       </div>
     </div>
   );

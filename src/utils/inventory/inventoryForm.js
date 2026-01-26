@@ -20,6 +20,7 @@ const buildBaseFormData = (settings) => ({
   // Bổ sung input cho phí gửi VNĐ
   shippingFeeVndInput: "",
   image: "",
+  expiryDate: "",
 });
 
 export const createFormDataForNewProduct = ({ settings, activeCategory }) => ({
@@ -47,6 +48,7 @@ export const createFormDataForProduct = ({ product, settings }) => {
     shippingFeeVnd: "",
     shippingFeeVndInput: "",
     image: product.image || "",
+    expiryDate: product.expiryDate || "",
   };
 };
 
@@ -86,5 +88,6 @@ export const createFormDataForLot = ({ product, lot, settings }) => {
     shippingFeeVndInput:
       inferredShippingMethod === "vn" ? lot.shipping?.feeVnd || "" : "", // Populate shipping fee input
     image: product.image || "",
+    expiryDate: product.expiryDate || "",
   };
 };

@@ -97,6 +97,7 @@ const ProductModal = ({
           barcode={formData.barcode}
           category={formData.category}
           name={formData.name}
+          expiryDate={formData.expiryDate}
           // Handlers
           onImageChange={onImageSelect} // ProductModal expects file object, ProductIdentityForm passes file object
           onBarcodeChange={(val) => setFormData({ ...formData, barcode: val })}
@@ -104,6 +105,9 @@ const ProductModal = ({
             setFormData({ ...formData, category: val })
           }
           onNameChange={(val) => setFormData({ ...formData, name: val })}
+          onExpiryDateChange={(val) =>
+            setFormData({ ...formData, expiryDate: val })
+          }
           // Config
           categories={categories}
           onShowScanner={onShowScanner}
