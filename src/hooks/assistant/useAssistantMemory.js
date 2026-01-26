@@ -13,6 +13,8 @@ export const useAssistantMemory = () => {
     return "";
   });
 
+  const [isSummarizing, setIsSummarizing] = useState(false);
+
   // Xử lý buffer tồn đọng khi khởi động
   useEffect(() => {
     const processPendingBuffer = async () => {
@@ -30,6 +32,7 @@ export const useAssistantMemory = () => {
             `Phát hiện ${pendingMessages.length} tin nhắn tồn đọng. Đang dọn dẹp...`,
           );
 
+          setIsSummarizing(true);
           const currentMem = localStorage.getItem("ai_chat_summary") || "";
           const newSummary = await summarizeChatHistory(
             currentMem,
@@ -43,6 +46,8 @@ export const useAssistantMemory = () => {
         } catch (e) {
           console.error("Lỗi xử lý buffer, tiến hành xóa bắt buộc:", e);
           localStorage.removeItem("ai_pending_buffer");
+        } finally {
+          setIsSummarizing(false);
         }
       }
     };
@@ -75,6 +80,7 @@ export const useAssistantMemory = () => {
   const checkAndSummarizeBuffer = async (currentBuffer) => {
     if (currentBuffer.length >= BUFFER_TRIGGER_SIZE) {
       console.log("Buffer đạt ngưỡng, kích hoạt tóm tắt & dọn dẹp...");
+      setIsSummarizing(true);
       try {
         const newSummary = await summarizeChatHistory(
           chatSummary,
@@ -86,6 +92,8 @@ export const useAssistantMemory = () => {
         console.log("Auto summarize done & Buffer cleared.");
       } catch (err) {
         console.error("Lỗi tóm tắt ngầm:", err);
+      } finally {
+        setIsSummarizing(false);
       }
     }
   };
@@ -97,6 +105,7 @@ export const useAssistantMemory = () => {
       try {
         const pendingMessages = JSON.parse(pendingJson);
         if (pendingMessages.length > 0) {
+          setIsSummarizing(true);
           const newSummary = await summarizeChatHistory(
             chatSummary,
             pendingMessages,
@@ -106,6 +115,8 @@ export const useAssistantMemory = () => {
         }
       } catch (e) {
         console.warn("Lỗi force summarize:", e);
+      } finally {
+        setIsSummarizing(false);
       }
       localStorage.removeItem("ai_pending_buffer");
     }
@@ -117,5 +128,6 @@ export const useAssistantMemory = () => {
     appendToPendingBuffer,
     checkAndSummarizeBuffer,
     forceSummarizeBuffer,
+    isSummarizing,
   };
 };

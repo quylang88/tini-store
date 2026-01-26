@@ -8,7 +8,7 @@ import { AI_MODES } from "../../services/ai/config";
 const AssistantHeader = ({
   activeTheme,
   modelMode,
-  chatSummary,
+  isSummarizing,
   handleClearScreen,
   handleCycleTheme,
   messagesLength,
@@ -39,7 +39,7 @@ const AssistantHeader = ({
             {modelMode === "fast" && AI_MODES.fast.label}
             {modelMode === "deep" && AI_MODES.deep.label}
           </p>
-          {chatSummary && (
+          {isSummarizing && (
             <span
               className={`text-[10px] ${activeTheme.themeBtnBg} ${activeTheme.themeBtnText} px-1.5 rounded-full flex items-center gap-0.5`}
             >
