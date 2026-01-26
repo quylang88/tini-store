@@ -21,19 +21,29 @@ const CustomCalendar = ({
   const yearListRef = useRef(null);
 
   const scrollToActive = () => {
-    if (monthListRef.current) {
-      const activeMonth = monthListRef.current.querySelector(".bg-rose-500");
-      if (activeMonth) {
-        activeMonth.scrollIntoView({ block: "center" });
+    // Sử dụng requestAnimationFrame để đảm bảo DOM đã render xong
+    requestAnimationFrame(() => {
+      if (monthListRef.current) {
+        const activeMonth = monthListRef.current.querySelector(".bg-rose-500");
+        if (activeMonth) {
+          activeMonth.scrollIntoView({ block: "center" });
+        }
       }
-    }
-    if (yearListRef.current) {
-      const activeYear = yearListRef.current.querySelector(".bg-rose-500");
-      if (activeYear) {
-        activeYear.scrollIntoView({ block: "center" });
+      if (yearListRef.current) {
+        const activeYear = yearListRef.current.querySelector(".bg-rose-500");
+        if (activeYear) {
+          activeYear.scrollIntoView({ block: "center" });
+        }
       }
-    }
+    });
   };
+
+  // Cuộn ngay khi bật picker (dù chưa có animation)
+  useEffect(() => {
+    if (showMonthYearPicker) {
+      scrollToActive();
+    }
+  }, [showMonthYearPicker]);
 
   // Chuẩn hóa so sánh ngày
   const isSameDay = (d1, d2) => {

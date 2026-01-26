@@ -77,7 +77,10 @@ const DatePickerInput = ({
       <button
         type="button"
         disabled={disabled}
-        onClick={() => !disabled && setIsOpen(!isOpen)}
+        onClick={(e) => {
+          e.stopPropagation();
+          !disabled && setIsOpen(!isOpen);
+        }}
         className={`w-full flex items-center justify-between border-b border-gray-200 py-2 focus:border-rose-400 outline-none font-medium disabled:text-gray-500 text-left ${inputClassName}`}
       >
         <span className={value ? "text-gray-900" : "text-gray-400"}>
