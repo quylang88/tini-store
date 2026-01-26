@@ -12,24 +12,23 @@
 
 html, body, #root {
   height: 100%;
+  width: 100%;
+  overflow: hidden; /* Prevent native scroll completely */
 }
 
 html {
-  /* Match the lightest color of the app gradient to hide overscroll gap */
-  background-color: #fff1f2; /* rose-50 */
-  overscroll-behavior-y: none;
+  background-color: #fff1f2;
+  position: fixed; /* Lock viewport for iOS */
+  inset: 0;
 }
 
 body {
-  /* Prevent pull-to-refresh on mobile */
-  overscroll-behavior-y: none;
-  /* Disable text selection */
+  position: fixed; /* Lock viewport for iOS */
+  inset: 0;
   user-select: none;
   -webkit-user-select: none;
-  /* Remove tap highlight */
   -webkit-tap-highlight-color: transparent;
-  /* Optimized scrolling */
-  -webkit-overflow-scrolling: touch;
+  -webkit-touch-callout: none;
 }
 
 /* Allow text selection in inputs */
