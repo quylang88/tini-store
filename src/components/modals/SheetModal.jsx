@@ -22,7 +22,7 @@ const SheetModal = ({
   return createPortal(
     <div
       className={`fixed inset-0 z-[90] bg-black/40 backdrop-blur-sm flex items-end sm:items-center justify-center transition-opacity duration-300 ${
-        active ? "opacity-100" : "opacity-0"
+        active ? "opacity-100" : "opacity-0 pointer-events-none"
       }`}
       onClick={onClose}
     >

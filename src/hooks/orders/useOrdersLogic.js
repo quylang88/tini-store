@@ -4,7 +4,7 @@ import useOrderCatalog from "./useOrderCatalog";
 import { buildCartFromItems } from "../../utils/orders/orderDraftUtils";
 import useCartLogic from "./useCartLogic";
 import useOrderFormLogic from "./useOrderFormLogic";
-import useOrderSubmitLogic from "./useOrderSubmitLogic";
+import useOrderSubmitLogic from "../../utils/orders/useOrderSubmitLogic";
 import {
   getDefaultWarehouse,
   resolveWarehouseKey,

@@ -1,22 +1,18 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useCallback } from "react";
 
 const STORAGE_KEY = "shop_customers_v1";
 const EXCLUDED_CUSTOMERS = ["Mẹ Hương", "Mẹ Nguyệt"];
 
 const useCustomerLogic = () => {
-  const [customers, setCustomers] = useState([]);
-
-  // Tải danh sách khách hàng khi component được mount
-  useEffect(() => {
+  const [customers, setCustomers] = useState(() => {
     try {
       const stored = localStorage.getItem(STORAGE_KEY);
-      if (stored) {
-        setCustomers(JSON.parse(stored));
-      }
+      return stored ? JSON.parse(stored) : [];
     } catch (error) {
       console.error("Failed to load customers:", error);
+      return [];
     }
-  }, []);
+  });
 
   const processOrderForCustomer = useCallback((order, isUpdate = false) => {
     const { customerName, customerAddress, total, date } = order;
