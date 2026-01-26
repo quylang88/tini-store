@@ -34,6 +34,8 @@ const Inventory = ({
       showTabBarOnlyAtTop: true,
     });
 
+  const [visibleCount, setVisibleCount] = useState(20);
+
   const {
     isModalOpen,
     showScanner,
@@ -71,6 +73,39 @@ const Inventory = ({
     highlightOps,
   } = useInventoryLogic({ products, setProducts, orders, setOrders, settings });
 
+  const handleSearchChange = (e) => {
+    setSearchTerm(e.target.value);
+    setVisibleCount(20);
+  };
+
+  const handleClearSearch = () => {
+    setSearchTerm("");
+    setVisibleCount(20);
+  };
+
+  const handleCategoryChange = (cat) => {
+    setActiveCategory(cat);
+    setVisibleCount(20);
+  };
+
+  const handleWarehouseChange = (w) => {
+    setWarehouseFilter(w);
+    setVisibleCount(20);
+  };
+
+  const onListScroll = (e) => {
+    handleScroll(e);
+
+    const target = e.target;
+    // Load more when scrolled near bottom (300px buffer)
+    if (
+      target.scrollHeight - target.scrollTop - target.clientHeight < 300 &&
+      visibleCount < filteredProducts.length
+    ) {
+      setVisibleCount((prev) => Math.min(prev + 20, filteredProducts.length));
+    }
+  };
+
   // Đã loại bỏ useFilterTransition để tránh remount list gây khựng.
 
   return (
@@ -95,14 +130,14 @@ const Inventory = ({
         >
           <ProductFilterHeader
             searchTerm={searchTerm}
-            onSearchChange={(e) => setSearchTerm(e.target.value)}
-            onClearSearch={() => setSearchTerm("")}
+            onSearchChange={handleSearchChange}
+            onClearSearch={handleClearSearch}
             onShowScanner={() => setShowScanner(true)}
             enableFilters={false} // Tắt filter trong header cố định
             activeCategory={activeCategory}
-            setActiveCategory={setActiveCategory}
+            setActiveCategory={handleCategoryChange}
             warehouseFilter={warehouseFilter}
-            onWarehouseChange={setWarehouseFilter}
+            onWarehouseChange={handleWarehouseChange}
             categories={settings.categories}
             namespace="inventory"
           />
@@ -111,21 +146,21 @@ const Inventory = ({
         {/* Product List cuộn bên dưới InventoryHeader */}
         <div
           className="flex-1 overflow-y-auto min-h-0 pt-[56px] overscroll-y-contain"
-          onScroll={handleScroll}
+          onScroll={onListScroll}
         >
           {/* Filter Section nằm trong luồng scroll */}
           <ProductFilterSection
             warehouseFilter={warehouseFilter}
-            onWarehouseChange={setWarehouseFilter}
+            onWarehouseChange={handleWarehouseChange}
             activeCategory={activeCategory}
-            setActiveCategory={setActiveCategory}
+            setActiveCategory={handleCategoryChange}
             categories={settings.categories}
             namespace="inventory"
             sortConfig={sortConfig}
             onSortChange={setSortConfig}
           />
           <ProductList
-            products={filteredProducts}
+            products={filteredProducts.slice(0, visibleCount)}
             onDelete={handleDelete}
             onOpenDetail={setDetailProduct}
             activeCategory={activeCategory}
