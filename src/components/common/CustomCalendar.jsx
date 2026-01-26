@@ -20,22 +20,20 @@ const CustomCalendar = ({
   const monthListRef = useRef(null);
   const yearListRef = useRef(null);
 
-  useEffect(() => {
-    if (showMonthYearPicker) {
-      if (monthListRef.current) {
-        const activeMonth = monthListRef.current.querySelector(".bg-rose-500");
-        if (activeMonth) {
-          activeMonth.scrollIntoView({ block: "center" });
-        }
-      }
-      if (yearListRef.current) {
-        const activeYear = yearListRef.current.querySelector(".bg-rose-500");
-        if (activeYear) {
-          activeYear.scrollIntoView({ block: "center" });
-        }
+  const scrollToActive = () => {
+    if (monthListRef.current) {
+      const activeMonth = monthListRef.current.querySelector(".bg-rose-500");
+      if (activeMonth) {
+        activeMonth.scrollIntoView({ block: "center" });
       }
     }
-  }, [showMonthYearPicker]);
+    if (yearListRef.current) {
+      const activeYear = yearListRef.current.querySelector(".bg-rose-500");
+      if (activeYear) {
+        activeYear.scrollIntoView({ block: "center" });
+      }
+    }
+  };
 
   // Chuẩn hóa so sánh ngày
   const isSameDay = (d1, d2) => {
@@ -112,6 +110,7 @@ const CustomCalendar = ({
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
             transition={{ duration: 0.2 }}
+            onAnimationComplete={scrollToActive}
             className="w-full h-full"
           >
             <div className="flex justify-between items-center mb-2 pb-2 border-b border-rose-100">
