@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { processQuery } from "../../services/aiAssistantService";
 import { getRandomGreeting } from "../../services/ai/chatHelpers";
+import { detectIntent } from "../../services/ai/intentService";
 
 export const useAssistantChat = ({
   messages,
@@ -32,11 +33,21 @@ export const useAssistantChat = ({
     setIsTyping(true);
     setLoadingText(null);
 
-    // 2. Lưu vào Buffer
-    const currentBuffer = appendToPendingBuffer([userMsg]);
+    // 0. Xác định Intent trước để quyết định có lưu memory không
+    let intent = "CHAT";
+    try {
+      setLoadingText("Misa đang suy nghĩ...");
+      intent = await detectIntent(text);
+    } catch (e) {
+      console.warn("Intent detection failed inside useAssistantChat", e);
+    }
 
-    // 3. Kiểm tra tóm tắt tự động
-    checkAndSummarizeBuffer(currentBuffer);
+    // 2. Lưu vào Buffer (Chỉ khi KHÔNG phải CHAT)
+    if (intent !== "CHAT") {
+      const currentBuffer = appendToPendingBuffer([userMsg]);
+      // 3. Kiểm tra tóm tắt tự động
+      checkAndSummarizeBuffer(currentBuffer);
+    }
 
     try {
       const response = await processQuery(
@@ -46,15 +57,18 @@ export const useAssistantChat = ({
         newHistory,
         chatSummary,
         (status) => setLoadingText(status),
+        intent, // Pass explicit intent
       );
 
-      // Nếu là Text thường -> Lưu vào Buffer
+      // Nếu là Text thường -> Lưu vào Buffer (Chỉ khi KHÔNG phải CHAT)
       if (response.type !== "tool_request") {
-        const aiMsgForBuffer = {
-          sender: "assistant",
-          content: response.content,
-        };
-        appendToPendingBuffer([aiMsgForBuffer]);
+        if (intent !== "CHAT") {
+          const aiMsgForBuffer = {
+            sender: "assistant",
+            content: response.content,
+          };
+          appendToPendingBuffer([aiMsgForBuffer]);
+        }
       } else {
         // Nếu là Tool Request -> KHÔNG lưu vào Buffer ngay (đợi Confirm xong mới lưu kết quả)
         // Hoặc có thể lưu "AI yêu cầu..." tùy logic, nhưng tạm thời để UI xử lý
