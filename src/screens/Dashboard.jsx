@@ -16,7 +16,7 @@ import StatListModal from "../components/dashboard/StatListModal";
 import FloatingActionButton from "../components/button/FloatingActionButton";
 import AppHeader from "../components/common/AppHeader";
 
-const Dashboard = ({ products, orders, onOpenDetail }) => {
+const Dashboard = React.memo(({ products, orders, onOpenDetail }) => {
   const {
     currentDate, // Sử dụng ngày từ hook
     topOptions,
@@ -173,6 +173,6 @@ const Dashboard = ({ products, orders, onOpenDetail }) => {
       />
     </div>
   );
-};
+});
 
 export default Dashboard;

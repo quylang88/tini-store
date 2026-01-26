@@ -9,7 +9,7 @@ import ErrorModal from "../components/modals/ErrorModal";
 import ScreenTransition from "../components/common/ScreenTransition";
 import useOrdersLogic from "../hooks/orders/useOrdersLogic";
 
-const Orders = ({
+const Orders = React.memo(({
   products,
   setProducts,
   orders,
@@ -196,6 +196,6 @@ const Orders = ({
       />
     </>
   );
-};
+});
 
 export default Orders;

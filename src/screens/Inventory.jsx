@@ -17,7 +17,7 @@ import AppHeader from "../components/common/AppHeader";
 import usePagination from "../hooks/ui/usePagination";
 import { isScrollNearBottom } from "../utils/ui/scrollUtils";
 
-const Inventory = ({
+const Inventory = React.memo(({
   products,
   setProducts,
   orders,
@@ -158,7 +158,7 @@ const Inventory = ({
             initial={{ scale: 0, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0, opacity: 0 }}
-            className="fixed right-5 bottom-[calc(env(safe-area-inset-bottom)+90px)] z-30"
+            className="fixed right-4 bottom-[calc(env(safe-area-inset-bottom)+88px)] z-30"
           >
             <FloatingActionButton
               onClick={() => openModal()}
@@ -240,6 +240,6 @@ const Inventory = ({
       />
     </div>
   );
-};
+});
 
 export default Inventory;

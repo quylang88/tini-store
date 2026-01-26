@@ -44,7 +44,7 @@ const ScreenTransition = ({
       initial="enter"
       animate="center"
       exit="exit"
-      className={`screen-transition absolute top-0 left-0 w-full h-full bg-inherit ${className}`}
+      className={`screen-transition will-change-transform absolute top-0 left-0 w-full h-full bg-inherit ${className}`}
       // Cấu hình gesture swipe back nếu có handler
       drag={onSwipeBack ? "x" : false}
       dragConstraints={{ left: 0, right: 0 }}

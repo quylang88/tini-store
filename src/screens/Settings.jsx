@@ -21,7 +21,7 @@ import AppHeader from "../components/common/AppHeader";
 import AnimatedFilterTabs from "../components/common/AnimatedFilterTabs";
 import { AnimatePresence, motion } from "framer-motion";
 
-const Settings = ({
+const Settings = React.memo(({
   products,
   orders,
   setProducts,
@@ -295,6 +295,6 @@ const Settings = ({
       />
     </div>
   );
-};
+});
 
 export default Settings;

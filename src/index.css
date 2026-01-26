@@ -16,7 +16,7 @@ html, body, #root {
 
 html {
   /* Match the lightest color of the app gradient to hide overscroll gap */
-  background-color: #FFF7ED; /* amber-50 */
+  background-color: #fff1f2; /* rose-50 */
   overscroll-behavior-y: none;
 }
 
