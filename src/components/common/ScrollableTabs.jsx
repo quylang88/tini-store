@@ -10,6 +10,7 @@ const ScrollableTabs = ({
   activeTextColor = "text-rose-700",
   inactiveTextColor = "text-rose-500",
   underlineColor = "bg-rose-600",
+  ariaLabel = "Category Selection",
 }) => {
   const containerRef = useRef(null);
   const activeTabRef = useRef(null);
@@ -45,7 +46,11 @@ const ScrollableTabs = ({
       ref={containerRef}
       className={`overflow-x-auto no-scrollbar ${className}`}
     >
-      <div className="flex gap-2 min-w-max px-3">
+      <div
+        className="flex gap-2 min-w-max px-3"
+        role="tablist"
+        aria-label={ariaLabel}
+      >
         {tabs.map((tab) => {
           const isActive = activeTab === tab.key;
           return (
@@ -53,6 +58,8 @@ const ScrollableTabs = ({
               key={tab.key}
               ref={isActive ? activeTabRef : null}
               onClick={() => onTabChange(tab.key)}
+              role="tab"
+              aria-selected={isActive}
               className={`relative px-3 py-2 text-sm font-medium transition-colors z-0 outline-none select-none ${
                 isActive ? activeTextColor : inactiveTextColor
               }`}
