@@ -1,9 +1,22 @@
+// Cached formatters to avoid re-creation overhead
+const numberFormatterEn = new Intl.NumberFormat("en-US");
+const numberFormatterVi = new Intl.NumberFormat("vi-VN");
+
+const dateTimeFormatter = new Intl.DateTimeFormat("vi-VN", {
+  year: "numeric",
+  month: "numeric",
+  day: "numeric",
+  hour: "numeric",
+  minute: "numeric",
+  second: "numeric",
+});
+
 export const formatNumber = (value) => {
   const number = Number(value);
   if (!Number.isFinite(number)) {
     return "0";
   }
-  return number.toLocaleString("en-US");
+  return numberFormatterEn.format(number);
 };
 
 export const formatInputNumber = (value) => {
@@ -14,7 +27,7 @@ export const formatInputNumber = (value) => {
   if (!Number.isFinite(number)) {
     return "";
   }
-  return number.toLocaleString("en-US");
+  return numberFormatterEn.format(number);
 };
 
 export const sanitizeNumberInput = (value) => value.replace(/[^\d]/g, "");
@@ -46,5 +59,12 @@ export const formatCurrency = (value) => {
   if (value === undefined || value === null) return "0₫";
   const number = Number(value);
   if (!Number.isFinite(number)) return "0₫";
-  return number.toLocaleString("vi-VN") + "₫";
+  return numberFormatterVi.format(number) + "₫";
+};
+
+export const formatDateTime = (dateInput) => {
+  if (!dateInput) return "";
+  const date = new Date(dateInput);
+  if (isNaN(date.getTime())) return "";
+  return dateTimeFormatter.format(date);
 };

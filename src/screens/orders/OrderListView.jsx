@@ -5,6 +5,8 @@ import FloatingActionButton from "../../components/button/FloatingActionButton";
 import AppHeader from "../../components/common/AppHeader";
 import useScrollHandling from "../../hooks/ui/useScrollHandling";
 import OrderListItem from "../../components/orders/OrderListItem";
+import usePagination from "../../hooks/ui/usePagination";
+import { isScrollNearBottom } from "../../utils/ui/scrollUtils";
 
 // Giao diện danh sách đơn tách riêng để dễ quản lý và thêm nút huỷ đơn
 const OrderListView = ({
@@ -23,22 +25,32 @@ const OrderListView = ({
     setTabBarVisible,
   });
 
-  // Memoize sorted orders to avoid re-sorting on every render
+  // Memoize danh sách đơn hàng đã sắp xếp để tránh sắp xếp lại mỗi lần render
   const sortedOrders = useMemo(() => {
     return [...orders].sort((a, b) => {
       const dateA = a.date || "";
       const dateB = b.date || "";
 
-      // Optimize for ISO strings (common case)
+      // Tối ưu hoá cho chuỗi ISO (trường hợp phổ biến)
       if (typeof dateA === "string" && typeof dateB === "string") {
         if (dateB === dateA) return 0;
         return dateB > dateA ? 1 : -1;
       }
 
-      // Fallback for legacy/numeric timestamps
+      // Dự phòng cho timestamp số/cũ
       return new Date(dateB || 0) - new Date(dateA || 0);
     });
   }, [orders]);
+
+  const {
+    visibleData: visibleOrders,
+    loadMore,
+    hasMore,
+  } = usePagination(sortedOrders, {
+    pageSize: 20,
+    // Danh sách đơn hàng giữ nguyên vị trí cuộn ngay cả khi cập nhật, trừ khi chúng ta quyết định khác
+    resetDeps: [],
+  });
 
   return (
     <div className="relative h-full bg-transparent">
@@ -68,9 +80,14 @@ const OrderListView = ({
 
       <div
         className="h-full overflow-y-auto p-3 pt-[calc(80px+env(safe-area-inset-top))] pb-24 space-y-3 min-h-0 overscroll-y-contain"
-        onScroll={handleScroll}
+        onScroll={(e) => {
+          handleScroll(e);
+          if (isScrollNearBottom(e.target) && hasMore) {
+            loadMore();
+          }
+        }}
       >
-        {sortedOrders.map((order) => (
+        {visibleOrders.map((order) => (
           <OrderListItem
             key={order.id}
             order={order}

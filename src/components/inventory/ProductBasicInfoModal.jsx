@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import SheetModal from "../../components/modals/SheetModal";
 import Button from "../../components/button/Button";
 import ProductIdentityForm from "./ProductIdentityForm";
+import DatePickerInput from "../common/DatePickerInput";
 import { formatInputNumber } from "../../utils/formatters/formatUtils";
 import useHighlightFields from "../../hooks/ui/useHighlightFields";
 
@@ -23,6 +24,7 @@ const ProductBasicInfoModal = ({
     price: product?.price || "",
     image: product?.image || null,
     note: product?.note || "",
+    expiryDate: product?.expiryDate || "",
   });
 
   const highlightOps = useHighlightFields();
@@ -38,6 +40,7 @@ const ProductBasicInfoModal = ({
         price: product.price || "",
         image: product.image || null,
         note: product.note || "",
+        expiryDate: product.expiryDate || "",
       });
     }
   }
@@ -104,12 +107,12 @@ const ProductBasicInfoModal = ({
     >
       <div className="space-y-4">
         <ProductIdentityForm
-          // Data
+          // Dữ liệu
           image={formData.image}
           barcode={formData.barcode}
           category={formData.category}
           name={formData.name}
-          // Handlers
+          // Xử lý sự kiện
           onImageChange={handleImageFileChange}
           onBarcodeChange={(val) =>
             setFormData((prev) => ({ ...prev, barcode: val }))
@@ -120,16 +123,30 @@ const ProductBasicInfoModal = ({
           onNameChange={(val) =>
             setFormData((prev) => ({ ...prev, name: val }))
           }
-          // Config
+          // Cấu hình
           categories={categories}
           onShowScanner={onShowScanner}
           disabled={false}
           allowImageUpload={true}
-          inputColorClass="text-gray-900" // Explicitly setting color as requested
+          inputColorClass="text-gray-900"
           highlightOps={highlightOps}
         />
 
-        {/* Price Input - Manually added back */}
+        {/* Hạn sử dụng */}
+        <div>
+          <label className="text-xs font-bold text-rose-700 uppercase">
+            Hạn sử dụng
+          </label>
+          <DatePickerInput
+            value={formData.expiryDate || ""}
+            onChange={(val) =>
+              setFormData((prev) => ({ ...prev, expiryDate: val }))
+            }
+            placeholder="Chọn ngày..."
+          />
+        </div>
+
+        {/* Nhập giá - Thêm lại thủ công */}
         <div>
           <label className="text-xs font-bold text-rose-700 uppercase">
             Giá bán (VNĐ)
@@ -148,7 +165,7 @@ const ProductBasicInfoModal = ({
           />
         </div>
 
-        {/* Note Input */}
+        {/* Nhập ghi chú */}
         <div>
           <label className="text-xs font-bold text-rose-700 uppercase">
             Ghi chú

@@ -12,6 +12,7 @@ import SheetModal from "../../components/modals/SheetModal";
 import Button from "../../components/button/Button";
 import useModalCache from "../../hooks/ui/useModalCache";
 import ProductIdentityForm from "./ProductIdentityForm";
+import DatePickerInput from "../common/DatePickerInput";
 
 const ProductModal = ({
   isOpen,
@@ -90,7 +91,7 @@ const ProductModal = ({
       footer={footer}
     >
       <div className="space-y-4">
-        {/* REFACTORED: Shared Product Identity Form */}
+        {/* TÁI CẤU TRÚC: Form định danh sản phẩm dùng chung */}
         <ProductIdentityForm
           // Data
           image={formData.image}
@@ -98,17 +99,17 @@ const ProductModal = ({
           category={formData.category}
           name={formData.name}
           // Handlers
-          onImageChange={onImageSelect} // ProductModal expects file object, ProductIdentityForm passes file object
+          onImageChange={onImageSelect} // ProductModal nhận file object, ProductIdentityForm truyền file object
           onBarcodeChange={(val) => setFormData({ ...formData, barcode: val })}
           onCategoryChange={(val) =>
             setFormData({ ...formData, category: val })
           }
           onNameChange={(val) => setFormData({ ...formData, name: val })}
-          // Config
+          // Cấu hình
           categories={categories}
           onShowScanner={onShowScanner}
-          disabled={Boolean(editingProduct)} // Disable identity fields if editing existing product
-          allowImageUpload={!editingProduct} // Hide upload buttons if editing existing product
+          disabled={Boolean(editingProduct)} // Vô hiệu hóa các trường định danh nếu đang sửa sản phẩm có sẵn
+          allowImageUpload={!editingProduct} // Ẩn nút tải ảnh nếu đang sửa sản phẩm có sẵn
           nameSuggestions={nameSuggestions}
           onSelectExistingProduct={onSelectExistingProduct}
           inputColorClass="text-gray-900"
@@ -148,7 +149,7 @@ const ProductModal = ({
           </div>
 
           <div className="relative">
-            {/* Form JPY */}
+            {/* Form nhập theo Yên */}
             <div
               className={`transition-all duration-300 ease-in-out ${
                 formData.costCurrency === "JPY"
@@ -197,7 +198,7 @@ const ProductModal = ({
               </div>
             </div>
 
-            {/* Form VND */}
+            {/* Form nhập theo VNĐ */}
             <div
               className={`transition-all duration-300 ease-in-out ${
                 formData.costCurrency === "VND"
@@ -256,7 +257,7 @@ const ProductModal = ({
           </div>
 
           <div className="relative">
-            {/* Form Phí Gửi JP */}
+            {/* Form phí gửi Nhật */}
             <div
               className={`transition-all duration-300 ease-in-out ${
                 formData.shippingMethod === "jp"
@@ -295,7 +296,7 @@ const ProductModal = ({
               </div>
             </div>
 
-            {/* Form Phí Gửi VN */}
+            {/* Form phí gửi Việt Nam */}
             <div
               className={`transition-all duration-300 ease-in-out ${
                 formData.shippingMethod === "vn"
@@ -367,7 +368,19 @@ const ProductModal = ({
           </div>
         </div>
 
-        {/* Giá bán + Lợi nhuận - (Moved back to bottom as per request) */}
+        {/* Hạn sử dụng */}
+        <div>
+          <label className="text-xs font-bold text-rose-700 uppercase">
+            Hạn sử dụng
+          </label>
+          <DatePickerInput
+            value={formData.expiryDate || ""}
+            onChange={(val) => setFormData({ ...formData, expiryDate: val })}
+            placeholder="Chọn ngày..."
+          />
+        </div>
+
+        {/* Giá bán + Lợi nhuận */}
         <div className="grid grid-cols-2 gap-3 items-start">
           <div className="flex flex-col gap-1 min-w-0">
             <label className="text-xs font-bold text-rose-700 uppercase">
