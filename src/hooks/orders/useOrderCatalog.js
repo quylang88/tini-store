@@ -14,6 +14,7 @@ const DEFAULT_WAREHOUSE = "all";
 const useOrderCatalog = ({
   products,
   cart,
+  priceOverrides = {},
   searchTerm,
   activeCategory,
   selectedWarehouse,
@@ -91,18 +92,24 @@ const useOrderCatalog = ({
           const product = productMap.get(productId);
           if (!product) return null;
 
+          const overriddenPrice = priceOverrides[productId];
+
           return {
             id: product.id,
             productId: product.id,
             name: product.name,
-            price: product.price,
+            price:
+              overriddenPrice !== undefined
+                ? Number(overriddenPrice)
+                : product.price,
+            originalPrice: product.price,
             quantity,
             // Giá vốn dùng cho đơn hàng cần gồm cả phí gửi/đơn vị.
             cost: getLatestUnitCost(product),
           };
         })
         .filter((item) => item && item.quantity > 0), // Lọc bỏ item null hoặc số lượng <= 0 (bao gồm cả chuỗi rỗng)
-    [cart, productMap],
+    [cart, productMap, priceOverrides],
   );
 
   const totalAmount = useMemo(
