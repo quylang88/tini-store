@@ -12,6 +12,7 @@ import SheetModal from "../../components/modals/SheetModal";
 import Button from "../../components/button/Button";
 import useModalCache from "../../hooks/ui/useModalCache";
 import ProductIdentityForm from "./ProductIdentityForm";
+import DatePickerInput from "../common/DatePickerInput";
 
 const ProductModal = ({
   isOpen,
@@ -97,7 +98,6 @@ const ProductModal = ({
           barcode={formData.barcode}
           category={formData.category}
           name={formData.name}
-          expiryDate={formData.expiryDate}
           // Handlers
           onImageChange={onImageSelect} // ProductModal expects file object, ProductIdentityForm passes file object
           onBarcodeChange={(val) => setFormData({ ...formData, barcode: val })}
@@ -105,9 +105,6 @@ const ProductModal = ({
             setFormData({ ...formData, category: val })
           }
           onNameChange={(val) => setFormData({ ...formData, name: val })}
-          onExpiryDateChange={(val) =>
-            setFormData({ ...formData, expiryDate: val })
-          }
           // Config
           categories={categories}
           onShowScanner={onShowScanner}
@@ -369,6 +366,18 @@ const ProductModal = ({
             </div>
             <div />
           </div>
+        </div>
+
+        {/* Expiry Date - Added here (below Quantity, above Price) */}
+        <div>
+          <label className="text-xs font-bold text-rose-700 uppercase">
+            Hạn sử dụng
+          </label>
+          <DatePickerInput
+            value={formData.expiryDate || ""}
+            onChange={(val) => setFormData({ ...formData, expiryDate: val })}
+            placeholder="Chọn ngày..."
+          />
         </div>
 
         {/* Giá bán + Lợi nhuận - (Moved back to bottom as per request) */}

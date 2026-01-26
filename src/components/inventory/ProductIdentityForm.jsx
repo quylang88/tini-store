@@ -8,14 +8,12 @@ const ProductIdentityForm = ({
   barcode,
   category,
   name,
-  expiryDate,
 
   // Handlers
   onImageChange, // callback(file)
   onBarcodeChange,
   onCategoryChange,
   onNameChange,
-  onExpiryDateChange,
 
   // Config/Helpers
   categories = [],
@@ -163,23 +161,6 @@ const ProductIdentityForm = ({
             ))}
           </div>
         )}
-      </div>
-
-      {/* Expiry Date */}
-      <div>
-        <label className="text-xs font-bold text-rose-700 uppercase">
-          Hạn sử dụng
-        </label>
-        <input
-          type="date"
-          className={`w-full border-b border-gray-200 py-2 focus:border-rose-400 outline-none font-medium disabled:text-gray-500 ${inputColorClass}`}
-          value={expiryDate || ""}
-          onChange={(e) =>
-            onExpiryDateChange && onExpiryDateChange(e.target.value)
-          }
-          placeholder="Chọn ngày..."
-          disabled={disabled}
-        />
       </div>
     </div>
   );

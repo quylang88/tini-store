@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import SheetModal from "../../components/modals/SheetModal";
 import Button from "../../components/button/Button";
 import ProductIdentityForm from "./ProductIdentityForm";
+import DatePickerInput from "../common/DatePickerInput";
 import { formatInputNumber } from "../../utils/formatters/formatUtils";
 import useHighlightFields from "../../hooks/ui/useHighlightFields";
 
@@ -111,7 +112,6 @@ const ProductBasicInfoModal = ({
           barcode={formData.barcode}
           category={formData.category}
           name={formData.name}
-          expiryDate={formData.expiryDate}
           // Handlers
           onImageChange={handleImageFileChange}
           onBarcodeChange={(val) =>
@@ -123,9 +123,6 @@ const ProductBasicInfoModal = ({
           onNameChange={(val) =>
             setFormData((prev) => ({ ...prev, name: val }))
           }
-          onExpiryDateChange={(val) =>
-            setFormData((prev) => ({ ...prev, expiryDate: val }))
-          }
           // Config
           categories={categories}
           onShowScanner={onShowScanner}
@@ -134,6 +131,20 @@ const ProductBasicInfoModal = ({
           inputColorClass="text-gray-900" // Explicitly setting color as requested
           highlightOps={highlightOps}
         />
+
+        {/* Expiry Date */}
+        <div>
+          <label className="text-xs font-bold text-rose-700 uppercase">
+            Hạn sử dụng
+          </label>
+          <DatePickerInput
+            value={formData.expiryDate || ""}
+            onChange={(val) =>
+              setFormData((prev) => ({ ...prev, expiryDate: val }))
+            }
+            placeholder="Chọn ngày..."
+          />
+        </div>
 
         {/* Price Input - Manually added back */}
         <div>
