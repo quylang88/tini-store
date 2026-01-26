@@ -10,6 +10,7 @@ import useHighlightFields from "../../hooks/ui/useHighlightFields";
 import ErrorModal from "../../components/modals/ErrorModal";
 import CustomerAutocomplete from "./CustomerAutocomplete";
 import EditPriceModal from "./EditPriceModal";
+import { MapPin } from "lucide-react";
 
 const OrderCreateReviewModal = ({
   isReviewOpen,
@@ -40,6 +41,7 @@ const OrderCreateReviewModal = ({
 
   // State cho modal chỉnh sửa giá
   const [editingItem, setEditingItem] = useState(null);
+  const [isEditPriceModalOpen, setIsEditPriceModalOpen] = useState(false);
 
   const handleCustomerSelect = (customer) => {
     setCustomerName(customer.name);
@@ -136,7 +138,10 @@ const OrderCreateReviewModal = ({
               <div
                 key={item.id}
                 className="flex justify-between text-sm text-gray-600 active:bg-gray-50 rounded-lg -mx-2 px-2 py-1 transition-colors cursor-pointer select-none"
-                onClick={() => setEditingItem(item)}
+                onClick={() => {
+                  setEditingItem(item);
+                  setIsEditPriceModalOpen(true);
+                }}
               >
                 <div className="min-w-0">
                   <div className="flex items-center gap-2 text-rose-900">
@@ -233,21 +238,24 @@ const OrderCreateReviewModal = ({
                   )}
                   error={highlightOps.isHighlighted("customerName")}
                 />
-                <textarea
-                  value={customerAddress}
-                  onChange={(e) => setCustomerAddress(e.target.value)}
-                  placeholder="Địa chỉ giao hàng"
-                  rows={2}
-                  className={`w-full border border-rose-200 rounded-xl px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-rose-200 ${
-                    highlightOps.isHighlighted("customerAddress")
-                      ? highlightOps.highlightClass
-                      : ""
-                  }`}
-                  {...highlightOps.getHighlightProps(
-                    "customerAddress",
-                    customerAddress,
-                  )}
-                />
+                <div className="relative">
+                  <textarea
+                    value={customerAddress}
+                    onChange={(e) => setCustomerAddress(e.target.value)}
+                    placeholder="Địa chỉ giao hàng"
+                    rows={2}
+                    className={`w-full border border-rose-200 rounded-xl px-3 py-2 pl-9 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-rose-200 ${
+                      highlightOps.isHighlighted("customerAddress")
+                        ? highlightOps.highlightClass
+                        : ""
+                    }`}
+                    {...highlightOps.getHighlightProps(
+                      "customerAddress",
+                      customerAddress,
+                    )}
+                  />
+                  <MapPin className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                </div>
                 <div>
                   <label className="text-xs font-semibold text-rose-700">
                     Phí gửi khách
@@ -309,15 +317,13 @@ const OrderCreateReviewModal = ({
         onClose={() => setValidationError(null)}
       />
 
-      {editingItem && (
-        <EditPriceModal
-          key={editingItem.id}
-          isOpen={!!editingItem}
-          item={editingItem}
-          onClose={() => setEditingItem(null)}
-          onSave={handleSavePrice}
-        />
-      )}
+      <EditPriceModal
+        key={editingItem ? editingItem.id : "edit-price-modal"}
+        isOpen={isEditPriceModalOpen}
+        item={editingItem}
+        onClose={() => setIsEditPriceModalOpen(false)}
+        onSave={handleSavePrice}
+      />
     </>
   );
 };

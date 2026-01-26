@@ -22,7 +22,7 @@ const CustomerAutocomplete = ({
           .filter((c) =>
             normalizeString(c.name).includes(normalizeString(value)),
           )
-          .slice(0, 5)
+          .slice(0, 3)
       : [];
 
   useEffect(() => {
