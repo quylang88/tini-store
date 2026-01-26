@@ -15,15 +15,19 @@ const useInventoryFilters = ({
   formDataName,
   sortConfig = { key: "date", direction: "desc" },
 }) => {
+  const resolvedFilterKey = useMemo(
+    () => resolveWarehouseKey(warehouseFilter),
+    [warehouseFilter],
+  );
+
   // Định nghĩa hàm lọc tùy chỉnh cho tính khả dụng của kho
   const checkWarehouseStock = useCallback(
     (product) => {
       const stockByWarehouse = normalizeWarehouseStock(product);
       if (warehouseFilter === "all") return true;
-      const resolvedKey = resolveWarehouseKey(warehouseFilter);
-      return (stockByWarehouse[resolvedKey] || 0) > 0;
+      return (stockByWarehouse[resolvedFilterKey] || 0) > 0;
     },
-    [warehouseFilter],
+    [warehouseFilter, resolvedFilterKey],
   );
 
   // Sử dụng hook chia sẻ cho logic

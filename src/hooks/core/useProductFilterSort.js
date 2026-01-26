@@ -12,10 +12,12 @@ const useProductFilterSort = ({
 
   const filteredProducts = useMemo(() => {
     // 1. Filtering
+    // Tối ưu hóa: Tính toán từ khóa tìm kiếm đã chuẩn hóa một lần, bên ngoài vòng lặp
+    const keyword = normalizeString(searchTerm);
+
     let result = products.filter((product) => {
       // Search Filter
-      if (searchTerm) {
-        const keyword = normalizeString(searchTerm);
+      if (keyword) {
         const name = normalizeString(product.name);
         const barcode = product.barcode ? String(product.barcode) : "";
         if (!name.includes(keyword) && !barcode.includes(keyword)) {
