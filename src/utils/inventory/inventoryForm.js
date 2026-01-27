@@ -1,4 +1,4 @@
-import { getLatestCost, getLatestLot } from "./purchaseUtils.js";
+import { getProductStats } from "./purchaseUtils.js";
 import { getDefaultWarehouse } from "./warehouseUtils.js";
 
 const buildBaseFormData = (settings) => ({
@@ -30,9 +30,7 @@ export const createFormDataForNewProduct = ({ settings, activeCategory }) => ({
 });
 
 export const createFormDataForProduct = ({ product, settings }) => {
-  const latestLot = getLatestLot(product);
-  const isJpy = latestLot && Number(latestLot.costJpy) > 0;
-  const currentCost = getLatestCost(product) || "";
+  const { latestLot, isJpy, cost: currentCost } = getProductStats(product);
 
   return {
     ...buildBaseFormData(settings),

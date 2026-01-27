@@ -93,14 +93,6 @@ export const getProductStats = (product = {}) => {
   return { latestLot, cost, unitCost, isJpy };
 };
 
-export const getLatestCost = (product = {}) => {
-  return getProductStats(product).cost;
-};
-
-export const getLatestUnitCost = (product = {}) => {
-  return getProductStats(product).unitCost;
-};
-
 export const addPurchaseLot = (product, lot) => {
   const quantity = Number(lot.quantity) || 0;
   const shippingFeeVnd = Number(lot.shipping?.feeVnd) || 0;

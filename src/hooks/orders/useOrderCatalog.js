@@ -5,7 +5,7 @@ import {
   getTotalStock,
   resolveWarehouseKey,
 } from "../../utils/inventory/warehouseUtils";
-import { getLatestUnitCost } from "../../utils/inventory/purchaseUtils";
+import { getProductStats } from "../../utils/inventory/purchaseUtils";
 import useProductFilterSort from "../core/useProductFilterSort";
 
 const DEFAULT_WAREHOUSE = "all";
@@ -105,7 +105,7 @@ const useOrderCatalog = ({
             originalPrice: product.price,
             quantity,
             // Giá vốn dùng cho đơn hàng cần gồm cả phí gửi/đơn vị.
-            cost: getLatestUnitCost(product),
+            cost: getProductStats(product).unitCost,
           };
         })
         .filter((item) => item && item.quantity > 0), // Lọc bỏ item null hoặc số lượng <= 0 (bao gồm cả chuỗi rỗng)
