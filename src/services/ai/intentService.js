@@ -40,6 +40,7 @@ const SEARCH_KEYWORDS = [
   "rẻ",
   "tốt",
   "trend",
+  "thị trường", // Added based on user feedback
   // Force Search Triggers
   "bên nhật",
   "tại nhật",
@@ -81,25 +82,27 @@ const LOCAL_KEYWORDS = [
 const detectIntentByKeywords = (query) => {
   const lowerQuery = query.toLowerCase();
 
-  // Kiểm tra Import (Action cao nhất)
-  if (IMPORT_KEYWORDS.some((kw) => lowerQuery.includes(kw))) {
-    return "IMPORT";
+  const isImport = IMPORT_KEYWORDS.some((kw) => lowerQuery.includes(kw));
+  const isExport = EXPORT_KEYWORDS.some((kw) => lowerQuery.includes(kw));
+  const isSearch = SEARCH_KEYWORDS.some((kw) => lowerQuery.includes(kw));
+  const isLocal = LOCAL_KEYWORDS.some((kw) => lowerQuery.includes(kw));
+
+  // 1. Conflict Detection (Quan trọng nhất để fix lỗi nhận nhầm)
+  // Nếu câu vừa có ý định Search (tìm, check, thị trường...)
+  // VÀ vừa có ý định hành động (nhập, xuất, tồn kho...)
+  // -> Khả năng cao là câu phức -> Trả về null để đẩy sang AI phân tích kỹ hơn.
+  if (isSearch && (isImport || isExport || isLocal)) {
+    console.log(
+      "Intent Ambiguity Detected (Search mixed with Action) -> Fallback to AI",
+    );
+    return null;
   }
 
-  // Kiểm tra Export (Action cao nhất)
-  if (EXPORT_KEYWORDS.some((kw) => lowerQuery.includes(kw))) {
-    return "EXPORT";
-  }
-
-  // Kiểm tra Search (Action cao nhất)
-  if (SEARCH_KEYWORDS.some((kw) => lowerQuery.includes(kw))) {
-    return "SEARCH";
-  }
-
-  // Kiểm tra Local (Truy vấn thông tin nội bộ)
-  if (LOCAL_KEYWORDS.some((kw) => lowerQuery.includes(kw))) {
-    return "LOCAL";
-  }
+  // 2. Nếu không có mâu thuẫn, trả về theo thứ tự ưu tiên
+  if (isImport) return "IMPORT";
+  if (isExport) return "EXPORT";
+  if (isSearch) return "SEARCH";
+  if (isLocal) return "LOCAL";
 
   return null; // Không tìm thấy keyword
 };
