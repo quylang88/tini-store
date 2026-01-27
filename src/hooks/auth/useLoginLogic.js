@@ -30,8 +30,11 @@ const useLoginLogic = ({ onLogin }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Kiểm tra tài khoản cứng
-    if (username === "tinyshop" && password === "Misa@2024") {
+    // Kiểm tra tài khoản (Environment Variables)
+    const validUser = import.meta.env.VITE_APP_USERNAME;
+    const validPass = import.meta.env.VITE_APP_PASSWORD;
+
+    if (validUser && validPass && username === validUser && password === validPass) {
       // Xử lý Ghi nhớ Tài khoản/Mật khẩu
       if (remember) {
         // Nếu chọn Ghi nhớ: Lưu vào IndexedDB
