@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import SheetModal from "../../components/modals/SheetModal";
 import Button from "../../components/button/Button";
 import ProductIdentityForm from "./ProductIdentityForm";
@@ -26,6 +26,15 @@ const ProductBasicInfoModal = ({
   });
 
   const highlightOps = useHighlightFields();
+  const textareaRef = useRef(null);
+
+  // Auto-resize textarea on mount/change
+  useEffect(() => {
+    if (textareaRef.current) {
+      textareaRef.current.style.height = "auto";
+      textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
+    }
+  }, [formData.note, isOpen]);
 
   // State dẫn xuất: Cập nhật formData khi product thay đổi
   if (product !== prevProduct) {
@@ -154,12 +163,16 @@ const ProductBasicInfoModal = ({
             Ghi chú
           </label>
           <textarea
-            className="w-full border border-gray-200 rounded-lg p-3 outline-none focus:border-rose-400 text-gray-900 text-sm mt-1"
-            rows={4}
+            ref={textareaRef}
+            className="w-full border border-gray-200 rounded-lg p-3 outline-none focus:border-rose-400 text-gray-900 text-sm mt-1 resize-none overflow-y-auto"
+            style={{ maxHeight: "160px", minHeight: "100px" }}
+            rows={1}
             value={formData.note}
-            onChange={(e) =>
-              setFormData((prev) => ({ ...prev, note: e.target.value }))
-            }
+            onChange={(e) => {
+              setFormData((prev) => ({ ...prev, note: e.target.value }));
+              e.target.style.height = "auto";
+              e.target.style.height = `${e.target.scrollHeight}px`;
+            }}
             placeholder="Ghi chú về sản phẩm..."
           />
         </div>
