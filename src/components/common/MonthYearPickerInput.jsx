@@ -1,6 +1,160 @@
-import React, { useState, useRef, useEffect, useLayoutEffect } from "react";
+import React, {
+  useState,
+  useRef,
+  useEffect,
+  useLayoutEffect,
+  useCallback,
+  useMemo,
+} from "react";
 import { Calendar } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
+
+// Helper: Phân tích chuỗi giá trị "yyyy-mm-dd" thành đối tượng Date (Giờ địa phương)
+const parseDate = (val) => {
+  if (!val) return new Date();
+  const parts = val.split("-");
+  if (parts.length !== 3) return new Date();
+  return new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+};
+
+// Helper: Định dạng Date thành MM/YYYY để hiển thị
+const formatDateDisplay = (val) => {
+  if (!val) return "";
+  const date = parseDate(val);
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const year = date.getFullYear();
+  return `${month}/${year}`;
+};
+
+const centerActiveElement = (node) => {
+  if (!node) return;
+  const activeEl = node.querySelector(".bg-rose-500");
+  if (activeEl) {
+    const top =
+      activeEl.offsetTop - node.clientHeight / 2 + activeEl.clientHeight / 2;
+    node.scrollTop = top;
+  }
+};
+
+const MonthYearPickerPopup = ({ value, onChange }) => {
+  // Tham chiếu onChange ổn định để ngăn các vấn đề phụ thuộc trong effects
+  const onChangeRef = useRef(onChange);
+  useLayoutEffect(() => {
+    onChangeRef.current = onChange;
+  }, [onChange]);
+
+  // State nội bộ cho view picker, khởi tạo từ prop value
+  const [viewDate, setViewDate] = useState(() => parseDate(value));
+
+  // Hàm updateValue ổn định
+  const updateValue = useCallback((newYear, newMonth) => {
+    // Tạo date mới: YYYY-MM-01
+    // Định dạng thành YYYY-MM-DD
+    const yearStr = newYear;
+    const monthStr = String(newMonth + 1).padStart(2, "0");
+    const dayStr = "01";
+    onChangeRef.current?.(`${yearStr}-${monthStr}-${dayStr}`);
+  }, []);
+
+  // Logic: Xử lý giá trị rỗng khi mount (mặc định là Hôm nay)
+  useEffect(() => {
+    if (!value) {
+      const today = new Date();
+      updateValue(today.getFullYear(), today.getMonth());
+      // viewDate đã được khởi tạo là today bởi parseDate(value)
+    }
+  }, [value, updateValue]);
+
+  // Refs để cuộn
+  const monthListRef = useRef(null);
+  const yearListRef = useRef(null);
+
+  // Logic: Cuộn tới phần tử active khi viewDate thay đổi
+  useLayoutEffect(() => {
+    centerActiveElement(monthListRef.current);
+    centerActiveElement(yearListRef.current);
+  }, [viewDate]);
+
+  const handleSelectMonth = (newMonth) => {
+    const currentYear = viewDate.getFullYear();
+    // Cập nhật viewDate để highlight UI
+    setViewDate(new Date(currentYear, newMonth, 1));
+    // Cập nhật giá trị cha
+    updateValue(currentYear, newMonth);
+  };
+
+  const handleSelectYear = (newYear) => {
+    const currentMonth = viewDate.getMonth();
+    // Cập nhật viewDate để highlight UI
+    setViewDate(new Date(newYear, currentMonth, 1));
+    // Cập nhật giá trị cha
+    updateValue(newYear, currentMonth);
+  };
+
+  // Tạo danh sách năm (memoized cho lần mount hiện tại)
+  const rangeYears = useMemo(() => {
+    return Array.from(
+      { length: 101 },
+      (_, i) => new Date().getFullYear() - 50 + i,
+    );
+  }, []);
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 10, scale: 0.95 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      exit={{ opacity: 0, y: 10, scale: 0.95 }}
+      transition={{ duration: 0.2 }}
+      className="absolute z-50 bottom-full mb-2 left-0 w-full origin-bottom bg-white p-3 rounded-xl shadow-lg border border-amber-100 select-none overflow-hidden"
+    >
+      <div className="flex justify-center items-center mb-2 pb-2 border-b border-rose-100">
+        <span className="text-sm font-bold text-rose-800 uppercase">
+          Chọn Tháng Năm
+        </span>
+      </div>
+      <div className="grid grid-cols-2 gap-2 h-48">
+        {/* Danh sách tháng */}
+        <div
+          ref={monthListRef}
+          className="overflow-y-auto overscroll-contain border-r border-rose-100 pr-1 h-full relative scrollbar-hide"
+        >
+          {Array.from({ length: 12 }, (_, i) => i).map((m) => (
+            <button
+              key={m}
+              onClick={() => handleSelectMonth(m)}
+              className={`w-full text-left px-3 py-1.5 text-xs rounded-lg mb-1 ${
+                viewDate.getMonth() === m
+                  ? "bg-rose-500 text-white font-bold"
+                  : "text-gray-700 hover:bg-rose-50"
+              }`}
+            >
+              Tháng {m + 1}
+            </button>
+          ))}
+        </div>
+        {/* Danh sách năm */}
+        <div
+          ref={yearListRef}
+          className="overflow-y-auto overscroll-contain pl-1 h-full relative scrollbar-hide"
+        >
+          {rangeYears.map((y) => (
+            <button
+              key={y}
+              onClick={() => handleSelectYear(y)}
+              className={`w-full text-left px-3 py-1.5 text-xs rounded-lg mb-1 ${
+                viewDate.getFullYear() === y
+                  ? "bg-rose-500 text-white font-bold"
+                  : "text-gray-700 hover:bg-rose-50"
+              }`}
+            >
+              {y}
+            </button>
+          ))}
+        </div>
+      </div>
+    </motion.div>
+  );
+};
 
 const MonthYearPickerInput = ({
   value, // "yyyy-mm-dd" string
@@ -12,72 +166,8 @@ const MonthYearPickerInput = ({
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef(null);
-  const monthListRef = useRef(null);
-  const yearListRef = useRef(null);
 
-  // Helper: Parse value string "yyyy-mm-dd" to Date object (Local time)
-  const parseDate = (val) => {
-    if (!val) return new Date();
-    const parts = val.split("-");
-    if (parts.length !== 3) return new Date();
-    return new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
-  };
-
-  // Internal state for the picker view
-  const [viewDate, setViewDate] = useState(() => parseDate(value));
-
-  // Helper: Format Date to MM/YYYY for display
-  const formatDateDisplay = (val) => {
-    if (!val) return "";
-    const date = parseDate(val);
-    const month = String(date.getMonth() + 1).padStart(2, "0");
-    const year = date.getFullYear();
-    return `${month}/${year}`;
-  };
-
-  const centerActiveElement = (node) => {
-    if (!node) return;
-    const activeEl = node.querySelector(".bg-rose-500");
-    if (activeEl) {
-      const top =
-        activeEl.offsetTop - node.clientHeight / 2 + activeEl.clientHeight / 2;
-      node.scrollTop = top;
-    }
-  };
-
-  const setMonthListRef = (node) => {
-    monthListRef.current = node;
-    if (node) centerActiveElement(node);
-  };
-
-  const setYearListRef = (node) => {
-    yearListRef.current = node;
-    if (node) centerActiveElement(node);
-  };
-
-  // Logic: Live Update + Sync with Value
-  // Khi user mở modal:
-  // 1. Nếu input đang có giá trị -> viewDate = giá trị đó (đã có ở logic dưới).
-  // 2. Nếu input rỗng -> viewDate = today -> GỌI onChange ngay lập tức để input nhảy lên tháng/năm hiện tại.
-  useLayoutEffect(() => {
-    if (isOpen) {
-      if (!value) {
-        const today = new Date();
-        updateValue(today.getFullYear(), today.getMonth());
-        setViewDate(today);
-      } else {
-        setViewDate(parseDate(value));
-      }
-    }
-  }, [isOpen]);
-
-  useLayoutEffect(() => {
-    if (isOpen) {
-      centerActiveElement(monthListRef.current);
-      centerActiveElement(yearListRef.current);
-    }
-  }, [isOpen, viewDate]);
-
+  // Đóng popup khi click ra ngoài
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (
@@ -95,38 +185,6 @@ const MonthYearPickerInput = ({
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [isOpen]);
-
-  const updateValue = (newYear, newMonth) => {
-    // Construct new date: YYYY-MM-01
-    // Format to YYYY-MM-DD
-    const yearStr = newYear;
-    const monthStr = String(newMonth + 1).padStart(2, "0");
-    const dayStr = "01";
-    onChange(`${yearStr}-${monthStr}-${dayStr}`);
-  };
-
-  const handleSelectMonth = (newMonth) => {
-    const currentYear = viewDate.getFullYear();
-    // Cập nhật viewDate để highlight UI
-    setViewDate(new Date(currentYear, newMonth, 1));
-    // Cập nhật giá trị input ngay lập tức
-    updateValue(currentYear, newMonth);
-    // KHÔNG đóng modal
-  };
-
-  const handleSelectYear = (newYear) => {
-    const currentMonth = viewDate.getMonth();
-    // Cập nhật viewDate để highlight UI
-    setViewDate(new Date(newYear, currentMonth, 1));
-    // Cập nhật giá trị input ngay lập tức
-    updateValue(newYear, currentMonth);
-    // KHÔNG đóng modal
-  };
-
-  const rangeYears = Array.from(
-    { length: 101 },
-    (_, i) => new Date().getFullYear() - 50 + i,
-  );
 
   return (
     <div className={`relative ${className}`} ref={containerRef}>
@@ -152,61 +210,7 @@ const MonthYearPickerInput = ({
       </button>
 
       <AnimatePresence>
-        {isOpen && (
-          <motion.div
-            initial={{ opacity: 0, y: 10, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 10, scale: 0.95 }}
-            transition={{ duration: 0.2 }}
-            className="absolute z-50 bottom-full mb-2 left-0 w-full origin-bottom bg-white p-3 rounded-xl shadow-lg border border-amber-100 select-none overflow-hidden"
-          >
-            <div className="flex justify-center items-center mb-2 pb-2 border-b border-rose-100">
-              <span className="text-sm font-bold text-rose-800 uppercase">
-                Chọn Tháng Năm
-              </span>
-            </div>
-            <div className="grid grid-cols-2 gap-2 h-48">
-              {/* Month List */}
-              <div
-                ref={setMonthListRef}
-                className="overflow-y-auto overscroll-contain border-r border-rose-100 pr-1 h-full relative scrollbar-hide"
-              >
-                {Array.from({ length: 12 }, (_, i) => i).map((m) => (
-                  <button
-                    key={m}
-                    onClick={() => handleSelectMonth(m)}
-                    className={`w-full text-left px-3 py-1.5 text-xs rounded-lg mb-1 ${
-                      viewDate.getMonth() === m
-                        ? "bg-rose-500 text-white font-bold"
-                        : "text-gray-700 hover:bg-rose-50"
-                    }`}
-                  >
-                    Tháng {m + 1}
-                  </button>
-                ))}
-              </div>
-              {/* Year List */}
-              <div
-                ref={setYearListRef}
-                className="overflow-y-auto overscroll-contain pl-1 h-full relative scrollbar-hide"
-              >
-                {rangeYears.map((y) => (
-                  <button
-                    key={y}
-                    onClick={() => handleSelectYear(y)}
-                    className={`w-full text-left px-3 py-1.5 text-xs rounded-lg mb-1 ${
-                      viewDate.getFullYear() === y
-                        ? "bg-rose-500 text-white font-bold"
-                        : "text-gray-700 hover:bg-rose-50"
-                    }`}
-                  >
-                    {y}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </motion.div>
-        )}
+        {isOpen && <MonthYearPickerPopup value={value} onChange={onChange} />}
       </AnimatePresence>
     </div>
   );
