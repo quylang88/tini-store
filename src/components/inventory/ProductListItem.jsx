@@ -35,8 +35,12 @@ const ProductListItem = memo(
     const hasProfitData = Number(product.price) > 0 && latestUnitCost > 0;
     // Tối ưu hóa: Chỉ tính toán tồn kho chi tiết khi hiển thị tất cả kho.
     // Khi lọc theo kho cụ thể, dùng getSpecificWarehouseStock để tránh tạo object không cần thiết.
-    const stockByWarehouse =
-      activeWarehouse === "all" ? normalizeWarehouseStock(product) : null;
+    // Sử dụng useMemo để tránh tính toán lại khi component re-render do thay đổi props khác (như activeCategory).
+    const stockByWarehouse = useMemo(
+      () =>
+        activeWarehouse === "all" ? normalizeWarehouseStock(product) : null,
+      [activeWarehouse, product],
+    );
     const warehouses = getWarehouses();
 
     return (
