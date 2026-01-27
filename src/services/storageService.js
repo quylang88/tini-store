@@ -1,5 +1,5 @@
 const DB_NAME = "tiny_shop_db";
-const DB_VERSION = 2; // Tăng version để trigger upgrade
+const DB_VERSION = 3; // Tăng version để trigger upgrade (added auth_creds support)
 
 const STORES = {
   PRODUCTS: "products",
@@ -39,7 +39,7 @@ class StorageService {
           db.createObjectStore(STORES.CUSTOMERS, { keyPath: "id" });
         }
         if (!db.objectStoreNames.contains(STORES.CHAT_MEMORY)) {
-          // Chat memory lưu chuỗi tóm tắt
+          // Chat memory lưu chuỗi tóm tắt và buffer
           db.createObjectStore(STORES.CHAT_MEMORY, { keyPath: "key" });
         }
       };
@@ -82,9 +82,15 @@ class StorageService {
 
     // Chuẩn hóa bộ nhớ chat
     let chatSummary = "";
+    let pendingBuffer = [];
     if (chatMemoryResult && chatMemoryResult.length > 0) {
-      const found = chatMemoryResult.find((s) => s.key === "summary");
-      if (found) chatSummary = found.value;
+      const summaryFound = chatMemoryResult.find((s) => s.key === "summary");
+      if (summaryFound) chatSummary = summaryFound.value;
+
+      const bufferFound = chatMemoryResult.find(
+        (s) => s.key === "pending_buffer",
+      );
+      if (bufferFound) pendingBuffer = bufferFound.value;
     }
 
     return {
@@ -93,69 +99,133 @@ class StorageService {
       settings: settings || null,
       customers: customers || [],
       chatSummary: chatSummary || "",
+      pendingBuffer: pendingBuffer || [],
     };
   }
 
   async migrateFromLocalStorageIfNeeded() {
     try {
-      const productCount = await this.count(STORES.PRODUCTS);
-      // Logic migration cơ bản: Nếu store chính trống, thử kéo từ LocalStorage
-      // Lưu ý: Có thể cần logic phức tạp hơn nếu muốn merge, nhưng hiện tại ưu tiên case "Lần đầu chạy bản mới"
+      // Logic migration: Check từng phần, nếu chưa có trong DB thì lấy từ LocalStorage
+      // Lưu ý: Migration này chạy mỗi lần load để đảm bảo vét sạch dữ liệu cũ nếu user update dần dần
 
+      // 1. Products (Chỉ migrate nếu DB trống)
+      const productCount = await this.count(STORES.PRODUCTS);
       if (productCount === 0) {
-        // 1. Products
         const rawProducts = localStorage.getItem("shop_products_v2");
         if (rawProducts) {
-          console.log(
-            "Đang chuyển đổi Products từ LocalStorage sang IndexedDB...",
-          );
+          console.log("Migrating Products...");
           const products = JSON.parse(rawProducts);
           if (Array.isArray(products)) {
             await this.saveAll(STORES.PRODUCTS, products);
           }
         }
+      }
 
-        // 2. Orders
+      // 2. Orders (Chỉ migrate nếu DB trống)
+      const orderCount = await this.count(STORES.ORDERS);
+      if (orderCount === 0) {
         const rawOrders = localStorage.getItem("shop_orders_v2");
         if (rawOrders) {
-          console.log(
-            "Đang chuyển đổi Orders từ LocalStorage sang IndexedDB...",
-          );
+          console.log("Migrating Orders...");
           const orders = JSON.parse(rawOrders);
           if (Array.isArray(orders)) {
             await this.saveAll(STORES.ORDERS, orders);
           }
         }
+      }
 
-        // 3. Settings
+      // 3. Settings (Main) + Theme + Greeting Date
+      // Chúng ta sẽ load settings hiện tại từ DB (nếu có) để merge
+      let currentSettings = await this.getSettings();
+      let settingsChanged = false;
+
+      if (!currentSettings) {
         const rawSettings = localStorage.getItem("shop_settings");
         if (rawSettings) {
-          console.log(
-            "Đang chuyển đổi Settings từ LocalStorage sang IndexedDB...",
-          );
-          const settings = JSON.parse(rawSettings);
-          await this.saveSettings(settings);
+          console.log("Migrating Settings...");
+          currentSettings = JSON.parse(rawSettings);
+          settingsChanged = true;
+        } else {
+          currentSettings = {};
         }
+      }
 
-        // 4. Customers
+      // Migrate Theme ID
+      if (!currentSettings.themeId) {
+        const localTheme = localStorage.getItem("ai_theme_id");
+        if (localTheme) {
+          console.log("Migrating Theme ID...");
+          currentSettings.themeId = localTheme;
+          settingsChanged = true;
+        }
+      }
+
+      // Migrate Greeting Date
+      if (!currentSettings.lastGreetingDate) {
+        const localGreeting = localStorage.getItem("last_daily_greeting_date");
+        if (localGreeting) {
+          console.log("Migrating Greeting Date...");
+          currentSettings.lastGreetingDate = localGreeting;
+          settingsChanged = true;
+        }
+      }
+
+      if (settingsChanged) {
+        await this.saveSettings(currentSettings);
+      }
+
+      // 4. Customers
+      const customerCount = await this.count(STORES.CUSTOMERS);
+      if (customerCount === 0) {
         const rawCustomers = localStorage.getItem("shop_customers_v1");
         if (rawCustomers) {
-          console.log(
-            "Đang chuyển đổi Customers từ LocalStorage sang IndexedDB...",
-          );
+          console.log("Migrating Customers...");
           const customers = JSON.parse(rawCustomers);
           if (Array.isArray(customers)) {
             await this.saveAll(STORES.CUSTOMERS, customers);
           }
         }
+      }
 
-        // 5. Chat Summary
+      // 5. Chat Summary
+      const chatSummary = await this.getChatSummary();
+      if (!chatSummary) {
         const rawChatSummary = localStorage.getItem("ai_chat_summary");
         if (rawChatSummary) {
-          console.log(
-            "Đang chuyển đổi Chat Summary từ LocalStorage sang IndexedDB...",
-          );
+          console.log("Migrating Chat Summary...");
           await this.saveChatSummary(rawChatSummary);
+        }
+      }
+
+      // 6. Pending Buffer (New)
+      const pendingBuffer = await this.getPendingBuffer();
+      if (!pendingBuffer || pendingBuffer.length === 0) {
+        const rawBuffer = localStorage.getItem("ai_pending_buffer");
+        if (rawBuffer) {
+          console.log("Migrating Pending Buffer...");
+          try {
+            const buffer = JSON.parse(rawBuffer);
+            if (Array.isArray(buffer)) {
+              await this.savePendingBuffer(buffer);
+            }
+          } catch (e) {
+            console.warn("Invalid pending buffer in localStorage", e);
+          }
+        }
+      }
+
+      // 7. Auth Credentials (New)
+      const authCreds = await this.getAuthCreds();
+      if (!authCreds) {
+        const rawCreds = localStorage.getItem("tini_saved_creds");
+        if (rawCreds) {
+          console.log("Migrating Auth Credentials...");
+          try {
+            const creds = JSON.parse(rawCreds);
+            await this.saveAuthCreds(creds);
+          } catch (e) {
+            console.warn("Invalid auth creds in localStorage", e);
+          }
         }
       }
     } catch (e) {
@@ -188,7 +258,7 @@ class StorageService {
     });
   }
 
-  // --- Specific Savers ---
+  // --- Specific Savers/Getters ---
 
   async saveAllProducts(products) {
     return this.saveAll(STORES.PRODUCTS, products);
@@ -202,6 +272,17 @@ class StorageService {
     return this.saveAll(STORES.CUSTOMERS, customers);
   }
 
+  async getSettings() {
+    return new Promise((resolve, reject) => {
+      const transaction = this.db.transaction([STORES.SETTINGS], "readonly");
+      const store = transaction.objectStore(STORES.SETTINGS);
+      const request = store.get("main");
+      request.onsuccess = () =>
+        resolve(request.result ? request.result.value : null);
+      request.onerror = () => reject(request.error);
+    });
+  }
+
   async saveSettings(settingsObj) {
     return new Promise((resolve, reject) => {
       const transaction = this.db.transaction([STORES.SETTINGS], "readwrite");
@@ -209,6 +290,17 @@ class StorageService {
       store.put({ key: "main", value: settingsObj });
       transaction.oncomplete = () => resolve();
       transaction.onerror = () => reject(transaction.error);
+    });
+  }
+
+  async getChatSummary() {
+    return new Promise((resolve, reject) => {
+      const transaction = this.db.transaction([STORES.CHAT_MEMORY], "readonly");
+      const store = transaction.objectStore(STORES.CHAT_MEMORY);
+      const request = store.get("summary");
+      request.onsuccess = () =>
+        resolve(request.result ? request.result.value : null);
+      request.onerror = () => reject(request.error);
     });
   }
 
@@ -220,6 +312,64 @@ class StorageService {
       );
       const store = transaction.objectStore(STORES.CHAT_MEMORY);
       store.put({ key: "summary", value: summaryString });
+      transaction.oncomplete = () => resolve();
+      transaction.onerror = () => reject(transaction.error);
+    });
+  }
+
+  async getPendingBuffer() {
+    return new Promise((resolve, reject) => {
+      const transaction = this.db.transaction([STORES.CHAT_MEMORY], "readonly");
+      const store = transaction.objectStore(STORES.CHAT_MEMORY);
+      const request = store.get("pending_buffer");
+      request.onsuccess = () =>
+        resolve(request.result ? request.result.value : null);
+      request.onerror = () => reject(request.error);
+    });
+  }
+
+  async savePendingBuffer(bufferArray) {
+    return new Promise((resolve, reject) => {
+      const transaction = this.db.transaction(
+        [STORES.CHAT_MEMORY],
+        "readwrite",
+      );
+      const store = transaction.objectStore(STORES.CHAT_MEMORY);
+      store.put({ key: "pending_buffer", value: bufferArray });
+      transaction.oncomplete = () => resolve();
+      transaction.onerror = () => reject(transaction.error);
+    });
+  }
+
+  async getAuthCreds() {
+    await this.init(); // Ensure DB is initialized before calling this from Login
+    return new Promise((resolve, reject) => {
+      const transaction = this.db.transaction([STORES.SETTINGS], "readonly");
+      const store = transaction.objectStore(STORES.SETTINGS);
+      const request = store.get("auth_creds");
+      request.onsuccess = () =>
+        resolve(request.result ? request.result.value : null);
+      request.onerror = () => reject(request.error);
+    });
+  }
+
+  async saveAuthCreds(creds) {
+    await this.init();
+    return new Promise((resolve, reject) => {
+      const transaction = this.db.transaction([STORES.SETTINGS], "readwrite");
+      const store = transaction.objectStore(STORES.SETTINGS);
+      store.put({ key: "auth_creds", value: creds });
+      transaction.oncomplete = () => resolve();
+      transaction.onerror = () => reject(transaction.error);
+    });
+  }
+
+  async clearAuthCreds() {
+    await this.init();
+    return new Promise((resolve, reject) => {
+      const transaction = this.db.transaction([STORES.SETTINGS], "readwrite");
+      const store = transaction.objectStore(STORES.SETTINGS);
+      store.delete("auth_creds");
       transaction.oncomplete = () => resolve();
       transaction.onerror = () => reject(transaction.error);
     });

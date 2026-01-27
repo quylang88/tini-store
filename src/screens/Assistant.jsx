@@ -26,11 +26,18 @@ const Assistant = ({
   isTyping,
   setIsTyping,
   setTabBarVisible,
-  chatSummary, // Receive prop
-  setChatSummary, // Receive prop
+  chatSummary,
+  setChatSummary,
+  pendingBuffer,
+  setPendingBuffer,
+  themeId,
+  setThemeId,
 }) => {
   // 1. Theme Logic
-  const { activeTheme, handleCycleTheme } = useAssistantTheme();
+  const { activeTheme, handleCycleTheme } = useAssistantTheme(
+    themeId,
+    setThemeId,
+  );
 
   const [isInputFocused, setIsInputFocused] = React.useState(false);
 
@@ -57,15 +64,15 @@ const Assistant = ({
 
   // 3. Memory Logic
   const {
-    // chatSummary, <-- Removed from hook return (now prop)
-    // setChatSummary, <-- Removed from hook return (now prop)
     appendToPendingBuffer,
     checkAndSummarizeBuffer,
     forceSummarizeBuffer,
     isSummarizing,
   } = useAssistantMemory({
-    chatSummary, // Pass down
-    setChatSummary, // Pass down
+    chatSummary,
+    setChatSummary,
+    pendingBuffer,
+    setPendingBuffer,
   });
 
   // 4. Chat Logic
