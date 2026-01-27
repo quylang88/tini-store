@@ -3,7 +3,7 @@ import React, { useMemo, useState } from "react";
 import { BarChart3, DollarSign, TrendingUp } from "lucide-react";
 import { formatNumber } from "../../utils/formatters/formatUtils";
 import useDashboardLogic from "../../hooks/dashboard/useDashboardLogic";
-import { getLatestUnitCost } from "../../utils/inventory/purchaseUtils";
+import { getProductStats } from "../../utils/inventory/purchaseUtils";
 import MetricCard from "../../components/stats/MetricCard";
 import TopSellingSection from "../../components/stats/TopSellingSection";
 import StatListModal from "../../components/dashboard/StatListModal";
@@ -34,7 +34,7 @@ const StatsDetail = ({ products, orders, onBack }) => {
     // Optimization: Use for...of to avoid intermediate array allocation from map()
     const map = new Map();
     for (const product of products) {
-      map.set(product.id, getLatestUnitCost(product));
+      map.set(product.id, getProductStats(product).unitCost);
     }
     return map;
   }, [products]);

@@ -64,28 +64,33 @@ export const normalizePurchaseLots = (product = {}) => {
 
 export const getLatestLot = (product = {}) => {
   const lots = product.purchaseLots || [];
-  if (lots.length > 0) {
-    return lots[lots.length - 1];
-  }
-  return null;
+  if (lots.length === 0) return null;
+
+  // Find lot with latest createdAt using string comparison (ISO format).
+  // Note: We must scan the array (O(N)) because lots are not guaranteed to be sorted by date.
+  // Using string comparison is faster than new Date() parsing.
+  return lots.reduce((latest, current) => {
+    if (!latest) return current;
+    const latestDate = latest.createdAt || "";
+    const currentDate = current.createdAt || "";
+    return currentDate > latestDate ? current : latest;
+  }, lots[0]);
 };
 
-export const getLatestCost = (product = {}) => {
+// Returns all stats in one pass to avoid multiple array scans
+export const getProductStats = (product = {}) => {
   const latestLot = getLatestLot(product);
-  if (latestLot) {
-    return Number(latestLot.cost) || 0;
-  }
-  return Number(product.cost) || 0;
-};
+  const cost = latestLot
+    ? Number(latestLot.cost) || 0
+    : Number(product.cost) || 0;
 
-export const getLatestUnitCost = (product = {}) => {
-  const latestLot = getLatestLot(product);
-  if (latestLot) {
-    const baseCost = Number(latestLot.cost) || 0;
-    const shippingPerUnit = Number(latestLot.shipping?.perUnitVnd) || 0;
-    return baseCost + shippingPerUnit;
-  }
-  return Number(product.cost) || 0;
+  const shippingPerUnit = latestLot
+    ? Number(latestLot.shipping?.perUnitVnd) || 0
+    : 0;
+  const unitCost = cost + shippingPerUnit;
+  const isJpy = latestLot ? Number(latestLot.costJpy) > 0 : false;
+
+  return { latestLot, cost, unitCost, isJpy };
 };
 
 export const addPurchaseLot = (product, lot) => {
