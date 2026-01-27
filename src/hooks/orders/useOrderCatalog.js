@@ -1,6 +1,6 @@
 import { useCallback, useMemo } from "react";
 import {
-  normalizeWarehouseStock,
+  getSpecificWarehouseStock,
   getDefaultWarehouse,
   getTotalStock,
   resolveWarehouseKey,
@@ -50,8 +50,8 @@ const useOrderCatalog = ({
       if (warehouseKey === "all") {
         baseStock = getTotalStock(product);
       } else {
-        const warehouseStock = normalizeWarehouseStock(product);
-        baseStock = warehouseStock[resolvedKey] || 0;
+        // Tối ưu hóa: Tính trực tiếp tồn kho của kho cụ thể mà không cần chuẩn hóa toàn bộ object
+        baseStock = getSpecificWarehouseStock(product, resolvedKey);
       }
 
       if (!orderBeingEdited) return baseStock;

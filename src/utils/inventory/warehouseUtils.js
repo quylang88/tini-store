@@ -90,7 +90,28 @@ export const normalizeWarehouseStock = (product = {}) => {
   return stock;
 };
 
+// Tối ưu hóa: Tính tồn kho cho một kho cụ thể mà không cần tạo object mới.
+// Giúp giảm áp lực GC khi lọc danh sách lớn.
+export const getSpecificWarehouseStock = (product, targetWarehouseKey) => {
+  if (!product.stockByWarehouse || !targetWarehouseKey) return 0;
+
+  let total = 0;
+  for (const sourceKey in product.stockByWarehouse) {
+    if (
+      Object.prototype.hasOwnProperty.call(product.stockByWarehouse, sourceKey)
+    ) {
+      if (resolveWarehouseKey(sourceKey) === targetWarehouseKey) {
+        total += Number(product.stockByWarehouse[sourceKey]) || 0;
+      }
+    }
+  }
+  return total;
+};
+
 export const getTotalStock = (product = {}) => {
-  const stockByWarehouse = normalizeWarehouseStock(product);
-  return Object.values(stockByWarehouse).reduce((sum, val) => sum + val, 0);
+  if (!product.stockByWarehouse) return 0;
+  return Object.values(product.stockByWarehouse).reduce(
+    (sum, val) => sum + (Number(val) || 0),
+    0,
+  );
 };
