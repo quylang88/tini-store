@@ -2,17 +2,6 @@ import React, { useState, useMemo, useRef, useLayoutEffect } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 
-// Helper for ARIA label dates
-const formatFullDate = (date) => {
-  if (!date) return "";
-  return new Intl.DateTimeFormat("vi-VN", {
-    weekday: "long",
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  }).format(date);
-};
-
 const CustomCalendar = ({
   mode = "single", // 'single' | 'range'
   selectedDate, // Date | null (cho chế độ single)
@@ -204,7 +193,6 @@ const CustomCalendar = ({
               <button
                 onClick={handlePrevMonth}
                 className="p-1 text-rose-500 hover:bg-rose-50 rounded-full"
-                aria-label="Tháng trước"
               >
                 <ChevronLeft size={18} />
               </button>
@@ -212,8 +200,6 @@ const CustomCalendar = ({
               <button
                 onClick={() => setShowMonthYearPicker(true)}
                 className="text-sm font-bold text-rose-800 hover:bg-rose-50 px-2 py-1 rounded-lg transition"
-                aria-label="Chọn tháng và năm"
-                aria-expanded={showMonthYearPicker}
               >
                 Tháng {String(viewDate.getMonth() + 1).padStart(2, "0")}{" "}
                 {viewDate.getFullYear()}
@@ -222,7 +208,6 @@ const CustomCalendar = ({
               <button
                 onClick={handleNextMonth}
                 className="p-1 text-rose-500 hover:bg-rose-50 rounded-full"
-                aria-label="Tháng sau"
               >
                 <ChevronRight size={18} />
               </button>
@@ -264,9 +249,6 @@ const CustomCalendar = ({
                   <button
                     key={date.toISOString()}
                     onClick={() => handleDateClick(date)}
-                    aria-label={formatFullDate(date)}
-                    aria-selected={isSelected}
-                    aria-current={isToday ? "date" : undefined}
                     className={`
                       h-8 rounded-lg text-xs font-medium relative transition-all
                       ${

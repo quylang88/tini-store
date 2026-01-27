@@ -388,6 +388,7 @@ const ProductModal = ({
             </label>
             <input
               inputMode="numeric"
+              enterKeyHint="done"
               className={`w-full border-b border-gray-200 py-2 focus:border-rose-400 outline-none text-gray-900 font-bold text-lg disabled:text-gray-500 ${
                 isHighlighted("price") ? highlightClass : ""
               }`}
