@@ -5,68 +5,90 @@ import { summarizeChatHistory } from "../../services/aiAssistantService";
 const MAX_BUFFER_SIZE = 50; // Tối đa 50 tin nhắn trong buffer
 const BUFFER_TRIGGER_SIZE = 20; // Đủ 20 tin nhắn thì tóm tắt
 
-export const useAssistantMemory = ({ chatSummary, setChatSummary }) => {
-  // Hook này giờ đây nhận state từ bên ngoài (App.jsx -> Assistant.jsx -> ...)
-  // Không còn quản lý localStorage cho chatSummary nữa (để App.jsx lo).
-  // Tuy nhiên, pending buffer vẫn giữ ở localStorage vì nó là dữ liệu tạm thời/nhỏ.
-
+export const useAssistantMemory = ({
+  chatSummary,
+  setChatSummary,
+  pendingBuffer,
+  setPendingBuffer
+}) => {
   const [isSummarizing, setIsSummarizing] = useState(false);
 
-  // Xử lý buffer tồn đọng khi khởi động
+  // Xử lý buffer tồn đọng khi khởi động (nếu có dữ liệu load từ DB)
   useEffect(() => {
     const processPendingBuffer = async () => {
-      const pendingJson = localStorage.getItem("ai_pending_buffer");
-      if (pendingJson) {
+      // Chỉ xử lý nếu có pendingBuffer và nó không rỗng
+      if (pendingBuffer && pendingBuffer.length > 0) {
         try {
-          const pendingMessages = JSON.parse(pendingJson);
-
-          if (!Array.isArray(pendingMessages) || pendingMessages.length === 0) {
-            localStorage.removeItem("ai_pending_buffer");
-            return;
-          }
-
           console.log(
-            `Phát hiện ${pendingMessages.length} tin nhắn tồn đọng. Đang dọn dẹp...`,
+            `Phát hiện ${pendingBuffer.length} tin nhắn tồn đọng. Đang dọn dẹp...`,
           );
 
           setIsSummarizing(true);
-          // Sử dụng chatSummary từ props
           const currentMem = chatSummary || "";
           const newSummary = await summarizeChatHistory(
             currentMem,
-            pendingMessages,
+            pendingBuffer,
           );
 
           setChatSummary(newSummary);
-          // Lưu xuống DB do App.jsx handle useEffect([chatSummary])
-          localStorage.removeItem("ai_pending_buffer");
+
+          // Clear buffer sau khi summarize thành công
+          setPendingBuffer([]);
           console.log("Đã dọn dẹp bộ nhớ đệm thành công!");
         } catch (e) {
-          console.error("Lỗi xử lý buffer, tiến hành xóa bắt buộc:", e);
-          localStorage.removeItem("ai_pending_buffer");
+          console.error("Lỗi xử lý buffer:", e);
+          // Trong trường hợp lỗi, có thể chọn giữ lại buffer hoặc xoá.
+          // Ở đây ta giữ nguyên để lần sau thử lại, hoặc user có thể xoá tay nếu cần.
+          // Tuy nhiên, logic cũ là xoá bắt buộc để tránh kẹt loop.
+          // setPendingBuffer([]);
         } finally {
           setIsSummarizing(false);
         }
       }
     };
-    // Chạy 1 lần khi mount, nhưng cần chatSummary để merge
-    // Nếu chatSummary chưa load xong (từ IDB), có thể chạy sai?
-    // Nhưng Assistant chỉ được render khi App loaded.
-    processPendingBuffer();
+
+    // Chỉ chạy logic này ONE-TIME khi component mount VÀ dữ liệu đã ready.
+    // Tuy nhiên, vì pendingBuffer được quản lý bởi App và truyền xuống,
+    // useEffect này có thể chạy mỗi khi pendingBuffer thay đổi.
+    // Ta cần cơ chế để chỉ chạy "lần đầu tiên" khi app khởi động.
+    // NHƯNG: Logic cũ của `useAssistantMemory` chạy trong `Assistant.jsx`.
+    // Khi `Assistant` mount, nó check localStorage.
+    // Giờ đây `pendingBuffer` là state. Nếu ta muốn giữ behavior "mở App -> check buffer -> summarize",
+    // thì ta nên check ngay khi data load xong ở App.jsx hoặc ở đây.
+
+    // Ở đây ta sẽ check: nếu pendingBuffer có nhiều tin nhắn cũ (do load từ DB), ta summarize.
+    // Để tránh loop vô tận khi đang chat (khi đó pendingBuffer cũng có data),
+    // ta có thể dựa vào một flag hoặc logic nào đó?
+    // Logic cũ: `useEffect([], ...)` -> Chỉ chạy khi mount.
+    // OK, ta giữ `[]` nhưng cần đảm bảo `pendingBuffer` đã có giá trị ban đầu từ prop.
+    // Do đó, ta cần thêm `pendingBuffer` vào deps nhưng phải chặn chạy lại liên tục.
+
+    // Tạm thời disable auto-process on mount ở level này, vì App.jsx load data async.
+    // Khi Assistant mount, pendingBuffer đã là mới nhất.
+    // Nếu App vừa load xong và Assistant chưa mount -> không chạy.
+    // Nếu user mở tab Assistant -> mount -> chạy check.
+
+    // Vấn đề: `pendingBuffer` thay đổi liên tục khi chat.
+    // Ta chỉ muốn process những gì "tồn đọng" từ phiên trước.
+    // Nhưng phiên trước = những gì trong DB.
+    // Vậy logic check length > 0 là OK, nhưng phải cẩn thận khi user đang chat.
+
+    // Giải pháp: Chỉ check nếu buffer ĐÃ đầy quá ngưỡng ngay lúc mount?
+    // Hoặc giữ nguyên logic cũ: Check localStorage (giờ là prop).
+    // Nếu ta để `useEffect` phụ thuộc `[]`, nó chỉ chạy 1 lần khi Assistant mount.
+    // Lúc đó `pendingBuffer` là giá trị khởi tạo (từ DB).
+    if (pendingBuffer.length > 0) {
+       // Nhưng ta không thể gọi async trong useEffect [] nếu pendingBuffer chưa kịp update từ prop (nếu prop update trễ).
+       // Tuy nhiên, App.jsx chỉ render Assistant khi `isDataLoaded` = true.
+       // Nên `pendingBuffer` prop passed in sẽ là data từ DB.
+       processPendingBuffer();
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, []); // Chỉ chạy khi mount component Assistant
 
   // Hàm thêm tin nhắn vào buffer
   const appendToPendingBuffer = (newMsgs) => {
-    let currentBuffer = [];
-    try {
-      currentBuffer = JSON.parse(
-        localStorage.getItem("ai_pending_buffer") || "[]",
-      );
-    } catch {
-      currentBuffer = [];
-    }
-
+    const currentBuffer = pendingBuffer || [];
     let updatedBuffer = [...currentBuffer, ...newMsgs];
 
     if (updatedBuffer.length > MAX_BUFFER_SIZE) {
@@ -74,7 +96,7 @@ export const useAssistantMemory = ({ chatSummary, setChatSummary }) => {
       updatedBuffer = updatedBuffer.slice(-MAX_BUFFER_SIZE);
     }
 
-    localStorage.setItem("ai_pending_buffer", JSON.stringify(updatedBuffer));
+    setPendingBuffer(updatedBuffer);
     return updatedBuffer;
   };
 
@@ -89,7 +111,7 @@ export const useAssistantMemory = ({ chatSummary, setChatSummary }) => {
           currentBuffer,
         );
         setChatSummary(newSummary);
-        localStorage.removeItem("ai_pending_buffer");
+        setPendingBuffer([]);
         console.log("Auto summarize done & Buffer cleared.");
       } catch (err) {
         console.error("Lỗi tóm tắt ngầm:", err);
@@ -101,24 +123,20 @@ export const useAssistantMemory = ({ chatSummary, setChatSummary }) => {
 
   // Hàm force summarize (dùng khi clear screen)
   const forceSummarizeBuffer = async () => {
-    const pendingJson = localStorage.getItem("ai_pending_buffer");
-    if (pendingJson) {
+    if (pendingBuffer && pendingBuffer.length > 0) {
       try {
-        const pendingMessages = JSON.parse(pendingJson);
-        if (pendingMessages.length > 0) {
-          setIsSummarizing(true);
-          const newSummary = await summarizeChatHistory(
-            chatSummary,
-            pendingMessages,
-          );
-          setChatSummary(newSummary);
-        }
+        setIsSummarizing(true);
+        const newSummary = await summarizeChatHistory(
+          chatSummary,
+          pendingBuffer,
+        );
+        setChatSummary(newSummary);
+        setPendingBuffer([]);
       } catch (e) {
         console.warn("Lỗi force summarize:", e);
       } finally {
         setIsSummarizing(false);
       }
-      localStorage.removeItem("ai_pending_buffer");
     }
   };
 

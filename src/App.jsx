@@ -56,9 +56,13 @@ const App = () => {
   const [settings, setSettings] = useState({
     exchangeRate: 170,
     categories: ["Chung", "Mỹ phẩm", "Thực phẩm", "Quần áo"],
+    themeId: "rose", // Default theme
+    lastGreetingDate: null,
   });
   const [customers, setCustomers] = useState([]);
   const [chatSummary, setChatSummary] = useState("");
+  // State mới cho buffer chat (thay thế localStorage ai_pending_buffer)
+  const [pendingBuffer, setPendingBuffer] = useState([]);
 
   // Load data khi authenticated
   useEffect(() => {
@@ -69,10 +73,12 @@ const App = () => {
         );
         setOrders(data.orders);
         if (data.settings) {
-          setSettings(data.settings);
+          // Merge with default settings to ensure new fields like themeId exist
+          setSettings((prev) => ({ ...prev, ...data.settings }));
         }
         setCustomers(data.customers);
         setChatSummary(data.chatSummary);
+        setPendingBuffer(data.pendingBuffer);
         setIsDataLoaded(true);
       });
     }
@@ -110,6 +116,12 @@ const App = () => {
     }
   }, [chatSummary, isDataLoaded]);
 
+  useEffect(() => {
+    if (isDataLoaded) {
+      storageService.savePendingBuffer(pendingBuffer);
+    }
+  }, [pendingBuffer, isDataLoaded]);
+
   // --- 4. HÀM XỬ LÝ NAV & AUTH ---
   const handleLoginSuccess = () => {
     setIsAuthenticated(true);
@@ -124,9 +136,10 @@ const App = () => {
     const now = new Date().toISOString();
     const newSettings = { ...settings, lastBackupDate: now };
     setSettings(newSettings);
-    exportDataToJSON(products, orders, newSettings);
+    // Pass extra data (customers, chatSummary) to backup function
+    exportDataToJSON(products, orders, newSettings, customers, chatSummary);
     setBackupReminderOpen(false);
-  }, [settings, products, orders]);
+  }, [settings, products, orders, customers, chatSummary]);
 
   // --- 3b. KIỂM TRA SAO LƯU (AUTO REMINDER / DOWNLOAD) ---
   useEffect(() => {
@@ -214,7 +227,19 @@ const App = () => {
   const [offlineAcknowledged, setOfflineAcknowledged] = useState(false);
 
   // --- 5c. DAILY GREETING NOTIFICATION ---
-  useDailyGreeting(isAuthenticated);
+  // Sử dụng hook đã refactor, truyền state từ settings
+  const updateLastGreetingDate = React.useCallback(
+    (dateStr) => {
+      setSettings((prev) => ({ ...prev, lastGreetingDate: dateStr }));
+    },
+    [setSettings],
+  );
+
+  useDailyGreeting(
+    isAuthenticated,
+    settings.lastGreetingDate,
+    updateLastGreetingDate,
+  );
 
   const handleForceContinue = () => {
     if (showWarning) {
@@ -250,6 +275,7 @@ const App = () => {
                 products={products}
                 orders={orders}
                 onOpenDetail={() => handleTabChange("stats-detail")}
+                settings={settings} // Pass settings for Dashboard logic if needed
               />
             </ScreenTransition>
           )}
@@ -314,6 +340,13 @@ const App = () => {
                 setTabBarVisible={setIsTabBarVisible}
                 chatSummary={chatSummary}
                 setChatSummary={setChatSummary}
+                // Pass new props
+                pendingBuffer={pendingBuffer}
+                setPendingBuffer={setPendingBuffer}
+                themeId={settings.themeId}
+                setThemeId={(id) =>
+                  setSettings((prev) => ({ ...prev, themeId: id }))
+                }
               />
             </motion.div>
           )}
@@ -350,6 +383,11 @@ const App = () => {
                 setOrders={setOrders}
                 settings={settings}
                 setSettings={setSettings}
+                // Pass extra props for backup/restore
+                customers={customers}
+                setCustomers={setCustomers}
+                chatSummary={chatSummary}
+                setChatSummary={setChatSummary}
                 onLogout={handleLogout}
               />
             </ScreenTransition>
@@ -379,6 +417,7 @@ const App = () => {
           setOrders([]);
           setCustomers([]);
           setChatSummary("");
+          setPendingBuffer([]);
           setIsDataLoaded(false);
         }}
       />
