@@ -9,6 +9,7 @@ import {
   resolveWarehouseKey,
 } from "../../utils/inventory/warehouseUtils";
 import useCustomerLogic from "../customer/useCustomerLogic";
+import useDebounce from "../core/useDebounce";
 
 const DEFAULT_ORDER_TYPE = "delivery";
 
@@ -31,6 +32,7 @@ const useOrderCreateLogic = ({
   );
   const [activeCategory, setActiveCategory] = useState("Tất cả");
   const [searchTerm, setSearchTerm] = useState("");
+  const debouncedSearchTerm = useDebounce(searchTerm, 300);
   const [orderBeingEdited, setOrderBeingEdited] = useState(null);
   const [sortConfig, setSortConfig] = useState({
     key: "date",
@@ -73,7 +75,7 @@ const useOrderCreateLogic = ({
       products,
       cart,
       priceOverrides,
-      searchTerm,
+      searchTerm: debouncedSearchTerm,
       activeCategory,
       selectedWarehouse,
       orderBeingEdited,
@@ -285,6 +287,7 @@ const useOrderCreateLogic = ({
     setActiveCategory,
     searchTerm,
     setSearchTerm,
+    debouncedSearchTerm,
     orderBeingEdited,
     totalAmount,
     reviewItems,

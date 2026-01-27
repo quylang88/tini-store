@@ -71,6 +71,7 @@ const Inventory = ({
     sortConfig,
     setSortConfig,
     highlightOps,
+    debouncedSearchTerm,
   } = useInventoryLogic({ products, setProducts, orders, setOrders, settings });
 
   const {
@@ -79,7 +80,12 @@ const Inventory = ({
     hasMore,
   } = usePagination(filteredProducts, {
     pageSize: 20,
-    resetDeps: [searchTerm, activeCategory, warehouseFilter, sortConfig],
+    resetDeps: [
+      debouncedSearchTerm,
+      activeCategory,
+      warehouseFilter,
+      sortConfig,
+    ],
   });
 
   return (

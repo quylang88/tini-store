@@ -6,6 +6,7 @@ import {
 } from "../../utils/inventory/inventoryForm";
 import useInventoryFormState from "./useInventoryFormState";
 import useInventoryFilters from "./useInventoryFilters";
+import useDebounce from "../core/useDebounce";
 import {
   buildNextProductFromForm,
   getInventoryValidationError,
@@ -18,6 +19,8 @@ const useInventoryLogic = ({ products, setProducts, settings }) => {
   const [editingProduct, setEditingProduct] = useState(null);
   const [editingLotId, setEditingLotId] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const debouncedSearchTerm = useDebounce(searchTerm, 300);
+
   // Modal xác nhận xoá sản phẩm để giao diện đồng bộ
   const [confirmModal, setConfirmModal] = useState(null);
   // Modal báo lỗi riêng cho form tạo/sửa sản phẩm
@@ -206,7 +209,7 @@ const useInventoryLogic = ({ products, setProducts, settings }) => {
 
   const { filteredProducts, nameSuggestions } = useInventoryFilters({
     products,
-    searchTerm,
+    searchTerm: debouncedSearchTerm,
     activeCategory,
     warehouseFilter,
     editingProduct,
@@ -228,6 +231,7 @@ const useInventoryLogic = ({ products, setProducts, settings }) => {
     editingLotId,
     searchTerm,
     setSearchTerm,
+    debouncedSearchTerm,
     confirmModal,
     setConfirmModal,
     errorModal,
