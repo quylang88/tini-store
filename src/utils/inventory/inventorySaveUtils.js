@@ -166,7 +166,6 @@ export const buildNextProductFromForm = ({
     price: Number(formData.price),
     cost: costValue || getLatestCost(baseProduct),
     image: formData.image,
-    expiryDate: formData.expiryDate || "",
     stockByWarehouse: nextStockByWarehouse,
     stock: Object.values(nextStockByWarehouse).reduce(
       (sum, val) => sum + val,
@@ -210,6 +209,7 @@ export const buildNextProductFromForm = ({
               perUnitVnd: feeVnd,
             },
             priceAtPurchase: updatedPrice,
+            expiryDate: formData.expiryDate || "",
           };
         }
 
@@ -249,6 +249,7 @@ export const buildNextProductFromForm = ({
         warehouse: resolvedWarehouseKey,
         shipping: shippingInfo,
         priceAtPurchase: Number(formData.price) || 0,
+        expiryDate: formData.expiryDate || "",
       });
     }
   }

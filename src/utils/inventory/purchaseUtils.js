@@ -104,6 +104,7 @@ export const addPurchaseLot = (product, lot) => {
     warehouse: targetWarehouse,
     createdAt: lot.createdAt || new Date().toISOString(),
     priceAtPurchase: Number(lot.priceAtPurchase) || 0,
+    expiryDate: lot.expiryDate || "",
     shipping: lot.shipping
       ? {
           ...lot.shipping,

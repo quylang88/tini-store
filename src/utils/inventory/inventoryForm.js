@@ -88,6 +88,6 @@ export const createFormDataForLot = ({ product, lot, settings }) => {
     shippingFeeVndInput:
       inferredShippingMethod === "vn" ? lot.shipping?.feeVnd || "" : "", // Điền input phí gửi
     image: product.image || "",
-    expiryDate: product.expiryDate || "",
+    expiryDate: lot.expiryDate || "",
   };
 };

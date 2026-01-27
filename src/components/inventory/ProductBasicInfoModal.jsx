@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import SheetModal from "../../components/modals/SheetModal";
 import Button from "../../components/button/Button";
 import ProductIdentityForm from "./ProductIdentityForm";
-import DatePickerInput from "../common/DatePickerInput";
 import { formatInputNumber } from "../../utils/formatters/formatUtils";
 import useHighlightFields from "../../hooks/ui/useHighlightFields";
 
@@ -24,7 +23,6 @@ const ProductBasicInfoModal = ({
     price: product?.price || "",
     image: product?.image || null,
     note: product?.note || "",
-    expiryDate: product?.expiryDate || "",
   });
 
   const highlightOps = useHighlightFields();
@@ -40,7 +38,6 @@ const ProductBasicInfoModal = ({
         price: product.price || "",
         image: product.image || null,
         note: product.note || "",
-        expiryDate: product.expiryDate || "",
       });
     }
   }
@@ -131,20 +128,6 @@ const ProductBasicInfoModal = ({
           inputColorClass="text-gray-900"
           highlightOps={highlightOps}
         />
-
-        {/* Hạn sử dụng */}
-        <div>
-          <label className="text-xs font-bold text-rose-700 uppercase">
-            Hạn sử dụng
-          </label>
-          <DatePickerInput
-            value={formData.expiryDate || ""}
-            onChange={(val) =>
-              setFormData((prev) => ({ ...prev, expiryDate: val }))
-            }
-            placeholder="Chọn ngày..."
-          />
-        </div>
 
         {/* Nhập giá - Thêm lại thủ công */}
         <div>
