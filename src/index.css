@@ -15,8 +15,7 @@ html, body, #root {
 }
 
 html {
-  /* Match the lightest color of the app gradient to hide overscroll gap */
-  background-color: #FFF7ED; /* amber-50 */
+  background-color: #fff1f2;
   overscroll-behavior-y: none;
 }
 
@@ -46,7 +45,6 @@ input, textarea, [contenteditable] {
 
 /* Utilities */
 .pb-safe-area { padding-bottom: env(safe-area-inset-bottom); }
-
 .no-scrollbar::-webkit-scrollbar { display: none; }
 .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
