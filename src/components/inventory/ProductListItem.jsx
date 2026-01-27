@@ -1,12 +1,8 @@
-import React, { memo } from "react";
+import React, { memo, useMemo } from "react";
 import { Image as ImageIcon, Trash2, Edit } from "lucide-react";
 import { motion } from "framer-motion";
 import { formatNumber } from "../../utils/formatters/formatUtils";
-import {
-  getLatestCost,
-  getLatestUnitCost,
-  getLatestLot,
-} from "../../utils/inventory/purchaseUtils";
+import { getProductStats } from "../../utils/inventory/purchaseUtils";
 import {
   normalizeWarehouseStock,
   getWarehouses,
@@ -26,11 +22,15 @@ const ProductListItem = memo(
     activeWarehouse,
     onEditBasicInfo,
   }) => {
-    const latestCost = getLatestCost(product);
-    const latestLot = getLatestLot(product);
-    const isJpy = latestLot && Number(latestLot.costJpy) > 0;
+    // Tối ưu hóa: Memoize việc tìm lot mới nhất và tính toán chi phí (O(N)).
+    // Sử dụng helper getProductStats để đóng gói logic và tránh quét mảng nhiều lần.
+    const {
+      latestLot,
+      cost: latestCost,
+      unitCost: latestUnitCost,
+      isJpy,
+    } = useMemo(() => getProductStats(product), [product]);
 
-    const latestUnitCost = getLatestUnitCost(product);
     const expectedProfit = (Number(product.price) || 0) - latestUnitCost;
     const hasProfitData = Number(product.price) > 0 && latestUnitCost > 0;
     // Tối ưu hóa: Chỉ tính toán tồn kho chi tiết khi hiển thị tất cả kho.
