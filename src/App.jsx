@@ -22,6 +22,7 @@ import { exportDataToJSON } from "./utils/file/fileUtils";
 import { sendNotification } from "./utils/common/notificationUtils";
 import useDailyGreeting from "./hooks/core/useDailyGreeting";
 import { getRandomGreeting } from "./services/ai/chatHelpers";
+import storageService from "./services/storageService";
 
 // Định nghĩa thứ tự tab để xác định hướng chuyển cảnh
 const TAB_ORDER = {
@@ -48,44 +49,78 @@ const App = () => {
   const [chatMessages, setChatMessages] = useState(() => [getRandomGreeting()]);
   const [isChatTyping, setIsChatTyping] = useState(false);
 
-  // --- 2. KHỞI TẠO DỮ LIỆU TỪ LOCALSTORAGE ---
-  const [products, setProducts] = useState(() => {
-    const saved = localStorage.getItem("shop_products_v2");
-    const parsed = saved ? JSON.parse(saved) : [];
-    return parsed.map((product) => normalizePurchaseLots(product));
+  // --- 2. KHỞI TẠO DỮ LIỆU TỪ INDEXEDDB (Async) ---
+  const [isDataLoaded, setIsDataLoaded] = useState(false);
+  const [products, setProducts] = useState([]);
+  const [orders, setOrders] = useState([]);
+  const [settings, setSettings] = useState({
+    exchangeRate: 170,
+    categories: ["Chung", "Mỹ phẩm", "Thực phẩm", "Quần áo"],
+    themeId: "rose", // Default theme
+    lastGreetingDate: null,
   });
+  const [customers, setCustomers] = useState([]);
+  const [chatSummary, setChatSummary] = useState("");
+  // State mới cho buffer chat (thay thế localStorage ai_pending_buffer)
+  const [pendingBuffer, setPendingBuffer] = useState([]);
 
-  const [orders, setOrders] = useState(() => {
-    const saved = localStorage.getItem("shop_orders_v2");
-    return saved ? JSON.parse(saved) : [];
-  });
-
-  const [settings, setSettings] = useState(() => {
-    const saved = localStorage.getItem("shop_settings");
-    return saved
-      ? JSON.parse(saved)
-      : {
-          exchangeRate: 170,
-          categories: ["Chung", "Mỹ phẩm", "Thực phẩm", "Quần áo"],
-        };
-  });
+  // Load data khi authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      storageService.loadAllData().then((data) => {
+        setProducts(
+          data.products.map((product) => normalizePurchaseLots(product)),
+        );
+        setOrders(data.orders);
+        if (data.settings) {
+          // Merge with default settings to ensure new fields like themeId exist
+          setSettings((prev) => ({ ...prev, ...data.settings }));
+        }
+        setCustomers(data.customers);
+        setChatSummary(data.chatSummary);
+        setPendingBuffer(data.pendingBuffer);
+        setIsDataLoaded(true);
+      });
+    }
+  }, [isAuthenticated]);
 
   // --- 3. TỰ ĐỘNG LƯU DỮ LIỆU ---
+  // Chỉ lưu khi đã load xong dữ liệu (tránh overwrite DB bằng mảng rỗng lúc khởi tạo)
   useEffect(() => {
-    try {
-      localStorage.setItem("shop_products_v2", JSON.stringify(products));
-    } catch (e) {
-      console.error("Lỗi lưu sản phẩm:", e);
+    if (isDataLoaded) {
+      storageService.saveAllProducts(products);
     }
-  }, [products]);
+  }, [products, isDataLoaded]);
 
   useEffect(() => {
-    localStorage.setItem("shop_orders_v2", JSON.stringify(orders));
-  }, [orders]);
+    if (isDataLoaded) {
+      storageService.saveAllOrders(orders);
+    }
+  }, [orders, isDataLoaded]);
 
   useEffect(() => {
-    localStorage.setItem("shop_settings", JSON.stringify(settings));
-  }, [settings]);
+    if (isDataLoaded) {
+      storageService.saveSettings(settings);
+    }
+  }, [settings, isDataLoaded]);
+
+  useEffect(() => {
+    if (isDataLoaded) {
+      storageService.saveAllCustomers(customers);
+    }
+  }, [customers, isDataLoaded]);
+
+  useEffect(() => {
+    if (isDataLoaded) {
+      storageService.saveChatSummary(chatSummary);
+    }
+  }, [chatSummary, isDataLoaded]);
+
+  useEffect(() => {
+    if (isDataLoaded) {
+      storageService.savePendingBuffer(pendingBuffer);
+    }
+  }, [pendingBuffer, isDataLoaded]);
 
   // --- 4. HÀM XỬ LÝ NAV & AUTH ---
   const handleLoginSuccess = () => {
@@ -101,13 +136,14 @@ const App = () => {
     const now = new Date().toISOString();
     const newSettings = { ...settings, lastBackupDate: now };
     setSettings(newSettings);
-    exportDataToJSON(products, orders, newSettings);
+    // Pass extra data (customers, chatSummary) to backup function
+    exportDataToJSON(products, orders, newSettings, customers, chatSummary);
     setBackupReminderOpen(false);
-  }, [settings, products, orders]);
+  }, [settings, products, orders, customers, chatSummary]);
 
   // --- 3b. KIỂM TRA SAO LƯU (AUTO REMINDER / DOWNLOAD) ---
   useEffect(() => {
-    if (!isAuthenticated) return;
+    if (!isAuthenticated || !isDataLoaded) return;
 
     const checkBackupStatus = () => {
       if (sessionStorage.getItem("hasCheckedBackup")) return;
@@ -123,27 +159,22 @@ const App = () => {
         settings.autoBackupInterval > 0 &&
         daysSinceBackup >= settings.autoBackupInterval
       ) {
-        // Thay đổi: Không tự động download (vì sẽ bị chặn trên iOS/Mobile nếu không có user gesture)
-        // Thay vào đó, hiện modal nhắc nhở để user bấm "Sao lưu ngay" -> tạo gesture hợp lệ cho navigator.share
         setBackupReminderOpen(true);
         sessionStorage.setItem("hasCheckedBackup", "true");
         return;
       }
 
       // Case B: Không bật tự động, nhưng quá hạn mặc định (7 ngày) -> Hiện nhắc nhở
-      // Chỉ nhắc nhở nếu có sản phẩm (tránh làm phiền người dùng mới cài app chưa có dữ liệu)
       const isAutoOff = !settings.autoBackupInterval;
       const hasData = products.length > 0;
 
       if (isAutoOff && daysSinceBackup > 7 && hasData) {
-        // Kiểm tra permission notification
         if ("Notification" in window && Notification.permission === "granted") {
           sendNotification("Nhắc nhở sao lưu", {
             body: "Bạn chưa sao lưu dữ liệu quá 7 ngày. Hãy mở app và sao lưu ngay để tránh mất dữ liệu!",
             requireInteraction: true,
           });
         } else {
-          // Fallback: Modal cũ nếu không có quyền thông báo
           setBackupReminderOpen(true);
         }
         sessionStorage.setItem("hasCheckedBackup", "true");
@@ -154,6 +185,7 @@ const App = () => {
     return () => clearTimeout(timer);
   }, [
     isAuthenticated,
+    isDataLoaded,
     products.length,
     settings.lastBackupDate,
     settings.autoBackupInterval,
@@ -195,7 +227,19 @@ const App = () => {
   const [offlineAcknowledged, setOfflineAcknowledged] = useState(false);
 
   // --- 5c. DAILY GREETING NOTIFICATION ---
-  useDailyGreeting(isAuthenticated);
+  // Sử dụng hook đã refactor, truyền state từ settings
+  const updateLastGreetingDate = React.useCallback(
+    (dateStr) => {
+      setSettings((prev) => ({ ...prev, lastGreetingDate: dateStr }));
+    },
+    [setSettings],
+  );
+
+  useDailyGreeting(
+    isAuthenticated,
+    settings.lastGreetingDate,
+    updateLastGreetingDate,
+  );
 
   const handleForceContinue = () => {
     if (showWarning) {
@@ -209,7 +253,8 @@ const App = () => {
     return <Login onLogin={handleLoginSuccess} />;
   }
 
-  if (!appReady) {
+  // Chỉ hiển thị app khi đã load xong ảnh splash VÀ load xong dữ liệu từ IndexedDB
+  if (!appReady || !isDataLoaded) {
     return (
       <SplashScreen showWarning={showWarning} onConfirm={handleForceContinue} />
     );
@@ -230,6 +275,7 @@ const App = () => {
                 products={products}
                 orders={orders}
                 onOpenDetail={() => handleTabChange("stats-detail")}
+                settings={settings} // Pass settings for Dashboard logic if needed
               />
             </ScreenTransition>
           )}
@@ -292,6 +338,15 @@ const App = () => {
                 isTyping={isChatTyping}
                 setIsTyping={setIsChatTyping}
                 setTabBarVisible={setIsTabBarVisible}
+                chatSummary={chatSummary}
+                setChatSummary={setChatSummary}
+                // Pass new props
+                pendingBuffer={pendingBuffer}
+                setPendingBuffer={setPendingBuffer}
+                themeId={settings.themeId}
+                setThemeId={(id) =>
+                  setSettings((prev) => ({ ...prev, themeId: id }))
+                }
               />
             </motion.div>
           )}
@@ -309,6 +364,8 @@ const App = () => {
                 setOrders={setOrders}
                 settings={settings}
                 setTabBarVisible={setIsTabBarVisible}
+                customers={customers}
+                setCustomers={setCustomers}
               />
             </ScreenTransition>
           )}
@@ -326,6 +383,11 @@ const App = () => {
                 setOrders={setOrders}
                 settings={settings}
                 setSettings={setSettings}
+                // Pass extra props for backup/restore
+                customers={customers}
+                setCustomers={setCustomers}
+                chatSummary={chatSummary}
+                setChatSummary={setChatSummary}
                 onLogout={handleLogout}
               />
             </ScreenTransition>
@@ -351,6 +413,12 @@ const App = () => {
           sessionStorage.removeItem("tini_auth");
           handleTabChange("dashboard");
           setLogoutModalOpen(false);
+          setProducts([]);
+          setOrders([]);
+          setCustomers([]);
+          setChatSummary("");
+          setPendingBuffer([]);
+          setIsDataLoaded(false);
         }}
       />
 

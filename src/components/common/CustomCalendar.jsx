@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useRef, useEffect } from "react";
+import React, { useState, useMemo, useRef, useLayoutEffect } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 
@@ -17,33 +17,37 @@ const CustomCalendar = ({
   });
 
   const [showMonthYearPicker, setShowMonthYearPicker] = useState(false);
+  const centerActiveElement = (node) => {
+    if (!node) return;
+    const activeEl = node.querySelector(".bg-rose-500");
+    if (activeEl) {
+      const top =
+        activeEl.offsetTop - node.clientHeight / 2 + activeEl.clientHeight / 2;
+      node.scrollTop = top;
+    }
+  };
+
   const monthListRef = useRef(null);
   const yearListRef = useRef(null);
 
-  const scrollToActive = () => {
-    // Sử dụng requestAnimationFrame để đảm bảo DOM đã render xong
-    requestAnimationFrame(() => {
-      if (monthListRef.current) {
-        const activeMonth = monthListRef.current.querySelector(".bg-rose-500");
-        if (activeMonth) {
-          activeMonth.scrollIntoView({ block: "center" });
-        }
-      }
-      if (yearListRef.current) {
-        const activeYear = yearListRef.current.querySelector(".bg-rose-500");
-        if (activeYear) {
-          activeYear.scrollIntoView({ block: "center" });
-        }
-      }
-    });
+  // Sử dụng callback ref để đảm bảo scroll ngay khi element được mount vào DOM (do AnimatePresence mode='wait')
+  const setMonthListRef = (node) => {
+    monthListRef.current = node;
+    if (node) centerActiveElement(node);
   };
 
-  // Cuộn ngay khi bật picker (dù chưa có animation)
-  useEffect(() => {
+  const setYearListRef = (node) => {
+    yearListRef.current = node;
+    if (node) centerActiveElement(node);
+  };
+
+  // Xử lý scroll khi update viewDate (nếu picker đang mở)
+  useLayoutEffect(() => {
     if (showMonthYearPicker) {
-      scrollToActive();
+      centerActiveElement(monthListRef.current);
+      centerActiveElement(yearListRef.current);
     }
-  }, [showMonthYearPicker]);
+  }, [showMonthYearPicker, viewDate]);
 
   // Chuẩn hóa so sánh ngày
   const isSameDay = (d1, d2) => {
@@ -121,7 +125,6 @@ const CustomCalendar = ({
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
             transition={{ duration: 0.2 }}
-            onAnimationComplete={scrollToActive}
             className="w-full h-full"
           >
             <div className="flex justify-between items-center mb-2 pb-2 border-b border-rose-100">
@@ -138,8 +141,8 @@ const CustomCalendar = ({
             <div className="grid grid-cols-2 gap-2 h-48">
               {/* Tháng */}
               <div
-                ref={monthListRef}
-                className="overflow-y-auto overscroll-contain border-r border-rose-100 pr-1 h-full"
+                ref={setMonthListRef}
+                className="overflow-y-auto overscroll-contain border-r border-rose-100 pr-1 h-full relative"
               >
                 {Array.from({ length: 12 }, (_, i) => i).map((m) => (
                   <button
@@ -157,8 +160,8 @@ const CustomCalendar = ({
               </div>
               {/* Năm */}
               <div
-                ref={yearListRef}
-                className="overflow-y-auto overscroll-contain pl-1 h-full"
+                ref={setYearListRef}
+                className="overflow-y-auto overscroll-contain pl-1 h-full relative"
               >
                 {rangeYears.map((y) => (
                   <button

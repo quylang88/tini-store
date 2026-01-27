@@ -22,15 +22,30 @@ export const getDefaultWarehouse = () => {
   return WAREHOUSES.find((w) => w.isDefault) || WAREHOUSES[0];
 };
 
-export const getAllWarehouseKeys = () => WAREHOUSES.map((w) => w.key);
+// Cache keys để tránh map() mỗi lần gọi
+const ALL_WAREHOUSE_KEYS = WAREHOUSES.map((w) => w.key);
+
+// Cache mapping key -> resolvedKey để tránh find() mỗi lần gọi
+const WAREHOUSE_KEY_MAP = (() => {
+  const map = {};
+  WAREHOUSES.forEach((w) => {
+    map[w.key] = w.key;
+    if (w.legacyKeys) {
+      w.legacyKeys.forEach((legacyKey) => {
+        map[legacyKey] = w.key;
+      });
+    }
+  });
+  return map;
+})();
+
+export const getAllWarehouseKeys = () => ALL_WAREHOUSE_KEYS;
 
 // Helper để map bất kỳ key nào (hiện tại hoặc cũ) sang key chính hiện tại
 export const resolveWarehouseKey = (key) => {
   if (!key) return null;
-  const match = WAREHOUSES.find(
-    (w) => w.key === key || (w.legacyKeys && w.legacyKeys.includes(key)),
-  );
-  return match ? match.key : key; // Trả về key đã resolve, hoặc key gốc nếu không tìm thấy (fallback)
+  // Sử dụng map lookup O(1) thay vì find O(N)
+  return WAREHOUSE_KEY_MAP[key] || key;
 };
 
 export const getWarehouseLabel = (key) => {
@@ -75,7 +90,28 @@ export const normalizeWarehouseStock = (product = {}) => {
   return stock;
 };
 
+// Tối ưu hóa: Tính tồn kho cho một kho cụ thể mà không cần tạo object mới.
+// Giúp giảm áp lực GC khi lọc danh sách lớn.
+export const getSpecificWarehouseStock = (product, targetWarehouseKey) => {
+  if (!product.stockByWarehouse || !targetWarehouseKey) return 0;
+
+  let total = 0;
+  for (const sourceKey in product.stockByWarehouse) {
+    if (
+      Object.prototype.hasOwnProperty.call(product.stockByWarehouse, sourceKey)
+    ) {
+      if (resolveWarehouseKey(sourceKey) === targetWarehouseKey) {
+        total += Number(product.stockByWarehouse[sourceKey]) || 0;
+      }
+    }
+  }
+  return total;
+};
+
 export const getTotalStock = (product = {}) => {
-  const stockByWarehouse = normalizeWarehouseStock(product);
-  return Object.values(stockByWarehouse).reduce((sum, val) => sum + val, 0);
+  if (!product.stockByWarehouse) return 0;
+  return Object.values(product.stockByWarehouse).reduce(
+    (sum, val) => sum + (Number(val) || 0),
+    0,
+  );
 };

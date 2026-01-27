@@ -14,6 +14,10 @@ const useSettingsLogic = ({
   setOrders,
   settings,
   setSettings,
+  customers,
+  setCustomers,
+  chatSummary,
+  setChatSummary,
 }) => {
   const [newCategory, setNewCategory] = useState("");
   const [isFetchingRate, setIsFetchingRate] = useState(false);
@@ -161,7 +165,8 @@ const useSettingsLogic = ({
     setSettings(newSettings);
 
     // Xuất dữ liệu (dùng newSettings để file backup có thời gian cập nhật mới nhất)
-    exportDataToJSON(products, orders, newSettings);
+    // Pass customers và chatSummary trực tiếp, ko đọc từ localStorage nữa
+    exportDataToJSON(products, orders, newSettings, customers, chatSummary);
   };
 
   // Khôi phục dữ liệu (Restore)
@@ -186,20 +191,13 @@ const useSettingsLogic = ({
           }
 
           // Khôi phục dữ liệu khách hàng
-          if (Array.isArray(data.customers)) {
-            try {
-              localStorage.setItem(
-                "shop_customers_v1",
-                JSON.stringify(data.customers),
-              );
-            } catch (e) {
-              console.error("Failed to restore customers", e);
-            }
+          if (Array.isArray(data.customers) && setCustomers) {
+            setCustomers(data.customers);
           }
 
           // Khôi phục bộ nhớ AI (nếu có trong file backup)
-          if (typeof data.aiChatSummary === "string") {
-            localStorage.setItem("ai_chat_summary", data.aiChatSummary);
+          if (typeof data.aiChatSummary === "string" && setChatSummary) {
+            setChatSummary(data.aiChatSummary);
           }
 
           // Thông báo sau khi khôi phục thành công.

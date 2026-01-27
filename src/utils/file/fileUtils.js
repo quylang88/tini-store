@@ -53,18 +53,14 @@ export const shareOrDownloadFile = async (content, fileName, mimeType) => {
 
 // --- Backup Functions ---
 
-export const exportDataToJSON = async (products, orders, settings) => {
-  // Lấy dữ liệu tóm tắt chat từ localStorage (nếu có)
-  const aiChatSummary = localStorage.getItem("ai_chat_summary") || "";
-
-  // Lấy dữ liệu khách hàng
-  let customers = [];
-  try {
-    const customersStr = localStorage.getItem("shop_customers_v1");
-    customers = customersStr ? JSON.parse(customersStr) : [];
-  } catch (e) {
-    console.error("Failed to load customers for backup", e);
-  }
+export const exportDataToJSON = async (
+  products,
+  orders,
+  settings,
+  customers = [],
+  aiChatSummary = "",
+) => {
+  // Không còn đọc từ localStorage nữa, nhận trực tiếp từ props
 
   const data = JSON.stringify({
     products,

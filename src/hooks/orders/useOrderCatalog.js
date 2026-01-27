@@ -1,11 +1,11 @@
 import { useCallback, useMemo } from "react";
 import {
-  normalizeWarehouseStock,
+  getSpecificWarehouseStock,
   getDefaultWarehouse,
   getTotalStock,
   resolveWarehouseKey,
 } from "../../utils/inventory/warehouseUtils";
-import { getLatestUnitCost } from "../../utils/inventory/purchaseUtils";
+import { getProductStats } from "../../utils/inventory/purchaseUtils";
 import useProductFilterSort from "../core/useProductFilterSort";
 
 const DEFAULT_WAREHOUSE = "all";
@@ -50,8 +50,8 @@ const useOrderCatalog = ({
       if (warehouseKey === "all") {
         baseStock = getTotalStock(product);
       } else {
-        const warehouseStock = normalizeWarehouseStock(product);
-        baseStock = warehouseStock[resolvedKey] || 0;
+        // Tối ưu hóa: Tính trực tiếp tồn kho của kho cụ thể mà không cần chuẩn hóa toàn bộ object
+        baseStock = getSpecificWarehouseStock(product, resolvedKey);
       }
 
       if (!orderBeingEdited) return baseStock;
@@ -105,7 +105,7 @@ const useOrderCatalog = ({
             originalPrice: product.price,
             quantity,
             // Giá vốn dùng cho đơn hàng cần gồm cả phí gửi/đơn vị.
-            cost: getLatestUnitCost(product),
+            cost: getProductStats(product).unitCost,
           };
         })
         .filter((item) => item && item.quantity > 0), // Lọc bỏ item null hoặc số lượng <= 0 (bao gồm cả chuỗi rỗng)

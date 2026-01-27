@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { getLatestUnitCost } from "../../utils/inventory/purchaseUtils";
+import { getProductStats } from "../../utils/inventory/purchaseUtils";
 
 // Tạo label thời gian động theo tháng/năm hiện tại và tách bộ lọc cho dashboard vs chi tiết.
 const buildRangeOptions = (mode = "dashboard", now) => {
@@ -60,7 +60,7 @@ const useDashboardLogic = ({ products, orders, rangeMode = "dashboard" }) => {
 
     for (const product of products) {
       // 1. Cost Map
-      const unitCost = getLatestUnitCost(product);
+      const { unitCost } = getProductStats(product);
       costMap.set(product.id, unitCost);
 
       // 2. Product Meta

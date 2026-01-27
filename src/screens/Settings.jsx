@@ -28,6 +28,10 @@ const Settings = ({
   setOrders,
   settings,
   setSettings,
+  customers,
+  setCustomers,
+  chatSummary,
+  setChatSummary,
   onLogout,
 }) => {
   const {
@@ -54,6 +58,10 @@ const Settings = ({
     setOrders,
     settings,
     setSettings,
+    customers,
+    setCustomers,
+    chatSummary,
+    setChatSummary,
   });
 
   const isAutoBackupOn = settings.autoBackupInterval > 0;
@@ -264,7 +272,7 @@ const Settings = ({
 
         {/* Footer info */}
         <div className="text-center text-xs text-rose-400 pb-4">
-          Phiên bản 15.6 - Tiny Shop
+          Phiên bản 15.3 - Tiny Shop
           <br />
           Được phát triển bởi Quý Lăng &copy; 2026
         </div>

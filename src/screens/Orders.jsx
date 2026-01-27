@@ -16,6 +16,8 @@ const Orders = ({
   setOrders,
   settings,
   setTabBarVisible,
+  customers, // New prop
+  setCustomers, // New prop
 }) => {
   const {
     cart,
@@ -43,6 +45,7 @@ const Orders = ({
     setActiveCategory,
     searchTerm,
     setSearchTerm,
+    debouncedSearchTerm,
     orderBeingEdited,
     totalAmount,
     reviewItems,
@@ -65,7 +68,7 @@ const Orders = ({
     isCreateView,
     sortConfig,
     setSortConfig,
-    customers,
+    // customers, <-- Removed because it's now a prop, not returned by useOrdersLogic (actually useOrdersLogic passes it through, so checking below)
     isCustomerNameTaken,
     setPriceOverrides,
   } = useOrdersLogic({
@@ -74,6 +77,8 @@ const Orders = ({
     orders,
     setOrders,
     setTabBarVisible,
+    customers, // Pass down
+    setCustomers, // Pass down
   });
 
   const renderContent = () => {
@@ -100,6 +105,7 @@ const Orders = ({
           setActiveCategory={setActiveCategory}
           searchTerm={searchTerm}
           setSearchTerm={setSearchTerm}
+          debouncedSearchTerm={debouncedSearchTerm}
           filteredProducts={filteredProducts}
           totalAmount={totalAmount}
           reviewItems={reviewItems}

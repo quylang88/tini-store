@@ -5,66 +5,53 @@ import { summarizeChatHistory } from "../../services/aiAssistantService";
 const MAX_BUFFER_SIZE = 50; // Tối đa 50 tin nhắn trong buffer
 const BUFFER_TRIGGER_SIZE = 20; // Đủ 20 tin nhắn thì tóm tắt
 
-export const useAssistantMemory = () => {
-  const [chatSummary, setChatSummary] = useState(() => {
-    if (typeof window !== "undefined") {
-      return localStorage.getItem("ai_chat_summary") || "";
-    }
-    return "";
-  });
-
+export const useAssistantMemory = ({
+  chatSummary,
+  setChatSummary,
+  pendingBuffer,
+  setPendingBuffer,
+}) => {
   const [isSummarizing, setIsSummarizing] = useState(false);
 
-  // Xử lý buffer tồn đọng khi khởi động
+  // Xử lý buffer tồn đọng khi khởi động (nếu có dữ liệu load từ DB)
   useEffect(() => {
     const processPendingBuffer = async () => {
-      const pendingJson = localStorage.getItem("ai_pending_buffer");
-      if (pendingJson) {
+      // Chỉ xử lý nếu có pendingBuffer và nó không rỗng
+      // Lưu ý: pendingBuffer ở đây là giá trị tại thời điểm mount (do deps=[])
+      // Điều này đúng ý đồ: Chỉ xử lý những gì tồn đọng từ phiên trước.
+      if (pendingBuffer && pendingBuffer.length > 0) {
         try {
-          const pendingMessages = JSON.parse(pendingJson);
-
-          if (!Array.isArray(pendingMessages) || pendingMessages.length === 0) {
-            localStorage.removeItem("ai_pending_buffer");
-            return;
-          }
-
           console.log(
-            `Phát hiện ${pendingMessages.length} tin nhắn tồn đọng. Đang dọn dẹp...`,
+            `Phát hiện ${pendingBuffer.length} tin nhắn tồn đọng. Đang dọn dẹp...`,
           );
 
           setIsSummarizing(true);
-          const currentMem = localStorage.getItem("ai_chat_summary") || "";
+          const currentMem = chatSummary || "";
           const newSummary = await summarizeChatHistory(
             currentMem,
-            pendingMessages,
+            pendingBuffer,
           );
 
           setChatSummary(newSummary);
-          localStorage.setItem("ai_chat_summary", newSummary);
-          localStorage.removeItem("ai_pending_buffer");
+
+          // Clear buffer sau khi summarize thành công
+          setPendingBuffer([]);
           console.log("Đã dọn dẹp bộ nhớ đệm thành công!");
         } catch (e) {
-          console.error("Lỗi xử lý buffer, tiến hành xóa bắt buộc:", e);
-          localStorage.removeItem("ai_pending_buffer");
+          console.error("Lỗi xử lý buffer:", e);
         } finally {
           setIsSummarizing(false);
         }
       }
     };
+
     processPendingBuffer();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Chỉ chạy 1 lần khi mount để xử lý dữ liệu tồn đọng
 
   // Hàm thêm tin nhắn vào buffer
   const appendToPendingBuffer = (newMsgs) => {
-    let currentBuffer = [];
-    try {
-      currentBuffer = JSON.parse(
-        localStorage.getItem("ai_pending_buffer") || "[]",
-      );
-    } catch {
-      currentBuffer = [];
-    }
-
+    const currentBuffer = pendingBuffer || [];
     let updatedBuffer = [...currentBuffer, ...newMsgs];
 
     if (updatedBuffer.length > MAX_BUFFER_SIZE) {
@@ -72,7 +59,7 @@ export const useAssistantMemory = () => {
       updatedBuffer = updatedBuffer.slice(-MAX_BUFFER_SIZE);
     }
 
-    localStorage.setItem("ai_pending_buffer", JSON.stringify(updatedBuffer));
+    setPendingBuffer(updatedBuffer);
     return updatedBuffer;
   };
 
@@ -87,8 +74,7 @@ export const useAssistantMemory = () => {
           currentBuffer,
         );
         setChatSummary(newSummary);
-        localStorage.setItem("ai_chat_summary", newSummary);
-        localStorage.removeItem("ai_pending_buffer");
+        setPendingBuffer([]);
         console.log("Auto summarize done & Buffer cleared.");
       } catch (err) {
         console.error("Lỗi tóm tắt ngầm:", err);
@@ -100,25 +86,20 @@ export const useAssistantMemory = () => {
 
   // Hàm force summarize (dùng khi clear screen)
   const forceSummarizeBuffer = async () => {
-    const pendingJson = localStorage.getItem("ai_pending_buffer");
-    if (pendingJson) {
+    if (pendingBuffer && pendingBuffer.length > 0) {
       try {
-        const pendingMessages = JSON.parse(pendingJson);
-        if (pendingMessages.length > 0) {
-          setIsSummarizing(true);
-          const newSummary = await summarizeChatHistory(
-            chatSummary,
-            pendingMessages,
-          );
-          setChatSummary(newSummary);
-          localStorage.setItem("ai_chat_summary", newSummary);
-        }
+        setIsSummarizing(true);
+        const newSummary = await summarizeChatHistory(
+          chatSummary,
+          pendingBuffer,
+        );
+        setChatSummary(newSummary);
+        setPendingBuffer([]);
       } catch (e) {
         console.warn("Lỗi force summarize:", e);
       } finally {
         setIsSummarizing(false);
       }
-      localStorage.removeItem("ai_pending_buffer");
     }
   };
 

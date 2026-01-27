@@ -1,14 +1,8 @@
-import { useState } from "react";
 import { ASSISTANT_THEMES } from "../../constants/assistantThemes";
 
-export const useAssistantTheme = () => {
-  const [activeThemeId, setActiveThemeId] = useState(() => {
-    if (typeof window !== "undefined") {
-      return localStorage.getItem("ai_theme_id") || "rose";
-    }
-    return "rose";
-  });
-
+export const useAssistantTheme = (currentThemeId, onThemeChange) => {
+  // Use passed props or default fallback
+  const activeThemeId = currentThemeId || "rose";
   const activeTheme =
     ASSISTANT_THEMES[activeThemeId] || ASSISTANT_THEMES["rose"];
 
@@ -17,8 +11,11 @@ export const useAssistantTheme = () => {
     const currentIndex = themeIds.indexOf(activeThemeId);
     const nextIndex = (currentIndex + 1) % themeIds.length;
     const newThemeId = themeIds[nextIndex];
-    setActiveThemeId(newThemeId);
-    localStorage.setItem("ai_theme_id", newThemeId);
+
+    // Call the callback prop to update state in parent (App.jsx)
+    if (onThemeChange) {
+      onThemeChange(newThemeId);
+    }
   };
 
   return { activeTheme, handleCycleTheme };

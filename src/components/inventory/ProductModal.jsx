@@ -12,7 +12,7 @@ import SheetModal from "../../components/modals/SheetModal";
 import Button from "../../components/button/Button";
 import useModalCache from "../../hooks/ui/useModalCache";
 import ProductIdentityForm from "./ProductIdentityForm";
-import DatePickerInput from "../common/DatePickerInput";
+import MonthYearPickerInput from "../common/MonthYearPickerInput";
 
 const ProductModal = ({
   isOpen,
@@ -373,10 +373,10 @@ const ProductModal = ({
           <label className="text-xs font-bold text-rose-700 uppercase">
             Hạn sử dụng
           </label>
-          <DatePickerInput
+          <MonthYearPickerInput
             value={formData.expiryDate || ""}
             onChange={(val) => setFormData({ ...formData, expiryDate: val })}
-            placeholder="Chọn ngày..."
+            placeholder="Chọn tháng/năm..."
           />
         </div>
 

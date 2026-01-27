@@ -1,50 +1,44 @@
-import { useState } from "react";
-
-const getSavedCredentials = () => {
-  try {
-    const savedCreds = localStorage.getItem("tini_saved_creds");
-    if (savedCreds) {
-      return JSON.parse(savedCreds);
-    }
-  } catch {
-    localStorage.removeItem("tini_saved_creds");
-  }
-  return null;
-};
+import { useState, useEffect } from "react";
+import storageService from "../../services/storageService";
 
 const useLoginLogic = ({ onLogin }) => {
-  const [username, setUsername] = useState(() => {
-    const creds = getSavedCredentials();
-    return creds?.user || "";
-  });
-
-  const [password, setPassword] = useState(() => {
-    const creds = getSavedCredentials();
-    return creds?.pass || "";
-  });
-
-  const [remember, setRemember] = useState(() => {
-    const creds = getSavedCredentials();
-    return !!creds;
-  });
-
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [remember, setRemember] = useState(false);
   const [error, setError] = useState("");
+  const [isLoadingCreds, setIsLoadingCreds] = useState(true);
 
-  const handleSubmit = (e) => {
+  // Load saved credentials from IndexedDB on mount
+  useEffect(() => {
+    const loadCreds = async () => {
+      try {
+        const creds = await storageService.getAuthCreds();
+        if (creds) {
+          setUsername(creds.user || "");
+          setPassword(creds.pass || "");
+          setRemember(true);
+        }
+      } catch (err) {
+        console.error("Failed to load saved credentials:", err);
+      } finally {
+        setIsLoadingCreds(false);
+      }
+    };
+    loadCreds();
+  }, []);
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     // Kiểm tra tài khoản cứng
     if (username === "tinyshop" && password === "Misa@2024") {
       // Xử lý Ghi nhớ Tài khoản/Mật khẩu
       if (remember) {
-        // Nếu chọn Ghi nhớ: Lưu vào bộ nhớ máy
-        localStorage.setItem(
-          "tini_saved_creds",
-          JSON.stringify({ user: username, pass: password }),
-        );
+        // Nếu chọn Ghi nhớ: Lưu vào IndexedDB
+        await storageService.saveAuthCreds({ user: username, pass: password });
       } else {
-        // Nếu không chọn: Xóa khỏi bộ nhớ máy
-        localStorage.removeItem("tini_saved_creds");
+        // Nếu không chọn: Xóa khỏi IndexedDB
+        await storageService.clearAuthCreds();
       }
 
       onLogin(); // Báo cho App biết đã đăng nhập thành công
@@ -62,6 +56,7 @@ const useLoginLogic = ({ onLogin }) => {
     setRemember,
     error,
     handleSubmit,
+    isLoadingCreds,
   };
 };
 

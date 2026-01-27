@@ -1,9 +1,11 @@
 import { useEffect } from "react";
 import { sendNotification } from "../../utils/common/notificationUtils";
 
-const STORAGE_KEY = "last_daily_greeting_date";
-
-const useDailyGreeting = (isAuthenticated) => {
+const useDailyGreeting = (
+  isAuthenticated,
+  lastGreetingDate,
+  saveLastGreetingDate,
+) => {
   useEffect(() => {
     if (!isAuthenticated) return;
 
@@ -13,7 +15,8 @@ const useDailyGreeting = (isAuthenticated) => {
         icon: "/tiny-shop-icon-iphone.png",
         tag: "daily-greeting",
       });
-      localStorage.setItem(STORAGE_KEY, dateStr);
+      // Call the callback to update state and save to IDB
+      saveLastGreetingDate(dateStr);
     };
 
     const scheduleNotificationTrigger = async () => {
@@ -57,9 +60,8 @@ const useDailyGreeting = (isAuthenticated) => {
     const checkAndSendGreeting = () => {
       const now = new Date();
       const todayStr = now.toDateString(); // "Mon Jan 01 2024"
-      const lastGreetingDate = localStorage.getItem(STORAGE_KEY);
 
-      // If already greeted today, do nothing
+      // Use the prop instead of localStorage
       if (lastGreetingDate === todayStr) {
         return;
       }
@@ -73,7 +75,7 @@ const useDailyGreeting = (isAuthenticated) => {
       }
     };
 
-    // Check immediately on mount
+    // Check immediately on mount (or when deps change)
     checkAndSendGreeting();
 
     // Attempt to schedule the "Offline" trigger
@@ -83,7 +85,7 @@ const useDailyGreeting = (isAuthenticated) => {
     const interval = setInterval(checkAndSendGreeting, 60000);
 
     return () => clearInterval(interval);
-  }, [isAuthenticated]);
+  }, [isAuthenticated, lastGreetingDate, saveLastGreetingDate]);
 };
 
 export default useDailyGreeting;

@@ -7,7 +7,7 @@ import {
 } from "./warehouseUtils.js";
 import {
   addPurchaseLot,
-  getLatestCost,
+  getProductStats,
   normalizePurchaseLots,
 } from "./purchaseUtils.js";
 
@@ -164,9 +164,8 @@ export const buildNextProductFromForm = ({
     barcode: formData.barcode ? formData.barcode.trim() : "",
     category: formData.category,
     price: Number(formData.price),
-    cost: costValue || getLatestCost(baseProduct),
+    cost: costValue || getProductStats(baseProduct).cost,
     image: formData.image,
-    expiryDate: formData.expiryDate || "",
     stockByWarehouse: nextStockByWarehouse,
     stock: Object.values(nextStockByWarehouse).reduce(
       (sum, val) => sum + val,
@@ -210,6 +209,7 @@ export const buildNextProductFromForm = ({
               perUnitVnd: feeVnd,
             },
             priceAtPurchase: updatedPrice,
+            expiryDate: formData.expiryDate || "",
           };
         }
 
@@ -239,7 +239,7 @@ export const buildNextProductFromForm = ({
         purchaseLots: nextLots,
         stockByWarehouse: adjustedStock,
         stock: Object.values(adjustedStock).reduce((sum, val) => sum + val, 0),
-        cost: getLatestCost({ ...nextProduct, purchaseLots: nextLots }),
+        cost: getProductStats({ ...nextProduct, purchaseLots: nextLots }).cost,
       };
     } else {
       nextProduct = addPurchaseLot(nextProduct, {
@@ -249,6 +249,7 @@ export const buildNextProductFromForm = ({
         warehouse: resolvedWarehouseKey,
         shipping: shippingInfo,
         priceAtPurchase: Number(formData.price) || 0,
+        expiryDate: formData.expiryDate || "",
       });
     }
   }
