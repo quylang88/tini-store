@@ -5,7 +5,7 @@ import { AnimatePresence, motion } from "framer-motion";
 const MonthYearPickerInput = ({
   value, // "yyyy-mm-dd" string
   onChange, // (value: string "yyyy-mm-dd") => void
-  placeholder = "Chọn tháng/năm...",
+  placeholder = "Chọn tháng năm...",
   className = "",
   inputClassName = "",
   disabled = false,
@@ -55,11 +55,21 @@ const MonthYearPickerInput = ({
     if (node) centerActiveElement(node);
   };
 
+  // Logic: Live Update + Sync with Value
+  // Khi user mở modal:
+  // 1. Nếu input đang có giá trị -> viewDate = giá trị đó (đã có ở logic dưới).
+  // 2. Nếu input rỗng -> viewDate = today -> GỌI onChange ngay lập tức để input nhảy lên tháng/năm hiện tại.
   useLayoutEffect(() => {
     if (isOpen) {
-      setViewDate(parseDate(value));
+      if (!value) {
+        const today = new Date();
+        updateValue(today.getFullYear(), today.getMonth());
+        setViewDate(today);
+      } else {
+        setViewDate(parseDate(value));
+      }
     }
-  }, [isOpen, value]);
+  }, [isOpen]);
 
   useLayoutEffect(() => {
     if (isOpen) {
@@ -86,15 +96,31 @@ const MonthYearPickerInput = ({
     };
   }, [isOpen]);
 
-  const handleSelect = (newYear, newMonth) => {
+  const updateValue = (newYear, newMonth) => {
     // Construct new date: YYYY-MM-01
-    const date = new Date(newYear, newMonth, 1);
     // Format to YYYY-MM-DD
-    const yearStr = date.getFullYear();
-    const monthStr = String(date.getMonth() + 1).padStart(2, "0");
+    const yearStr = newYear;
+    const monthStr = String(newMonth + 1).padStart(2, "0");
     const dayStr = "01";
     onChange(`${yearStr}-${monthStr}-${dayStr}`);
-    setIsOpen(false);
+  };
+
+  const handleSelectMonth = (newMonth) => {
+    const currentYear = viewDate.getFullYear();
+    // Cập nhật viewDate để highlight UI
+    setViewDate(new Date(currentYear, newMonth, 1));
+    // Cập nhật giá trị input ngay lập tức
+    updateValue(currentYear, newMonth);
+    // KHÔNG đóng modal
+  };
+
+  const handleSelectYear = (newYear) => {
+    const currentMonth = viewDate.getMonth();
+    // Cập nhật viewDate để highlight UI
+    setViewDate(new Date(newYear, currentMonth, 1));
+    // Cập nhật giá trị input ngay lập tức
+    updateValue(newYear, currentMonth);
+    // KHÔNG đóng modal
   };
 
   const rangeYears = Array.from(
@@ -134,16 +160,10 @@ const MonthYearPickerInput = ({
             transition={{ duration: 0.2 }}
             className="absolute z-50 bottom-full mb-2 left-0 w-full origin-bottom bg-white p-3 rounded-xl shadow-lg border border-amber-100 select-none overflow-hidden"
           >
-            <div className="flex justify-between items-center mb-2 pb-2 border-b border-rose-100">
-              <span className="text-sm font-bold text-rose-800">
-                Chọn Tháng/Năm
+            <div className="flex justify-center items-center mb-2 pb-2 border-b border-rose-100">
+              <span className="text-sm font-bold text-rose-800 uppercase">
+                Chọn Tháng Năm
               </span>
-              <button
-                onClick={() => setIsOpen(false)}
-                className="text-xs text-rose-500 font-medium px-2"
-              >
-                Đóng
-              </button>
             </div>
             <div className="grid grid-cols-2 gap-2 h-48">
               {/* Month List */}
@@ -154,10 +174,7 @@ const MonthYearPickerInput = ({
                 {Array.from({ length: 12 }, (_, i) => i).map((m) => (
                   <button
                     key={m}
-                    onClick={() => {
-                      const currentYear = viewDate.getFullYear();
-                      handleSelect(currentYear, m);
-                    }}
+                    onClick={() => handleSelectMonth(m)}
                     className={`w-full text-left px-3 py-1.5 text-xs rounded-lg mb-1 ${
                       viewDate.getMonth() === m
                         ? "bg-rose-500 text-white font-bold"
@@ -176,9 +193,7 @@ const MonthYearPickerInput = ({
                 {rangeYears.map((y) => (
                   <button
                     key={y}
-                    onClick={() => {
-                      setViewDate(new Date(y, viewDate.getMonth(), 1));
-                    }}
+                    onClick={() => handleSelectYear(y)}
                     className={`w-full text-left px-3 py-1.5 text-xs rounded-lg mb-1 ${
                       viewDate.getFullYear() === y
                         ? "bg-rose-500 text-white font-bold"
