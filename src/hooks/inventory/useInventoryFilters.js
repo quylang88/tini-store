@@ -1,7 +1,7 @@
 import { useMemo, useCallback } from "react";
 import { normalizeString } from "../../utils/formatters/formatUtils";
 import {
-  normalizeWarehouseStock,
+  getSpecificWarehouseStock,
   resolveWarehouseKey,
 } from "../../utils/inventory/warehouseUtils";
 import useProductFilterSort from "../core/useProductFilterSort";
@@ -23,9 +23,10 @@ const useInventoryFilters = ({
   // Định nghĩa hàm lọc tùy chỉnh cho tính khả dụng của kho
   const checkWarehouseStock = useCallback(
     (product) => {
-      const stockByWarehouse = normalizeWarehouseStock(product);
+      // Tối ưu hóa: Kiểm tra "Tất cả" trước để tránh tính toán không cần thiết
       if (warehouseFilter === "all") return true;
-      return (stockByWarehouse[resolvedFilterKey] || 0) > 0;
+      // Tối ưu hóa: Sử dụng getSpecificWarehouseStock để tránh cấp phát object mới (normalizeWarehouseStock)
+      return getSpecificWarehouseStock(product, resolvedFilterKey) > 0;
     },
     [warehouseFilter, resolvedFilterKey],
   );
