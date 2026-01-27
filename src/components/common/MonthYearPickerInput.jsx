@@ -169,7 +169,7 @@ const MonthYearPickerInput = ({
               {/* Month List */}
               <div
                 ref={setMonthListRef}
-                className="overflow-y-auto overscroll-contain border-r border-rose-100 pr-1 h-full relative"
+                className="overflow-y-auto overscroll-contain border-r border-rose-100 pr-1 h-full relative scrollbar-hide"
               >
                 {Array.from({ length: 12 }, (_, i) => i).map((m) => (
                   <button
@@ -188,7 +188,7 @@ const MonthYearPickerInput = ({
               {/* Year List */}
               <div
                 ref={setYearListRef}
-                className="overflow-y-auto overscroll-contain pl-1 h-full relative"
+                className="overflow-y-auto overscroll-contain pl-1 h-full relative scrollbar-hide"
               >
                 {rangeYears.map((y) => (
                   <button
