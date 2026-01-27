@@ -94,21 +94,11 @@ export const getProductStats = (product = {}) => {
 };
 
 export const getLatestCost = (product = {}) => {
-  const latestLot = getLatestLot(product);
-  if (latestLot) {
-    return Number(latestLot.cost) || 0;
-  }
-  return Number(product.cost) || 0;
+  return getProductStats(product).cost;
 };
 
 export const getLatestUnitCost = (product = {}) => {
-  const latestLot = getLatestLot(product);
-  if (latestLot) {
-    const baseCost = Number(latestLot.cost) || 0;
-    const shippingPerUnit = Number(latestLot.shipping?.perUnitVnd) || 0;
-    return baseCost + shippingPerUnit;
-  }
-  return Number(product.cost) || 0;
+  return getProductStats(product).unitCost;
 };
 
 export const addPurchaseLot = (product, lot) => {
