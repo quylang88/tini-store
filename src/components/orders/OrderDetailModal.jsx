@@ -89,12 +89,13 @@ const OrderDetailModal = ({ order, products, onClose, getOrderStatusInfo }) => {
               animate={{ opacity: 0.8, scale: 1 }}
               exit={{ opacity: 0, scale: 0.8 }}
               transition={{
+                delay: 0.4,
                 type: "spring",
                 stiffness: 300,
                 damping: 20,
               }}
               style={{ mixBlendMode: "multiply" }}
-              className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 border-4 border-rose-500 text-rose-500 font-bold text-xl px-4 py-2 -rotate-12 pointer-events-none z-10 whitespace-nowrap rounded-lg"
+              className="absolute top-0 right-0 border-2 border-rose-500 text-rose-500 font-bold text-base px-2 py-1 pointer-events-none z-10 whitespace-nowrap rounded-md"
             >
               ĐÃ THANH TOÁN
             </motion.div>
