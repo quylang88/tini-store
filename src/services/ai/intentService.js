@@ -29,24 +29,25 @@ const EXPORT_KEYWORDS = [
 const SEARCH_KEYWORDS = [
   // General Search Triggers
   "tìm",
+  "trên mạng",
+  "internet",
   "so sánh",
+  "tại sao",
+  "ở đâu",
+  "tư vấn",
+  "hợp lý",
+  "có lời",
   "giá nhập",
   "giá sỉ",
-  "shopee",
-  "lazada",
-  "amazon",
-  "rakuten",
-  "cosme",
   "rẻ",
   "tốt",
   "trend",
+  "thị trường", // Added based on user feedback
   // Force Search Triggers
   "bên nhật",
   "tại nhật",
   "web nhật",
   "nguồn hàng",
-  "giá yên",
-  "check giá",
   "review",
   "đánh giá",
 ];
@@ -81,25 +82,27 @@ const LOCAL_KEYWORDS = [
 const detectIntentByKeywords = (query) => {
   const lowerQuery = query.toLowerCase();
 
-  // Kiểm tra Import (Action cao nhất)
-  if (IMPORT_KEYWORDS.some((kw) => lowerQuery.includes(kw))) {
-    return "IMPORT";
+  const isLocal = LOCAL_KEYWORDS.some((kw) => lowerQuery.includes(kw));
+  const isSearch = SEARCH_KEYWORDS.some((kw) => lowerQuery.includes(kw));
+  const isImport = IMPORT_KEYWORDS.some((kw) => lowerQuery.includes(kw));
+  const isExport = EXPORT_KEYWORDS.some((kw) => lowerQuery.includes(kw));
+
+  // 1. Conflict Detection (Quan trọng nhất để fix lỗi nhận nhầm)
+  // Nếu câu vừa có ý định Search (tìm, check, thị trường...)
+  // VÀ vừa có ý định hành động (nhập, xuất, tồn kho...)
+  // -> Khả năng cao là câu phức -> Trả về "AMBIGUOUS" để đẩy sang AI phân tích kỹ hơn (bất kể độ dài).
+  if (isSearch && (isImport || isExport || isLocal)) {
+    console.log(
+      "Intent Ambiguity Detected (Search mixed with Action) -> Fallback to AI",
+    );
+    return "AMBIGUOUS";
   }
 
-  // Kiểm tra Export (Action cao nhất)
-  if (EXPORT_KEYWORDS.some((kw) => lowerQuery.includes(kw))) {
-    return "EXPORT";
-  }
-
-  // Kiểm tra Search (Action cao nhất)
-  if (SEARCH_KEYWORDS.some((kw) => lowerQuery.includes(kw))) {
-    return "SEARCH";
-  }
-
-  // Kiểm tra Local (Truy vấn thông tin nội bộ)
-  if (LOCAL_KEYWORDS.some((kw) => lowerQuery.includes(kw))) {
-    return "LOCAL";
-  }
+  // 2. Nếu không có mâu thuẫn, trả về theo thứ tự ưu tiên
+  if (isLocal) return "LOCAL";
+  if (isSearch) return "SEARCH";
+  if (isImport) return "IMPORT";
+  if (isExport) return "EXPORT";
 
   return null; // Không tìm thấy keyword
 };
@@ -114,10 +117,11 @@ const detectIntentByAI = async (query) => {
   const systemPrompt = `
     You are a precise Intent Classifier for a shop assistant AI.
     Classify the following User Query into exactly one of these categories:
+
+    - LOCAL: User asks about internal/local business info: stock, products, revenue, customers (e.g., "kho còn áo A không?", "hôm nay bán được bao nhiêu?", "check tồn kho").
+    - SEARCH: User asks for external info, price comparison, web search, market trends (e.g. "giá iphone", "tìm hiểu về...").
     - IMPORT: User wants to add stock, restock products (e.g. "nhập 5 cái", "thêm hàng").
     - EXPORT: User wants to sell, create order, ship items (e.g. "bán 2 cái", "lên đơn cho khách").
-    - SEARCH: User asks for external info, price comparison, web search, market trends (e.g. "giá iphone", "tìm hiểu về...").
-    - LOCAL: User asks about internal/local business info: stock, products, revenue, customers (e.g., "kho còn áo A không?", "hôm nay bán được bao nhiêu?", "check tồn kho").
     - CHAT: Pure casual conversation, greetings, fun (e.g., "chào em", "em làm được gì", "kể chuyện vui").
 
     OUTPUT FORMAT: Return ONLY the category name (IMPORT, EXPORT, SEARCH, LOCAL, or CHAT). Do not explain.
@@ -130,7 +134,7 @@ const detectIntentByAI = async (query) => {
     const intent = response.content.trim().toUpperCase();
 
     // Validate output
-    if (["IMPORT", "EXPORT", "SEARCH", "LOCAL", "CHAT"].includes(intent)) {
+    if (["LOCAL", "SEARCH", "IMPORT", "EXPORT", "CHAT"].includes(intent)) {
       return intent;
     }
     return "CHAT"; // Fallback
@@ -146,14 +150,20 @@ const detectIntentByAI = async (query) => {
 export const detectIntent = async (query) => {
   // 1. Thử check keyword trước (Zero latency)
   const keywordIntent = detectIntentByKeywords(query);
-  if (keywordIntent) {
+
+  // Nếu detect ra intent cụ thể (IMPORT, EXPORT...) -> Return luôn
+  if (keywordIntent && keywordIntent !== "AMBIGUOUS") {
     console.log(`Intent detected by Keyword: ${keywordIntent}`);
     return keywordIntent;
   }
 
-  // 2. Nếu không khớp keyword, dùng AI Router (Low latency)
-  // Chỉ dùng khi query đủ dài (> 3 từ) để tránh spam, nếu quá ngắn -> Chat
-  if (query.trim().split(/\s+/).length < 4) {
+  // 2. Nếu không khớp keyword (null), hoặc mơ hồ (AMBIGUOUS) -> Chuẩn bị dùng AI Router
+  const isAmbiguous = keywordIntent === "AMBIGUOUS";
+
+  // Logic length check:
+  // - Nếu là AMBIGUOUS: Bỏ qua check length (vì đã có keyword xịn, chắc chắn ko phải spam)
+  // - Nếu là null (ko keyword): Check length < 4 -> CHAT (để tránh spam "hi", "alo")
+  if (!isAmbiguous && query.trim().split(/\s+/).length < 4) {
     return "CHAT";
   }
 
