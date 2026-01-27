@@ -1,5 +1,5 @@
 import React, { memo } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   formatNumber,
   formatDateTime,
@@ -42,33 +42,67 @@ const OrderListItem = memo(
     return (
       <motion.div
         whileTap={{ scale: 0.96 }}
-        className="bg-amber-50 p-4 rounded-xl shadow-sm border border-amber-100 cursor-pointer hover:shadow-md transition-shadow"
+        className={`p-4 rounded-xl shadow-sm border cursor-pointer hover:shadow-md transition-shadow relative overflow-hidden ${
+          isPaid ? "bg-gray-50 border-gray-200" : "bg-amber-50 border-amber-100"
+        }`}
         onClick={() => onSelectOrder?.(order)}
       >
-        <div className="flex justify-between mb-2 gap-2">
-          <div className="min-w-0">
-            <div className="flex items-center gap-2">
-              <span className="font-bold text-amber-900 text-lg">
-                {orderLabel}
-              </span>
-              <span className="text-xs font-semibold text-amber-600 truncate">
-                {orderName}
-              </span>
+        <AnimatePresence>
+          {isPaid && (
+            <motion.div
+              initial={{ opacity: 0, scale: 2 }}
+              animate={{ opacity: 0.8, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.8 }}
+              transition={{
+                type: "spring",
+                stiffness: 300,
+                damping: 20,
+              }}
+              className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 border-4 border-rose-500 text-rose-500 font-bold text-xl px-4 py-2 -rotate-12 pointer-events-none z-10 whitespace-nowrap rounded-lg"
+            >
+              ĐÃ THANH TOÁN
+            </motion.div>
+          )}
+        </AnimatePresence>
+        <div
+          className={`transition-all duration-300 ${isPaid ? "grayscale opacity-75" : ""}`}
+        >
+          <div className="flex justify-between mb-2 gap-2">
+            <div className="min-w-0">
+              <div className="flex items-center gap-2">
+                <span className="font-bold text-amber-900 text-lg">
+                  {orderLabel}
+                </span>
+                <span className="text-xs font-semibold text-amber-600 truncate">
+                  {orderName}
+                </span>
+              </div>
             </div>
+            <span className="text-rose-600 font-bold text-lg bg-rose-50 px-2 py-0.5 rounded">
+              {formatNumber(order.total)}đ
+            </span>
           </div>
-          <span className="text-rose-600 font-bold text-lg bg-rose-50 px-2 py-0.5 rounded">
-            {formatNumber(order.total)}đ
-          </span>
-        </div>
-        <div className="flex items-center justify-between text-xs text-gray-500 mb-2">
-          <span
-            className={`inline-flex items-center gap-2 px-2 py-0.5 rounded-full border ${statusInfo.badgeClass}`}
-          >
-            <span className={`w-2 h-2 rounded-full ${statusInfo.dotClass}`} />
-            {statusInfo.label}
-          </span>
-          {shouldShowWarehouseOnStatus && (
-            <span className="text-amber-600 font-semibold">
+          <div className="flex items-center justify-between text-xs text-gray-500 mb-2">
+            <div className="h-6 flex items-center">
+              <AnimatePresence mode="wait">
+                {!isPaid && (
+                  <motion.span
+                    key="status-badge"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className={`inline-flex items-center gap-2 px-2 py-0.5 rounded-full border ${statusInfo.badgeClass}`}
+                  >
+                    <span
+                      className={`w-2 h-2 rounded-full ${statusInfo.dotClass}`}
+                    />
+                    {statusInfo.label}
+                  </motion.span>
+                )}
+              </AnimatePresence>
+            </div>
+            {shouldShowWarehouseOnStatus && (
+              <span className="text-amber-600 font-semibold">
               Tại kho: {warehouseLabel}
             </span>
           )}
@@ -94,38 +128,59 @@ const OrderListItem = memo(
             </span>
           </div>
         </div>
-        <div className="mt-3 flex flex-wrap justify-end gap-2">
-          <button
-            onClick={(event) => {
-              event.stopPropagation();
-              handleTogglePaid(order);
-            }}
-            className={`text-xs font-semibold px-3 py-1.5 rounded-full border transition active:scale-95 ${
-              isPaid
-                ? "text-red-600 bg-red-50 border-red-300"
-                : "text-emerald-600 bg-emerald-50 border-emerald-300"
-            }`}
-          >
-            {isPaid ? "Huỷ thanh toán" : "Thanh toán"}
-          </button>
-          <button
-            onClick={(event) => {
-              event.stopPropagation();
-              handleEditOrder(order);
-            }}
-            className="text-xs font-semibold text-orange-600 bg-orange-50 border border-orange-300 px-3 py-1.5 rounded-full active:scale-95 transition"
-          >
-            Sửa đơn
-          </button>
-          <button
-            onClick={(event) => {
-              event.stopPropagation();
-              handleCancelOrder(order);
-            }}
-            className="text-xs font-semibold text-red-600 bg-red-50 border border-red-300 px-3 py-1.5 rounded-full active:scale-95 transition"
-          >
-            Huỷ đơn
-          </button>
+        <div className="mt-3 flex flex-wrap justify-end gap-2 h-8 items-center">
+          <AnimatePresence mode="popLayout" initial={false}>
+            {/* Nút Thanh Toán / Huỷ Thanh Toán */}
+            <motion.button
+              layout
+              key={isPaid ? "btn-unpay" : "btn-pay"}
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.8 }}
+              onClick={(event) => {
+                event.stopPropagation();
+                handleTogglePaid(order);
+              }}
+              className={`text-xs font-semibold px-3 py-1.5 rounded-full border transition active:scale-95 relative z-20 whitespace-nowrap ${
+                isPaid
+                  ? "text-red-600 bg-red-50 border-red-300"
+                  : "text-emerald-600 bg-emerald-50 border-emerald-300"
+              }`}
+            >
+              {isPaid ? "Huỷ thanh toán" : "Thanh toán"}
+            </motion.button>
+
+            {/* Các nút hành động khác (Sửa/Huỷ đơn) - Chỉ hiện khi chưa thanh toán */}
+            {!isPaid && (
+              <motion.div
+                key="action-buttons"
+                initial={{ opacity: 0, scale: 0.8, width: 0 }}
+                animate={{ opacity: 1, scale: 1, width: "auto" }}
+                exit={{ opacity: 0, scale: 0.8, width: 0 }}
+                className="flex gap-2 overflow-hidden"
+              >
+                <button
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    handleEditOrder(order);
+                  }}
+                  className="text-xs font-semibold text-orange-600 bg-orange-50 border border-orange-300 px-3 py-1.5 rounded-full active:scale-95 transition whitespace-nowrap"
+                >
+                  Sửa đơn
+                </button>
+                <button
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    handleCancelOrder(order);
+                  }}
+                  className="text-xs font-semibold text-red-600 bg-red-50 border border-red-300 px-3 py-1.5 rounded-full active:scale-95 transition whitespace-nowrap"
+                >
+                  Huỷ đơn
+                </button>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
         </div>
       </motion.div>
     );

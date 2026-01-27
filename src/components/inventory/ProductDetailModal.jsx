@@ -77,12 +77,19 @@ const ProductDetailModal = ({ product, onClose, onEditLot }) => {
               const exchangeRate = Number(lot.shipping?.exchangeRate) || 0;
               const isJpImport = lot.shipping?.method === "jp";
 
-              let costDisplay = `${formatNumber(lot.cost)}đ`;
+              let costDisplay = (
+                <span className="font-semibold">{formatNumber(lot.cost)}đ</span>
+              );
               if (isJpImport && exchangeRate > 0) {
                 const costJpy = Math.round(lot.cost / exchangeRate);
-                costDisplay = `${formatNumber(costJpy)}¥ (~${formatNumber(
-                  lot.cost,
-                )}đ)`;
+                costDisplay = (
+                  <span className="font-semibold">
+                    {formatNumber(costJpy)}¥{" "}
+                    <span className="text-[10px] text-gray-400 font-normal">
+                      (~{formatNumber(lot.cost)}đ)
+                    </span>
+                  </span>
+                );
               }
 
               // Shipping Display Logic
@@ -105,12 +112,12 @@ const ProductDetailModal = ({ product, onClose, onEditLot }) => {
                   onClick={() => !isSoldOut && onEditLot?.(lot)}
                   className={`w-full text-left border rounded-xl p-3 space-y-1 transition ${
                     isSoldOut
-                      ? "border-gray-200 bg-gray-50 opacity-70 cursor-not-allowed"
+                      ? "border-gray-200 bg-gray-100 grayscale cursor-not-allowed"
                       : "border-rose-100 bg-rose-50 active:border-rose-200"
                   }`}
                 >
                   <div className="flex items-center justify-between text-sm text-rose-700">
-                    <span className="font-semibold">{costDisplay}</span>
+                    {costDisplay}
                     <span className="text-[10px] px-2 py-0.5 rounded-full bg-white border border-rose-200 text-rose-600">
                       {getWarehouseLabel(lot.warehouse)}
                     </span>
