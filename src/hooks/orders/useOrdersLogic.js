@@ -103,6 +103,7 @@ const useOrdersLogic = ({
     setActiveCategory: createLogic.setActiveCategory,
     searchTerm: createLogic.searchTerm,
     setSearchTerm: createLogic.setSearchTerm,
+    debouncedSearchTerm: createLogic.debouncedSearchTerm,
     orderBeingEdited: createLogic.orderBeingEdited,
     totalAmount: createLogic.totalAmount,
     reviewItems: createLogic.reviewItems,

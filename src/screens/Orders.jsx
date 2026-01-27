@@ -45,6 +45,7 @@ const Orders = ({
     setActiveCategory,
     searchTerm,
     setSearchTerm,
+    debouncedSearchTerm,
     orderBeingEdited,
     totalAmount,
     reviewItems,
@@ -104,6 +105,7 @@ const Orders = ({
           setActiveCategory={setActiveCategory}
           searchTerm={searchTerm}
           setSearchTerm={setSearchTerm}
+          debouncedSearchTerm={debouncedSearchTerm}
           filteredProducts={filteredProducts}
           totalAmount={totalAmount}
           reviewItems={reviewItems}

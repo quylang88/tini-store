@@ -34,6 +34,7 @@ const OrderCreateView = ({
   setActiveCategory,
   searchTerm,
   setSearchTerm,
+  debouncedSearchTerm,
   filteredProducts,
   totalAmount,
   reviewItems,
@@ -68,7 +69,7 @@ const OrderCreateView = ({
     hasMore,
   } = usePagination(filteredProducts, {
     pageSize: 20,
-    resetDeps: [searchTerm, activeCategory, selectedWarehouse, sortConfig],
+    resetDeps: [debouncedSearchTerm, activeCategory, selectedWarehouse, sortConfig],
   });
 
   const handleScrollCombined = (e) => {
