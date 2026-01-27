@@ -58,7 +58,8 @@ const OrderListItem = memo(
                 stiffness: 300,
                 damping: 20,
               }}
-              className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 border-4 border-rose-500 text-rose-500 font-bold text-xl px-4 py-2 -rotate-12 pointer-events-none z-10 whitespace-nowrap rounded-lg"
+              style={{ mixBlendMode: "multiply" }}
+              className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 border-4 border-rose-600 text-rose-600 font-bold text-2xl px-6 py-3 -rotate-12 pointer-events-none z-10 whitespace-nowrap rounded-lg opacity-80"
             >
               ĐÃ THANH TOÁN
             </motion.div>

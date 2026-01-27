@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import SheetModal from "../../components/modals/SheetModal";
 import { formatNumber } from "../../utils/formatters/formatUtils";
 import {
@@ -25,6 +26,7 @@ const OrderDetailModal = ({ order, products, onClose, getOrderStatusInfo }) => {
     : `#${cachedOrder.id.slice(-4)}`;
   const orderName = getOrderDisplayName(cachedOrder);
   const statusInfo = getOrderStatusInfo?.(cachedOrder);
+  const isPaid = cachedOrder.status === "paid";
   const warehouseLabel = getWarehouseLabel(
     resolveWarehouseKey(cachedOrder.warehouse) || getDefaultWarehouse().key,
   );
@@ -79,14 +81,33 @@ const OrderDetailModal = ({ order, products, onClose, getOrderStatusInfo }) => {
       footer={footer}
       showCloseIcon={false} // Chỉ xem
     >
-      <div className="space-y-4">
+      <div className="space-y-4 relative">
+        <AnimatePresence>
+          {isPaid && (
+            <motion.div
+              initial={{ opacity: 0, scale: 2 }}
+              animate={{ opacity: 0.8, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.8 }}
+              transition={{
+                type: "spring",
+                stiffness: 300,
+                damping: 20,
+              }}
+              style={{ mixBlendMode: "multiply" }}
+              className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 border-4 border-rose-600 text-rose-600 font-bold text-2xl px-6 py-3 -rotate-12 pointer-events-none z-10 whitespace-nowrap rounded-lg opacity-80"
+            >
+              ĐÃ THANH TOÁN
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         {/* Thông tin Header */}
         <div className="border-b border-rose-100 pb-4">
           <div className="flex items-center justify-between mb-2">
             <div className="text-xs font-semibold text-rose-600">
               {orderName}
             </div>
-            {statusInfo && (
+            {statusInfo && !isPaid && (
               <span
                 className={`inline-flex items-center gap-2 px-2 py-1 rounded-full border text-xs font-semibold ${statusInfo.badgeClass}`}
               >

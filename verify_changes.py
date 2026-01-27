@@ -94,33 +94,45 @@ def run(playwright):
     except:
         print("Backup Modal not found")
 
-    # 4. Verify Note Scaling
-    print("Verifying Note Scaling...")
+    # 4. Verify Orders (Paid Status) -> "Xuất kho"
+    print("Verifying Orders...")
     try:
-        # Navigate to Inventory
+        page.get_by_text("Xuất kho", exact=False).click()
+        page.wait_for_timeout(1000)
+        page.screenshot(path="/home/jules/verification/orders_page.png")
+        print("Screenshot taken: orders_page.png")
+
+        # Open Order Detail
+        # Assuming only one order in list
+        # OrderListItem has onClick
+        page.locator(".cursor-pointer").first.click()
+        page.wait_for_timeout(1000)
+        page.screenshot(path="/home/jules/verification/order_detail.png")
+        print("Screenshot taken: order_detail.png")
+
+        # Close modal
+        page.get_by_role("button", name="Đóng").click()
+
+    except Exception as e:
+        print(f"Could not find 'Xuất kho' tab or process orders: {e}")
+
+    # 5. Verify Inventory (Sold Out Lot) -> "Nhập kho"
+    print("Verifying Inventory...")
+    try:
         page.get_by_text("Nhập kho", exact=False).click()
         page.wait_for_timeout(1000)
 
-        # Click FAB (last button on page, likely fixed position)
-        # Using a coordinate click as fallback if selector fails is risky but works for visual test
-        # Let's try the selector first: button that is fixed/absolute.
-        # Or just click coordinates (Right Bottom)
-        page.mouse.click(320, 700)
+        # Open product detail
+        page.get_by_text("Test Product").click()
         page.wait_for_timeout(1000)
+        page.screenshot(path="/home/jules/verification/product_detail.png")
+        print("Screenshot taken: product_detail.png")
 
-        # Check if modal opened
-        if page.get_by_text("Thêm Mới").is_visible():
-            print("Modal opened.")
-            note_area = page.locator("textarea[placeholder='Ghi chú về sản phẩm...']")
-            note_area.fill("Line 1\nLine 2\nLine 3\nLine 4\nLine 5\nLine 6\nLine 7\nLine 8\nLine 9\nLine 10")
-            page.wait_for_timeout(500)
-            page.screenshot(path="/home/jules/verification/note_scaling.png")
-            print("Screenshot taken: note_scaling.png")
-        else:
-            print("Modal did not open with coordinate click.")
-
+        # Close modal
+        page.get_by_role("button", name="Đóng").click()
+        page.wait_for_timeout(500)
     except Exception as e:
-        print(f"Error checking note scaling: {e}")
+        print(f"Error checking product detail: {e}")
 
     browser.close()
 
