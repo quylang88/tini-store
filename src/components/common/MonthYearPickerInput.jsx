@@ -1,4 +1,10 @@
-import React, { useState, useRef, useEffect, useLayoutEffect } from "react";
+import React, {
+  useState,
+  useRef,
+  useEffect,
+  useLayoutEffect,
+  useCallback,
+} from "react";
 import { Calendar } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 
@@ -55,6 +61,18 @@ const MonthYearPickerInput = ({
     if (node) centerActiveElement(node);
   };
 
+  const updateValue = useCallback(
+    (newYear, newMonth) => {
+      // Construct new date: YYYY-MM-01
+      // Format to YYYY-MM-DD
+      const yearStr = newYear;
+      const monthStr = String(newMonth + 1).padStart(2, "0");
+      const dayStr = "01";
+      onChange(`${yearStr}-${monthStr}-${dayStr}`);
+    },
+    [onChange],
+  );
+
   // Logic: Live Update + Sync with Value
   // Khi user mở modal:
   // 1. Nếu input đang có giá trị -> viewDate = giá trị đó (đã có ở logic dưới).
@@ -64,12 +82,13 @@ const MonthYearPickerInput = ({
       if (!value) {
         const today = new Date();
         updateValue(today.getFullYear(), today.getMonth());
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setViewDate(today);
       } else {
         setViewDate(parseDate(value));
       }
     }
-  }, [isOpen]);
+  }, [isOpen, value, updateValue]);
 
   useLayoutEffect(() => {
     if (isOpen) {
@@ -95,15 +114,6 @@ const MonthYearPickerInput = ({
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [isOpen]);
-
-  const updateValue = (newYear, newMonth) => {
-    // Construct new date: YYYY-MM-01
-    // Format to YYYY-MM-DD
-    const yearStr = newYear;
-    const monthStr = String(newMonth + 1).padStart(2, "0");
-    const dayStr = "01";
-    onChange(`${yearStr}-${monthStr}-${dayStr}`);
-  };
 
   const handleSelectMonth = (newMonth) => {
     const currentYear = viewDate.getFullYear();

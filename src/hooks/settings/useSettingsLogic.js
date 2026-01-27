@@ -6,7 +6,7 @@ import {
 import { normalizePurchaseLots } from "../../utils/inventory/purchaseUtils";
 import { exportDataToJSON, parseBackupFile } from "../../utils/file/fileUtils";
 import { requestNotificationPermission } from "../../utils/common/notificationUtils";
-import storageService from "../../services/storageService";
+// Removed unused storageService import
 
 const useSettingsLogic = ({
   products,
