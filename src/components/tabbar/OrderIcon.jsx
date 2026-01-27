@@ -83,7 +83,7 @@ const OrderIcon = ({ isActive, size = 24, strokeWidth = 2, loop = false }) => {
     >
       <defs>
         <linearGradient id={gradientId} x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#eab308" />
+          <stop offset="0%" stopColor="#f97316" />
           <stop offset="35%" stopColor="#ec4899" />
           <stop offset="65%" stopColor="#3b82f6" />
           <stop offset="100%" stopColor="#22c55e" />
@@ -185,7 +185,7 @@ const ShoppingCartIcon = ({
     >
       <defs>
         <linearGradient id={gradientId} x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#eab308" />
+          <stop offset="0%" stopColor="#f97316" />
           <stop offset="35%" stopColor="#ec4899" />
           <stop offset="65%" stopColor="#3b82f6" />
           <stop offset="100%" stopColor="#22c55e" />

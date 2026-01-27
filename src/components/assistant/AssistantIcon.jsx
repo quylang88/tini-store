@@ -27,7 +27,7 @@ const AssistantIcon = ({
     >
       <defs>
         <linearGradient id={gradientId} x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#eab308" /> {/* Yellow-500 */}
+          <stop offset="0%" stopColor="#f97316" /> {/* Orange-500 */}
           <stop offset="35%" stopColor="#ec4899" /> {/* Pink-500 */}
           <stop offset="65%" stopColor="#3b82f6" /> {/* Blue-500 */}
           <stop offset="100%" stopColor="#22c55e" /> {/* Green-500 */}

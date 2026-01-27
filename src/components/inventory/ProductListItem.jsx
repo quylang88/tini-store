@@ -11,6 +11,7 @@ import {
   normalizeWarehouseStock,
   getWarehouses,
   resolveWarehouseKey,
+  getSpecificWarehouseStock,
 } from "../../utils/inventory/warehouseUtils";
 
 // Sử dụng React.memo để ngăn component render lại không cần thiết
@@ -32,7 +33,10 @@ const ProductListItem = memo(
     const latestUnitCost = getLatestUnitCost(product);
     const expectedProfit = (Number(product.price) || 0) - latestUnitCost;
     const hasProfitData = Number(product.price) > 0 && latestUnitCost > 0;
-    const stockByWarehouse = normalizeWarehouseStock(product);
+    // Tối ưu hóa: Chỉ tính toán tồn kho chi tiết khi hiển thị tất cả kho.
+    // Khi lọc theo kho cụ thể, dùng getSpecificWarehouseStock để tránh tạo object không cần thiết.
+    const stockByWarehouse =
+      activeWarehouse === "all" ? normalizeWarehouseStock(product) : null;
     const warehouses = getWarehouses();
 
     return (
@@ -100,7 +104,10 @@ const ProductListItem = memo(
                     (w) => w.key === resolveWarehouseKey(activeWarehouse),
                   )?.label || activeWarehouse}
                   :{" "}
-                  {stockByWarehouse[resolveWarehouseKey(activeWarehouse)] || 0}{" "}
+                  {getSpecificWarehouseStock(
+                    product,
+                    resolveWarehouseKey(activeWarehouse),
+                  )}{" "}
                   sp
                 </span>
               )}

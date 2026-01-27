@@ -44,15 +44,15 @@ const TabBar = ({ activeTab, setActiveTab, isVisible = true }) => {
               key={tab.id}
               onClick={handleTabClick}
               aria-current={isActive ? "page" : undefined}
-              className={`relative flex flex-col items-center justify-center w-full h-full gap-0.5 ${
-                isActive ? "z-10" : "text-amber-600 z-0"
+              className={`relative flex flex-col items-center justify-center w-full h-full gap-0.5 transition-all duration-300 ${
+                isActive ? "z-10 scale-110 drop-shadow-sm" : "text-amber-500 z-0"
               }`}
             >
               <IconComponent isActive={isActive} size={24} loop={false} />
               <span
                 className={`text-[10px] uppercase ${
                   isActive
-                    ? "font-bold bg-[linear-gradient(90deg,#ca8a04_0%,#db2777_35%,#2563eb_65%,#16a34a_100%)] bg-clip-text text-transparent"
+                    ? "font-bold bg-[linear-gradient(90deg,#f97316_0%,#db2777_35%,#2563eb_65%,#16a34a_100%)] bg-clip-text text-transparent"
                     : "font-medium"
                 }`}
               >
