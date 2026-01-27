@@ -43,15 +43,32 @@ export const sanitizeDecimalInput = (value) => {
 };
 
 // Hàm chuẩn hóa chuỗi để so sánh (bỏ dấu, chuyển thường)
+// Tối ưu hóa: Cache kết quả để tránh tính toán lại regex đắt đỏ,
+// đặc biệt quan trọng khi lọc danh sách lớn (O(N) -> O(1) cho cache hits).
+const normalizeCache = new Map();
+
 export const normalizeString = (str) => {
   if (!str) return "";
-  return str
+  if (normalizeCache.has(str)) {
+    return normalizeCache.get(str);
+  }
+
+  const normalized = str
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
     .replace(/đ/g, "d")
     .replace(/Đ/g, "D")
     .toLowerCase()
     .trim();
+
+  // Simple eviction policy: Clear cache if it grows too large (e.g., > 2000 entries)
+  // This prevents memory leaks while covering typical inventory sizes.
+  if (normalizeCache.size > 2000) {
+    normalizeCache.clear();
+  }
+
+  normalizeCache.set(str, normalized);
+  return normalized;
 };
 
 // Common formatter for currency (VND)
