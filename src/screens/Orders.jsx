@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { AnimatePresence } from "framer-motion";
 // Tách giao diện tạo đơn/danh sách đơn để file Orders.jsx gọn hơn
 import OrderCreateView from "./orders/OrderCreateView";
@@ -18,6 +18,7 @@ const Orders = ({
   setTabBarVisible,
   customers, // New prop
   setCustomers, // New prop
+  updateFab,
 }) => {
   const {
     cart,
@@ -80,6 +81,12 @@ const Orders = ({
     customers, // Pass down
     setCustomers, // Pass down
   });
+
+  useEffect(() => {
+    if (isCreateView) {
+      updateFab({ isVisible: false });
+    }
+  }, [isCreateView, updateFab]);
 
   const renderContent = () => {
     if (isCreateView) {
@@ -157,6 +164,7 @@ const Orders = ({
           handleCancelOrder={handleCancelOrder}
           onSelectOrder={setSelectedOrder}
           setTabBarVisible={setTabBarVisible}
+          updateFab={updateFab}
         />
         <OrderDetailModal
           order={selectedOrder}
