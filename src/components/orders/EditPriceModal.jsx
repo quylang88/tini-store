@@ -167,6 +167,7 @@ const EditPriceModal = ({ item, isOpen, onClose, onSave }) => {
                 <input
                   type="text"
                   inputMode="numeric"
+                  enterKeyHint="done"
                   value={formatInputNumber(price)}
                   onChange={(e) => handlePriceChange(e.target.value)}
                   className="w-full border border-gray-300 rounded-xl p-3 pr-8 text-lg font-bold text-rose-600 focus:ring-2 focus:ring-rose-500 focus:border-rose-500 outline-none transition"

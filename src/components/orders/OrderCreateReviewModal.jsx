@@ -263,6 +263,7 @@ const OrderCreateReviewModal = ({
                   <input
                     type="text"
                     inputMode="numeric"
+                    enterKeyHint="done"
                     value={formatInputNumber(shippingFee)}
                     onChange={(e) => setShippingFee(e.target.value)}
                     placeholder="Ví dụ: 25,000"

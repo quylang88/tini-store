@@ -144,6 +144,8 @@ const ProductItem = ({
             src={p.image}
             className="w-full h-full object-cover"
             alt={p.name}
+            loading="lazy"
+            decoding="async"
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center">

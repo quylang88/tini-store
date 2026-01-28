@@ -168,6 +168,7 @@ const ProductModal = ({
                     </span>
                     <input
                       inputMode="numeric"
+                      enterKeyHint="done"
                       className={`w-full bg-transparent border-b border-rose-100 py-2 pl-4 focus:border-rose-400 outline-none text-gray-900 font-bold ${
                         isHighlighted("costJPY") ? highlightClass : ""
                       }`}
@@ -185,6 +186,7 @@ const ProductModal = ({
                   </label>
                   <input
                     inputMode="numeric"
+                    enterKeyHint="done"
                     className="w-full bg-transparent border-b border-rose-100 py-2 focus:border-rose-400 outline-none text-gray-900 text-right"
                     value={formatInputNumber(formData.exchangeRate)}
                     onChange={onMoneyChange("exchangeRate")}
@@ -210,6 +212,7 @@ const ProductModal = ({
                 <span className="absolute left-0 top-2 text-rose-500">đ</span>
                 <input
                   inputMode="numeric"
+                  enterKeyHint="done"
                   className={`w-full bg-transparent border-b border-rose-100 py-2 pl-4 focus:border-rose-400 outline-none text-gray-900 font-bold ${
                     isHighlighted("costVNDInput") ? highlightClass : ""
                   }`}
@@ -310,6 +313,7 @@ const ProductModal = ({
                 </label>
                 <input
                   inputMode="numeric"
+                  enterKeyHint="done"
                   className="w-full bg-transparent border-b border-rose-100 py-2 focus:border-rose-400 outline-none text-gray-900 font-bold"
                   value={formatInputNumber(formData.shippingFeeVndInput)}
                   onChange={onMoneyChange("shippingFeeVndInput")}
@@ -388,6 +392,7 @@ const ProductModal = ({
             </label>
             <input
               inputMode="numeric"
+              enterKeyHint="done"
               className={`w-full border-b border-gray-200 py-2 focus:border-rose-400 outline-none text-gray-900 font-bold text-lg disabled:text-gray-500 ${
                 isHighlighted("price") ? highlightClass : ""
               }`}

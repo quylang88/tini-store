@@ -74,6 +74,8 @@ const ProductListItem = memo(
               src={product.image}
               className={`w-full h-full object-cover ${isOutOfStock ? "grayscale opacity-80" : ""}`}
               alt={product.name}
+              loading="lazy"
+              decoding="async"
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center text-gray-300">

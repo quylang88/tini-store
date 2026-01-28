@@ -95,6 +95,7 @@ const Settings = ({
               <div className="relative flex-1">
                 <input
                   inputMode="numeric"
+                  enterKeyHint="done"
                   className="w-full border border-gray-200 rounded-lg pl-3 pr-12 py-3 outline-none focus:border-rose-400 font-medium text-lg text-gray-900"
                   value={formatInputNumber(settings.exchangeRate)}
                   onChange={(e) => {
