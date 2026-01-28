@@ -6,17 +6,11 @@ import { getProductStats } from "../../utils/inventory/purchaseUtils";
 import {
   normalizeWarehouseStock,
   getWarehouses,
-  resolveWarehouseKey,
   getSpecificWarehouseStock,
   getTotalStock,
+  getWarehouseLabel,
+  resolveWarehouseKey,
 } from "../../utils/inventory/warehouseUtils";
-
-// Cache warehouse labels để tránh tìm kiếm tuyến tính O(N) trong mỗi render
-// Việc này cải thiện hiệu năng danh sách khi lọc/scroll nhiều.
-const WAREHOUSE_LABEL_MAP = getWarehouses().reduce((acc, w) => {
-  acc[w.key] = w.label;
-  return acc;
-}, {});
 
 // Sử dụng React.memo để ngăn component render lại không cần thiết
 // khi props (như product) không thay đổi. Điều này giúp tối ưu hiệu năng
@@ -137,9 +131,7 @@ const ProductListItem = memo(
                 </span>
               ) : (
                 <span>
-                  {WAREHOUSE_LABEL_MAP[resolveWarehouseKey(activeWarehouse)] ||
-                    activeWarehouse}
-                  :{" "}
+                  {getWarehouseLabel(activeWarehouse)}:{" "}
                   {getSpecificWarehouseStock(
                     product,
                     resolveWarehouseKey(activeWarehouse),
