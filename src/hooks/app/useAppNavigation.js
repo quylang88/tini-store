@@ -16,20 +16,28 @@ const useAppNavigation = () => {
   const [isTabBarVisible, setIsTabBarVisible] = useState(true);
 
   // Hàm chuyển tab có tính toán hướng animation
-  const handleTabChange = useCallback((newTab) => {
-    setActiveTab((prevTab) => {
-      const currentOrder = TAB_ORDER[prevTab] ?? 0;
+  const handleTabChange = useCallback(
+    (newTab) => {
+      // Sử dụng activeTab hiện tại từ scope thay vì functional update
+      // Điều này an toàn vì chúng ta không update activeTab nhiều lần trong 1 render cycle
+      // và chúng ta cần giá trị hiện tại để tính toán direction.
+
+      // Tính toán direction dựa trên tab CŨ (activeTab) và tab MỚI (newTab)
+      const currentOrder = TAB_ORDER[activeTab] ?? 0;
       const newOrder = TAB_ORDER[newTab] ?? 0;
 
       let newDirection = 0;
       if (newTab === "stats-detail") {
         newDirection = 1; // Push
-      } else if (prevTab === "stats-detail") {
+      } else if (activeTab === "stats-detail") {
         newDirection = -1; // Pop
       } else {
         newDirection = newOrder > currentOrder ? 1 : -1;
       }
+
+      // Update các state
       setDirection(newDirection);
+      setActiveTab(newTab);
 
       // Cập nhật trạng thái hiển thị của TabBar
       if (newTab === "stats-detail") {
@@ -37,10 +45,9 @@ const useAppNavigation = () => {
       } else {
         setIsTabBarVisible(true);
       }
-
-      return newTab;
-    });
-  }, []);
+    },
+    [activeTab],
+  ); // Thêm activeTab vào dependency
 
   return {
     activeTab,
