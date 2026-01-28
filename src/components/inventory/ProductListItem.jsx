@@ -56,12 +56,7 @@ const ProductListItem = memo(
 
     return (
       <motion.div
-        layout
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        exit={{ opacity: 0, scale: 0.95 }}
         whileTap={{ scale: 0.96 }}
-        transition={{ duration: 0.2 }}
         onClick={() => onOpenDetail(product)}
         className={`${
           isOutOfStock
