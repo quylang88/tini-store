@@ -116,8 +116,8 @@ const OrderListItem = memo(
           <div className="mt-3 flex flex-wrap justify-end gap-2 h-8 items-center">
             <AnimatePresence mode="popLayout" initial={false}>
               {/* Nút Thanh Toán / Huỷ Thanh Toán */}
+              {/* Tối ưu hóa: Loại bỏ prop layout để tránh tính toán lại layout gây giật lag trong danh sách dài */}
               <motion.button
-                layout
                 key={isPaid ? "btn-unpay" : "btn-pay"}
                 initial={{ opacity: 0, scale: 0.8 }}
                 animate={{ opacity: 1, scale: 1 }}

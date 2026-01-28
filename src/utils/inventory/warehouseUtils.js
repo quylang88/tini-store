@@ -39,6 +39,24 @@ const WAREHOUSE_KEY_MAP = (() => {
   return map;
 })();
 
+// Cache label để lookup O(1) thay vì find()
+const WAREHOUSE_LABEL_MAP = (() => {
+  const map = {};
+  WAREHOUSES.forEach((w) => {
+    map[w.key] = w.label;
+  });
+  return map;
+})();
+
+// Cache short label để lookup O(1)
+const WAREHOUSE_SHORT_LABEL_MAP = (() => {
+  const map = {};
+  WAREHOUSES.forEach((w) => {
+    map[w.key] = w.shortLabel || w.label;
+  });
+  return map;
+})();
+
 export const getAllWarehouseKeys = () => ALL_WAREHOUSE_KEYS;
 
 // Helper để map bất kỳ key nào (hiện tại hoặc cũ) sang key chính hiện tại
@@ -50,14 +68,14 @@ export const resolveWarehouseKey = (key) => {
 
 export const getWarehouseLabel = (key) => {
   const resolvedKey = resolveWarehouseKey(key);
-  const warehouse = WAREHOUSES.find((item) => item.key === resolvedKey);
-  return warehouse ? warehouse.label : key;
+  // Sử dụng map lookup O(1) thay vì find O(N)
+  return WAREHOUSE_LABEL_MAP[resolvedKey] || key;
 };
 
 export const getWarehouseShortLabel = (key) => {
   const resolvedKey = resolveWarehouseKey(key);
-  const warehouse = WAREHOUSES.find((item) => item.key === resolvedKey);
-  return warehouse?.shortLabel || warehouse?.label || key;
+  // Sử dụng map lookup O(1) thay vì find O(N)
+  return WAREHOUSE_SHORT_LABEL_MAP[resolvedKey] || key;
 };
 
 export const normalizeWarehouseStock = (product = {}) => {
