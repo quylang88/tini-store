@@ -1,5 +1,6 @@
 import React, { useState, useCallback } from "react";
 import { AnimatePresence, motion } from "framer-motion";
+import { Plus } from "lucide-react";
 
 // --- IMPORT CÁC MÀN HÌNH TỪ THƯ MỤC RIÊNG ---
 import Login from "./screens/Login";
@@ -12,6 +13,7 @@ import StatsDetail from "./screens/dashboard/StatsDetail";
 
 // --- IMPORT COMPONENT CHUNG ---
 import TabBar from "./components/TabBar";
+import FloatingActionButton from "./components/button/FloatingActionButton";
 import ConfirmModal from "./components/modals/ConfirmModal";
 import ScreenTransition from "./components/common/ScreenTransition";
 import SplashScreen from "./screens/login/SplashScreen";
@@ -84,6 +86,25 @@ const App = () => {
   const [chatMessages, setChatMessages] = useState(() => [getRandomGreeting()]);
   const [isChatTyping, setIsChatTyping] = useState(false);
 
+  // FAB State - Global management to prevent jumping between tabs
+  const [fabConfig, setFabConfig] = useState({
+    isVisible: false,
+    onClick: null,
+    icon: Plus,
+    label: "",
+    color: "rose",
+  });
+
+  const updateFab = useCallback((config) => {
+    setFabConfig((prev) => ({ ...prev, ...config }));
+  }, []);
+
+  // Wrap tab change to reset FAB visibility
+  const onTabChange = (tab) => {
+    setFabConfig((prev) => ({ ...prev, isVisible: false }));
+    handleTabChange(tab);
+  };
+
   // Daily Greeting
   const updateLastGreetingDate = useCallback(
     (dateStr) => {
@@ -124,8 +145,9 @@ const App = () => {
               <Dashboard
                 products={products}
                 orders={orders}
-                onOpenDetail={() => handleTabChange("stats-detail")}
+                onOpenDetail={() => onTabChange("stats-detail")}
                 settings={settings}
+                updateFab={updateFab}
               />
             </ScreenTransition>
           )}
@@ -135,12 +157,12 @@ const App = () => {
               key="stats-detail"
               custom={direction}
               className="h-full"
-              onSwipeBack={() => handleTabChange("dashboard")}
+              onSwipeBack={() => onTabChange("dashboard")}
             >
               <StatsDetail
                 products={products}
                 orders={orders}
-                onBack={() => handleTabChange("dashboard")}
+                onBack={() => onTabChange("dashboard")}
               />
             </ScreenTransition>
           )}
@@ -158,6 +180,7 @@ const App = () => {
                 setOrders={setOrders}
                 settings={settings}
                 setTabBarVisible={setIsTabBarVisible}
+                updateFab={updateFab}
               />
             </ScreenTransition>
           )}
@@ -215,6 +238,7 @@ const App = () => {
                 setTabBarVisible={setIsTabBarVisible}
                 customers={customers}
                 setCustomers={setCustomers}
+                updateFab={updateFab}
               />
             </ScreenTransition>
           )}
@@ -245,9 +269,30 @@ const App = () => {
 
       <TabBar
         activeTab={activeTab}
-        setActiveTab={handleTabChange}
+        setActiveTab={onTabChange}
         isVisible={isTabBarVisible}
       />
+
+      <AnimatePresence>
+        {fabConfig.isVisible && (
+          <motion.div
+            layout
+            layoutId="floating-action-button"
+            initial={{ scale: 0, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0, opacity: 0 }}
+            className="fixed right-5 bottom-[calc(env(safe-area-inset-bottom)+90px)] z-30"
+          >
+            <FloatingActionButton
+              onClick={fabConfig.onClick}
+              ariaLabel={fabConfig.label}
+              icon={fabConfig.icon}
+              color={fabConfig.color}
+              className="!static"
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <ConfirmModal
         open={logoutModalOpen}
@@ -258,7 +303,7 @@ const App = () => {
         onCancel={closeLogoutModal}
         onConfirm={() => {
           confirmLogout(() => {
-            handleTabChange("dashboard");
+            onTabChange("dashboard");
             resetData();
           });
         }}
