@@ -147,6 +147,7 @@ const App = () => {
                 orders={orders}
                 onOpenDetail={() => onTabChange("stats-detail")}
                 settings={settings}
+                updateFab={updateFab}
               />
             </ScreenTransition>
           )}

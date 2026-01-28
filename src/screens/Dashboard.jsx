@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import {
   ArrowUpRight,
   DollarSign,
@@ -13,10 +13,19 @@ import useDashboardLogic from "../hooks/dashboard/useDashboardLogic";
 import MetricCard from "../components/stats/MetricCard";
 import TopSellingSection from "../components/stats/TopSellingSection";
 import StatListModal from "../components/dashboard/StatListModal";
-import FloatingActionButton from "../components/button/FloatingActionButton";
 import AppHeader from "../components/common/AppHeader";
 
-const Dashboard = ({ products, orders, onOpenDetail }) => {
+const Dashboard = ({ products, orders, onOpenDetail, updateFab }) => {
+  useEffect(() => {
+    updateFab({
+      isVisible: true,
+      onClick: onOpenDetail,
+      icon: ArrowUpRight,
+      label: "Mở thống kê chi tiết",
+      color: "rose",
+    });
+  }, [onOpenDetail, updateFab]);
+
   const {
     currentDate, // Sử dụng ngày từ hook
     topOptions,
@@ -163,14 +172,6 @@ const Dashboard = ({ products, orders, onOpenDetail }) => {
           type="warning"
         />
       </div>
-
-      {/* Nút thống kê chi tiết dạng floating */}
-      <FloatingActionButton
-        onClick={onOpenDetail}
-        ariaLabel="Mở thống kê chi tiết"
-        icon={ArrowUpRight}
-        color="rose"
-      />
     </div>
   );
 };
