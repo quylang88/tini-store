@@ -181,9 +181,16 @@ const ChatInput = ({
     // We also subtract scrollTop to move icon up if user scrolls.
     const rawTop = marker.offsetTop;
     const centeredTop = rawTop + 1; // Fine-tune offset
-    const finalY = centeredTop - textarea.scrollTop;
+    const scrolledY = centeredTop - textarea.scrollTop;
 
-    setIconY(finalY);
+    // Clamp values to keep icon inside the visible area
+    // Top padding is 12px. Bottom limit depends on clientHeight.
+    // Icon size is 18px.
+    const minY = 12; // Top padding
+    const maxY = textarea.clientHeight - 18 - 12; // Height - Icon - Bottom padding
+    const clampedY = Math.max(minY, Math.min(scrolledY, maxY));
+
+    setIconY(clampedY);
   };
 
   // Update icon on interactions
@@ -291,7 +298,7 @@ const ChatInput = ({
                 if (textareaRef.current) textareaRef.current.focus();
               }}
               disabled={disabled}
-              className="absolute right-2 top-2 p-1 text-gray-400 active:text-gray-600 transition-colors rounded-full"
+              className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-gray-400 active:text-gray-600 transition-colors rounded-full"
               aria-label="Xoá nội dung"
             >
               <X size={16} />
