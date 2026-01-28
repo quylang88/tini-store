@@ -50,7 +50,9 @@ const ProductIdentityForm = ({
       <div className="flex flex-col gap-3">
         <label
           htmlFor={allowImageUpload ? "pid-image-input" : undefined}
-          className={`w-full h-32 bg-gray-50 border-2 border-dashed border-gray-300 rounded-xl flex items-center justify-center text-rose-400 overflow-hidden relative ${
+          className={`w-full bg-gray-50 border-2 border-dashed border-gray-300 rounded-xl flex items-center justify-center text-rose-400 overflow-hidden relative ${
+            image ? "" : "h-52"
+          } ${
             allowImageUpload
               ? "cursor-pointer active:border-rose-400 active:bg-rose-50"
               : ""
@@ -59,7 +61,7 @@ const ProductIdentityForm = ({
           {image ? (
             <img
               src={image}
-              className="w-full h-full object-contain absolute inset-0"
+              className="w-full h-auto max-h-[45vh] object-contain"
               alt="Preview"
             />
           ) : (
