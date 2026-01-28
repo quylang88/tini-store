@@ -1,0 +1,3 @@
+## 2024-05-23 - Lazy Loading Heavy Interactive Components
+**Learning:** Components that import large third-party libraries (like `html5-qrcode` ~300KB) should be lazy-loaded using `React.lazy` and `Suspense`. This is especially critical for components that are not immediately visible (e.g., inside a modal or conditional render) but are imported by main screens (like Inventory or Orders). Static imports cause these heavy libraries to be bundled into the main chunk, increasing initial load time.
+**Action:** Always verify bundle impact of new dependencies. Use `React.lazy` for any component that wraps a heavy library and is not needed for the initial paint.
