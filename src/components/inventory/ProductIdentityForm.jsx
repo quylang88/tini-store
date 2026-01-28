@@ -1,6 +1,7 @@
-import React, { useRef } from "react";
-import { ScanBarcode, Upload } from "lucide-react";
+import React, { useRef, useState } from "react";
+import { ScanBarcode, Upload, Maximize2 } from "lucide-react";
 import { formatNumber } from "../../utils/formatters/formatUtils";
+import ImageViewerModal from "../modals/ImageViewerModal";
 
 const ProductIdentityForm = ({
   // Thuộc tính dữ liệu
@@ -30,6 +31,7 @@ const ProductIdentityForm = ({
   highlightOps, // Prop mới để xử lý highlight
 }) => {
   const uploadInputRef = useRef(null);
+  const [showImageViewer, setShowImageViewer] = useState(false);
 
   const handleFileChange = (event) => {
     const file = event.target.files?.[0];
@@ -46,31 +48,62 @@ const ProductIdentityForm = ({
 
   return (
     <div className="space-y-4">
+      {showImageViewer && (
+        <ImageViewerModal
+          src={image}
+          alt={name}
+          onClose={() => setShowImageViewer(false)}
+        />
+      )}
+
       {/* Phần hình ảnh */}
       <div className="flex flex-col gap-3">
-        <label
-          htmlFor={allowImageUpload ? "pid-image-input" : undefined}
-          className={`w-full h-32 bg-gray-50 border-2 border-dashed border-gray-300 rounded-xl flex items-center justify-center text-rose-400 overflow-hidden relative ${
-            allowImageUpload
-              ? "cursor-pointer active:border-rose-400 active:bg-rose-50"
-              : ""
-          }`}
-        >
-          {image ? (
-            <img
-              src={image}
-              className="w-full h-full object-contain absolute inset-0"
-              alt="Preview"
-            />
-          ) : (
-            <div className="flex flex-col items-center">
-              <Upload size={24} className="mb-2" />
-              <span className="text-xs">
-                {allowImageUpload ? "Chạm để thêm ảnh" : "Chưa có ảnh"}
-              </span>
-            </div>
+        <div className="relative w-full h-32">
+          <label
+            htmlFor={allowImageUpload ? "pid-image-input" : undefined}
+            onClick={() => {
+              if (!allowImageUpload && image) setShowImageViewer(true);
+            }}
+            className={`w-full h-full bg-gray-50 border-2 border-dashed border-gray-300 rounded-xl flex items-center justify-center text-rose-400 overflow-hidden relative ${
+              allowImageUpload
+                ? "cursor-pointer active:border-rose-400 active:bg-rose-50"
+                : image
+                  ? "cursor-zoom-in"
+                  : ""
+            }`}
+          >
+            {image ? (
+              <img
+                src={image}
+                className="w-full h-full object-contain absolute inset-0"
+                alt="Preview"
+              />
+            ) : (
+              <div className="flex flex-col items-center">
+                <Upload size={24} className="mb-2" />
+                <span className="text-xs">
+                  {allowImageUpload ? "Chạm để thêm ảnh" : "Chưa có ảnh"}
+                </span>
+              </div>
+            )}
+          </label>
+
+          {/* Nút Maximize */}
+          {image && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setShowImageViewer(true);
+              }}
+              className="absolute top-2 right-2 p-1.5 bg-black/40 text-white rounded-full hover:bg-black/60 transition z-10"
+              title="Xem ảnh đầy đủ"
+            >
+              <Maximize2 size={16} />
+            </button>
           )}
-        </label>
+        </div>
 
         {/* Input ẩn - Gộp chung */}
         <input
