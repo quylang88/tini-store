@@ -1,28 +1,28 @@
 import { useEffect, useRef } from "react";
 
 /**
- * A hook to efficiently persist data changes to storage using a batch update strategy.
- * It tracks changes (Added, Updated, Deleted) by comparing the current data
- * with the previous state using a reference map.
+ * Hook để lưu trữ dữ liệu vào storage một cách hiệu quả sử dụng chiến lược cập nhật hàng loạt (batch update).
+ * Nó theo dõi các thay đổi (Thêm, Sửa, Xóa) bằng cách so sánh dữ liệu hiện tại
+ * với trạng thái trước đó sử dụng reference map.
  *
- * @param {Array} data - The current list of data items (e.g., products, orders).
- * @param {Function} saveBatchFn - The storage function to call with changes: { added, updated, deleted }.
- * @param {boolean} isLoaded - Flag indicating if the initial data load is complete.
- * @param {string} idKey - The unique key field of items (default: "id").
+ * @param {Array} data - Danh sách dữ liệu hiện tại (ví dụ: products, orders).
+ * @param {Function} saveBatchFn - Hàm lưu trữ nhận vào object chứa các thay đổi: { added, updated, deleted }.
+ * @param {boolean} isLoaded - Cờ đánh dấu dữ liệu ban đầu đã tải xong chưa.
+ * @param {string} idKey - Tên trường định danh duy nhất của items (mặc định: "id").
  */
 const useDataPersistence = (data, saveBatchFn, isLoaded, idKey = "id") => {
   const previousDataMapRef = useRef(new Map());
   const hasInitializedRef = useRef(false);
 
   useEffect(() => {
-    // If data isn't loaded yet, do nothing (and reset init state if we logged out)
+    // Nếu chưa load xong dữ liệu thì không làm gì (và reset cờ init nếu vừa logout)
     if (!isLoaded) {
       hasInitializedRef.current = false;
       previousDataMapRef.current.clear();
       return;
     }
 
-    // Convert current list to Map for O(1) lookups
+    // Chuyển đổi danh sách hiện tại thành Map để tra cứu O(1)
     const currentDataMap = new Map();
     data.forEach((item) => {
       if (item && item[idKey]) {
@@ -30,48 +30,47 @@ const useDataPersistence = (data, saveBatchFn, isLoaded, idKey = "id") => {
       }
     });
 
-    // If this is the first render after data load, sync the reference without saving.
-    // This optimization prevents the initial "Write-After-Read" that typically happens
-    // when syncing state to DB on load.
+    // Nếu đây là lần render đầu tiên sau khi load dữ liệu, chỉ đồng bộ reference chứ không lưu.
+    // Tối ưu này ngăn chặn việc "Ghi ngay sau khi Đọc" (Write-After-Read) thừa thãi lúc khởi tạo.
     if (!hasInitializedRef.current) {
       previousDataMapRef.current = currentDataMap;
       hasInitializedRef.current = true;
       return;
     }
 
-    // Identify changes
+    // Xác định các thay đổi
     const added = [];
     const updated = [];
     const deleted = [];
     const previousDataMap = previousDataMapRef.current;
 
-    // 1. Find Added and Updated items
+    // 1. Tìm items Thêm mới và Cập nhật
     for (const [id, item] of currentDataMap.entries()) {
       if (!previousDataMap.has(id)) {
         added.push(item);
       } else {
         const prevItem = previousDataMap.get(id);
-        // We rely on referential equality check (prevItem !== item).
-        // React state updates usually create new object references for changed items.
+        // Dựa vào so sánh tham chiếu (referential equality) để phát hiện thay đổi.
+        // Trong React, khi state update thì object reference thường thay đổi.
         if (prevItem !== item) {
           updated.push(item);
         }
       }
     }
 
-    // 2. Find Deleted items
+    // 2. Tìm items Đã xóa
     for (const id of previousDataMap.keys()) {
       if (!currentDataMap.has(id)) {
         deleted.push(id);
       }
     }
 
-    // 3. Execute batch save if there are changes
+    // 3. Thực thi lưu batch nếu có thay đổi
     if (added.length > 0 || updated.length > 0 || deleted.length > 0) {
       saveBatchFn({ added, updated, deleted });
     }
 
-    // 4. Update the reference for the next cycle
+    // 4. Cập nhật reference cho vòng lặp tiếp theo
     previousDataMapRef.current = currentDataMap;
 
   }, [data, isLoaded, saveBatchFn, idKey]);

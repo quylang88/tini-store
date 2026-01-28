@@ -88,7 +88,7 @@ const App = () => {
   // --- 3. TỰ ĐỘNG LƯU DỮ LIỆU ---
   // Chỉ lưu khi đã load xong dữ liệu (tránh overwrite DB bằng mảng rỗng lúc khởi tạo)
 
-  // Define stable save handlers
+  // Định nghĩa handler ổn định để tránh re-render không cần thiết
   const handleSaveProducts = useCallback(
     (changes) => storageService.saveProductsBatch(changes),
     [],
@@ -98,6 +98,7 @@ const App = () => {
     [],
   );
 
+  // Sử dụng hook tối ưu hóa việc lưu trữ (chỉ lưu thay đổi thay vì ghi đè toàn bộ)
   useDataPersistence(products, handleSaveProducts, isDataLoaded);
   useDataPersistence(orders, handleSaveOrders, isDataLoaded);
 

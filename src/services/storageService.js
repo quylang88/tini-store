@@ -375,7 +375,7 @@ class StorageService {
     });
   }
 
-  // --- Batch Savers ---
+  // --- Batch Savers (Lưu hàng loạt) ---
 
   async saveBatch(storeName, { added, updated, deleted }) {
     if (!this.db) await this.init();
@@ -383,8 +383,11 @@ class StorageService {
       const transaction = this.db.transaction([storeName], "readwrite");
       const store = transaction.objectStore(storeName);
 
+      // Thêm mới và cập nhật dùng chung .put()
       added.forEach((item) => store.put(item));
       updated.forEach((item) => store.put(item));
+
+      // Xóa items
       deleted.forEach((id) => store.delete(id));
 
       transaction.oncomplete = () => resolve();
