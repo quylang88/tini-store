@@ -1,9 +1,7 @@
-import React, { useMemo, useState } from "react";
-import { Maximize2 } from "lucide-react";
+import React, { useMemo } from "react";
 import { formatNumber } from "../../utils/formatters/formatUtils";
 import { getWarehouseLabel } from "../../utils/inventory/warehouseUtils";
 import SheetModal from "../../components/modals/SheetModal";
-import ImageViewerModal from "../modals/ImageViewerModal";
 import useModalCache from "../../hooks/ui/useModalCache";
 import Button from "../../components/button/Button";
 import usePagination from "../../hooks/ui/usePagination";
@@ -13,7 +11,6 @@ import { isScrollNearBottom } from "../../utils/ui/scrollUtils";
 const ProductDetailModal = ({ product, onClose, onEditLot }) => {
   // Logic giữ dữ liệu (Cached Data) để phục vụ animation exit.
   const cachedProduct = useModalCache(product, Boolean(product));
-  const [showImageViewer, setShowImageViewer] = useState(false);
 
   // Sắp xếp các lô hàng theo thời gian mới nhất
   const sortedLots = useMemo(() => {
@@ -56,31 +53,6 @@ const ProductDetailModal = ({ product, onClose, onEditLot }) => {
       }}
     >
       <div className="space-y-4">
-        {/* Ảnh sản phẩm (nếu có) */}
-        {cachedProduct.image && (
-          <div className="relative w-full h-48 bg-gray-50 rounded-xl overflow-hidden border border-rose-100 group">
-            <img
-              src={cachedProduct.image}
-              alt={cachedProduct.name}
-              className="w-full h-full object-contain cursor-zoom-in"
-              onClick={() => setShowImageViewer(true)}
-            />
-            <button
-              onClick={() => setShowImageViewer(true)}
-              className="absolute bottom-2 right-2 p-2 bg-black/40 text-white rounded-full backdrop-blur-sm active:scale-95 transition"
-            >
-              <Maximize2 size={18} />
-            </button>
-            {showImageViewer && (
-              <ImageViewerModal
-                src={cachedProduct.image}
-                alt={cachedProduct.name}
-                onClose={() => setShowImageViewer(false)}
-              />
-            )}
-          </div>
-        )}
-
         <div className="flex flex-col border-b border-rose-100 pb-4">
           <div className="text-sm font-semibold text-amber-600">
             Giá bán: {formatNumber(cachedProduct.price)}đ
