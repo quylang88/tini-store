@@ -34,14 +34,6 @@ const useAppData = (isAuthenticated) => {
         setPendingBuffer(data.pendingBuffer);
         setIsDataLoaded(true);
       });
-    } else {
-        // Reset dữ liệu nếu chưa xác thực (tuỳ chọn, nhưng an toàn hơn nếu parent không unmount)
-        setIsDataLoaded(false);
-        setProducts([]);
-        setOrders([]);
-        setCustomers([]);
-        setChatSummary("");
-        setPendingBuffer([]);
     }
   }, [isAuthenticated]);
 
