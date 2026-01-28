@@ -134,42 +134,51 @@ const useInventoryLogic = ({ products, setProducts, settings }) => {
     return initialSnapshot !== currentSnapshot;
   };
 
-  const openModal = (product = null) => {
-    if (product) {
+  // Tối ưu hóa: Sử dụng useCallback để giữ hàm ổn định, tránh render lại không cần thiết
+  // cho các component con (như ProductDetailModal hoặc FAB) khi state cha thay đổi.
+  const openModal = useCallback(
+    (product = null) => {
+      if (product) {
+        setEditingProduct(product);
+        setEditingLotId(null);
+        const nextFormData = createFormDataForProduct({ product, settings });
+        setFormData(nextFormData);
+        initialFormDataRef.current = nextFormData;
+      } else {
+        setEditingProduct(null);
+        setEditingLotId(null);
+        const nextFormData = createFormDataForNewProduct({
+          settings,
+          activeCategory,
+        });
+        setFormData(nextFormData);
+        initialFormDataRef.current = nextFormData;
+      }
+      setIsModalOpen(true);
+    },
+    [settings, activeCategory, setFormData],
+  );
+
+  // Tối ưu hóa: Giữ reference ổn định để tránh re-render ProductDetailModal khi inventory re-render.
+  const openEditLot = useCallback(
+    (product, lot) => {
+      if (!product || !lot) return;
       setEditingProduct(product);
-      setEditingLotId(null);
-      const nextFormData = createFormDataForProduct({ product, settings });
+      setEditingLotId(lot.id);
+      const nextFormData = createFormDataForLot({ product, lot, settings });
       setFormData(nextFormData);
       initialFormDataRef.current = nextFormData;
-    } else {
-      setEditingProduct(null);
-      setEditingLotId(null);
-      const nextFormData = createFormDataForNewProduct({
-        settings,
-        activeCategory,
-      });
-      setFormData(nextFormData);
-      initialFormDataRef.current = nextFormData;
-    }
-    setIsModalOpen(true);
-  };
+      setIsModalOpen(true);
+    },
+    [settings, setFormData],
+  );
 
-  const openEditLot = (product, lot) => {
-    if (!product || !lot) return;
-    setEditingProduct(product);
-    setEditingLotId(lot.id);
-    const nextFormData = createFormDataForLot({ product, lot, settings });
-    setFormData(nextFormData);
-    initialFormDataRef.current = nextFormData;
-    setIsModalOpen(true);
-  };
-
-  const closeModal = () => {
+  const closeModal = useCallback(() => {
     setIsModalOpen(false);
     setEditingProduct(null);
     setEditingLotId(null);
     initialFormDataRef.current = null;
-  };
+  }, []);
 
   const handleCancelModal = () => {
     // Nếu không có thay đổi thì đóng luôn, tránh hỏi user.
@@ -217,11 +226,15 @@ const useInventoryLogic = ({ products, setProducts, settings }) => {
     sortConfig,
   });
 
-  const handleSelectExistingProduct = (product) => {
-    setEditingProduct(product);
-    setEditingLotId(null);
-    setFormData(createFormDataForProduct({ product, settings }));
-  };
+  // Tối ưu hóa: Memoize handler để tránh re-render ProductModal khi không cần thiết.
+  const handleSelectExistingProduct = useCallback(
+    (product) => {
+      setEditingProduct(product);
+      setEditingLotId(null);
+      setFormData(createFormDataForProduct({ product, settings }));
+    },
+    [settings, setFormData],
+  );
 
   return {
     isModalOpen,
