@@ -119,9 +119,9 @@ const detectIntentByAI = async (query) => {
     Classify the following User Query into exactly one of these categories:
 
     - LOCAL: User asks about internal/local business info: stock, products, revenue, customers (e.g., "kho còn áo A không?", "hôm nay bán được bao nhiêu?", "check tồn kho").
-    - SEARCH: User asks for external info, price comparison, web search, market trends (e.g. "giá iphone", "tìm hiểu về...").
-    - IMPORT: User wants to add stock, restock products (e.g. "nhập 5 cái", "thêm hàng").
-    - EXPORT: User wants to sell, create order, ship items (e.g. "bán 2 cái", "lên đơn cho khách").
+    - SEARCH: User asks for external info, price comparison, web search, market trends OR asks for PRICING ADVICE (e.g., "giá iphone", "nhập về bán giá bao nhiêu thì hợp lý?", "tìm hiểu về...").
+    - IMPORT: User EXPLICITLY commands to add stock/restock products (e.g., "nhập 5 cái", "thêm hàng", "tạo phiếu nhập"). WARNING: Questions like "if I import..." or "import price?" are SEARCH, not IMPORT.
+    - EXPORT: User EXPLICITLY commands to sell/create order (e.g., "bán 2 cái", "lên đơn cho khách").
     - CHAT: Pure casual conversation, greetings, fun (e.g., "chào em", "em làm được gì", "kể chuyện vui").
 
     OUTPUT FORMAT: Return ONLY the category name (IMPORT, EXPORT, SEARCH, LOCAL, or CHAT). Do not explain.

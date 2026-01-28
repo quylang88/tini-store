@@ -120,7 +120,11 @@ export const processQuery = async (
 
   // 5. Gọi AI với Tools
   try {
-    const availableTools = INVENTORY_TOOLS;
+    // Chỉ bật Tool khi Intent là IMPORT hoặc EXPORT để tránh ảo giác (hallucination)
+    // khi AI cố gọi tool trong lúc đang tư vấn (SEARCH) hoặc tán gẫu (CHAT).
+    const availableTools = ["IMPORT", "EXPORT"].includes(intent)
+      ? INVENTORY_TOOLS
+      : null;
 
     const result = await processQueryWithFailover(
       modeConfig.model,
