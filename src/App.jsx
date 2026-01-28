@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { AnimatePresence, motion } from "framer-motion";
+import useDataPersistence from "./hooks/core/useDataPersistence";
 
 // --- IMPORT CÁC MÀN HÌNH TỪ THƯ MỤC RIÊNG ---
 import Login from "./screens/Login";
@@ -86,17 +87,19 @@ const App = () => {
 
   // --- 3. TỰ ĐỘNG LƯU DỮ LIỆU ---
   // Chỉ lưu khi đã load xong dữ liệu (tránh overwrite DB bằng mảng rỗng lúc khởi tạo)
-  useEffect(() => {
-    if (isDataLoaded) {
-      storageService.saveAllProducts(products);
-    }
-  }, [products, isDataLoaded]);
 
-  useEffect(() => {
-    if (isDataLoaded) {
-      storageService.saveAllOrders(orders);
-    }
-  }, [orders, isDataLoaded]);
+  // Define stable save handlers
+  const handleSaveProducts = useCallback(
+    (changes) => storageService.saveProductsBatch(changes),
+    [],
+  );
+  const handleSaveOrders = useCallback(
+    (changes) => storageService.saveOrdersBatch(changes),
+    [],
+  );
+
+  useDataPersistence(products, handleSaveProducts, isDataLoaded);
+  useDataPersistence(orders, handleSaveOrders, isDataLoaded);
 
   useEffect(() => {
     if (isDataLoaded) {

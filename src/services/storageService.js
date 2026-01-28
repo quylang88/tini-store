@@ -375,6 +375,31 @@ class StorageService {
     });
   }
 
+  // --- Batch Savers ---
+
+  async saveBatch(storeName, { added, updated, deleted }) {
+    if (!this.db) await this.init();
+    return new Promise((resolve, reject) => {
+      const transaction = this.db.transaction([storeName], "readwrite");
+      const store = transaction.objectStore(storeName);
+
+      added.forEach((item) => store.put(item));
+      updated.forEach((item) => store.put(item));
+      deleted.forEach((id) => store.delete(id));
+
+      transaction.oncomplete = () => resolve();
+      transaction.onerror = () => reject(transaction.error);
+    });
+  }
+
+  async saveProductsBatch(changes) {
+    return this.saveBatch(STORES.PRODUCTS, changes);
+  }
+
+  async saveOrdersBatch(changes) {
+    return this.saveBatch(STORES.ORDERS, changes);
+  }
+
   saveAll(storeName, items) {
     return new Promise((resolve, reject) => {
       const transaction = this.db.transaction([storeName], "readwrite");
