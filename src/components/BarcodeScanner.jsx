@@ -1,4 +1,5 @@
 import React, { useEffect } from "react";
+import { createPortal } from "react-dom";
 import { Html5QrcodeScanner } from "html5-qrcode";
 
 const BarcodeScanner = ({ onScanSuccess, onClose }) => {
@@ -28,30 +29,32 @@ const BarcodeScanner = ({ onScanSuccess, onClose }) => {
     };
   }, [onScanSuccess]);
 
-  return (
-    // Nâng z-index để khung quét luôn nổi trên modal thêm sản phẩm.
-    <div className="fixed inset-0 z-[80] bg-black/70 backdrop-blur-sm flex flex-col items-center justify-center p-4 modal-overlay-animate">
+  return createPortal(
+    // Nâng z-index lên cực cao (z-[9999]) để đảm bảo che phủ hoàn toàn mọi modal (z-90) và TabBar (z-50).
+    // Chuyển tone màu sang Rose theo yêu cầu.
+    <div className="fixed inset-0 z-[9999] bg-black/80 backdrop-blur-md flex flex-col items-center justify-center p-4 modal-overlay-animate">
       {/* Khung quét dùng animation chung để đồng bộ cảm giác mở modal. */}
       <div className="w-full max-w-sm bg-white rounded-2xl shadow-xl p-4 modal-panel-animate">
         <div className="flex items-center justify-between mb-3">
-          <h3 className="font-bold text-amber-900">Quét mã vạch</h3>
+          <h3 className="font-bold text-rose-900">Quét mã vạch</h3>
           <button
             type="button"
             onClick={onClose}
-            className="text-amber-700 active:text-amber-900 text-sm font-semibold"
+            className="text-rose-700 active:text-rose-900 text-sm font-semibold"
           >
             Đóng
           </button>
         </div>
         <div
           id="reader"
-          className="w-full rounded-lg overflow-hidden bg-black/5"
+          className="w-full rounded-lg overflow-hidden bg-rose-50"
         />
-        <p className="text-xs text-amber-700 mt-3 text-center">
+        <p className="text-xs text-rose-700 mt-3 text-center">
           Đưa mã vạch vào khung để tự động nhận diện.
         </p>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 
