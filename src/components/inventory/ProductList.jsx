@@ -1,5 +1,4 @@
 import React, { memo } from "react";
-import { AnimatePresence } from "framer-motion";
 import { Package } from "lucide-react";
 import ProductListItem from "./ProductListItem";
 
@@ -23,19 +22,17 @@ const ProductList = memo(
          Điều này đảm bảo rằng chỉ những item thực sự thay đổi mới bị render lại,
          giúp scroll mượt mà hơn trên các thiết bị yếu.
       */}
-        <AnimatePresence mode="popLayout">
-          {products.map((product) => (
-            <ProductListItem
-              key={product.id}
-              product={product}
-              onDelete={onDelete}
-              onOpenDetail={onOpenDetail}
-              activeCategory={activeCategory}
-              activeWarehouse={activeWarehouse}
-              onEditBasicInfo={onEditBasicInfo}
-            />
-          ))}
-        </AnimatePresence>
+        {products.map((product) => (
+          <ProductListItem
+            key={product.id}
+            product={product}
+            onDelete={onDelete}
+            onOpenDetail={onOpenDetail}
+            activeCategory={activeCategory}
+            activeWarehouse={activeWarehouse}
+            onEditBasicInfo={onEditBasicInfo}
+          />
+        ))}
 
         {/* 
         Trạng thái rỗng hoàn toàn tĩnh BÊN NGOÀI AnimatePresence.
