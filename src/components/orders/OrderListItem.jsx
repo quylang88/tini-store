@@ -1,5 +1,6 @@
 import React, { memo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import PaidStamp from "../common/PaidStamp";
 import {
   formatNumber,
   formatDateTime,
@@ -47,42 +48,7 @@ const OrderListItem = memo(
         }`}
         onClick={() => onSelectOrder?.(order)}
       >
-        <AnimatePresence>
-          {isPaid && (
-            <motion.div
-              initial={{
-                opacity: 0,
-                scale: 2,
-                x: "-50%",
-                y: "-50%",
-                rotate: -25,
-              }}
-              animate={{
-                opacity: 0.8,
-                scale: 1,
-                x: "-50%",
-                y: "-50%",
-                rotate: -25,
-              }}
-              exit={{
-                opacity: 0,
-                scale: 0.8,
-                x: "-50%",
-                y: "-50%",
-                rotate: -25,
-              }}
-              transition={{
-                delay: 0.3,
-                type: "spring",
-                stiffness: 300,
-                damping: 20,
-              }}
-              className="absolute top-1/2 left-1/2 border-4 border-rose-500 text-rose-500 font-bold text-xl px-4 py-2 pointer-events-none z-10 whitespace-nowrap rounded-lg"
-            >
-              ĐÃ THANH TOÁN
-            </motion.div>
-          )}
-        </AnimatePresence>
+        <PaidStamp isPaid={isPaid} variant="list" />
         <div
           className={`transition-all duration-300 ${isPaid ? "grayscale opacity-75" : ""}`}
         >

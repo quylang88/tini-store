@@ -122,7 +122,14 @@ const EditPriceModal = ({ item, isOpen, onClose, onSave }) => {
           </div>
         }
       >
-        <div className="space-y-4 py-2">
+        <form
+          className="space-y-4 py-2"
+          action="#"
+          onSubmit={(e) => {
+            e.preventDefault();
+            handleSave();
+          }}
+        >
           <div>
             <label className="text-xs font-semibold text-rose-700 uppercase tracking-wider">
               Sản phẩm
@@ -149,6 +156,8 @@ const EditPriceModal = ({ item, isOpen, onClose, onSave }) => {
               <div className="relative mt-1">
                 <input
                   type="number"
+                  inputMode="decimal"
+                  enterKeyHint="next"
                   value={discountPercent}
                   onChange={(e) => handleDiscountChange(e.target.value)}
                   className="w-full border border-gray-300 rounded-xl p-3 pr-8 text-sm focus:ring-2 focus:ring-rose-500 focus:border-rose-500 outline-none transition"
@@ -167,6 +176,7 @@ const EditPriceModal = ({ item, isOpen, onClose, onSave }) => {
                 <input
                   type="text"
                   inputMode="numeric"
+                  pattern="[0-9]*"
                   enterKeyHint="done"
                   value={formatInputNumber(price)}
                   onChange={(e) => handlePriceChange(e.target.value)}
@@ -184,6 +194,7 @@ const EditPriceModal = ({ item, isOpen, onClose, onSave }) => {
           <div className="flex gap-3">
             {[10, 15, 20, 30].map((percent) => (
               <button
+                type="button"
                 key={percent}
                 onClick={() => applyQuickSale(percent)}
                 className="flex-1 py-2 bg-rose-50 text-rose-600 text-xs font-bold rounded-lg border border-rose-100 active:bg-rose-100 transition"
@@ -196,7 +207,7 @@ const EditPriceModal = ({ item, isOpen, onClose, onSave }) => {
           <div className="text-xs text-gray-400 italic text-center pt-2">
             Nhập % sale hoặc giá bán trực tiếp.
           </div>
-        </div>
+        </form>
       </SheetModal>
 
       <ErrorModal

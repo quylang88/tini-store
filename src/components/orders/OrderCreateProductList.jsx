@@ -49,6 +49,8 @@ const QuantityStepper = ({
       </button>
       <input
         type="number"
+        inputMode="numeric"
+        pattern="[0-9]*"
         className="w-12 h-full text-center bg-transparent border-x border-rose-200 outline-none text-gray-900 font-bold text-sm m-0 p-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
         value={qty}
         onChange={(e) =>
