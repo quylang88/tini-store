@@ -97,7 +97,7 @@ const StatsDetail = ({ products, orders, onBack }) => {
   const modalItems = activeModal === "quantity" ? topByQuantity : topByProfit;
 
   return (
-    <div className="flex flex-col h-full animate-fade-in bg-rose-50">
+    <div className="flex flex-col h-full bg-rose-50">
       <div className="flex-none pt-[env(safe-area-inset-top)] bg-rose-50 z-20 sticky top-0 px-4 py-2 border-b border-rose-100/50 backdrop-blur-sm">
         <div className="text-xl text-rose-700 font-bold whitespace-nowrap">
           Thống kê chi tiết
