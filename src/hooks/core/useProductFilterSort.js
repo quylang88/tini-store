@@ -2,6 +2,11 @@ import { useMemo } from "react";
 import { normalizeString } from "../../utils/formatters/formatUtils";
 import { getProductDate } from "../../utils/common/sortingUtils";
 
+// Cache cấp module để tái sử dụng các object wrapper khi sản phẩm (reference) không đổi.
+// Giúp giảm thiểu việc tạo object mới (GC pressure) và gọi normalizeString khi danh sách sản phẩm cập nhật (ví dụ: edit 1 item).
+// WeakMap tự động dọn dẹp khi object product gốc bị xóa khỏi bộ nhớ.
+const searchableProductCache = new WeakMap();
+
 const useProductFilterSort = ({
   products,
   filterConfig = {},
@@ -13,12 +18,22 @@ const useProductFilterSort = ({
   // Tối ưu hóa: Tính toán trước các trường tìm kiếm đã được chuẩn hóa.
   // Việc này giúp tránh gọi hàm normalizeString (sử dụng regex tốn kém) trong vòng lặp lọc.
   // Thay vì độ phức tạp O(N * M) với M là số ký tự gõ, ta chỉ tốn O(N) một lần khi danh sách sản phẩm thay đổi.
+  // Sử dụng WeakMap cache để O(1) khi tái sử dụng wrapper cho các sản phẩm không đổi.
   const searchableProducts = useMemo(() => {
-    return products.map((product) => ({
-      original: product,
-      normalizedName: normalizeString(product.name),
-      searchableBarcode: product.barcode ? String(product.barcode) : "",
-    }));
+    return products.map((product) => {
+      if (searchableProductCache.has(product)) {
+        return searchableProductCache.get(product);
+      }
+
+      const searchable = {
+        original: product,
+        normalizedName: normalizeString(product.name),
+        searchableBarcode: product.barcode ? String(product.barcode) : "",
+      };
+
+      searchableProductCache.set(product, searchable);
+      return searchable;
+    });
   }, [products]);
 
   const filteredProducts = useMemo(() => {

@@ -15,8 +15,9 @@ const ProductDetailModal = ({ product, onClose, onEditLot }) => {
   // Sắp xếp các lô hàng theo thời gian mới nhất
   const sortedLots = useMemo(() => {
     if (!cachedProduct) return [];
-    return [...(cachedProduct.purchaseLots || [])].sort(
-      (a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0),
+    // Tối ưu hóa: So sánh chuỗi ISO trực tiếp thay vì tạo object Date mới (O(N) allocations).
+    return [...(cachedProduct.purchaseLots || [])].sort((a, b) =>
+      (b.createdAt || "").localeCompare(a.createdAt || ""),
     );
   }, [cachedProduct]);
 

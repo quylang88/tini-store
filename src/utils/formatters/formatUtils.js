@@ -61,9 +61,9 @@ export const normalizeString = (str) => {
     .toLowerCase()
     .trim();
 
-  // Simple eviction policy: Clear cache if it grows too large (e.g., > 2000 entries)
-  // This prevents memory leaks while covering typical inventory sizes.
-  if (normalizeCache.size > 2000) {
+  // Simple eviction policy: Clear cache if it grows too large (e.g., > 10000 entries)
+  // This prevents memory leaks while covering typical inventory sizes, while avoiding thrashing for larger shops.
+  if (normalizeCache.size > 10000) {
     normalizeCache.clear();
   }
 

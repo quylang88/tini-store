@@ -1,6 +1,6 @@
 import React, { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
 import SheetModal from "../../components/modals/SheetModal";
+import PaidStamp from "../common/PaidStamp";
 import { formatNumber } from "../../utils/formatters/formatUtils";
 import {
   getWarehouseLabel,
@@ -82,25 +82,7 @@ const OrderDetailModal = ({ order, products, onClose, getOrderStatusInfo }) => {
       showCloseIcon={false} // Chỉ xem
     >
       <div className="space-y-4 relative">
-        <AnimatePresence>
-          {isPaid && (
-            <motion.div
-              initial={{ opacity: 0, scale: 2 }}
-              animate={{ opacity: 0.8, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.8 }}
-              transition={{
-                delay: 0.4,
-                type: "spring",
-                stiffness: 300,
-                damping: 20,
-              }}
-              style={{ mixBlendMode: "multiply" }}
-              className="absolute top-0 right-0 border-2 border-rose-500 text-rose-500 font-bold text-base px-2 py-1 pointer-events-none z-10 whitespace-nowrap rounded-md"
-            >
-              ĐÃ THANH TOÁN
-            </motion.div>
-          )}
-        </AnimatePresence>
+        <PaidStamp isPaid={isPaid} variant="detail" />
 
         {/* Thông tin Header */}
         <div className="border-b border-rose-100 pb-4">
