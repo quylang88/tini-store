@@ -29,9 +29,12 @@ const useOrderSubmitLogic = ({
 }) => {
   const getNextOrderNumber = () => {
     // Tạo số đơn 4 chữ số ngẫu nhiên để thay thế STT tuần tự.
-    const usedNumbers = new Set(
-      orders.map((order) => String(order.orderNumber)).filter(Boolean),
-    );
+    const usedNumbers = new Set();
+    for (const order of orders) {
+      const numStr = String(order.orderNumber);
+      if (numStr) usedNumbers.add(numStr);
+    }
+
     const generateNumber = () =>
       String(Math.floor(1000 + Math.random() * 9000));
     let nextNumber = generateNumber();

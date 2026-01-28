@@ -84,13 +84,12 @@ const ProductItem = ({
 
   const handleExpandToggle = (targetState) => {
     if (targetState) {
-      // Mở rộng: Ẩn thông tin trước -> sau đó mở rộng text
-      // FIX: Bỏ setTimeout để hiệu ứng mượt hơn (concurrent animations)
+      // Mở rộng: Ẩn thông tin và mở rộng text đồng thời để hiệu ứng mượt hơn
       // ExpandableProductName đã được tối ưu với layout prop và line-clamp
       setIsInfoHidden(true);
       setIsNameExpanded(true);
     } else {
-      // Thu gọn: Thu gọn text trước -> sau đó hiện thông tin
+      // Thu gọn: Thu gọn text và hiện thông tin đồng thời
       setIsNameExpanded(false);
       setIsInfoHidden(false);
     }
