@@ -90,7 +90,14 @@ const ProductModal = ({
       showCloseIcon={true} // Modal nhập liệu có nút X
       footer={footer}
     >
-      <div className="space-y-4">
+      <form
+        className="space-y-4"
+        action="#"
+        onSubmit={(e) => {
+          e.preventDefault();
+          onSave();
+        }}
+      >
         {/* TÁI CẤU TRÚC: Form định danh sản phẩm dùng chung */}
         <ProductIdentityForm
           // Data
@@ -168,7 +175,8 @@ const ProductModal = ({
                     </span>
                     <input
                       inputMode="numeric"
-                      enterKeyHint="done"
+                      pattern="[0-9]*"
+                      enterKeyHint="next"
                       className={`w-full bg-transparent border-b border-rose-100 py-2 pl-4 focus:border-rose-400 outline-none text-gray-900 font-bold ${
                         isHighlighted("costJPY") ? highlightClass : ""
                       }`}
@@ -186,7 +194,8 @@ const ProductModal = ({
                   </label>
                   <input
                     inputMode="numeric"
-                    enterKeyHint="done"
+                    pattern="[0-9]*"
+                    enterKeyHint="next"
                     className="w-full bg-transparent border-b border-rose-100 py-2 focus:border-rose-400 outline-none text-gray-900 text-right"
                     value={formatInputNumber(formData.exchangeRate)}
                     onChange={onMoneyChange("exchangeRate")}
@@ -212,7 +221,8 @@ const ProductModal = ({
                 <span className="absolute left-0 top-2 text-rose-500">đ</span>
                 <input
                   inputMode="numeric"
-                  enterKeyHint="done"
+                  pattern="[0-9]*"
+                  enterKeyHint="next"
                   className={`w-full bg-transparent border-b border-rose-100 py-2 pl-4 focus:border-rose-400 outline-none text-gray-900 font-bold ${
                     isHighlighted("costVNDInput") ? highlightClass : ""
                   }`}
@@ -274,6 +284,7 @@ const ProductModal = ({
                 </label>
                 <input
                   inputMode="decimal"
+                  enterKeyHint="next"
                   lang="en"
                   className={`w-full bg-transparent border-b border-rose-100 py-2 focus:border-rose-400 outline-none text-gray-900 font-bold ${
                     isHighlighted("shippingWeightKg") ? highlightClass : ""
@@ -313,7 +324,8 @@ const ProductModal = ({
                 </label>
                 <input
                   inputMode="numeric"
-                  enterKeyHint="done"
+                  pattern="[0-9]*"
+                  enterKeyHint="next"
                   className="w-full bg-transparent border-b border-rose-100 py-2 focus:border-rose-400 outline-none text-gray-900 font-bold"
                   value={formatInputNumber(formData.shippingFeeVndInput)}
                   onChange={onMoneyChange("shippingFeeVndInput")}
@@ -356,7 +368,9 @@ const ProductModal = ({
                 Số lượng
               </label>
               <input
-                type="number"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                enterKeyHint="next"
                 className={`w-full border-b border-rose-100 bg-transparent py-2 focus:border-rose-400 outline-none text-gray-900 font-bold text-lg ${
                   isHighlighted("quantity") ? highlightClass : ""
                 }`}
@@ -392,6 +406,7 @@ const ProductModal = ({
             </label>
             <input
               inputMode="numeric"
+              pattern="[0-9]*"
               enterKeyHint="done"
               className={`w-full border-b border-gray-200 py-2 focus:border-rose-400 outline-none text-gray-900 font-bold text-lg disabled:text-gray-500 ${
                 isHighlighted("price") ? highlightClass : ""
@@ -435,7 +450,7 @@ const ProductModal = ({
             ))}
           </div>
         )}
-      </div>
+      </form>
     </SheetModal>
   );
 };
