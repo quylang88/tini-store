@@ -62,19 +62,30 @@ export const normalizePurchaseLots = (product = {}) => {
   };
 };
 
+// Cache kết quả tìm kiếm lot mới nhất để tránh loop O(N) lặp lại.
+// Key là reference của array purchaseLots.
+const latestLotCache = new WeakMap();
+
 export const getLatestLot = (product = {}) => {
-  const lots = product.purchaseLots || [];
-  if (lots.length === 0) return null;
+  const lots = product.purchaseLots;
+  if (!lots || !Array.isArray(lots) || lots.length === 0) return null;
+
+  if (latestLotCache.has(lots)) {
+    return latestLotCache.get(lots);
+  }
 
   // Find lot with latest createdAt using string comparison (ISO format).
   // Note: We must scan the array (O(N)) because lots are not guaranteed to be sorted by date.
   // Using string comparison is faster than new Date() parsing.
-  return lots.reduce((latest, current) => {
+  const latest = lots.reduce((latest, current) => {
     if (!latest) return current;
     const latestDate = latest.createdAt || "";
     const currentDate = current.createdAt || "";
     return currentDate > latestDate ? current : latest;
   }, lots[0]);
+
+  latestLotCache.set(lots, latest);
+  return latest;
 };
 
 // Returns all stats in one pass to avoid multiple array scans
