@@ -5,8 +5,8 @@ import { motion } from "framer-motion";
 const variants = {
   enter: (direction) => ({
     x: direction > 0 ? "100%" : "-25%", // Vào từ phải (nếu direction > 0) hoặc từ trái
-    opacity: 0,
-    scale: 0.95, // Hơi nhỏ lại một chút
+    opacity: 1, // Đảm bảo không bị trong suốt khi bắt đầu (tránh chớp trắng)
+    scale: 1, // Giữ nguyên kích thước (tránh hở nền)
     zIndex: 2, // Đè lên màn hình cũ
   }),
   center: {
@@ -21,8 +21,8 @@ const variants = {
   },
   exit: (direction) => ({
     x: direction < 0 ? "100%" : "-25%", // Ra về phải (nếu direction < 0) hoặc về trái
-    opacity: 0, // Fade out để tạo chiều sâu
-    scale: 0.95,
+    opacity: 1, // Giữ nguyên độ đậm để tránh lộ nền trắng phía sau
+    scale: 0.95, // Thu nhỏ nhẹ để tạo chiều sâu (giống iOS)
     zIndex: 1, // Nằm dưới màn hình mới vào
     transition: {
       x: { type: "spring", stiffness: 300, damping: 30 },
@@ -44,7 +44,7 @@ const ScreenTransition = ({
       initial="enter"
       animate="center"
       exit="exit"
-      className={`screen-transition absolute top-0 left-0 w-full h-full bg-inherit ${className}`}
+      className={`screen-transition absolute top-0 left-0 w-full h-full bg-rose-50 ${className}`}
       // Cấu hình gesture swipe back nếu có handler
       drag={onSwipeBack ? "x" : false}
       dragConstraints={{ left: 0, right: 0 }}
@@ -54,9 +54,6 @@ const ScreenTransition = ({
         if (onSwipeBack && (offset.x > 100 || velocity.x > 500)) {
           onSwipeBack();
         }
-      }}
-      style={{
-        background: "inherit", // Giữ màu nền để không bị trong suốt khi trượt
       }}
     >
       {children}
