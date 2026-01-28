@@ -17,11 +17,13 @@ html, body, #root {
 html {
   background-color: #fff1f2;
   overscroll-behavior-y: none;
+  overflow: hidden; /* Force viewport to be non-scrollable */
 }
 
 body {
   /* Prevent pull-to-refresh on mobile */
   overscroll-behavior-y: none;
+  overflow: hidden; /* Force viewport to be non-scrollable */
   /* Disable text selection */
   user-select: none;
   -webkit-user-select: none;

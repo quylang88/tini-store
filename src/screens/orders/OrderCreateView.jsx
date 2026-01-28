@@ -1,7 +1,6 @@
 /* eslint-disable no-unused-vars */
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import BarcodeScanner from "../../components/BarcodeScanner";
 import { getWarehouses } from "../../utils/inventory/warehouseUtils";
 
 import OrderCreateHeader from "../../components/orders/OrderCreateHeader";
@@ -12,6 +11,11 @@ import useScrollHandling from "../../hooks/ui/useScrollHandling";
 import ProductFilterHeader from "../../components/common/ProductFilterHeader";
 import usePagination from "../../hooks/ui/usePagination";
 import { isScrollNearBottom } from "../../utils/ui/scrollUtils";
+
+// Tối ưu hóa: Lazy load BarcodeScanner để giảm kích thước bundle.
+const BarcodeScanner = React.lazy(
+  () => import("../../components/BarcodeScanner"),
+);
 
 // Giao diện tạo/sửa đơn được tách riêng để Orders.jsx gọn hơn
 const OrderCreateView = ({
@@ -103,10 +107,18 @@ const OrderCreateView = ({
   return (
     <div className="flex flex-col h-full bg-rose-50 pb-safe-area relative">
       {showScanner && (
-        <BarcodeScanner
-          onScanSuccess={handleScanForSale}
-          onClose={() => setShowScanner(false)}
-        />
+        <React.Suspense
+          fallback={
+            <div className="fixed inset-0 z-[80] bg-black/50 backdrop-blur-sm flex items-center justify-center">
+              <div className="text-white font-medium">Đang tải máy quét...</div>
+            </div>
+          }
+        >
+          <BarcodeScanner
+            onScanSuccess={handleScanForSale}
+            onClose={() => setShowScanner(false)}
+          />
+        </React.Suspense>
       )}
 
       {/* 1. Header Tiêu Đề (Fixed, Z-20) - Luôn hiển thị */}

@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Plus } from "lucide-react";
-import BarcodeScanner from "../components/BarcodeScanner";
 import ProductFilterHeader from "../components/common/ProductFilterHeader";
 import ProductFilterSection from "../components/common/ProductFilterSection";
 import ProductList from "../components/inventory/ProductList";
@@ -15,6 +14,10 @@ import useScrollHandling from "../hooks/ui/useScrollHandling";
 import AppHeader from "../components/common/AppHeader";
 import usePagination from "../hooks/ui/usePagination";
 import { isScrollNearBottom } from "../utils/ui/scrollUtils";
+
+// Tối ưu hóa: Lazy load BarcodeScanner để giảm kích thước bundle ban đầu.
+// Thư viện html5-qrcode rất nặng (~300KB), chỉ nên tải khi người dùng cần quét mã.
+const BarcodeScanner = React.lazy(() => import("../components/BarcodeScanner"));
 
 const Inventory = ({
   products,
@@ -103,10 +106,18 @@ const Inventory = ({
       <AppHeader className="z-20" isScrolled={isScrolled} />
 
       {showScanner && (
-        <BarcodeScanner
-          onScanSuccess={handleScanSuccess}
-          onClose={() => setShowScanner(false)}
-        />
+        <React.Suspense
+          fallback={
+            <div className="fixed inset-0 z-[80] bg-black/50 backdrop-blur-sm flex items-center justify-center">
+              <div className="text-white font-medium">Đang tải máy quét...</div>
+            </div>
+          }
+        >
+          <BarcodeScanner
+            onScanSuccess={handleScanSuccess}
+            onClose={() => setShowScanner(false)}
+          />
+        </React.Suspense>
       )}
 
       {/* Container cho nội dung chính, bắt đầu từ dưới AppHeader */}

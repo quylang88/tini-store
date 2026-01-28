@@ -3,7 +3,6 @@ import { Lock, User, ArrowRight, CheckSquare, Eye, EyeOff } from "lucide-react";
 import useLoginLogic from "../hooks/auth/useLoginLogic";
 import SplashScreen from "./login/SplashScreen";
 import useImagePreloader from "../hooks/ui/useImagePreloader";
-import useThemeColor from "../hooks/ui/useThemeColor";
 
 const AuthField = ({
   label,
@@ -72,10 +71,6 @@ const Login = ({ onLogin }) => {
     handleForceContinue,
   } = useImagePreloader("/tiny-shop.png");
 
-  // Cập nhật theme color để khớp với gradient nền của màn hình Login
-  // Amber-50 (#fffbeb) là màu bắt đầu của gradient
-  useThemeColor("#fffbeb");
-
   if (!imgLoaded) {
     return (
       <SplashScreen showWarning={showWarning} onConfirm={handleForceContinue} />
@@ -83,7 +78,7 @@ const Login = ({ onLogin }) => {
   }
 
   return (
-    <div className="h-[100dvh] overflow-hidden bg-gradient-to-br from-amber-50 via-rose-50 to-orange-100 flex items-center justify-center p-4">
+    <div className="h-[100dvh] overflow-hidden bg-rose-50 flex items-center justify-center p-4">
       <div className="bg-white/90 w-full max-w-sm rounded-2xl shadow-xl backdrop-blur overflow-hidden animate-fade-in border border-white/70 max-h-full overflow-y-auto">
         <div className="h-40 overflow-hidden shrink-0">
           <img
