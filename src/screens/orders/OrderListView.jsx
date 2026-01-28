@@ -1,7 +1,5 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useEffect } from "react";
 import { ShoppingCart, Plus } from "lucide-react";
-import { AnimatePresence, motion } from "framer-motion";
-import FloatingActionButton from "../../components/button/FloatingActionButton";
 import AppHeader from "../../components/common/AppHeader";
 import useScrollHandling from "../../hooks/ui/useScrollHandling";
 import OrderListItem from "../../components/orders/OrderListItem";
@@ -18,12 +16,23 @@ const OrderListView = ({
   handleCancelOrder,
   onSelectOrder,
   setTabBarVisible,
+  updateFab,
 }) => {
   // Logic scroll ẩn/hiện UI sử dụng hook mới
   const { isAddButtonVisible, isScrolled, handleScroll } = useScrollHandling({
     mode: "simple",
     setTabBarVisible,
   });
+
+  useEffect(() => {
+    updateFab({
+      isVisible: isAddButtonVisible,
+      onClick: onCreateOrder,
+      icon: Plus,
+      label: "Tạo đơn mới",
+      color: "rose",
+    });
+  }, [isAddButtonVisible, onCreateOrder, updateFab]);
 
   // Memoize danh sách đơn hàng đã sắp xếp để tránh sắp xếp lại mỗi lần render
   const sortedOrders = useMemo(() => {
@@ -55,28 +64,6 @@ const OrderListView = ({
   return (
     <div className="relative h-full bg-transparent">
       <AppHeader isScrolled={isScrolled} />
-
-      {/* Nút tạo đơn mới nổi để tái sử dụng layout và tránh lặp code. */}
-      <AnimatePresence>
-        {isAddButtonVisible && (
-          <motion.div
-            layout
-            layoutId="floating-action-button"
-            initial={{ scale: 0, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0, opacity: 0 }}
-            className="fixed right-5 bottom-[calc(env(safe-area-inset-bottom)+90px)] z-30"
-          >
-            <FloatingActionButton
-              onClick={onCreateOrder}
-              ariaLabel="Tạo đơn mới"
-              icon={Plus}
-              color="rose"
-              className="!static"
-            />
-          </motion.div>
-        )}
-      </AnimatePresence>
 
       <div
         className="h-full overflow-y-auto p-3 pt-[calc(80px+env(safe-area-inset-top))] pb-24 space-y-3 min-h-0 overscroll-y-contain"

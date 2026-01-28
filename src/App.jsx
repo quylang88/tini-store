@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useCallback } from "react";
 import { AnimatePresence, motion } from "framer-motion";
+import { Plus } from "lucide-react";
 
 // --- IMPORT CÁC MÀN HÌNH TỪ THƯ MỤC RIÊNG ---
 import Login from "./screens/Login";
@@ -9,226 +10,103 @@ import Orders from "./screens/Orders";
 import Assistant from "./screens/Assistant";
 import Settings from "./screens/Settings";
 import StatsDetail from "./screens/dashboard/StatsDetail";
-import { normalizePurchaseLots } from "./utils/inventory/purchaseUtils";
 
 // --- IMPORT COMPONENT CHUNG ---
 import TabBar from "./components/TabBar";
+import FloatingActionButton from "./components/button/FloatingActionButton";
 import ConfirmModal from "./components/modals/ConfirmModal";
 import ScreenTransition from "./components/common/ScreenTransition";
 import SplashScreen from "./screens/login/SplashScreen";
 import OfflineAlert from "./screens/login/OfflineAlert";
-import useImagePreloader from "./hooks/ui/useImagePreloader";
-import { exportDataToJSON } from "./utils/file/fileUtils";
-import { sendNotification } from "./utils/common/notificationUtils";
+
+// --- IMPORT HOOKS ---
 import useDailyGreeting from "./hooks/core/useDailyGreeting";
 import { getRandomGreeting } from "./services/ai/chatHelpers";
-import storageService from "./services/storageService";
-
-// Định nghĩa thứ tự tab để xác định hướng chuyển cảnh
-const TAB_ORDER = {
-  dashboard: 0,
-  products: 1,
-  assistant: 2,
-  orders: 3,
-  settings: 4,
-  "stats-detail": 10, // Coi như màn hình con của dashboard
-};
+import useAppAuth from "./hooks/app/useAppAuth";
+import useAppData from "./hooks/app/useAppData";
+import useAppNavigation from "./hooks/app/useAppNavigation";
+import useBackupLogic from "./hooks/app/useBackupLogic";
+import useAppInit from "./hooks/app/useAppInit";
 
 const App = () => {
-  // --- 1. QUẢN LÝ TRẠNG THÁI ĐĂNG NHẬP ---
-  const [isAuthenticated, setIsAuthenticated] = useState(() => {
-    return sessionStorage.getItem("tini_auth") === "true";
-  });
+  // --- 1. AUTHENTICATION & INIT ---
+  const {
+    isAuthenticated,
+    logoutModalOpen,
+    handleLoginSuccess,
+    handleLogout,
+    closeLogoutModal,
+    confirmLogout,
+  } = useAppAuth();
 
-  const [activeTab, setActiveTab] = useState("dashboard");
-  const [direction, setDirection] = useState(0); // 1: phải sang trái (push), -1: trái sang phải (pop)
-  const [logoutModalOpen, setLogoutModalOpen] = useState(false);
-  const [backupReminderOpen, setBackupReminderOpen] = useState(false);
+  const { appReady, showWarning, offlineAcknowledged, handleForceContinue } =
+    useAppInit(isAuthenticated);
 
-  // --- 1b. TRẠNG THÁI CHAT ASSISTANT ---
+  // --- 2. DATA MANAGEMENT ---
+  const {
+    isDataLoaded,
+    products,
+    setProducts,
+    orders,
+    setOrders,
+    settings,
+    setSettings,
+    customers,
+    setCustomers,
+    chatSummary,
+    setChatSummary,
+    pendingBuffer,
+    setPendingBuffer,
+    resetData,
+  } = useAppData(isAuthenticated);
+
+  // --- 3. NAVIGATION ---
+  const {
+    activeTab,
+    direction,
+    handleTabChange,
+    isTabBarVisible,
+    setIsTabBarVisible,
+  } = useAppNavigation();
+
+  // --- 4. BACKUP LOGIC ---
+  const { backupReminderOpen, setBackupReminderOpen, handleBackupNow } =
+    useBackupLogic({
+      isAuthenticated,
+      isDataLoaded,
+      products,
+      orders,
+      settings,
+      setSettings,
+      customers,
+      chatSummary,
+    });
+
+  // --- 5. UI STATE (ASSISTANT & OTHERS) ---
   const [chatMessages, setChatMessages] = useState(() => [getRandomGreeting()]);
   const [isChatTyping, setIsChatTyping] = useState(false);
 
-  // --- 2. KHỞI TẠO DỮ LIỆU TỪ INDEXEDDB (Async) ---
-  const [isDataLoaded, setIsDataLoaded] = useState(false);
-  const [products, setProducts] = useState([]);
-  const [orders, setOrders] = useState([]);
-  const [settings, setSettings] = useState({
-    exchangeRate: 170,
-    categories: ["Chung", "Mỹ phẩm", "Thực phẩm", "Quần áo"],
-    themeId: "rose", // Default theme
-    lastGreetingDate: null,
+  // FAB State - Global management to prevent jumping between tabs
+  const [fabConfig, setFabConfig] = useState({
+    isVisible: false,
+    onClick: null,
+    icon: Plus,
+    label: "",
+    color: "rose",
   });
-  const [customers, setCustomers] = useState([]);
-  const [chatSummary, setChatSummary] = useState("");
-  // State mới cho buffer chat (thay thế localStorage ai_pending_buffer)
-  const [pendingBuffer, setPendingBuffer] = useState([]);
 
-  // Load data khi authenticated
-  useEffect(() => {
-    if (isAuthenticated) {
-      storageService.loadAllData().then((data) => {
-        setProducts(
-          data.products.map((product) => normalizePurchaseLots(product)),
-        );
-        setOrders(data.orders);
-        if (data.settings) {
-          // Merge with default settings to ensure new fields like themeId exist
-          setSettings((prev) => ({ ...prev, ...data.settings }));
-        }
-        setCustomers(data.customers);
-        setChatSummary(data.chatSummary);
-        setPendingBuffer(data.pendingBuffer);
-        setIsDataLoaded(true);
-      });
-    }
-  }, [isAuthenticated]);
+  const updateFab = useCallback((config) => {
+    setFabConfig((prev) => ({ ...prev, ...config }));
+  }, []);
 
-  // --- 3. TỰ ĐỘNG LƯU DỮ LIỆU ---
-  // Chỉ lưu khi đã load xong dữ liệu (tránh overwrite DB bằng mảng rỗng lúc khởi tạo)
-  useEffect(() => {
-    if (isDataLoaded) {
-      storageService.saveAllProducts(products);
-    }
-  }, [products, isDataLoaded]);
-
-  useEffect(() => {
-    if (isDataLoaded) {
-      storageService.saveAllOrders(orders);
-    }
-  }, [orders, isDataLoaded]);
-
-  useEffect(() => {
-    if (isDataLoaded) {
-      storageService.saveSettings(settings);
-    }
-  }, [settings, isDataLoaded]);
-
-  useEffect(() => {
-    if (isDataLoaded) {
-      storageService.saveAllCustomers(customers);
-    }
-  }, [customers, isDataLoaded]);
-
-  useEffect(() => {
-    if (isDataLoaded) {
-      storageService.saveChatSummary(chatSummary);
-    }
-  }, [chatSummary, isDataLoaded]);
-
-  useEffect(() => {
-    if (isDataLoaded) {
-      storageService.savePendingBuffer(pendingBuffer);
-    }
-  }, [pendingBuffer, isDataLoaded]);
-
-  // --- 4. HÀM XỬ LÝ NAV & AUTH ---
-  const handleLoginSuccess = () => {
-    setIsAuthenticated(true);
-    sessionStorage.setItem("tini_auth", "true");
+  // Wrap tab change to reset FAB visibility
+  const onTabChange = (tab) => {
+    setFabConfig((prev) => ({ ...prev, isVisible: false }));
+    handleTabChange(tab);
   };
 
-  const handleLogout = () => {
-    setLogoutModalOpen(true);
-  };
-
-  const handleBackupNow = React.useCallback(() => {
-    const now = new Date().toISOString();
-    const newSettings = { ...settings, lastBackupDate: now };
-    setSettings(newSettings);
-    // Pass extra data (customers, chatSummary) to backup function
-    exportDataToJSON(products, orders, newSettings, customers, chatSummary);
-    setBackupReminderOpen(false);
-  }, [settings, products, orders, customers, chatSummary]);
-
-  // --- 3b. KIỂM TRA SAO LƯU (AUTO REMINDER / DOWNLOAD) ---
-  useEffect(() => {
-    if (!isAuthenticated || !isDataLoaded) return;
-
-    const checkBackupStatus = () => {
-      if (sessionStorage.getItem("hasCheckedBackup")) return;
-
-      const lastBackup = settings.lastBackupDate
-        ? new Date(settings.lastBackupDate).getTime()
-        : 0;
-      const now = Date.now();
-      const daysSinceBackup = (now - lastBackup) / (1000 * 60 * 60 * 24);
-
-      // Case A: Tự động sao lưu được bật và đã đến hạn
-      if (
-        settings.autoBackupInterval > 0 &&
-        daysSinceBackup >= settings.autoBackupInterval
-      ) {
-        setBackupReminderOpen(true);
-        sessionStorage.setItem("hasCheckedBackup", "true");
-        return;
-      }
-
-      // Case B: Không bật tự động, nhưng quá hạn mặc định (7 ngày) -> Hiện nhắc nhở
-      const isAutoOff = !settings.autoBackupInterval;
-      const hasData = products.length > 0;
-
-      if (isAutoOff && daysSinceBackup > 7 && hasData) {
-        if ("Notification" in window && Notification.permission === "granted") {
-          sendNotification("Nhắc nhở sao lưu", {
-            body: "Bạn chưa sao lưu dữ liệu quá 7 ngày. Hãy mở app và sao lưu ngay để tránh mất dữ liệu!",
-            requireInteraction: true,
-          });
-        } else {
-          setBackupReminderOpen(true);
-        }
-        sessionStorage.setItem("hasCheckedBackup", "true");
-      }
-    };
-
-    const timer = setTimeout(checkBackupStatus, 2000);
-    return () => clearTimeout(timer);
-  }, [
-    isAuthenticated,
-    isDataLoaded,
-    products.length,
-    settings.lastBackupDate,
-    settings.autoBackupInterval,
-    handleBackupNow,
-  ]);
-
-  // Hàm chuyển tab có tính toán hướng animation
-  const handleTabChange = (newTab) => {
-    const currentOrder = TAB_ORDER[activeTab] ?? 0;
-    const newOrder = TAB_ORDER[newTab] ?? 0;
-
-    if (newTab === "stats-detail") {
-      setDirection(1); // Push
-    } else if (activeTab === "stats-detail") {
-      setDirection(-1); // Pop
-    } else {
-      setDirection(newOrder > currentOrder ? 1 : -1);
-    }
-    setActiveTab(newTab);
-
-    // Cập nhật hiển thị TabBar dựa trên tab mới
-    if (newTab === "stats-detail") {
-      setIsTabBarVisible(false);
-    } else {
-      setIsTabBarVisible(true);
-    }
-  };
-
-  // --- 5. LOGIC HIỂN THỊ TABBAR ---
-  const [isTabBarVisible, setIsTabBarVisible] = useState(true);
-
-  // --- 5b. PRELOAD TÀI NGUYÊN DASHBOARD ---
-  const {
-    isLoaded: appReady,
-    showWarning,
-    handleForceContinue: originalHandleForceContinue,
-  } = useImagePreloader("/tiny-shop-transparent.png", isAuthenticated);
-
-  const [offlineAcknowledged, setOfflineAcknowledged] = useState(false);
-
-  // --- 5c. DAILY GREETING NOTIFICATION ---
-  // Sử dụng hook đã refactor, truyền state từ settings
-  const updateLastGreetingDate = React.useCallback(
+  // Daily Greeting
+  const updateLastGreetingDate = useCallback(
     (dateStr) => {
       setSettings((prev) => ({ ...prev, lastGreetingDate: dateStr }));
     },
@@ -240,13 +118,6 @@ const App = () => {
     settings.lastGreetingDate,
     updateLastGreetingDate,
   );
-
-  const handleForceContinue = () => {
-    if (showWarning) {
-      setOfflineAcknowledged(true);
-    }
-    originalHandleForceContinue();
-  };
 
   // --- 6. RENDERING ---
   if (!isAuthenticated) {
@@ -274,8 +145,9 @@ const App = () => {
               <Dashboard
                 products={products}
                 orders={orders}
-                onOpenDetail={() => handleTabChange("stats-detail")}
-                settings={settings} // Pass settings for Dashboard logic if needed
+                onOpenDetail={() => onTabChange("stats-detail")}
+                settings={settings}
+                updateFab={updateFab}
               />
             </ScreenTransition>
           )}
@@ -285,12 +157,12 @@ const App = () => {
               key="stats-detail"
               custom={direction}
               className="h-full"
-              onSwipeBack={() => handleTabChange("dashboard")}
+              onSwipeBack={() => onTabChange("dashboard")}
             >
               <StatsDetail
                 products={products}
                 orders={orders}
-                onBack={() => handleTabChange("dashboard")}
+                onBack={() => onTabChange("dashboard")}
               />
             </ScreenTransition>
           )}
@@ -308,6 +180,7 @@ const App = () => {
                 setOrders={setOrders}
                 settings={settings}
                 setTabBarVisible={setIsTabBarVisible}
+                updateFab={updateFab}
               />
             </ScreenTransition>
           )}
@@ -324,7 +197,7 @@ const App = () => {
               }}
               transition={{
                 duration: 1.2,
-                ease: [0.22, 1, 0.36, 1], // Custom easing for "spread" feel
+                ease: [0.22, 1, 0.36, 1],
               }}
             >
               <Assistant
@@ -340,7 +213,6 @@ const App = () => {
                 setTabBarVisible={setIsTabBarVisible}
                 chatSummary={chatSummary}
                 setChatSummary={setChatSummary}
-                // Pass new props
                 pendingBuffer={pendingBuffer}
                 setPendingBuffer={setPendingBuffer}
                 themeId={settings.themeId}
@@ -366,6 +238,7 @@ const App = () => {
                 setTabBarVisible={setIsTabBarVisible}
                 customers={customers}
                 setCustomers={setCustomers}
+                updateFab={updateFab}
               />
             </ScreenTransition>
           )}
@@ -383,7 +256,6 @@ const App = () => {
                 setOrders={setOrders}
                 settings={settings}
                 setSettings={setSettings}
-                // Pass extra props for backup/restore
                 customers={customers}
                 setCustomers={setCustomers}
                 chatSummary={chatSummary}
@@ -397,9 +269,30 @@ const App = () => {
 
       <TabBar
         activeTab={activeTab}
-        setActiveTab={handleTabChange}
+        setActiveTab={onTabChange}
         isVisible={isTabBarVisible}
       />
+
+      <AnimatePresence>
+        {fabConfig.isVisible && (
+          <motion.div
+            layout
+            layoutId="floating-action-button"
+            initial={{ scale: 0, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0, opacity: 0 }}
+            className="fixed right-5 bottom-[calc(env(safe-area-inset-bottom)+90px)] z-30"
+          >
+            <FloatingActionButton
+              onClick={fabConfig.onClick}
+              ariaLabel={fabConfig.label}
+              icon={fabConfig.icon}
+              color={fabConfig.color}
+              className="!static"
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <ConfirmModal
         open={logoutModalOpen}
@@ -407,18 +300,12 @@ const App = () => {
         message="Bạn có chắc chắn muốn đăng xuất không?"
         confirmLabel="Đăng xuất"
         tone="danger"
-        onCancel={() => setLogoutModalOpen(false)}
+        onCancel={closeLogoutModal}
         onConfirm={() => {
-          setIsAuthenticated(false);
-          sessionStorage.removeItem("tini_auth");
-          handleTabChange("dashboard");
-          setLogoutModalOpen(false);
-          setProducts([]);
-          setOrders([]);
-          setCustomers([]);
-          setChatSummary("");
-          setPendingBuffer([]);
-          setIsDataLoaded(false);
+          confirmLogout(() => {
+            onTabChange("dashboard");
+            resetData();
+          });
         }}
       />
 

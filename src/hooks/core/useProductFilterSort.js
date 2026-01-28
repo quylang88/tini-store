@@ -29,6 +29,9 @@ const useProductFilterSort = ({
         original: product,
         normalizedName: normalizeString(product.name),
         searchableBarcode: product.barcode ? String(product.barcode) : "",
+        // Pre-calculate sort values (date is expensive O(N) due to lot traversal)
+        sortDate: getProductDate(product),
+        sortPrice: Number(product.price) || 0,
       };
 
       searchableProductCache.set(product, searchable);
@@ -69,33 +72,21 @@ const useProductFilterSort = ({
       return true;
     });
 
-    // Trả về danh sách sản phẩm gốc để sắp xếp và hiển thị
-    let resultProducts = result.map((item) => item.original);
-
-    // 2. Sorting
+    // 2. Sorting (trực tiếp trên wrapper, sử dụng giá trị đã cache)
     if (sortConfig) {
-      // Schwartzian transform optimization
-      // Pre-calculate sort keys to avoid expensive recalculations (e.g. getProductDate) during sort.
-      // This reduces complexity from O(n * log n * cost_of_get) to O(n * cost_of_get + n * log n).
-
-      const getSortValue = (product) => {
-        if (sortConfig.key === "date") {
-          return getProductDate(product);
-        }
-        if (sortConfig.key === "price") {
-          return Number(product.price) || 0;
-        }
-        return 0;
-      };
-
-      const withValues = resultProducts.map((product) => ({
-        product,
-        value: getSortValue(product),
-      }));
-
-      withValues.sort((a, b) => {
-        const valA = a.value;
-        const valB = b.value;
+      result.sort((a, b) => {
+        const valA =
+          sortConfig.key === "date"
+            ? a.sortDate
+            : sortConfig.key === "price"
+              ? a.sortPrice
+              : 0;
+        const valB =
+          sortConfig.key === "date"
+            ? b.sortDate
+            : sortConfig.key === "price"
+              ? b.sortPrice
+              : 0;
 
         // Handle string comparison (for dates)
         if (typeof valA === "string" && typeof valB === "string") {
@@ -113,12 +104,10 @@ const useProductFilterSort = ({
           return valB - valA;
         }
       });
-
-      // Unwrap
-      resultProducts = withValues.map((item) => item.product);
     }
 
-    return resultProducts;
+    // 3. Map về sản phẩm gốc sau khi đã lọc và sắp xếp
+    return result.map((item) => item.original);
   }, [
     searchableProducts,
     searchTerm,

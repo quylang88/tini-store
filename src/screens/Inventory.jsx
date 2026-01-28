@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { AnimatePresence, motion } from "framer-motion";
+import React, { useState, useEffect } from "react";
+import { motion } from "framer-motion";
 import { Plus } from "lucide-react";
 import BarcodeScanner from "../components/BarcodeScanner";
 import ProductFilterHeader from "../components/common/ProductFilterHeader";
@@ -10,7 +10,6 @@ import ProductModal from "../components/inventory/ProductModal";
 import ProductBasicInfoModal from "../components/inventory/ProductBasicInfoModal";
 import ConfirmModalHost from "../components/modals/ConfirmModalHost";
 import ErrorModal from "../components/modals/ErrorModal";
-import FloatingActionButton from "../components/button/FloatingActionButton";
 import useInventoryLogic from "../hooks/inventory/useInventoryLogic";
 import useScrollHandling from "../hooks/ui/useScrollHandling";
 import AppHeader from "../components/common/AppHeader";
@@ -24,6 +23,7 @@ const Inventory = ({
   setOrders,
   settings,
   setTabBarVisible,
+  updateFab,
 }) => {
   const [detailProduct, setDetailProduct] = useState(null);
   const [editingBasicInfoProduct, setEditingBasicInfoProduct] = useState(null);
@@ -73,6 +73,16 @@ const Inventory = ({
     highlightOps,
     debouncedSearchTerm,
   } = useInventoryLogic({ products, setProducts, orders, setOrders, settings });
+
+  useEffect(() => {
+    updateFab({
+      isVisible: isAddButtonVisible,
+      onClick: () => openModal(),
+      icon: Plus,
+      label: "Thêm hàng mới",
+      color: "rose",
+    });
+  }, [isAddButtonVisible, openModal, updateFab]);
 
   const {
     visibleData: visibleProducts,
@@ -154,28 +164,6 @@ const Inventory = ({
           />
         </div>
       </div>
-
-      {/* Nút thêm hàng mới nổi theo cùng vị trí với màn tạo đơn để đồng bộ UX. */}
-      <AnimatePresence>
-        {isAddButtonVisible && (
-          <motion.div
-            layout
-            layoutId="floating-action-button"
-            initial={{ scale: 0, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0, opacity: 0 }}
-            className="fixed right-5 bottom-[calc(env(safe-area-inset-bottom)+90px)] z-30"
-          >
-            <FloatingActionButton
-              onClick={() => openModal()}
-              ariaLabel="Thêm hàng mới"
-              icon={Plus}
-              color="rose"
-              className="!static" // Override absolute positioning if needed by wrapper
-            />
-          </motion.div>
-        )}
-      </AnimatePresence>
 
       {/* Tách form modal và bổ sung nút chụp ảnh từ camera */}
       {/* Modal sửa thông tin cơ bản */}
