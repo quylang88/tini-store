@@ -1,4 +1,7 @@
-import { formatNumber } from "../formatters/formatUtils.js";
+import {
+  formatNumber,
+  readMoneyToVietnamese,
+} from "../formatters/formatUtils.js";
 
 // Simple HTML escaping to prevent XSS
 const escapeHtml = (unsafe) => {
@@ -100,7 +103,7 @@ export const generateReceiptHTMLContent = async (order, products = []) => {
 <body>
   <div class="header">
     ${logoHtml}
-    <div class="meta">Phiếu xuất kho / Hóa đơn bán hàng</div>
+    <div class="meta">Hóa đơn</div>
     <div class="meta">${orderId} - ${orderDate}</div>
   </div>
 
@@ -153,8 +156,9 @@ export const generateA4InvoiceHTMLContent = async (order, products = []) => {
 
   // Tính tổng số lượng
   const totalQuantity = items.reduce((sum, item) => sum + item.quantity, 0);
+  const totalAmountText = readMoneyToVietnamese(order.total || 0);
 
-  const customerName = escapeHtml(order.customerName || "Khách lẻ");
+  const customerName = escapeHtml(order.customerName || "");
   const customerAddress = escapeHtml(order.customerAddress || "");
   const orderComment = escapeHtml(order.comment || "");
 
@@ -268,7 +272,7 @@ export const generateA4InvoiceHTMLContent = async (order, products = []) => {
       ${logoHtml}
       <div style="font-size: 14px; margin-top: 5px;">
         <div>Uy tín - Chất lượng - Tận tâm</div>
-        <div>Điện thoại: 090.xxx.xxxx</div>
+        <div>Điện thoại: 0972 766 717</div>
       </div>
     </div>
     <div class="order-meta">
@@ -322,15 +326,15 @@ export const generateA4InvoiceHTMLContent = async (order, products = []) => {
     <table style="width: 100%; border-collapse: collapse; border: none;">
         <tr>
             <td style="text-align: right; padding: 4px; border: none;">Tổng số lượng:</td>
-            <td style="width: 120px; text-align: right; padding: 4px; border: none; font-weight: bold;">${totalQuantity}</td>
+            <td style="width: 150px; text-align: right; padding: 4px; border: none; font-weight: bold; font-size: 16px;">${totalQuantity}</td>
         </tr>
         <tr>
             <td style="text-align: right; padding: 4px; border: none;">Tổng tiền:</td>
-            <td style="width: 120px; text-align: right; padding: 4px; border: none; font-weight: bold; font-size: 16px;">${total}đ</td>
+            <td style="width: 150px; text-align: right; padding: 4px; border: none; font-weight: bold; font-size: 20px;">${total}đ</td>
         </tr>
     </table>
     <div style="text-align: right; font-size: 14px; font-style: italic; font-weight: normal; margin-top: 5px;">
-      (Bằng chữ: ........................................................................)
+      (Bằng chữ: ${totalAmountText})
     </div>
   </div>
 
