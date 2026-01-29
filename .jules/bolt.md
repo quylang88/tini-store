@@ -1,0 +1,1 @@
+## 2025-02-19 - Filter Tabs Re-rendering **Learning:** Inline array creation in parent components defeats `React.memo` in children, causing unnecessary list diffing on every keystroke. **Action:** Always `useMemo` for array/object props passed to memoized list components, especially in high-frequency update paths like search.

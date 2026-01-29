@@ -1,4 +1,4 @@
-import React, { memo } from "react";
+import React, { memo, useMemo } from "react";
 import AnimatedFilterTabs from "./AnimatedFilterTabs";
 import ScrollableTabs from "./ScrollableTabs";
 import { Calendar, DollarSign } from "lucide-react";
@@ -22,18 +22,25 @@ const ProductFilterSection = memo(
     onSortChange,
   }) => {
     // Cấu hình kho mặc định
-    const defaultWarehouseTabs = [
-      { key: "all", label: "Tất cả" },
-      ...getWarehouses().map((w) => ({ key: w.key, label: w.label })),
-    ];
-
-    const finalWarehouseTabs = warehouseTabs || defaultWarehouseTabs;
+    // Tối ưu hóa: Sử dụng useMemo để đảm bảo tính ổn định của prop tabs,
+    // giúp React.memo ở component con hoạt động hiệu quả.
+    const finalWarehouseTabs = useMemo(() => {
+      if (warehouseTabs) return warehouseTabs;
+      return [
+        { key: "all", label: "Tất cả" },
+        ...getWarehouses().map((w) => ({ key: w.key, label: w.label })),
+      ];
+    }, [warehouseTabs]);
 
     // Cấu hình danh mục
-    const categoryTabs = [
-      { key: "Tất cả", label: "Tất cả" },
-      ...categories.map((cat) => ({ key: cat, label: cat })),
-    ];
+    // Tối ưu hóa: Cache mảng tabs danh mục.
+    const categoryTabs = useMemo(
+      () => [
+        { key: "Tất cả", label: "Tất cả" },
+        ...categories.map((cat) => ({ key: cat, label: cat })),
+      ],
+      [categories],
+    );
 
     const handleDateSort = () => {
       if (sortConfig?.key === "date") {
