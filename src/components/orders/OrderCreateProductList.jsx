@@ -97,7 +97,7 @@ const ProductItem = memo(
 
     return (
       <div
-        className={`bg-amber-50 p-3 rounded-xl shadow-sm border border-amber-100 flex gap-3 items-center transition-all duration-200 ${
+        className={`bg-amber-50 p-3 rounded-xl shadow-sm border border-amber-100 flex gap-3 items-center transition duration-200 ${
           isOutOfStock ? "opacity-50 grayscale" : ""
         }`}
       >

@@ -53,7 +53,7 @@ const ExpandableProductName = ({
       className={`relative cursor-pointer transition-colors ${className}`}
     >
       <motion.div
-        layout
+        layout="size"
         transition={{ type: "spring", stiffness: 300, damping: 30 }}
         className="break-words" // Luôn cho phép xuống dòng để tránh layout thrashing
         style={
@@ -75,7 +75,6 @@ const ExpandableProductName = ({
       <AnimatePresence>
         {!isExpanded && (
           <motion.div
-            layout // Thêm layout prop để đồng bộ với cha
             initial={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
