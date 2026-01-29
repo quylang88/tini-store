@@ -1,6 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, memo, useMemo } from "react";
 import { Plus, Minus, ShoppingCart, Image as ImageIcon } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
 import { formatInputNumber } from "../../utils/formatters/formatUtils";
 import {
   normalizeWarehouseStock,
@@ -12,7 +11,7 @@ import ProductFilterSection from "../../components/common/ProductFilterSection";
 import useLongPress from "../../hooks/ui/useLongPress";
 import ExpandableProductName from "../../components/common/ExpandableProductName";
 
-const QuantityStepper = ({
+const QuantityStepper = memo(({
   qty,
   availableStock,
   adjustQuantity,
@@ -68,74 +67,59 @@ const QuantityStepper = ({
       </button>
     </div>
   );
-};
+});
 
-const ProductItem = ({
+QuantityStepper.displayName = "QuantityStepper";
+
+const ProductItem = memo(({
   p,
-  cart,
+  qty,
   selectedWarehouse,
   orderBeingEdited,
   adjustQuantity,
   handleQuantityChange,
   activeCategory,
 }) => {
-  const [isInfoHidden, setIsInfoHidden] = useState(false);
   const [isNameExpanded, setIsNameExpanded] = useState(false);
 
+  // Logic hiển thị/ẩn thông tin phụ (category, kho) dựa trên việc mở rộng tên
+  // Khi mở rộng tên -> Ẩn thông tin để nhường chỗ
+  const shouldHideInfo = isNameExpanded;
+
   const handleExpandToggle = (targetState) => {
-    if (targetState) {
-      // Mở rộng: Ẩn thông tin và mở rộng text đồng thời để hiệu ứng mượt hơn
-      // ExpandableProductName đã được tối ưu với layout prop và line-clamp
-      setIsInfoHidden(true);
-      setIsNameExpanded(true);
-    } else {
-      // Thu gọn: Thu gọn text và hiện thông tin đồng thời
-      setIsNameExpanded(false);
-      setIsInfoHidden(false);
+    setIsNameExpanded(targetState);
+  };
+
+  // Tính toán tồn kho khả dụng
+  const availableStock = useMemo(() => {
+    const stockByWarehouse = normalizeWarehouseStock(p);
+    const resolvedWarehouseKey = resolveWarehouseKey(selectedWarehouse);
+    let stock = stockByWarehouse[resolvedWarehouseKey] || 0;
+
+    if (orderBeingEdited) {
+        const orderWarehouse =
+        resolveWarehouseKey(orderBeingEdited.warehouse) ||
+        getDefaultWarehouse().key;
+
+        if (orderWarehouse === resolveWarehouseKey(selectedWarehouse)) {
+            const previousQty =
+            orderBeingEdited.items.find((item) => item.productId === p.id)
+                ?.quantity || 0;
+            stock += previousQty;
+        }
     }
-  };
+    return stock;
+  }, [p, selectedWarehouse, orderBeingEdited]);
 
-  // Khi đang sửa đơn, cộng lại số lượng cũ để hiển thị tồn kho chính xác
-  const getAvailableStock = (productId, stock) => {
-    if (!orderBeingEdited) return stock;
-    const orderWarehouse =
-      resolveWarehouseKey(orderBeingEdited.warehouse) ||
-      getDefaultWarehouse().key;
-    if (orderWarehouse !== resolveWarehouseKey(selectedWarehouse)) return stock;
-    const previousQty =
-      orderBeingEdited.items.find((item) => item.productId === productId)
-        ?.quantity || 0;
-    return stock + previousQty;
-  };
-
-  const rawQty = cart[p.id];
-  const isAdded = rawQty !== undefined;
-  // Hiển thị value cho input: nếu undefined thì fallback về 0 (nhưng UI sẽ dùng isAdded để ẩn hiện)
-  // Nếu rawQty là "" thì giữ nguyên để input rỗng.
-  const displayQty = isAdded ? rawQty : 0;
-
-  const stockByWarehouse = normalizeWarehouseStock(p);
-  const resolvedWarehouseKey = resolveWarehouseKey(selectedWarehouse);
-  const warehouseStock = stockByWarehouse[resolvedWarehouseKey] || 0;
-
-  const availableStock = getAvailableStock(p.id, warehouseStock);
   const isOutOfStock = availableStock <= 0;
+  const isAdded = qty !== undefined;
+  const displayQty = isAdded ? qty : 0;
 
-  const warehouseLabel = getWarehouseShortLabel(selectedWarehouse);
-
-  // Logic:
-  // "Trong TH đang mở thanh tăng giảm số lượng (isAdded) mà tên dài quá user chạm expand name (isExpanded)
-  // thì danh mục và số lượng kho hàng sẽ có animaation biến mất"
-  const shouldHideInfo = isInfoHidden;
+  const warehouseLabel = useMemo(() => getWarehouseShortLabel(selectedWarehouse), [selectedWarehouse]);
 
   return (
-    <motion.div
-      layout
-      initial={{ opacity: 0, scale: 0.95 }}
-      animate={{ opacity: 1, scale: 1 }}
-      exit={{ opacity: 0, scale: 0.95 }}
-      transition={{ duration: 0.2 }}
-      className={`bg-amber-50 p-3 rounded-xl shadow-sm border border-amber-100 flex gap-3 items-center ${
+    <div
+      className={`bg-amber-50 p-3 rounded-xl shadow-sm border border-amber-100 flex gap-3 items-center transition-all duration-200 ${
         isOutOfStock ? "opacity-50 grayscale" : ""
       }`}
     >
@@ -155,7 +139,7 @@ const ProductItem = ({
         )}
       </div>
 
-      <motion.div layout className="flex-1 min-w-0 flex gap-2 text-[10px]">
+      <div className="flex-1 min-w-0 flex gap-2 text-[10px]">
         {/* Cột 1: Tên + Giá bán - Sử dụng Flex grow để chiếm khoảng trống */}
         <div className="space-y-1 flex-1 min-w-0">
           <ExpandableProductName
@@ -164,44 +148,33 @@ const ProductItem = ({
             onExpandChange={handleExpandToggle}
             isExpanded={isNameExpanded}
           >
-            {/* 
-              Sử dụng layout="position" để ngăn việc bóp méo/kéo giãn trong quá trình thay đổi chiều rộng cha,
-              nhưng cho phép nó di chuyển theo chiều dọc khi tên mở rộng.
-            */}
-            <motion.div layout="position" className="flex items-center">
+            <div className="flex items-center">
               <span className="font-bold text-rose-700 text-sm">
                 {formatInputNumber(p.price)}
               </span>
               <span className="text-rose-700 font-bold text-sm ml-0.5">đ</span>
-            </motion.div>
+            </div>
           </ExpandableProductName>
         </div>
 
         {/* Cột 2: Danh mục + Kho hàng - Ẩn hoàn toàn khi cần thiết */}
-        <AnimatePresence>
-          {!shouldHideInfo && (
-            <motion.div
-              layout
-              initial={{ opacity: 1, width: "auto" }}
-              animate={{ opacity: 1, width: "auto" }}
-              exit={{ opacity: 0, width: 0 }}
-              transition={{ duration: 0.2 }}
-              className="text-right space-y-1 overflow-hidden shrink-0"
+        <div
+          className={`text-right space-y-1 overflow-hidden shrink-0 transition-all duration-200 ease-in-out ${
+            shouldHideInfo ? "w-0 opacity-0" : "w-auto opacity-100"
+          }`}
+        >
+            <span
+              className={`text-[10px] text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded whitespace-nowrap inline-block ${
+                activeCategory !== "Tất cả" ? "invisible" : ""
+              }`}
             >
-              <span
-                className={`text-[10px] text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded whitespace-nowrap inline-block ${
-                  activeCategory !== "Tất cả" ? "invisible" : ""
-                }`}
-              >
-                {p.category}
-              </span>
-              <div className="text-amber-600 text-[10px] origin-right whitespace-nowrap">
-                {warehouseLabel}: {availableStock}
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </motion.div>
+              {p.category}
+            </span>
+            <div className="text-amber-600 text-[10px] origin-right whitespace-nowrap">
+              {warehouseLabel}: {availableStock}
+            </div>
+        </div>
+      </div>
 
       {/* Bộ điều khiển số lượng - giữ nguyên ở bên phải cùng */}
       {isAdded ? (
@@ -227,11 +200,13 @@ const ProductItem = ({
           <Plus size={20} />
         </button>
       )}
-    </motion.div>
+    </div>
   );
-};
+});
 
-const OrderCreateProductList = ({
+ProductItem.displayName = "ProductItem";
+
+const OrderCreateProductList = memo(({
   filteredProducts,
   handleScroll,
   cart,
@@ -277,7 +252,7 @@ const OrderCreateProductList = ({
         <ProductItem
           key={p.id}
           p={p}
-          cart={cart}
+          qty={cart[p.id]}
           selectedWarehouse={selectedWarehouse}
           orderBeingEdited={orderBeingEdited}
           adjustQuantity={adjustQuantity}
@@ -298,6 +273,8 @@ const OrderCreateProductList = ({
       )}
     </div>
   );
-};
+});
+
+OrderCreateProductList.displayName = "OrderCreateProductList";
 
 export default OrderCreateProductList;

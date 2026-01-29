@@ -80,11 +80,18 @@ const OrderCreateView = ({
     }
   };
 
-  const categories = settings?.categories || ["Chung"];
-  const warehouseTabs = getWarehouses().map((w) => ({
-    key: w.key,
-    label: w.label,
-  }));
+  const categories = React.useMemo(
+    () => settings?.categories || ["Chung"],
+    [settings?.categories],
+  );
+  const warehouseTabs = React.useMemo(
+    () =>
+      getWarehouses().map((w) => ({
+        key: w.key,
+        label: w.label,
+      })),
+    [],
+  );
 
   // Chiều cao cho Layout
   // Header tiêu đề: ~45px (compact)
