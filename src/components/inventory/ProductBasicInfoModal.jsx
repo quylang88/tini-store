@@ -11,7 +11,6 @@ const ProductBasicInfoModal = ({
   categories,
   onClose,
   onSave,
-  onShowScanner,
   onError,
 }) => {
   // Lưu prevProduct để theo dõi thay đổi cho cập nhật state dẫn xuất
@@ -19,7 +18,7 @@ const ProductBasicInfoModal = ({
   const [formData, setFormData] = useState({
     name: product?.name || "",
     category: product?.category || categories[0] || "",
-    barcode: product?.barcode || "",
+    productCode: product?.productCode || "",
     price: product?.price || "",
     image: product?.image || null,
     note: product?.note || "",
@@ -43,7 +42,7 @@ const ProductBasicInfoModal = ({
       setFormData({
         name: product.name || "",
         category: product.category || categories[0] || "",
-        barcode: product.barcode || "",
+        productCode: product.productCode || "",
         price: product.price || "",
         image: product.image || null,
         note: product.note || "",
@@ -72,13 +71,15 @@ const ProductBasicInfoModal = ({
       missing.push("name");
     if (!formData.price || String(formData.price).trim() === "")
       missing.push("price");
+    if (!formData.productCode || String(formData.productCode).trim() === "")
+      missing.push("productCode");
 
     if (missing.length > 0) {
       highlightOps.triggerHighlights(missing);
       if (onError) {
         onError({
           title: "Thiếu thông tin",
-          message: "Vui lòng nhập đầy đủ Tên sản phẩm và Giá bán.",
+          message: "Vui lòng nhập đầy đủ Tên sản phẩm, Mã sản phẩm và Giá bán.",
         });
       }
       return;
@@ -115,13 +116,13 @@ const ProductBasicInfoModal = ({
         <ProductIdentityForm
           // Dữ liệu
           image={formData.image}
-          barcode={formData.barcode}
+          productCode={formData.productCode}
           category={formData.category}
           name={formData.name}
           // Xử lý sự kiện
           onImageChange={handleImageFileChange}
-          onBarcodeChange={(val) =>
-            setFormData((prev) => ({ ...prev, barcode: val }))
+          onProductCodeChange={(val) =>
+            setFormData((prev) => ({ ...prev, productCode: val }))
           }
           onCategoryChange={(val) =>
             setFormData((prev) => ({ ...prev, category: val }))
@@ -131,7 +132,6 @@ const ProductBasicInfoModal = ({
           }
           // Cấu hình
           categories={categories}
-          onShowScanner={onShowScanner}
           disabled={false}
           allowImageUpload={true}
           inputColorClass="text-gray-900"

@@ -15,10 +15,6 @@ import AppHeader from "../components/common/AppHeader";
 import usePagination from "../hooks/ui/usePagination";
 import { isScrollNearBottom } from "../utils/ui/scrollUtils";
 
-// Tối ưu hóa: Lazy load BarcodeScanner để giảm kích thước bundle ban đầu.
-// Thư viện html5-qrcode rất nặng (~300KB), chỉ nên tải khi người dùng cần quét mã.
-const BarcodeScanner = React.lazy(() => import("../components/BarcodeScanner"));
-
 const Inventory = ({
   products,
   setProducts,
@@ -41,8 +37,6 @@ const Inventory = ({
 
   const {
     isModalOpen,
-    showScanner,
-    setShowScanner,
     editingProduct,
     editingLotId,
     searchTerm,
@@ -60,7 +54,6 @@ const Inventory = ({
     handleDecimalChange,
     handleCurrencyChange,
     handleShippingMethodChange,
-    handleScanSuccess,
     handleImageSelect,
     handleSave,
     openModal,
@@ -105,21 +98,6 @@ const Inventory = ({
     <div className="relative h-full bg-transparent flex flex-col">
       <AppHeader className="z-20" isScrolled={isScrolled} />
 
-      {showScanner && (
-        <React.Suspense
-          fallback={
-            <div className="fixed inset-0 z-[80] bg-black/50 backdrop-blur-sm flex items-center justify-center">
-              <div className="text-white font-medium">Đang tải máy quét...</div>
-            </div>
-          }
-        >
-          <BarcodeScanner
-            onScanSuccess={handleScanSuccess}
-            onClose={() => setShowScanner(false)}
-          />
-        </React.Suspense>
-      )}
-
       {/* Container cho nội dung chính, bắt đầu từ dưới AppHeader */}
       <div className="flex flex-col h-full pt-[calc(72px+env(safe-area-inset-top))] relative">
         {/* InventoryHeader cố định phía trên danh sách (Chỉ Search) */}
@@ -133,7 +111,6 @@ const Inventory = ({
             searchTerm={searchTerm}
             onSearchChange={(e) => setSearchTerm(e.target.value)}
             onClearSearch={() => setSearchTerm("")}
-            onShowScanner={() => setShowScanner(true)}
             enableFilters={false} // Tắt filter trong header cố định
             activeCategory={activeCategory}
             setActiveCategory={setActiveCategory}
@@ -183,9 +160,22 @@ const Inventory = ({
         product={editingBasicInfoProduct}
         categories={settings.categories}
         onClose={() => setEditingBasicInfoProduct(null)}
-        onShowScanner={() => setShowScanner(true)}
         onError={setErrorModal}
         onSave={(updatedProduct) => {
+          const duplicateCode = products.find(
+            (p) =>
+              p.productCode === updatedProduct.productCode &&
+              p.id !== updatedProduct.id,
+          );
+
+          if (duplicateCode) {
+            setErrorModal({
+              title: "Mã sản phẩm trùng",
+              message: `Mã sản phẩm "${updatedProduct.productCode}" đã được sử dụng bởi "${duplicateCode.name}".`,
+            });
+            return;
+          }
+
           const newProducts = products.map((p) =>
             p.id === updatedProduct.id ? updatedProduct : p,
           );
@@ -212,7 +202,6 @@ const Inventory = ({
             setDetailProduct(null);
           }
         }}
-        onShowScanner={() => setShowScanner(true)}
         onImageSelect={handleImageSelect}
         onMoneyChange={handleMoneyChange}
         onDecimalChange={handleDecimalChange}

@@ -85,8 +85,6 @@ const useOrdersLogic = ({
 
     // Create Logic Exposure
     cart: createLogic.cart,
-    showScanner: createLogic.showScanner,
-    setShowScanner: createLogic.setShowScanner,
     isReviewOpen: createLogic.isReviewOpen,
     setIsReviewOpen: createLogic.setIsReviewOpen,
     orderComment: createLogic.orderComment,
@@ -110,7 +108,6 @@ const useOrdersLogic = ({
     filteredProducts: createLogic.filteredProducts,
     handleQuantityChange: createLogic.handleQuantityChange,
     adjustQuantity: createLogic.adjustQuantity,
-    handleScanForSale: createLogic.handleScanForSale,
     handleCreateOrder: createLogic.handleCreateOrder,
     handleUpdateOrder: createLogic.handleUpdateOrder,
     handleExitCreate: createLogic.handleExitCreate,

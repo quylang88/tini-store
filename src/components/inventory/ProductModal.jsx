@@ -25,7 +25,6 @@ const ProductModal = ({
   onSelectExistingProduct,
   onClose,
   onSave,
-  onShowScanner,
   onImageSelect,
   onCurrencyChange,
   onMoneyChange,
@@ -95,19 +94,20 @@ const ProductModal = ({
         <ProductIdentityForm
           // Data
           image={formData.image}
-          barcode={formData.barcode}
+          productCode={formData.productCode}
           category={formData.category}
           name={formData.name}
           // Handlers
           onImageChange={onImageSelect} // ProductModal nhận file object, ProductIdentityForm truyền file object
-          onBarcodeChange={(val) => setFormData({ ...formData, barcode: val })}
+          onProductCodeChange={(val) =>
+            setFormData({ ...formData, productCode: val })
+          }
           onCategoryChange={(val) =>
             setFormData({ ...formData, category: val })
           }
           onNameChange={(val) => setFormData({ ...formData, name: val })}
           // Cấu hình
           categories={categories}
-          onShowScanner={onShowScanner}
           disabled={Boolean(editingProduct)} // Vô hiệu hóa các trường định danh nếu đang sửa sản phẩm có sẵn
           allowImageUpload={!editingProduct} // Ẩn nút tải ảnh nếu đang sửa sản phẩm có sẵn
           nameSuggestions={nameSuggestions}

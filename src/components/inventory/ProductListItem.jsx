@@ -101,9 +101,9 @@ const ProductListItem = memo(
             </div>
           </div>
 
-          {/* Row 2: Barcode */}
+          {/* Row 2: Product Code */}
           <div className="text-gray-400 font-mono text-[10px]">
-            {product.barcode || "---"}
+            {product.productCode || "---"}
           </div>
 
           {/* Row 3: Price & Stock (aligned) */}
