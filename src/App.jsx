@@ -164,6 +164,8 @@ const App = () => {
                 products={products}
                 orders={orders}
                 onBack={() => onTabChange("dashboard")}
+                updateFab={updateFab}
+                isActive={activeTab === "stats-detail"}
               />
             </ScreenTransition>
           )}
@@ -221,6 +223,8 @@ const App = () => {
                 setThemeId={(id) =>
                   setSettings((prev) => ({ ...prev, themeId: id }))
                 }
+                updateFab={updateFab}
+                isActive={activeTab === "assistant"}
               />
             </motion.div>
           )}
@@ -264,6 +268,8 @@ const App = () => {
                 chatSummary={chatSummary}
                 setChatSummary={setChatSummary}
                 onLogout={handleLogout}
+                updateFab={updateFab}
+                isActive={activeTab === "settings"}
               />
             </ScreenTransition>
           )}
