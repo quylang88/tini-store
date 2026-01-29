@@ -92,6 +92,7 @@ const ProductIdentityForm = ({
             Mã sản phẩm
           </label>
           <input
+            enterKeyHint="next"
             className={`w-full border-b border-gray-200 py-2 focus:border-rose-400 outline-none font-mono text-sm ${inputColorClass} ${
               isHighlighted("productCode") ? highlightClass : ""
             }`}
@@ -131,6 +132,7 @@ const ProductIdentityForm = ({
           Tên sản phẩm
         </label>
         <input
+          enterKeyHint="next"
           className={`w-full border-b border-gray-200 py-2 focus:border-rose-400 outline-none font-medium disabled:text-gray-500 ${inputColorClass} ${
             isHighlighted("name") ? highlightClass : ""
           }`}

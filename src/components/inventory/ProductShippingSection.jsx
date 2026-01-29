@@ -64,6 +64,7 @@ const ProductShippingSection = ({
             </label>
             <input
               inputMode="decimal"
+              enterKeyHint="next"
               lang="en"
               className={`w-full bg-transparent border-b border-rose-100 py-2 focus:border-rose-400 outline-none text-gray-900 font-bold ${
                 isHighlighted("shippingWeightKg") ? highlightClass : ""

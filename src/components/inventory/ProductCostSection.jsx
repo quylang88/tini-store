@@ -64,7 +64,7 @@ const ProductCostSection = ({
                 <span className="absolute left-0 top-2 text-rose-500">¥</span>
                 <input
                   inputMode="numeric"
-                  enterKeyHint="done"
+                  enterKeyHint="next"
                   className={`w-full bg-transparent border-b border-rose-100 py-2 pl-4 focus:border-rose-400 outline-none text-gray-900 font-bold ${
                     isHighlighted("costJPY") ? highlightClass : ""
                   }`}
@@ -82,7 +82,7 @@ const ProductCostSection = ({
               </label>
               <input
                 inputMode="numeric"
-                enterKeyHint="done"
+                enterKeyHint="next"
                 className="w-full bg-transparent border-b border-rose-100 py-2 focus:border-rose-400 outline-none text-gray-900 text-right"
                 value={formatInputNumber(formData.exchangeRate)}
                 onChange={onMoneyChange("exchangeRate")}
