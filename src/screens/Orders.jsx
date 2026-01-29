@@ -22,8 +22,6 @@ const Orders = ({
 }) => {
   const {
     cart,
-    showScanner,
-    setShowScanner,
     selectedOrder,
     setSelectedOrder,
     isReviewOpen,
@@ -55,7 +53,6 @@ const Orders = ({
     setSelectedWarehouse,
     handleQuantityChange,
     adjustQuantity,
-    handleScanForSale,
     handleCreateOrder,
     handleUpdateOrder,
     handleStartCreate,
@@ -95,8 +92,6 @@ const Orders = ({
           setTabBarVisible={setTabBarVisible} // Pass TabBar control to Create View
           settings={settings}
           cart={cart}
-          showScanner={showScanner}
-          setShowScanner={setShowScanner}
           orderBeingEdited={orderBeingEdited}
           selectedWarehouse={selectedWarehouse}
           setSelectedWarehouse={setSelectedWarehouse}
@@ -122,7 +117,6 @@ const Orders = ({
           setOrderComment={setOrderComment}
           handleExitCreate={handleExitCreate}
           handleCancelDraft={handleCancelDraft}
-          handleScanForSale={handleScanForSale}
           handleQuantityChange={handleQuantityChange}
           adjustQuantity={adjustQuantity}
           handleOpenReview={() => setIsReviewOpen(true)}

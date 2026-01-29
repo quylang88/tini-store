@@ -28,7 +28,7 @@ const useProductFilterSort = ({
       const searchable = {
         original: product,
         normalizedName: normalizeString(product.name),
-        searchableBarcode: product.barcode ? String(product.barcode) : "",
+        searchableProductCode: product.productCode ? String(product.productCode) : "",
         // Pre-calculate sort values (date is expensive O(N) due to lot traversal)
         sortDate: getProductDate(product),
         sortPrice: Number(product.price) || 0,
@@ -49,7 +49,7 @@ const useProductFilterSort = ({
       if (keyword) {
         if (
           !item.normalizedName.includes(keyword) &&
-          !item.searchableBarcode.includes(keyword)
+          !item.searchableProductCode.includes(keyword)
         ) {
           return false;
         }

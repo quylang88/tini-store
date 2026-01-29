@@ -15,7 +15,6 @@ import useHighlightFields from "../ui/useHighlightFields";
 
 const useInventoryLogic = ({ products, setProducts, settings }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [showScanner, setShowScanner] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
   const [editingLotId, setEditingLotId] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
@@ -50,30 +49,6 @@ const useInventoryLogic = ({ products, setProducts, settings }) => {
   } = useInventoryFormState({ settings, activeCategory });
 
   const highlightOps = useHighlightFields();
-
-  const handleScanSuccess = (decodedText) => {
-    setShowScanner(false);
-    const existingProduct = products.find((p) => p.barcode === decodedText);
-
-    if (existingProduct) {
-      // Cảnh báo khi mã vạch đã tồn tại để user biết dùng sản phẩm cũ.
-      setErrorModal({
-        title: "Sản phẩm đã tồn tại",
-        message: `Sản phẩm này đã có: ${existingProduct.name}.`,
-      });
-      openModal(existingProduct);
-    } else {
-      if (isModalOpen) {
-        setFormData((prev) => ({ ...prev, barcode: decodedText }));
-      } else {
-        openModal();
-        setTimeout(
-          () => setFormData((prev) => ({ ...prev, barcode: decodedText })),
-          100,
-        );
-      }
-    }
-  };
 
   const handleSave = () => {
     const validationError = getInventoryValidationError({
@@ -238,8 +213,6 @@ const useInventoryLogic = ({ products, setProducts, settings }) => {
 
   return {
     isModalOpen,
-    showScanner,
-    setShowScanner,
     editingProduct,
     editingLotId,
     searchTerm,
@@ -259,7 +232,6 @@ const useInventoryLogic = ({ products, setProducts, settings }) => {
     setFormData,
     handleMoneyChange,
     handleDecimalChange,
-    handleScanSuccess,
     handleImageSelect,
     handleSave,
     openModal,

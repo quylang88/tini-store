@@ -1,23 +1,22 @@
 import React, { useRef } from "react";
-import { ScanBarcode, Upload } from "lucide-react";
+import { Upload } from "lucide-react";
 import { formatNumber } from "../../utils/formatters/formatUtils";
 
 const ProductIdentityForm = ({
   // Thuộc tính dữ liệu
   image,
-  barcode,
+  productCode,
   category,
   name,
 
   // Xử lý sự kiện
   onImageChange, // callback(file)
-  onBarcodeChange,
+  onProductCodeChange,
   onCategoryChange,
   onNameChange,
 
   // Cấu hình/Tiện ích
   categories = [],
-  onShowScanner,
   disabled = false, // Vô hiệu hóa nhập liệu văn bản
   allowImageUpload = true, // Kiểm soát hiển thị nút tải ảnh
 
@@ -86,25 +85,23 @@ const ProductIdentityForm = ({
         />
       </div>
 
-      {/* Mã vạch & Danh mục */}
+      {/* Mã sản phẩm & Danh mục */}
       <div className="grid grid-cols-2 gap-4 items-end">
         <div className="flex flex-col gap-1">
           <label className="text-xs font-bold text-rose-700 uppercase flex justify-between">
-            Mã Vạch
-            {allowImageUpload && ( // Chỉ hiển thị máy quét nếu được phép sửa định danh (đại diện cho tạo mới/sửa cơ bản)
-              <ScanBarcode
-                size={14}
-                className="text-rose-600 cursor-pointer"
-                onClick={onShowScanner}
-              />
-            )}
+            Mã sản phẩm
           </label>
           <input
-            className={`w-full border-b border-gray-200 py-2 focus:border-rose-400 outline-none font-mono text-sm ${inputColorClass}`}
-            value={barcode || ""}
-            onChange={(e) => onBarcodeChange && onBarcodeChange(e.target.value)}
-            placeholder={disabled ? "---" : "Quét/Nhập..."}
+            className={`w-full border-b border-gray-200 py-2 focus:border-rose-400 outline-none font-mono text-sm ${inputColorClass} ${
+              isHighlighted("productCode") ? highlightClass : ""
+            }`}
+            value={productCode || ""}
+            onChange={(e) =>
+              onProductCodeChange && onProductCodeChange(e.target.value)
+            }
+            placeholder={disabled ? "---" : "Nhập mã..."}
             disabled={disabled}
+            {...getHighlightProps("productCode", productCode)}
           />
         </div>
         <div className="flex flex-col gap-1">

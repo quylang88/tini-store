@@ -12,17 +12,10 @@ import ProductFilterHeader from "../../components/common/ProductFilterHeader";
 import usePagination from "../../hooks/ui/usePagination";
 import { isScrollNearBottom } from "../../utils/ui/scrollUtils";
 
-// Tối ưu hóa: Lazy load BarcodeScanner để giảm kích thước bundle.
-const BarcodeScanner = React.lazy(
-  () => import("../../components/BarcodeScanner"),
-);
-
 // Giao diện tạo/sửa đơn được tách riêng để Orders.jsx gọn hơn
 const OrderCreateView = ({
   settings,
   cart,
-  showScanner,
-  setShowScanner,
   orderBeingEdited,
   selectedWarehouse,
   setSelectedWarehouse,
@@ -48,7 +41,6 @@ const OrderCreateView = ({
   setOrderComment,
   handleExitCreate,
   handleCancelDraft,
-  handleScanForSale,
   handleQuantityChange,
   adjustQuantity,
   handleOpenReview,
@@ -106,21 +98,6 @@ const OrderCreateView = ({
 
   return (
     <div className="flex flex-col h-full bg-rose-50 pb-safe-area relative">
-      {showScanner && (
-        <React.Suspense
-          fallback={
-            <div className="fixed inset-0 z-[80] bg-black/50 backdrop-blur-sm flex items-center justify-center">
-              <div className="text-white font-medium">Đang tải máy quét...</div>
-            </div>
-          }
-        >
-          <BarcodeScanner
-            onScanSuccess={handleScanForSale}
-            onClose={() => setShowScanner(false)}
-          />
-        </React.Suspense>
-      )}
-
       {/* 1. Header Tiêu Đề (Fixed, Z-20) - Luôn hiển thị */}
       <div className="absolute top-0 left-0 right-0 z-20">
         <OrderCreateHeader orderBeingEdited={orderBeingEdited} />
@@ -143,7 +120,6 @@ const OrderCreateView = ({
           searchTerm={searchTerm}
           onSearchChange={(e) => setSearchTerm(e.target.value)}
           onClearSearch={() => setSearchTerm("")}
-          onShowScanner={() => setShowScanner(true)}
           enableFilters={false} // Chỉ hiện Search Bar
           // Props thừa nhưng cần để component không lỗi nếu nó check
           activeCategory={activeCategory}

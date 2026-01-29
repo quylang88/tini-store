@@ -25,7 +25,6 @@ const useOrderCreateLogic = ({
   customers: customersProp, // Receive prop
   setCustomers, // Receive prop
 }) => {
-  const [showScanner, setShowScanner] = useState(false);
   const [isReviewOpen, setIsReviewOpen] = useState(false);
   const [selectedWarehouse, setSelectedWarehouse] = useState(
     getDefaultWarehouse().key,
@@ -126,27 +125,6 @@ const useOrderCreateLogic = ({
       setErrorModal,
       processOrderForCustomer,
     });
-
-  const handleScanForSale = (decodedText) => {
-    setShowScanner(false);
-    const product = products.find((item) => item.barcode === decodedText);
-    if (!product) {
-      setErrorModal({
-        title: "Không tìm thấy sản phẩm",
-        message: "Không tìm thấy sản phẩm với mã vạch này.",
-      });
-      return;
-    }
-    const availableStock = getAvailableStock(product, selectedWarehouse);
-    if (availableStock <= 0) {
-      setErrorModal({
-        title: "Hết hàng",
-        message: "Sản phẩm này đã hết hàng.",
-      });
-      return;
-    }
-    adjustQuantity(product.id, 1, availableStock);
-  };
 
   const hasDraftChanges = () => {
     if (!orderBeingEdited) {
@@ -269,8 +247,6 @@ const useOrderCreateLogic = ({
 
   return {
     cart,
-    showScanner,
-    setShowScanner,
     isReviewOpen,
     setIsReviewOpen,
     orderComment,
@@ -294,7 +270,6 @@ const useOrderCreateLogic = ({
     filteredProducts,
     handleQuantityChange,
     adjustQuantity,
-    handleScanForSale,
     handleCreateOrder,
     handleUpdateOrder,
     handleExitCreate,
