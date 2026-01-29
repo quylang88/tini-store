@@ -19,6 +19,7 @@ const Orders = ({
   customers, // New prop
   setCustomers, // New prop
   updateFab,
+  isActive,
 }) => {
   const {
     cart,
@@ -159,6 +160,7 @@ const Orders = ({
           onSelectOrder={setSelectedOrder}
           setTabBarVisible={setTabBarVisible}
           updateFab={updateFab}
+          isActive={isActive}
         />
         <OrderDetailModal
           order={selectedOrder}

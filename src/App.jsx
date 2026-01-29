@@ -148,6 +148,7 @@ const App = () => {
                 onOpenDetail={() => onTabChange("stats-detail")}
                 settings={settings}
                 updateFab={updateFab}
+                isActive={activeTab === "dashboard"}
               />
             </ScreenTransition>
           )}
@@ -181,6 +182,7 @@ const App = () => {
                 settings={settings}
                 setTabBarVisible={setIsTabBarVisible}
                 updateFab={updateFab}
+                isActive={activeTab === "products"}
               />
             </ScreenTransition>
           )}
@@ -239,6 +241,7 @@ const App = () => {
                 customers={customers}
                 setCustomers={setCustomers}
                 updateFab={updateFab}
+                isActive={activeTab === "orders"}
               />
             </ScreenTransition>
           )}

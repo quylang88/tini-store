@@ -23,6 +23,7 @@ const Inventory = ({
   settings,
   setTabBarVisible,
   updateFab,
+  isActive,
 }) => {
   const [detailProduct, setDetailProduct] = useState(null);
   const [editingBasicInfoProduct, setEditingBasicInfoProduct] = useState(null);
@@ -71,14 +72,16 @@ const Inventory = ({
   } = useInventoryLogic({ products, setProducts, orders, setOrders, settings });
 
   useEffect(() => {
-    updateFab({
-      isVisible: isAddButtonVisible,
-      onClick: () => openModal(),
-      icon: Plus,
-      label: "Thêm hàng mới",
-      color: "rose",
-    });
-  }, [isAddButtonVisible, openModal, updateFab]);
+    if (isActive) {
+      updateFab({
+        isVisible: isAddButtonVisible,
+        onClick: () => openModal(),
+        icon: Plus,
+        label: "Thêm hàng mới",
+        color: "rose",
+      });
+    }
+  }, [isActive, isAddButtonVisible, openModal, updateFab]);
 
   const {
     visibleData: visibleProducts,
