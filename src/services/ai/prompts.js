@@ -5,6 +5,8 @@
  */
 
 import { formatCurrency } from "../../utils/formatters/formatUtils.js";
+import { analyzeBusinessStats } from "./analysisUtils.js";
+import { getProductStats } from "../../utils/inventory/purchaseUtils.js";
 
 // --- HELPERS ---
 
@@ -21,7 +23,7 @@ const getUrgentRestock = (products, salesMap) => {
     .join("\n");
 };
 
-const buildStatsContext = (orders, location) => {
+const buildStatsContext = (orders, location, products = []) => {
   const now = new Date();
   const currentMonth = now.getMonth();
   const currentYear = now.getFullYear();
@@ -38,11 +40,22 @@ const buildStatsContext = (orders, location) => {
   const thisMonthRevenue = thisMonthOrders.reduce((sum, o) => sum + o.total, 0);
   const totalOrdersMonth = thisMonthOrders.length;
 
+  // Phân tích tài chính sâu hơn
+  const stats = analyzeBusinessStats(products, orders);
+
   return `
     - Báo cáo Tháng ${currentMonth + 1}/${currentYear}:
     - Doanh thu: ${formatCurrency(thisMonthRevenue)}
     - Tổng đơn: ${totalOrdersMonth} đơn
     - Vị trí shop: ${location || "Văn phòng Tiny Shop"}
+
+    TỔNG KẾT TÀI CHÍNH & KHO VẬN:
+    - 💰 Vốn đã nhập (Tổng tích lũy): ${formatCurrency(stats.totalImportCapital)}
+    - 📦 Vốn tồn kho (Hiện tại): ${formatCurrency(stats.totalInventoryCapital)}
+    - ⏳ Đơn chưa thanh toán: ${stats.unpaidOrderCount} đơn
+      + Vốn đang kẹt: ${formatCurrency(stats.totalUnpaidCapital)}
+      + Tổng tiền khách nợ: ${formatCurrency(stats.totalUnpaidRevenue)}
+      + Lợi nhuận dự kiến: ${formatCurrency(stats.totalUnpaidProfit)}
     `;
 };
 
@@ -104,7 +117,7 @@ export const buildBusinessContext = (
   });
 
   const urgentRestock = getUrgentRestock(products, salesMap);
-  const statsContext = buildStatsContext(orders, location);
+  const statsContext = buildStatsContext(orders, location, products);
 
   // Memory
   const memoryContext = previousSummary
@@ -115,7 +128,8 @@ export const buildBusinessContext = (
   const productContext = products
     .slice(0, 150)
     .map((p) => {
-      return `- ${p.name} | Giá bán: ${formatCurrency(p.price)} | Kho: ${p.stock}`;
+      const { unitCost } = getProductStats(p);
+      return `- ${p.name} | Giá bán: ${formatCurrency(p.price)} | Giá nhập: ${formatCurrency(unitCost)} | Kho: ${p.stock}`;
     })
     .join("\n");
 
