@@ -1,12 +1,10 @@
-import React, { memo } from "react";
+import React, { memo, useMemo } from "react";
 import AnimatedFilterTabs from "./AnimatedFilterTabs";
 import ScrollableTabs from "./ScrollableTabs";
 import { Calendar, DollarSign } from "lucide-react";
 import SortButton from "../button/SortButton";
 import { getWarehouses } from "../../utils/inventory/warehouseUtils";
 
-// Sử dụng React.memo cho ProductFilterSection để tránh render lại
-// và tính toán lại mảng tab khi component cha cập nhật state không liên quan.
 const ProductFilterSection = memo(
   ({
     warehouseFilter,
@@ -22,18 +20,22 @@ const ProductFilterSection = memo(
     onSortChange,
   }) => {
     // Cấu hình kho mặc định
-    const defaultWarehouseTabs = [
-      { key: "all", label: "Tất cả" },
-      ...getWarehouses().map((w) => ({ key: w.key, label: w.label })),
-    ];
-
-    const finalWarehouseTabs = warehouseTabs || defaultWarehouseTabs;
+    const finalWarehouseTabs = useMemo(() => {
+      if (warehouseTabs) return warehouseTabs;
+      return [
+        { key: "all", label: "Tất cả" },
+        ...getWarehouses().map((w) => ({ key: w.key, label: w.label })),
+      ];
+    }, [warehouseTabs]);
 
     // Cấu hình danh mục
-    const categoryTabs = [
-      { key: "Tất cả", label: "Tất cả" },
-      ...categories.map((cat) => ({ key: cat, label: cat })),
-    ];
+    const categoryTabs = useMemo(
+      () => [
+        { key: "Tất cả", label: "Tất cả" },
+        ...categories.map((cat) => ({ key: cat, label: cat })),
+      ],
+      [categories],
+    );
 
     const handleDateSort = () => {
       if (sortConfig?.key === "date") {
