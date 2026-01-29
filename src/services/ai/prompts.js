@@ -1,63 +1,15 @@
 /**
  * prompts.js
  * "Bộ não" logic và tính cách của Misa - Trợ lý Tini Store.
- * Updated: Modularized to save tokens.
+ * Updated: Logic xử lý dữ liệu đã được tách sang contextBuilder.js.
  */
 
+import {
+  generateFinancialReport,
+  generateRestockAlerts,
+  formatProductList,
+} from "./contextBuilder.js";
 import { formatCurrency } from "../../utils/formatters/formatUtils.js";
-import { analyzeBusinessStats } from "./analysisUtils.js";
-import { getProductStats } from "../../utils/inventory/purchaseUtils.js";
-
-// --- HELPERS ---
-
-const getUrgentRestock = (products, salesMap) => {
-  return products
-    .filter((p) => {
-      const soldQty = salesMap[p.name] || 0;
-      return p.stock <= 5 && soldQty > 0; // Sắp hết VÀ có người mua
-    })
-    .map((p) => {
-      const sold = salesMap[p.name];
-      return `- 🔥 [HOT - SẮP HẾT] ${p.name}: còn ${p.stock} (Tháng rồi bay ${sold} cái) -> Nhập gấp mẹ Trang ơi!`;
-    })
-    .join("\n");
-};
-
-const buildStatsContext = (orders, location, products = []) => {
-  const now = new Date();
-  const currentMonth = now.getMonth();
-  const currentYear = now.getFullYear();
-
-  const thisMonthOrders = orders.filter((o) => {
-    const d = new Date(o.date);
-    return (
-      d.getMonth() === currentMonth &&
-      d.getFullYear() === currentYear &&
-      o.status !== "cancelled"
-    );
-  });
-
-  const thisMonthRevenue = thisMonthOrders.reduce((sum, o) => sum + o.total, 0);
-  const totalOrdersMonth = thisMonthOrders.length;
-
-  // Phân tích tài chính sâu hơn
-  const stats = analyzeBusinessStats(products, orders);
-
-  return `
-    - Báo cáo Tháng ${currentMonth + 1}/${currentYear}:
-    - Doanh thu: ${formatCurrency(thisMonthRevenue)}
-    - Tổng đơn: ${totalOrdersMonth} đơn
-    - Vị trí shop: ${location || "Văn phòng Tiny Shop"}
-
-    TỔNG KẾT TÀI CHÍNH & KHO VẬN:
-    - 💰 Vốn đã nhập (Tổng tích lũy): ${formatCurrency(stats.totalImportCapital)}
-    - 📦 Vốn tồn kho (Hiện tại): ${formatCurrency(stats.totalInventoryCapital)}
-    - ⏳ Đơn chưa thanh toán: ${stats.unpaidOrderCount} đơn
-      + Vốn đang kẹt: ${formatCurrency(stats.totalUnpaidCapital)}
-      + Tổng tiền khách nợ: ${formatCurrency(stats.totalUnpaidRevenue)}
-      + Lợi nhuận dự kiến: ${formatCurrency(stats.totalUnpaidProfit)}
-    `;
-};
 
 // --- 0. PERSONA & CAPABILITIES (Luôn có) ---
 
@@ -101,37 +53,15 @@ export const buildBusinessContext = (
 ) => {
   const { products, orders, location } = context;
 
-  // Analysis for Smart Inventory
-  const oneMonthAgo = new Date();
-  oneMonthAgo.setDate(oneMonthAgo.getDate() - 30);
-  const recentOrders = orders.filter(
-    (o) => new Date(o.date) >= oneMonthAgo && o.status !== "cancelled",
-  );
-  const salesMap = {};
-  recentOrders.forEach((order) => {
-    if (Array.isArray(order.items)) {
-      order.items.forEach((item) => {
-        salesMap[item.name] = (salesMap[item.name] || 0) + item.quantity;
-      });
-    }
-  });
-
-  const urgentRestock = getUrgentRestock(products, salesMap);
-  const statsContext = buildStatsContext(orders, location, products);
+  // Gọi Helper để lấy dữ liệu đã xử lý
+  const statsContext = generateFinancialReport(orders, location, products);
+  const urgentRestock = generateRestockAlerts(products, orders);
+  const productContext = formatProductList(products);
 
   // Memory
   const memoryContext = previousSummary
     ? `\n=== SỔ TAY GHI NHỚ CỦA MISA ===\n${previousSummary}\n===================================`
     : "";
-
-  // Product List (Local Data)
-  const productContext = products
-    .slice(0, 150)
-    .map((p) => {
-      const { unitCost } = getProductStats(p);
-      return `- ${p.name} | Giá bán: ${formatCurrency(p.price)} | Giá nhập: ${formatCurrency(unitCost)} | Kho: ${p.stock}`;
-    })
-    .join("\n");
 
   // Local Logic (Currency Mindset & Smart Inventory)
   const localLogic = `
@@ -143,7 +73,7 @@ export const buildBusinessContext = (
     📦 QUẢN LÝ KHO (SMART INVENTORY):
        - Chỉ cảnh báo nhập hàng với các món HOT (bán chạy) mà sắp hết.
        - Danh sách cần nhập gấp (HOT + Low Stock):
-       ${urgentRestock ? urgentRestock : "(Kho mình đang ổn áp mẹ nha, chưa có gì cháy hàng đâu!)"}
+       ${urgentRestock}
   `;
 
   let duplicateInstruction = "";
@@ -261,9 +191,6 @@ export const buildDynamicSystemPrompt = (
   let finalPrompt = buildPersona() + "\n\n" + buildCapabilitiesPrompt();
 
   // 2. Business Context (Load cho mọi mode TRỪ CHAT)
-  // Mode CHAT là tán gẫu thuần túy, ko cần biết inventory.
-  // Mode LOCAL là hỏi về inventory/business -> Cần load data.
-  // IMPORT/EXPORT/SEARCH đương nhiên cần data.
   if (["IMPORT", "EXPORT", "SEARCH", "LOCAL"].includes(intent)) {
     finalPrompt +=
       "\n" + buildBusinessContext(context, previousSummary, isDuplicate);
