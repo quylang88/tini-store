@@ -8,7 +8,6 @@ import {
   resolveWarehouseKey,
 } from "../../utils/inventory/warehouseUtils";
 import ProductFilterSection from "../../components/common/ProductFilterSection";
-import useLongPress from "../../hooks/ui/useLongPress";
 import ExpandableProductName from "../../components/common/ExpandableProductName";
 
 const QuantityStepper = memo(({
@@ -18,30 +17,10 @@ const QuantityStepper = memo(({
   handleQuantityChange,
   id,
 }) => {
-  // Nhấn giữ để tăng
-  const addProps = useLongPress(() => adjustQuantity(id, 1, availableStock), {
-    enabled: qty < availableStock,
-    speed: 150,
-    delay: 500,
-    accelerate: true,
-  });
-
-  // Nhấn giữ để giảm
-  const subtractProps = useLongPress(
-    () => adjustQuantity(id, -1, availableStock),
-    {
-      enabled: true,
-      speed: 150,
-      delay: 500,
-      accelerate: true,
-    },
-  );
-
   return (
     <div className="flex items-center bg-rose-50 rounded-lg h-9 border border-rose-200 overflow-hidden shadow-sm shrink-0">
       <button
         onClick={() => adjustQuantity(id, -1, availableStock)}
-        {...subtractProps}
         className="w-9 h-full flex items-center justify-center text-rose-600 active:bg-rose-200 transition select-none"
       >
         <Minus size={16} strokeWidth={2.5} />
@@ -60,7 +39,6 @@ const QuantityStepper = memo(({
       <button
         onClick={() => adjustQuantity(id, 1, availableStock)}
         disabled={qty >= availableStock}
-        {...addProps}
         className="w-9 h-full flex items-center justify-center text-rose-600 active:bg-rose-200 disabled:opacity-30 transition select-none"
       >
         <Plus size={16} strokeWidth={2.5} />
