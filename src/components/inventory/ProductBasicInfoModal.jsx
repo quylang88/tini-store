@@ -2,8 +2,19 @@ import React, { useState, useRef, useEffect } from "react";
 import SheetModal from "../../components/modals/SheetModal";
 import Button from "../../components/button/Button";
 import ProductIdentityForm from "./ProductIdentityForm";
+import ConfirmModalHost from "../modals/ConfirmModalHost";
 import { formatInputNumber } from "../../utils/formatters/formatUtils";
 import useHighlightFields from "../../hooks/ui/useHighlightFields";
+
+// Helper để tạo object form chuẩn từ product
+const getInitialFormData = (product, categories) => ({
+  name: product?.name || "",
+  category: product?.category || categories?.[0] || "",
+  productCode: product?.productCode || "",
+  price: product?.price || "",
+  image: product?.image || null,
+  note: product?.note || "",
+});
 
 const ProductBasicInfoModal = ({
   isOpen,
@@ -15,14 +26,13 @@ const ProductBasicInfoModal = ({
 }) => {
   // Lưu prevProduct để theo dõi thay đổi cho cập nhật state dẫn xuất
   const [prevProduct, setPrevProduct] = useState(product);
-  const [formData, setFormData] = useState({
-    name: product?.name || "",
-    category: product?.category || categories[0] || "",
-    productCode: product?.productCode || "",
-    price: product?.price || "",
-    image: product?.image || null,
-    note: product?.note || "",
-  });
+  const [confirmModal, setConfirmModal] = useState(null);
+
+  // Khởi tạo state và ref ngay từ đầu để đảm bảo tính nhất quán
+  const [formData, setFormData] = useState(() =>
+    getInitialFormData(product, categories),
+  );
+  const initialFormDataRef = useRef(getInitialFormData(product, categories));
 
   const highlightOps = useHighlightFields();
   const textareaRef = useRef(null);
@@ -38,16 +48,10 @@ const ProductBasicInfoModal = ({
   // State dẫn xuất: Cập nhật formData khi product thay đổi
   if (product !== prevProduct) {
     setPrevProduct(product);
-    if (product) {
-      setFormData({
-        name: product.name || "",
-        category: product.category || categories[0] || "",
-        productCode: product.productCode || "",
-        price: product.price || "",
-        image: product.image || null,
-        note: product.note || "",
-      });
-    }
+    // Luôn cập nhật lại form khi product đổi (kể cả khi reset về null)
+    const newData = getInitialFormData(product, categories);
+    setFormData(newData);
+    initialFormDataRef.current = newData;
   }
 
   const handleImageFileChange = (file) => {
@@ -63,6 +67,36 @@ const ProductBasicInfoModal = ({
   const handleMoneyChange = (e) => {
     const rawValue = e.target.value.replace(/\D/g, "");
     setFormData((prev) => ({ ...prev, price: rawValue }));
+  };
+
+  const hasChanges = () => {
+    if (!initialFormDataRef.current) return false;
+    const initial = initialFormDataRef.current;
+    const current = formData;
+
+    return (
+      initial.name !== current.name ||
+      initial.category !== current.category ||
+      initial.productCode !== current.productCode ||
+      String(initial.price) !== String(current.price) ||
+      initial.image !== current.image ||
+      initial.note !== current.note
+    );
+  };
+
+  const handleClose = () => {
+    if (!hasChanges()) {
+      onClose();
+      return;
+    }
+    setConfirmModal({
+      title: "Huỷ chỉnh sửa?",
+      message: "Bạn đang có thay đổi chưa lưu. Bạn có chắc muốn huỷ không?",
+      confirmLabel: "Huỷ thay đổi",
+      cancelLabel: "Tiếp tục sửa",
+      tone: "danger",
+      onConfirm: () => onClose(),
+    });
   };
 
   const handleSave = () => {
@@ -95,7 +129,7 @@ const ProductBasicInfoModal = ({
 
   const footer = (
     <div className="grid grid-cols-2 gap-3">
-      <Button variant="secondary" onClick={onClose}>
+      <Button variant="secondary" onClick={handleClose}>
         Huỷ
       </Button>
       <Button variant="primary" onClick={handleSave}>
@@ -107,7 +141,7 @@ const ProductBasicInfoModal = ({
   return (
     <SheetModal
       open={isOpen}
-      onClose={onClose}
+      onClose={handleClose}
       title="Sửa Thông Tin Cơ Bản"
       showCloseIcon={true}
       footer={footer}
@@ -178,6 +212,10 @@ const ProductBasicInfoModal = ({
           />
         </div>
       </div>
+      <ConfirmModalHost
+        modal={confirmModal}
+        onClose={() => setConfirmModal(null)}
+      />
     </SheetModal>
   );
 };
