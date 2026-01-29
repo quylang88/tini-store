@@ -40,11 +40,16 @@ const OrderListItem = memo(
         return sum + (item.price - cost) * item.quantity;
       }, 0) - (order.shippingFee || 0);
 
+    // ⚡ Tối ưu hóa: Thay thế motion.div container bằng div thường + CSS.
+    // Loại bỏ overhead của Framer Motion trên container chính giúp render danh sách nhanh hơn,
+    // trong khi vẫn giữ lại hiệu ứng tương tác active:scale-95 mượt mà qua CSS.
+    // Các animation con (như badge, buttons) vẫn được giữ lại vì chúng cần logic phức tạp (exit animations).
     return (
-      <motion.div
-        whileTap={{ scale: 0.96 }}
-        className={`p-4 rounded-xl shadow-sm border cursor-pointer hover:shadow-md transition-shadow relative overflow-hidden ${
-          isPaid ? "bg-gray-50 border-gray-200" : "bg-amber-50 border-amber-100"
+      <div
+        className={`p-4 rounded-xl shadow-sm border cursor-pointer hover:shadow-md transition-all duration-200 active:scale-95 relative overflow-hidden ${
+          isPaid
+            ? "bg-gray-50 border-gray-200"
+            : "bg-amber-50 border-amber-100"
         }`}
         onClick={() => onSelectOrder?.(order)}
       >
@@ -167,7 +172,7 @@ const OrderListItem = memo(
             </AnimatePresence>
           </div>
         </div>
-      </motion.div>
+      </div>
     );
   },
 );

@@ -1,6 +1,5 @@
 import React, { memo, useMemo } from "react";
 import { Image as ImageIcon, Trash2, Edit } from "lucide-react";
-import { motion } from "framer-motion";
 import { formatNumber } from "../../utils/formatters/formatUtils";
 import { getProductStats } from "../../utils/inventory/purchaseUtils";
 import {
@@ -48,15 +47,17 @@ const ProductListItem = memo(
     );
     const warehouses = getWarehouses();
 
+    // ⚡ Tối ưu hóa: Thay thế Framer Motion bằng CSS transition đơn thuần.
+    // Loại bỏ motion.div giúp giảm đáng kể chi phí render ban đầu và re-render cho danh sách dài,
+    // đồng thời loại bỏ overhead của JS animation system cho interaction đơn giản này.
     return (
-      <motion.div
-        whileTap={{ scale: 0.96 }}
+      <div
         onClick={() => onOpenDetail(product)}
         className={`${
           isOutOfStock
             ? "bg-gray-100 border-gray-200"
             : "bg-amber-50 border-amber-100"
-        } p-3 rounded-xl shadow-sm border flex gap-3 items-start cursor-pointer hover:shadow-md transition-shadow select-none`}
+        } p-3 rounded-xl shadow-sm border flex gap-3 items-start cursor-pointer hover:shadow-md transition-all duration-200 active:scale-95 select-none`}
       >
         <div
           className={`w-16 h-16 rounded-lg overflow-hidden flex-shrink-0 border relative ${
@@ -197,7 +198,7 @@ const ProductListItem = memo(
             <Edit size={16} />
           </button>
         </div>
-      </motion.div>
+      </div>
     );
   },
 );
