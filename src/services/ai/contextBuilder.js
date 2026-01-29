@@ -63,3 +63,14 @@ export const generateRestockAlerts = (products, orders) => {
     })
     .join("\n");
 };
+
+// --- 4. XỬ LÝ HƯỚNG DẪN TRÙNG LẶP (DUPLICATE) ---
+
+export const generateDuplicateInstruction = (isDuplicate) => {
+  if (!isDuplicate) return "";
+
+  return `
+    1. [MISA NHẮC NHẸ] VD: "Câu này mẹ vừa hỏi rồi mà? Cá vàng thế? Thôi trả lời lại nè:", ...
+    2. Sau câu đùa, hãy nhắc lại câu trả lời cũ một cách NGẮN GỌN nhất có thể.
+  `;
+};

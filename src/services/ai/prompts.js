@@ -8,6 +8,7 @@ import {
   generateFinancialReport,
   generateRestockAlerts,
   formatProductList,
+  generateDuplicateInstruction,
 } from "./contextBuilder.js";
 import { formatCurrency } from "../../utils/formatters/formatUtils.js";
 
@@ -76,14 +77,6 @@ export const buildBusinessContext = (
        ${urgentRestock}
   `;
 
-  let duplicateInstruction = "";
-  if (isDuplicate) {
-    duplicateInstruction = `
-      1. [MISA NHẮC NHẸ] VD: "Câu này mẹ vừa hỏi rồi mà? Cá vàng thế? Thôi trả lời lại nè:", ...
-      2. Sau câu đùa, hãy nhắc lại câu trả lời cũ một cách NGẮN GỌN nhất có thể.
-      `;
-  }
-
   return `
     TÌNH HÌNH KINH DOANH THÁNG NÀY:
     ${statsContext}
@@ -95,8 +88,6 @@ export const buildBusinessContext = (
 
     QUY TẮC CƠ BẢN:
     ${localLogic}
-
-    ${duplicateInstruction}
   `;
 };
 
@@ -227,6 +218,12 @@ export const buildDynamicSystemPrompt = (
       break;
   }
 
+  // 4. Global Duplicate Instruction (Apply to ALL intents)
+  const duplicateInstruction = generateDuplicateInstruction(isDuplicate);
+  if (duplicateInstruction) {
+    finalPrompt += `\n${duplicateInstruction}`;
+  }
+
   return finalPrompt;
 };
 
@@ -236,10 +233,19 @@ export const buildCommonPrompt = (
   previousSummary = "",
   isDuplicate = false,
 ) => {
+  // For backward compatibility, we can just call buildDynamicSystemPrompt with a default intent 'CHAT'
+  // But wait, buildCommonPrompt used to return Business Context.
+  // Let's keep it close to original behavior but using the new duplicate global logic if we were refactoring fully.
+  // However, buildCommonPrompt is likely used in legacy flows. Let's just wrap buildBusinessContext + Persona.
+
+  // Re-adding duplicate instruction manually here since it was removed from buildBusinessContext
+  const duplicateInstruction = generateDuplicateInstruction(isDuplicate);
+
   return (
     buildPersona() +
     "\n" +
-    buildBusinessContext(context, previousSummary, isDuplicate)
+    buildBusinessContext(context, previousSummary, isDuplicate) +
+    (duplicateInstruction ? `\n${duplicateInstruction}` : "")
   );
 };
 
