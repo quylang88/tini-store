@@ -29,7 +29,7 @@ const ProductModal = ({
   categories,
   highlightOps,
 }) => {
-  // Use extracted math logic
+  // Sử dụng logic tính toán đã tách
   const { shippingFeeJpy, shippingFeeVnd, finalProfit, hasProfitData } =
     useProductFormMath(formData, settings);
 

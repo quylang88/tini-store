@@ -1,31 +1,31 @@
 import { useMemo } from "react";
 
 /**
- * Hook to calculate shipping fees, exchange rates, and profit margins for the product form.
- * @param {Object} formData - The current form data.
- * @param {Object} settings - The application settings (containing exchange rate).
- * @returns {Object} Calculated values: shippingFeeJpy, shippingFeeVnd, finalProfit, hasProfitData.
+ * Hook tính toán phí vận chuyển, tỷ giá và lợi nhuận cho form sản phẩm.
+ * @param {Object} formData - Dữ liệu form hiện tại.
+ * @param {Object} settings - Cài đặt ứng dụng (chứa tỷ giá).
+ * @returns {Object} Các giá trị đã tính: shippingFeeJpy, shippingFeeVnd, finalProfit, hasProfitData.
  */
 export const useProductFormMath = (formData, settings) => {
   return useMemo(() => {
     const shippingWeight = Number(formData.shippingWeightKg) || 0;
     const exchangeRateValue = Number(settings?.exchangeRate) || 0;
 
-    // Calculate Shipping Fee in JPY (if method is JP)
-    // Rule: 900 JPY per kg
+    // Tính phí vận chuyển bằng Yên (nếu chọn phương thức JP)
+    // Quy tắc: 900 Yên mỗi kg
     const shippingFeeJpy =
       formData.shippingMethod === "jp" ? Math.round(shippingWeight * 900) : 0;
 
-    // Calculate Shipping Fee in VND
-    // If JP: Convert JPY fee to VND using exchange rate
-    // If VN: Use the manually entered VND fee
+    // Tính phí vận chuyển bằng VNĐ
+    // Nếu là JP: Đổi phí Yên sang VNĐ theo tỷ giá
+    // Nếu là VN: Sử dụng phí VNĐ nhập tay
     const shippingFeeVnd =
       formData.shippingMethod === "jp"
         ? Math.round(shippingFeeJpy * exchangeRateValue)
         : Number(formData.shippingFeeVnd) || 0;
 
-    // Calculate Profit
-    // Profit = Price - Cost - ShippingFeeVND
+    // Tính lợi nhuận
+    // Lợi nhuận = Giá bán - Giá vốn - Phí vận chuyển VNĐ
     const cost = Number(formData.cost) || 0;
     const price = Number(formData.price) || 0;
 
