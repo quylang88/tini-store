@@ -132,7 +132,10 @@ const fetchLogoBase64 = async () => {
   }
 };
 
-export const generateOrderHTMLContent = async (order, products = []) => {
+/**
+ * Generates HTML for a standard small receipt (Bill K80).
+ */
+export const generateReceiptHTMLContent = async (order, products = []) => {
   const items = order.items || order.products || [];
   const orderId = order.orderNumber
     ? `#${order.orderNumber}`
@@ -140,10 +143,7 @@ export const generateOrderHTMLContent = async (order, products = []) => {
   const orderDate = new Date(order.date).toLocaleString("vi-VN");
   const total = formatNumber(order.total || 0);
 
-  // Tên khách hàng đã được xử lý default logic khi tạo đơn (saveOrder)
-  // nên ở đây chỉ cần lấy từ order.customerName hoặc fallback "Khách lẻ"
   const customerName = escapeHtml(order.customerName || "Khách lẻ");
-
   const customerAddress = escapeHtml(order.customerAddress || "");
   const orderComment = escapeHtml(order.comment || "");
 
@@ -152,7 +152,6 @@ export const generateOrderHTMLContent = async (order, products = []) => {
     ? `<img src="${logoBase64}" alt="Tiny Shop Logo" style="height: 100px; margin-bottom: 5px;">`
     : `<h1 class="shop-name">Tiny Shop</h1>`;
 
-  // Inline CSS for receipt styling
   const style = `
     <style>
       body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; padding: 20px; max-width: 600px; margin: 0 auto; color: #333; line-height: 1.5; }
@@ -246,14 +245,267 @@ export const generateOrderHTMLContent = async (order, products = []) => {
   `;
 };
 
-export const exportOrderToHTML = async (order, products = []) => {
+/**
+ * Generates HTML for an A4 Warehouse Receipt (Phiếu Xuất Kho).
+ */
+export const generateA4InvoiceHTMLContent = async (order, products = []) => {
+  const items = order.items || order.products || [];
+  const orderId = order.orderNumber
+    ? `#${order.orderNumber}`
+    : `#${order.id.slice(-4)}`;
+  const orderDate = new Date(order.date).toLocaleString("vi-VN");
+  const total = formatNumber(order.total || 0);
+
+  const customerName = escapeHtml(order.customerName || "Khách lẻ");
+  const customerAddress = escapeHtml(order.customerAddress || "");
+  const orderComment = escapeHtml(order.comment || "");
+
+  const logoBase64 = await fetchLogoBase64();
+  const logoHtml = logoBase64
+    ? `<img src="${logoBase64}" alt="Logo" style="height: 80px;">`
+    : `<h2 style="margin:0; color: #e11d48;">TINY SHOP</h2>`;
+
+  const style = `
+    <style>
+      @page { size: A4; margin: 0; }
+      body {
+        font-family: "Times New Roman", Times, serif;
+        width: 210mm;
+        min-height: 297mm;
+        padding: 20mm;
+        margin: 0 auto;
+        box-sizing: border-box;
+        color: #000;
+        background: white;
+      }
+      .header-section {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 10px;
+        padding-bottom: 10px;
+        border-bottom: 2px solid #000;
+      }
+      .shop-info { flex: 1; }
+      .shop-title {
+        font-size: 20px;
+        font-weight: bold;
+        text-transform: uppercase;
+        color: #e11d48;
+        margin-bottom: 5px;
+      }
+      .order-meta {
+        text-align: right;
+        font-size: 14px;
+        line-height: 1.5;
+      }
+      .doc-title {
+        text-align: center;
+        font-size: 28px;
+        font-weight: bold;
+        margin: 25px 0;
+        text-transform: uppercase;
+      }
+      .customer-section {
+        margin-bottom: 20px;
+        font-size: 15px;
+        line-height: 1.6;
+      }
+      .data-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 14px;
+        margin-bottom: 20px;
+      }
+      .data-table th, .data-table td {
+        border: 1px solid #000;
+        padding: 8px;
+      }
+      .data-table th {
+        background-color: #f0f0f0;
+        font-weight: bold;
+        text-align: center;
+      }
+      .text-center { text-align: center; }
+      .text-right { text-align: right; }
+      .total-section {
+        text-align: right;
+        font-size: 16px;
+        margin-top: 10px;
+      }
+      .total-row {
+        margin-bottom: 5px;
+      }
+      .final-total {
+        font-size: 18px;
+        font-weight: bold;
+      }
+      .signature-section {
+        margin-top: 50px;
+        display: flex;
+        justify-content: space-between;
+        text-align: center;
+      }
+      .signature-box {
+        width: 30%;
+      }
+      .signature-title {
+        font-weight: bold;
+        font-size: 15px;
+        margin-bottom: 80px;
+      }
+      .note-section {
+        margin-top: 20px;
+        font-style: italic;
+        font-size: 14px;
+      }
+    </style>
+  `;
+
+  const itemsRows = items
+    .map((item, index) => {
+      const product = products.find(
+        (p) => p.id === item.productId || p.id === item.id,
+      );
+      const displayName = product ? product.name : item.name;
+      const barcode = product && product.barcode ? product.barcode : "-";
+      const unitPrice =
+        item.price !== undefined ? item.price : item.sellingPrice || 0;
+      return `
+    <tr>
+      <td class="text-center" style="width: 5%;">${index + 1}</td>
+      <td class="text-center" style="width: 15%;">${escapeHtml(barcode)}</td>
+      <td>${escapeHtml(displayName)}</td>
+      <td class="text-right" style="width: 15%;">${formatNumber(unitPrice)}</td>
+      <td class="text-center" style="width: 10%;">${item.quantity}</td>
+      <td class="text-right" style="width: 20%;">${formatNumber(unitPrice * item.quantity)}</td>
+    </tr>
+  `;
+    })
+    .join("");
+
+  return `
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Phiếu xuất kho ${orderId}</title>
+  ${style}
+</head>
+<body>
+  <div class="header-section">
+    <div class="shop-info">
+      ${logoHtml}
+      <div style="font-size: 14px; margin-top: 5px;">
+        <div>Chuyên bán lẻ và bán sỉ</div>
+        <div>Điện thoại: 090.xxx.xxxx</div>
+      </div>
+    </div>
+    <div class="order-meta">
+      <div>Mã phiếu: <strong>${orderId}</strong></div>
+      <div>Ngày: ${orderDate}</div>
+    </div>
+  </div>
+
+  <div class="doc-title">Phiếu Xuất Kho</div>
+
+  <div class="customer-section">
+    <table style="width: 100%; border: none;">
+      <tr>
+        <td style="width: 120px; border: none; padding: 2px;"><strong>Khách hàng:</strong></td>
+        <td style="border: none; padding: 2px;">${customerName}</td>
+      </tr>
+      <tr>
+        <td style="border: none; padding: 2px;"><strong>Địa chỉ:</strong></td>
+        <td style="border: none; padding: 2px;">${customerAddress || "-"}</td>
+      </tr>
+      ${
+        orderComment
+          ? `
+      <tr>
+        <td style="border: none; padding: 2px;"><strong>Ghi chú:</strong></td>
+        <td style="border: none; padding: 2px;">${orderComment}</td>
+      </tr>
+      `
+          : ""
+      }
+    </table>
+  </div>
+
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>STT</th>
+        <th>Mã SP</th>
+        <th>Tên hàng hóa, dịch vụ</th>
+        <th>Đơn giá</th>
+        <th>SL</th>
+        <th>Thành tiền</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${itemsRows}
+    </tbody>
+  </table>
+
+  <div class="total-section">
+    <div class="total-row">
+      Tổng tiền: <span class="final-total">${total}đ</span>
+    </div>
+    <div style="font-size: 14px; font-style: italic; font-weight: normal; margin-top: 5px;">
+      (Bằng chữ: ........................................................................)
+    </div>
+  </div>
+
+  <div class="signature-section">
+    <div class="signature-box">
+      <div class="signature-title">Người lập phiếu</div>
+      <div style="font-size: 12px; font-style: italic;">(Ký, ghi rõ họ tên)</div>
+    </div>
+    <div class="signature-box">
+      <div class="signature-title">Người giao hàng</div>
+      <div style="font-size: 12px; font-style: italic;">(Ký, ghi rõ họ tên)</div>
+    </div>
+    <div class="signature-box">
+      <div class="signature-title">Người nhận hàng</div>
+      <div style="font-size: 12px; font-style: italic;">(Ký, ghi rõ họ tên)</div>
+    </div>
+  </div>
+
+  <div style="text-align: center; margin-top: 50px; font-size: 13px; color: #555;">
+    Cảm ơn Quý khách và hẹn gặp lại!
+  </div>
+</body>
+</html>
+  `;
+};
+
+/**
+ * Exports order to HTML file with selectable format.
+ * @param {Object} order - The order object.
+ * @param {Array} products - List of products (for looking up details).
+ * @param {string} format - 'receipt' (default) or 'a4'.
+ */
+export const exportOrderToHTML = async (
+  order,
+  products = [],
+  format = "receipt",
+) => {
   if (!order) return;
 
-  const htmlContent = await generateOrderHTMLContent(order, products);
-
-  // Create filename: Don_hang_ID.html
   const orderId = order.orderNumber ? order.orderNumber : order.id.slice(-4);
-  const fileName = `Don_hang_${orderId}.html`;
+  let htmlContent = "";
+  let fileName = "";
+
+  if (format === "a4") {
+    htmlContent = await generateA4InvoiceHTMLContent(order, products);
+    fileName = `Phieu_xuat_kho_${orderId}.html`;
+  } else {
+    // Default to receipt
+    htmlContent = await generateReceiptHTMLContent(order, products);
+    fileName = `Bill_${orderId}.html`;
+  }
 
   await shareOrDownloadFile(htmlContent, fileName, "text/html");
 };
