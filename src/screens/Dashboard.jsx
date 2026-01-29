@@ -15,16 +15,18 @@ import TopSellingSection from "../components/stats/TopSellingSection";
 import StatListModal from "../components/dashboard/StatListModal";
 import AppHeader from "../components/common/AppHeader";
 
-const Dashboard = ({ products, orders, onOpenDetail, updateFab }) => {
+const Dashboard = ({ products, orders, onOpenDetail, updateFab, isActive }) => {
   useEffect(() => {
-    updateFab({
-      isVisible: true,
-      onClick: onOpenDetail,
-      icon: ArrowUpRight,
-      label: "Mở thống kê chi tiết",
-      color: "rose",
-    });
-  }, [onOpenDetail, updateFab]);
+    if (isActive) {
+      updateFab({
+        isVisible: true,
+        onClick: onOpenDetail,
+        icon: ArrowUpRight,
+        label: "Mở thống kê chi tiết",
+        color: "rose",
+      });
+    }
+  }, [isActive, onOpenDetail, updateFab]);
 
   const {
     currentDate, // Sử dụng ngày từ hook

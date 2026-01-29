@@ -17,6 +17,7 @@ const OrderListView = ({
   onSelectOrder,
   setTabBarVisible,
   updateFab,
+  isActive,
 }) => {
   // Logic scroll ẩn/hiện UI sử dụng hook mới
   const { isAddButtonVisible, isScrolled, handleScroll } = useScrollHandling({
@@ -25,14 +26,16 @@ const OrderListView = ({
   });
 
   useEffect(() => {
-    updateFab({
-      isVisible: isAddButtonVisible,
-      onClick: onCreateOrder,
-      icon: Plus,
-      label: "Tạo đơn mới",
-      color: "rose",
-    });
-  }, [isAddButtonVisible, onCreateOrder, updateFab]);
+    if (isActive) {
+      updateFab({
+        isVisible: isAddButtonVisible,
+        onClick: onCreateOrder,
+        icon: Plus,
+        label: "Tạo đơn mới",
+        color: "rose",
+      });
+    }
+  }, [isActive, isAddButtonVisible, onCreateOrder, updateFab]);
 
   // Memoize danh sách đơn hàng đã sắp xếp để tránh sắp xếp lại mỗi lần render
   const sortedOrders = useMemo(() => {

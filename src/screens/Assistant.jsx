@@ -32,7 +32,16 @@ const Assistant = ({
   setPendingBuffer,
   themeId,
   setThemeId,
+  updateFab,
+  isActive,
 }) => {
+  // Hide FAB when active
+  React.useEffect(() => {
+    if (isActive && updateFab) {
+      updateFab({ isVisible: false });
+    }
+  }, [isActive, updateFab]);
+
   // 1. Theme Logic
   const { activeTheme, handleCycleTheme } = useAssistantTheme(
     themeId,
