@@ -233,12 +233,6 @@ export const buildCommonPrompt = (
   previousSummary = "",
   isDuplicate = false,
 ) => {
-  // For backward compatibility, we can just call buildDynamicSystemPrompt with a default intent 'CHAT'
-  // But wait, buildCommonPrompt used to return Business Context.
-  // Let's keep it close to original behavior but using the new duplicate global logic if we were refactoring fully.
-  // However, buildCommonPrompt is likely used in legacy flows. Let's just wrap buildBusinessContext + Persona.
-
-  // Re-adding duplicate instruction manually here since it was removed from buildBusinessContext
   const duplicateInstruction = generateDuplicateInstruction(isDuplicate);
 
   return (
