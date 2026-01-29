@@ -16,6 +16,7 @@ import LoadingOverlay from "../../components/common/LoadingOverlay";
 // OrderDetailModal: Xem chi tiết đơn hàng (Chỉ xem) -> showCloseIcon={false}
 const OrderDetailModal = ({ order, products, onClose, getOrderStatusInfo }) => {
   const [isExporting, setIsExporting] = useState(false);
+
   // Giữ lại dữ liệu cũ để animation đóng vẫn hiển thị nội dung
   const cachedOrder = useModalCache(order, Boolean(order));
 
@@ -38,12 +39,12 @@ const OrderDetailModal = ({ order, products, onClose, getOrderStatusInfo }) => {
       return sum + (item.price - cost) * item.quantity;
     }, 0) - (cachedOrder.shippingFee || 0);
 
-  const handleExport = async () => {
+  const handleExport = async (format = "receipt") => {
     setIsExporting(true);
     // Timeout nhỏ để đảm bảo UI loading kịp render trước khi hàm export nặng chạy
     await new Promise((resolve) => setTimeout(resolve, 300));
     try {
-      await exportOrderToHTML(cachedOrder, products);
+      await exportOrderToHTML(cachedOrder, products, format);
     } catch (error) {
       console.error("Export error:", error);
       alert("Có lỗi khi xuất file");
@@ -53,22 +54,30 @@ const OrderDetailModal = ({ order, products, onClose, getOrderStatusInfo }) => {
   };
 
   const footer = (
-    <div className="flex gap-3">
+    <div className="grid grid-cols-3 gap-2">
       <Button
         variant="secondary"
         size="sm"
         onClick={onClose}
-        className="flex-1"
+        className="w-full"
       >
         Đóng
       </Button>
       <Button
+        variant="sheetClose"
+        size="sm"
+        onClick={() => handleExport("receipt")}
+        className="w-full"
+      >
+        Xuất Receipt
+      </Button>
+      <Button
         variant="primary"
         size="sm"
-        onClick={handleExport}
-        className="flex-1"
+        onClick={() => handleExport("a4")}
+        className="w-full"
       >
-        Xuất hoá đơn
+        Xuất A4
       </Button>
     </div>
   );
