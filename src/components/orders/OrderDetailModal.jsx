@@ -39,6 +39,12 @@ const OrderDetailModal = ({ order, products, onClose, getOrderStatusInfo }) => {
       return sum + (item.price - cost) * item.quantity;
     }, 0) - (cachedOrder.shippingFee || 0);
 
+  // Tính tổng số lượng
+  const totalQuantity = cachedOrder.items.reduce(
+    (sum, item) => sum + item.quantity,
+    0,
+  );
+
   const handleExport = async (format = "receipt") => {
     setIsExporting(true);
     // Timeout nhỏ để đảm bảo UI loading kịp render trước khi hàm export nặng chạy
@@ -190,6 +196,10 @@ const OrderDetailModal = ({ order, products, onClose, getOrderStatusInfo }) => {
             </>
           )}
           <div className="flex justify-between text-sm text-gray-500 mt-2 pt-2 border-t border-rose-200/50">
+            <span className="font-medium text-rose-900">Tổng số lượng</span>
+            <span className="font-bold text-rose-700">{totalQuantity}</span>
+          </div>
+          <div className="flex justify-between text-sm text-gray-500 mt-1">
             <span className="font-medium text-rose-900">Tổng đơn</span>
             <span className="text-lg font-bold text-rose-600">
               {formatNumber(cachedOrder.total)}đ

@@ -9,7 +9,20 @@ import TopSellingSection from "../../components/stats/TopSellingSection";
 import StatListModal from "../../components/dashboard/StatListModal";
 import DateRangeFilter from "../../components/stats/DateRangeFilter";
 
-const StatsDetail = ({ products, orders, onBack }) => {
+const StatsDetail = ({
+  products,
+  orders,
+  onBack,
+  updateFab,
+  isActive,
+}) => {
+  // Hide FAB when active
+  React.useEffect(() => {
+    if (isActive && updateFab) {
+      updateFab({ isVisible: false });
+    }
+  }, [isActive, updateFab]);
+
   const {
     topOptions,
     topLimit,

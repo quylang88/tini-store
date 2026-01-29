@@ -33,7 +33,16 @@ const Settings = ({
   chatSummary,
   setChatSummary,
   onLogout,
+  updateFab,
+  isActive,
 }) => {
+  // Hide FAB when active
+  React.useEffect(() => {
+    if (isActive && updateFab) {
+      updateFab({ isVisible: false });
+    }
+  }, [isActive, updateFab]);
+
   const {
     newCategory,
     setNewCategory,
