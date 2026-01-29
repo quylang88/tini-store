@@ -12,12 +12,10 @@ import useModalCache from "../../hooks/ui/useModalCache";
 import Button from "../../components/button/Button";
 import { exportOrderToHTML } from "../../utils/file/fileUtils";
 import LoadingOverlay from "../../components/common/LoadingOverlay";
-import { ChevronLeft } from "lucide-react";
 
 // OrderDetailModal: Xem chi tiết đơn hàng (Chỉ xem) -> showCloseIcon={false}
 const OrderDetailModal = ({ order, products, onClose, getOrderStatusInfo }) => {
   const [isExporting, setIsExporting] = useState(false);
-  const [showExportOptions, setShowExportOptions] = useState(false);
 
   // Giữ lại dữ liệu cũ để animation đóng vẫn hiển thị nội dung
   const cachedOrder = useModalCache(order, Boolean(order));
@@ -47,7 +45,6 @@ const OrderDetailModal = ({ order, products, onClose, getOrderStatusInfo }) => {
     await new Promise((resolve) => setTimeout(resolve, 300));
     try {
       await exportOrderToHTML(cachedOrder, products, format);
-      setShowExportOptions(false);
     } catch (error) {
       console.error("Export error:", error);
       alert("Có lỗi khi xuất file");
@@ -56,15 +53,10 @@ const OrderDetailModal = ({ order, products, onClose, getOrderStatusInfo }) => {
     }
   };
 
-  const footer = showExportOptions ? (
+  const footer = (
     <div className="flex gap-2">
-      <Button
-        variant="secondary"
-        size="sm"
-        onClick={() => setShowExportOptions(false)}
-        className="w-12 px-0 flex items-center justify-center"
-      >
-        <ChevronLeft size={20} />
+      <Button variant="secondary" size="sm" onClick={onClose} className="w-16">
+        Đóng
       </Button>
       <Button
         variant="secondary"
@@ -72,7 +64,7 @@ const OrderDetailModal = ({ order, products, onClose, getOrderStatusInfo }) => {
         onClick={() => handleExport("receipt")}
         className="flex-1"
       >
-        Bill Nhỏ
+        Xuất Bill
       </Button>
       <Button
         variant="primary"
@@ -80,26 +72,7 @@ const OrderDetailModal = ({ order, products, onClose, getOrderStatusInfo }) => {
         onClick={() => handleExport("a4")}
         className="flex-1"
       >
-        Phiếu Kho A4
-      </Button>
-    </div>
-  ) : (
-    <div className="flex gap-3">
-      <Button
-        variant="secondary"
-        size="sm"
-        onClick={onClose}
-        className="flex-1"
-      >
-        Đóng
-      </Button>
-      <Button
-        variant="primary"
-        size="sm"
-        onClick={() => setShowExportOptions(true)}
-        className="flex-1"
-      >
-        Xuất hoá đơn
+        Xuất A4
       </Button>
     </div>
   );

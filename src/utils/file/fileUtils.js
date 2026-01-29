@@ -256,6 +256,9 @@ export const generateA4InvoiceHTMLContent = async (order, products = []) => {
   const orderDate = new Date(order.date).toLocaleString("vi-VN");
   const total = formatNumber(order.total || 0);
 
+  // Tính tổng số lượng
+  const totalQuantity = items.reduce((sum, item) => sum + item.quantity, 0);
+
   const customerName = escapeHtml(order.customerName || "Khách lẻ");
   const customerAddress = escapeHtml(order.customerAddress || "");
   const orderComment = escapeHtml(order.comment || "");
@@ -281,7 +284,7 @@ export const generateA4InvoiceHTMLContent = async (order, products = []) => {
       .header-section {
         display: flex;
         justify-content: space-between;
-        align-items: flex-start;
+        align-items: flex-end;
         margin-bottom: 10px;
         padding-bottom: 10px;
         border-bottom: 2px solid #000;
@@ -390,7 +393,7 @@ export const generateA4InvoiceHTMLContent = async (order, products = []) => {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Phiếu xuất kho ${orderId}</title>
+  <title>Đơn hàng ${orderId}</title>
   ${style}
 </head>
 <body>
@@ -398,7 +401,7 @@ export const generateA4InvoiceHTMLContent = async (order, products = []) => {
     <div class="shop-info">
       ${logoHtml}
       <div style="font-size: 14px; margin-top: 5px;">
-        <div>Chuyên bán lẻ và bán sỉ</div>
+        <div>Uy tín - Chất lượng - Tận tâm</div>
         <div>Điện thoại: 090.xxx.xxxx</div>
       </div>
     </div>
@@ -408,7 +411,7 @@ export const generateA4InvoiceHTMLContent = async (order, products = []) => {
     </div>
   </div>
 
-  <div class="doc-title">Phiếu Xuất Kho</div>
+  <div class="doc-title">ĐƠN HÀNG</div>
 
   <div class="customer-section">
     <table style="width: 100%; border: none;">
@@ -451,25 +454,11 @@ export const generateA4InvoiceHTMLContent = async (order, products = []) => {
 
   <div class="total-section">
     <div class="total-row">
+      Tổng số lượng: <span style="font-weight: bold; margin-right: 20px;">${totalQuantity}</span>
       Tổng tiền: <span class="final-total">${total}đ</span>
     </div>
     <div style="font-size: 14px; font-style: italic; font-weight: normal; margin-top: 5px;">
       (Bằng chữ: ........................................................................)
-    </div>
-  </div>
-
-  <div class="signature-section">
-    <div class="signature-box">
-      <div class="signature-title">Người lập phiếu</div>
-      <div style="font-size: 12px; font-style: italic;">(Ký, ghi rõ họ tên)</div>
-    </div>
-    <div class="signature-box">
-      <div class="signature-title">Người giao hàng</div>
-      <div style="font-size: 12px; font-style: italic;">(Ký, ghi rõ họ tên)</div>
-    </div>
-    <div class="signature-box">
-      <div class="signature-title">Người nhận hàng</div>
-      <div style="font-size: 12px; font-style: italic;">(Ký, ghi rõ họ tên)</div>
     </div>
   </div>
 
@@ -500,7 +489,7 @@ export const exportOrderToHTML = async (
 
   if (format === "a4") {
     htmlContent = await generateA4InvoiceHTMLContent(order, products);
-    fileName = `Phieu_xuat_kho_${orderId}.html`;
+    fileName = `Don_hang_${orderId}.html`;
   } else {
     // Default to receipt
     htmlContent = await generateReceiptHTMLContent(order, products);
