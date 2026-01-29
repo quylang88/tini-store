@@ -2,7 +2,7 @@ import React, { useState, memo, useMemo } from "react";
 import { Plus, Minus, ShoppingCart, Image as ImageIcon } from "lucide-react";
 import { formatInputNumber } from "../../utils/formatters/formatUtils";
 import {
-  normalizeWarehouseStock,
+  getSpecificWarehouseStock,
   getDefaultWarehouse,
   getWarehouseShortLabel,
   resolveWarehouseKey,
@@ -67,9 +67,9 @@ const ProductItem = memo(
 
     // Tính toán tồn kho khả dụng
     const availableStock = useMemo(() => {
-      const stockByWarehouse = normalizeWarehouseStock(p);
+      // Tối ưu hóa: Sử dụng getSpecificWarehouseStock thay vì normalizeWarehouseStock để tránh tạo object không cần thiết.
       const resolvedWarehouseKey = resolveWarehouseKey(selectedWarehouse);
-      let stock = stockByWarehouse[resolvedWarehouseKey] || 0;
+      let stock = getSpecificWarehouseStock(p, resolvedWarehouseKey);
 
       if (orderBeingEdited) {
         const orderWarehouse =

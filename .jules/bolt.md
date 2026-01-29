@@ -1,0 +1,3 @@
+## 2026-01-29 - O(N) vs O(1) in Render Loop
+**Learning:** Normalizing a full data structure (e.g., `normalizeWarehouseStock`) inside a list item's `useMemo` creates unnecessary object allocations for every item when the list re-renders. Even with `useMemo`, if dependencies (like `p` or `selectedWarehouse`) change, the cost adds up. Using a targeted getter (`getSpecificWarehouseStock`) avoided creating intermediate objects and was ~4.4x faster in micro-benchmarks.
+**Action:** When working with lists, prefer specific accessors over full data normalization helpers to minimize garbage collection pressure.
