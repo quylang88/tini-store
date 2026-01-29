@@ -28,11 +28,15 @@ const ProductBasicInfoModal = ({
   const [prevProduct, setPrevProduct] = useState(product);
   const [confirmModal, setConfirmModal] = useState(null);
 
-  // Khởi tạo state và ref ngay từ đầu để đảm bảo tính nhất quán
+  // Khởi tạo state cho formData và initialFormData (để so sánh thay đổi)
   const [formData, setFormData] = useState(() =>
     getInitialFormData(product, categories),
   );
-  const initialFormDataRef = useRef(getInitialFormData(product, categories));
+  // Thay thế ref bằng state để tránh lỗi "Access refs during render"
+  // và đảm bảo tính nhất quán của React flow.
+  const [initialFormData, setInitialFormData] = useState(() =>
+    getInitialFormData(product, categories),
+  );
 
   const highlightOps = useHighlightFields();
   const textareaRef = useRef(null);
@@ -51,7 +55,7 @@ const ProductBasicInfoModal = ({
     // Luôn cập nhật lại form khi product đổi (kể cả khi reset về null)
     const newData = getInitialFormData(product, categories);
     setFormData(newData);
-    initialFormDataRef.current = newData;
+    setInitialFormData(newData);
   }
 
   const handleImageFileChange = (file) => {
@@ -70,8 +74,8 @@ const ProductBasicInfoModal = ({
   };
 
   const hasChanges = () => {
-    if (!initialFormDataRef.current) return false;
-    const initial = initialFormDataRef.current;
+    if (!initialFormData) return false;
+    const initial = initialFormData;
     const current = formData;
 
     return (
