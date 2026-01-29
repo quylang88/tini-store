@@ -204,45 +204,29 @@ const ProductItem = ({
       </motion.div>
 
       {/* Bộ điều khiển số lượng - giữ nguyên ở bên phải cùng */}
-      <AnimatePresence mode="popLayout" initial={false}>
-        {isAdded ? (
-          <motion.div
-            layout
-            key="stepper"
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.8 }}
-            transition={{ type: "spring", bounce: 0, duration: 0.3 }}
-            className="flex-shrink-0"
-          >
-            <QuantityStepper
-              qty={displayQty}
-              availableStock={availableStock}
-              adjustQuantity={adjustQuantity}
-              handleQuantityChange={handleQuantityChange}
-              id={p.id}
-            />
-          </motion.div>
-        ) : (
-          <motion.button
-            layout
-            key="add-btn"
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.8 }}
-            transition={{ type: "spring", bounce: 0, duration: 0.3 }}
-            onClick={() => adjustQuantity(p.id, 1, availableStock)}
-            disabled={isOutOfStock}
-            className={`px-3 py-2 rounded-lg text-xs font-bold active:scale-95 transition shrink-0 border ${
-              isOutOfStock
-                ? "hidden"
-                : "bg-amber-100 text-amber-700 border-amber-300 active:bg-amber-200"
-            }`}
-          >
-            <Plus size={20} />
-          </motion.button>
-        )}
-      </AnimatePresence>
+      {isAdded ? (
+        <div className="flex-shrink-0">
+          <QuantityStepper
+            qty={displayQty}
+            availableStock={availableStock}
+            adjustQuantity={adjustQuantity}
+            handleQuantityChange={handleQuantityChange}
+            id={p.id}
+          />
+        </div>
+      ) : (
+        <button
+          onClick={() => adjustQuantity(p.id, 1, availableStock)}
+          disabled={isOutOfStock}
+          className={`px-3 py-2 rounded-lg text-xs font-bold active:scale-95 transition shrink-0 border ${
+            isOutOfStock
+              ? "hidden"
+              : "bg-amber-100 text-amber-700 border-amber-300 active:bg-amber-200"
+          }`}
+        >
+          <Plus size={20} />
+        </button>
+      )}
     </motion.div>
   );
 };
@@ -289,20 +273,18 @@ const OrderCreateProductList = ({
       />
       {/* Thêm lại -mx-3 để bù cho padding của cha */}
 
-      <AnimatePresence mode="popLayout">
-        {filteredProducts.map((p) => (
-          <ProductItem
-            key={p.id}
-            p={p}
-            cart={cart}
-            selectedWarehouse={selectedWarehouse}
-            orderBeingEdited={orderBeingEdited}
-            adjustQuantity={adjustQuantity}
-            handleQuantityChange={handleQuantityChange}
-            activeCategory={activeCategory}
-          />
-        ))}
-      </AnimatePresence>
+      {filteredProducts.map((p) => (
+        <ProductItem
+          key={p.id}
+          p={p}
+          cart={cart}
+          selectedWarehouse={selectedWarehouse}
+          orderBeingEdited={orderBeingEdited}
+          adjustQuantity={adjustQuantity}
+          handleQuantityChange={handleQuantityChange}
+          activeCategory={activeCategory}
+        />
+      ))}
 
       {filteredProducts.length === 0 && (
         <div className="flex flex-col items-center justify-center pt-24 text-gray-500 w-full">
