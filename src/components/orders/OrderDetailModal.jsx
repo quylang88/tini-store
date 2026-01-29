@@ -54,15 +54,15 @@ const OrderDetailModal = ({ order, products, onClose, getOrderStatusInfo }) => {
   };
 
   const footer = (
-    <div className="flex gap-2">
-      <Button variant="secondary" size="sm" onClick={onClose} className="w-16">
+    <div className="grid grid-cols-3 gap-2">
+      <Button variant="secondary" size="sm" onClick={onClose} className="w-full">
         Đóng
       </Button>
       <Button
         variant="secondary"
         size="sm"
         onClick={() => handleExport("receipt")}
-        className="flex-1"
+        className="w-full"
       >
         Xuất Bill
       </Button>
@@ -70,7 +70,7 @@ const OrderDetailModal = ({ order, products, onClose, getOrderStatusInfo }) => {
         variant="primary"
         size="sm"
         onClick={() => handleExport("a4")}
-        className="flex-1"
+        className="w-full"
       >
         Xuất A4
       </Button>
