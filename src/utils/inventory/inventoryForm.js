@@ -3,7 +3,7 @@ import { getDefaultWarehouse } from "./warehouseUtils.js";
 
 const buildBaseFormData = (settings) => ({
   name: "",
-  barcode: "",
+  productCode: "",
   category: "Chung",
   costCurrency: "JPY",
   costJPY: "",
@@ -35,7 +35,7 @@ export const createFormDataForProduct = ({ product, settings }) => {
   return {
     ...buildBaseFormData(settings),
     name: product.name,
-    barcode: product.barcode || "",
+    productCode: product.productCode || "",
     category: product.category || "Chung",
     costCurrency: isJpy ? "JPY" : "VND",
     costJPY: isJpy ? String(latestLot.costJpy) : "",
@@ -70,7 +70,7 @@ export const createFormDataForLot = ({ product, lot, settings }) => {
   return {
     ...buildBaseFormData(settings),
     name: product.name,
-    barcode: product.barcode || "",
+    productCode: product.productCode || "",
     category: product.category || "Chung",
     costCurrency: inferredShippingMethod === "jp" ? "JPY" : "VND",
     costJPY: costJPYValue === "" ? "" : String(costJPYValue),

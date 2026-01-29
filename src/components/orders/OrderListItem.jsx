@@ -41,9 +41,8 @@ const OrderListItem = memo(
       }, 0) - (order.shippingFee || 0);
 
     return (
-      <motion.div
-        whileTap={{ scale: 0.96 }}
-        className={`p-4 rounded-xl shadow-sm border cursor-pointer hover:shadow-md transition-shadow relative overflow-hidden ${
+      <div
+        className={`p-4 rounded-xl shadow-sm border cursor-pointer hover:shadow-md transition-all duration-200 active:scale-95 relative overflow-hidden ${
           isPaid ? "bg-gray-50 border-gray-200" : "bg-amber-50 border-amber-100"
         }`}
         onClick={() => onSelectOrder?.(order)}
@@ -167,7 +166,7 @@ const OrderListItem = memo(
             </AnimatePresence>
           </div>
         </div>
-      </motion.div>
+      </div>
     );
   },
 );

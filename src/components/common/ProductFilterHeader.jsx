@@ -1,5 +1,5 @@
-import React from "react";
-import SearchBarWithScanner from "./SearchBarWithScanner";
+import React, { useMemo } from "react";
+import SearchBar from "./SearchBar";
 import AnimatedFilterTabs from "./AnimatedFilterTabs";
 import ScrollableTabs from "./ScrollableTabs";
 import { motion, AnimatePresence } from "framer-motion";
@@ -10,7 +10,6 @@ const ProductFilterHeader = ({
   searchTerm,
   onSearchChange,
   onClearSearch,
-  onShowScanner,
 
   // Bộ lọc kho
   warehouseFilter,
@@ -28,31 +27,34 @@ const ProductFilterHeader = ({
   enableFilters = true, // Prop mới để bật tắt hiển thị phần bộ lọc
   className = "",
   namespace = "common", // để đảm bảo tính duy nhất của layoutId
-  placeholder = "Nhập tên hoặc quét mã sản phẩm...",
+  placeholder = "Nhập tên hoặc mã sản phẩm...",
 }) => {
   // Cấu hình kho mặc định (nếu không được cung cấp)
-  const defaultWarehouseTabs = [
-    { key: "all", label: "Tất cả" },
-    ...getWarehouses().map((w) => ({ key: w.key, label: w.label })),
-  ];
-
-  const finalWarehouseTabs = warehouseTabs || defaultWarehouseTabs;
+  const finalWarehouseTabs = useMemo(() => {
+    if (warehouseTabs) return warehouseTabs;
+    return [
+      { key: "all", label: "Tất cả" },
+      ...getWarehouses().map((w) => ({ key: w.key, label: w.label })),
+    ];
+  }, [warehouseTabs]);
 
   // Cấu hình danh mục (Thống nhất)
-  const categoryTabs = [
-    { key: "Tất cả", label: "Tất cả" },
-    ...categories.map((cat) => ({ key: cat, label: cat })),
-  ];
+  const categoryTabs = useMemo(
+    () => [
+      { key: "Tất cả", label: "Tất cả" },
+      ...categories.map((cat) => ({ key: cat, label: cat })),
+    ],
+    [categories],
+  );
 
   return (
     <div className={`bg-rose-50/90 backdrop-blur ${className}`}>
       {/* Hàng thanh tìm kiếm */}
       <div className="px-3 pt-3 pb-1">
-        <SearchBarWithScanner
+        <SearchBar
           searchTerm={searchTerm}
           onSearchChange={onSearchChange}
           onClearSearch={onClearSearch}
-          onShowScanner={onShowScanner}
           placeholder={placeholder}
         />
       </div>
