@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 
 /**
  * Hook xử lý phân trang (kiểu cuộn vô tận - infinite scroll).
@@ -23,11 +23,12 @@ const usePagination = (data, { pageSize = 20, resetDeps = [] } = {}) => {
     return data.slice(0, visibleCount);
   }, [data, visibleCount]);
 
-  const loadMore = () => {
+  // Tối ưu hóa: Memoize loadMore để tránh render lại không cần thiết
+  const loadMore = useCallback(() => {
     if (data && visibleCount < data.length) {
       setVisibleCount((prev) => prev + pageSize);
     }
-  };
+  }, [data, visibleCount, pageSize]);
 
   const hasMore = data ? visibleCount < data.length : false;
 
