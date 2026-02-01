@@ -10,28 +10,65 @@ const generateLotId = () =>
 
 export const normalizePurchaseLots = (product = {}) => {
   if (Array.isArray(product.purchaseLots)) {
+    let hasChanges = false;
     const normalizedLots = product.purchaseLots.map((lot) => {
       // Ánh xạ các key kho cũ sang key hiện tại
       const currentWarehouse = resolveWarehouseKey(lot.warehouse);
-      const normalizedLot = {
-        ...lot,
-        warehouse: currentWarehouse || lot.warehouse, // Giữ nguyên nếu không resolve được (mặc dù hàm resolve sẽ trả về fallback)
-      };
+      const warehouseChanged =
+        currentWarehouse && currentWarehouse !== lot.warehouse;
 
-      if (!normalizedLot.shipping || normalizedLot.shipping?.perUnitVnd) {
-        return normalizedLot;
+      const needsOriginalQtyUpdate = !lot.originalQuantity && lot.quantity;
+
+      let needsShippingUpdate = false;
+      let feeVnd = 0;
+      if (lot.shipping) {
+        feeVnd = Number(lot.shipping.feeVnd) || 0;
+        // Nếu chưa có perUnitVnd hoặc giá trị không khớp (ví dụ feeVnd thay đổi), cần update
+        // Sử dụng loose equality để handle trường hợp string/number
+        if (
+          lot.shipping.perUnitVnd === undefined ||
+          Number(lot.shipping.perUnitVnd) !== feeVnd
+        ) {
+          needsShippingUpdate = true;
+        }
       }
-      const feeVnd = Number(normalizedLot.shipping.feeVnd) || 0;
-      return {
-        ...normalizedLot,
-        originalQuantity:
-          normalizedLot.originalQuantity || normalizedLot.quantity,
-        shipping: {
-          ...normalizedLot.shipping,
-          perUnitVnd: feeVnd,
-        },
-      };
+
+      if (
+        !warehouseChanged &&
+        !needsOriginalQtyUpdate &&
+        !needsShippingUpdate
+      ) {
+        return lot;
+      }
+
+      hasChanges = true;
+      let newLot = lot;
+
+      if (warehouseChanged) {
+        newLot = { ...newLot, warehouse: currentWarehouse };
+      }
+
+      if (needsOriginalQtyUpdate) {
+        newLot = {
+          ...newLot,
+          originalQuantity: newLot.originalQuantity || newLot.quantity,
+        };
+      }
+
+      if (needsShippingUpdate) {
+        newLot = {
+          ...newLot,
+          shipping: {
+            ...newLot.shipping,
+            perUnitVnd: feeVnd,
+          },
+        };
+      }
+      return newLot;
     });
+
+    if (!hasChanges) return product;
+
     return { ...product, purchaseLots: normalizedLots };
   }
 
