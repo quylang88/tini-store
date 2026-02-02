@@ -1,11 +1,11 @@
-import React, { useMemo } from "react";
+import React, { memo, useMemo } from "react";
 import SearchBar from "./SearchBar";
 import AnimatedFilterTabs from "./AnimatedFilterTabs";
 import ScrollableTabs from "./ScrollableTabs";
 import { motion, AnimatePresence } from "framer-motion";
 import { getWarehouses } from "../../utils/inventory/warehouseUtils";
 
-const ProductFilterHeader = ({
+const ProductFilterHeader = memo(({
   // Tìm kiếm
   searchTerm,
   onSearchChange,
@@ -102,6 +102,8 @@ const ProductFilterHeader = ({
       )}
     </div>
   );
-};
+});
+
+ProductFilterHeader.displayName = "ProductFilterHeader";
 
 export default ProductFilterHeader;

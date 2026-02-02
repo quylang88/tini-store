@@ -118,6 +118,17 @@ const OrderCreateView = ({
     [listPaddingTop],
   );
 
+  // Tối ưu hóa: Memoize handlers tìm kiếm để tránh re-render ProductFilterHeader
+  const handleSearchChange = useCallback(
+    (e) => setSearchTerm(e.target.value),
+    [setSearchTerm],
+  );
+
+  const handleClearSearch = useCallback(
+    () => setSearchTerm(""),
+    [setSearchTerm],
+  );
+
   return (
     <div className="flex flex-col h-full bg-rose-50 pb-safe-area relative">
       {/* 1. Header Tiêu Đề (Fixed, Z-20) - Luôn hiển thị */}
@@ -140,8 +151,8 @@ const OrderCreateView = ({
       >
         <ProductFilterHeader
           searchTerm={searchTerm}
-          onSearchChange={(e) => setSearchTerm(e.target.value)}
-          onClearSearch={() => setSearchTerm("")}
+          onSearchChange={handleSearchChange}
+          onClearSearch={handleClearSearch}
           enableFilters={false} // Chỉ hiện Search Bar
           // Props thừa nhưng cần để component không lỗi nếu nó check
           activeCategory={activeCategory}
