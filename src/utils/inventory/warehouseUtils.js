@@ -88,20 +88,28 @@ export const normalizeWarehouseStock = (product = {}) => {
   });
 
   if (product.stockByWarehouse) {
-    Object.keys(product.stockByWarehouse).forEach((sourceKey) => {
-      const value = Number(product.stockByWarehouse[sourceKey]) || 0;
-      const targetKey = resolveWarehouseKey(sourceKey);
+    // Tối ưu hóa: Sử dụng for...in thay vì Object.keys().forEach() để tránh tạo mảng keys.
+    for (const sourceKey in product.stockByWarehouse) {
+      if (
+        Object.prototype.hasOwnProperty.call(
+          product.stockByWarehouse,
+          sourceKey,
+        )
+      ) {
+        const value = Number(product.stockByWarehouse[sourceKey]) || 0;
+        const targetKey = resolveWarehouseKey(sourceKey);
 
-      // Chỉ cộng dồn nếu key đích hợp lệ trong config
-      if (Object.prototype.hasOwnProperty.call(stock, targetKey)) {
-        stock[targetKey] += value;
-      } else {
-        // Nếu có dữ liệu cho key không có trong config (và không được alias),
-        // ta có thể bỏ qua hoặc giữ lại.
-        // Để an toàn/dễ kiểm tra, ta giữ lại trong object, nhưng nó sẽ không nằm trong danh sách primaryKeys.
-        stock[targetKey] = (stock[targetKey] || 0) + value;
+        // Chỉ cộng dồn nếu key đích hợp lệ trong config
+        if (Object.prototype.hasOwnProperty.call(stock, targetKey)) {
+          stock[targetKey] += value;
+        } else {
+          // Nếu có dữ liệu cho key không có trong config (và không được alias),
+          // ta có thể bỏ qua hoặc giữ lại.
+          // Để an toàn/dễ kiểm tra, ta giữ lại trong object, nhưng nó sẽ không nằm trong danh sách primaryKeys.
+          stock[targetKey] = (stock[targetKey] || 0) + value;
+        }
       }
-    });
+    }
   }
   // Đã bỏ logic fallback cho product.stock (dữ liệu cũ)
 
@@ -128,8 +136,13 @@ export const getSpecificWarehouseStock = (product, targetWarehouseKey) => {
 
 export const getTotalStock = (product = {}) => {
   if (!product.stockByWarehouse) return 0;
-  return Object.values(product.stockByWarehouse).reduce(
-    (sum, val) => sum + (Number(val) || 0),
-    0,
-  );
+  let total = 0;
+  // Tối ưu hóa: Sử dụng vòng lặp for...in để tránh tạo mảng (Object.values) mỗi lần gọi.
+  // Giúp giảm áp lực GC khi render danh sách dài.
+  for (const key in product.stockByWarehouse) {
+    if (Object.prototype.hasOwnProperty.call(product.stockByWarehouse, key)) {
+      total += Number(product.stockByWarehouse[key]) || 0;
+    }
+  }
+  return total;
 };
