@@ -6,40 +6,31 @@
 
 // --- 1. PHÂN TÍCH TÀI CHÍNH TỔNG QUAN ---
 export const analyzeBusinessStats = (products = [], orders = []) => {
-  // TỔNG VỐN NHẬP (Lũy kế)
-  const totalImportCapital = products.reduce((total, product) => {
-    if (!product.purchaseLots || !Array.isArray(product.purchaseLots))
-      return total;
+  // TỔNG VỐN NHẬP (Lũy kế) & VỐN TỒN KHO (Hiện tại)
+  // Gộp vòng lặp để tối ưu hiệu năng (tránh duyệt mảng products và purchaseLots 2 lần)
+  let totalImportCapital = 0;
+  let totalInventoryCapital = 0;
 
-    const productImportCost = product.purchaseLots.reduce((lotTotal, lot) => {
-      const quantity =
+  for (const product of products) {
+    if (!product.purchaseLots || !Array.isArray(product.purchaseLots)) {
+      continue;
+    }
+
+    for (const lot of product.purchaseLots) {
+      const cost = Number(lot.cost) || 0;
+      const shippingPerUnit = Number(lot.shipping?.perUnitVnd) || 0;
+      const unitCost = cost + shippingPerUnit;
+
+      // Tính cho vốn nhập (dựa trên số lượng nhập ban đầu)
+      const originalQty =
         Number(lot.originalQuantity) || Number(lot.quantity) || 0;
-      const cost = Number(lot.cost) || 0;
-      const shippingPerUnit = Number(lot.shipping?.perUnitVnd) || 0;
-      const unitCost = cost + shippingPerUnit;
+      totalImportCapital += unitCost * originalQty;
 
-      return lotTotal + unitCost * quantity;
-    }, 0);
-
-    return total + productImportCost;
-  }, 0);
-
-  // VỐN TỒN KHO (Hiện tại)
-  const totalInventoryCapital = products.reduce((total, product) => {
-    if (!product.purchaseLots || !Array.isArray(product.purchaseLots))
-      return total;
-
-    const productStockValue = product.purchaseLots.reduce((lotTotal, lot) => {
-      const quantity = Number(lot.quantity) || 0;
-      const cost = Number(lot.cost) || 0;
-      const shippingPerUnit = Number(lot.shipping?.perUnitVnd) || 0;
-      const unitCost = cost + shippingPerUnit;
-
-      return lotTotal + unitCost * quantity;
-    }, 0);
-
-    return total + productStockValue;
-  }, 0);
+      // Tính cho vốn tồn (dựa trên số lượng hiện tại)
+      const currentQty = Number(lot.quantity) || 0;
+      totalInventoryCapital += unitCost * currentQty;
+    }
+  }
 
   // PHÂN TÍCH ĐƠN HÀNG CHƯA THANH TOÁN
   const unpaidOrders = orders.filter(
