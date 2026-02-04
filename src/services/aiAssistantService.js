@@ -35,24 +35,41 @@ export const processQuery = async (
 
   const modeConfig = getModeConfig(modeKey);
 
-  // 0. Xác định Ý định (Intent Detection) - New!
-  let intent = explicitIntent || "CHAT";
-  if (!explicitIntent) {
+  // 0. Parallel Execution: Intent & Location
+  // Chạy song song để tối ưu thời gian phản hồi (giảm 50% wait time nếu balanced)
+
+  // Task A: Intent Detection
+  const intentPromise = (async () => {
+    if (explicitIntent) return explicitIntent;
     try {
       onStatusUpdate("Misa đang suy nghĩ...");
-      intent = await detectIntent(query);
+      return await detectIntent(query);
     } catch (err) {
       console.warn("Intent check failed, fallback to CHAT:", err);
+      return "CHAT";
     }
-  }
+  })();
 
-  // 1. Xác định vị trí
-  const coords = await getCurrentLocation();
-  let fullLocationInfo = coords ? `${coords}` : "Chưa rõ";
-  if (coords) {
-    const locName = await getAddressFromCoordinates(coords);
-    if (locName) fullLocationInfo = `${locName} (${coords})`;
-  }
+  // Task B: Location Context
+  const locationPromise = (async () => {
+    try {
+      const coords = await getCurrentLocation();
+      if (!coords) return "Chưa rõ";
+
+      let info = `${coords}`;
+      const locName = await getAddressFromCoordinates(coords);
+      if (locName) info = `${locName} (${coords})`;
+      return info;
+    } catch (err) {
+      console.warn("Location check failed:", err);
+      return "Chưa rõ";
+    }
+  })();
+
+  const [intent, fullLocationInfo] = await Promise.all([
+    intentPromise,
+    locationPromise,
+  ]);
 
   // 2. Logic Tìm kiếm (Simplified based on Intent)
   const shouldSearch =
