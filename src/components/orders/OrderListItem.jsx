@@ -1,5 +1,4 @@
 import React, { memo } from "react";
-import { motion, AnimatePresence } from "framer-motion";
 import PaidStamp from "../common/PaidStamp";
 import {
   formatNumber,
@@ -12,6 +11,8 @@ import {
 } from "../../utils/inventory/warehouseUtils";
 import { getOrderDisplayName } from "../../utils/orders/orderUtils";
 
+// Component hiển thị từng dòng đơn hàng trong danh sách
+// Sử dụng React.memo để tối ưu hiệu năng render khi props không đổi
 const OrderListItem = memo(
   ({
     order,
@@ -68,22 +69,16 @@ const OrderListItem = memo(
           </div>
           <div className="flex items-center justify-between text-xs text-gray-500 mb-2">
             <div className="h-6 flex items-center">
-              <AnimatePresence mode="wait">
-                {!isPaid && (
-                  <motion.span
-                    key="status-badge"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    className={`inline-flex items-center gap-2 px-2 py-0.5 rounded-full border ${statusInfo.badgeClass}`}
-                  >
-                    <span
-                      className={`w-2 h-2 rounded-full ${statusInfo.dotClass}`}
-                    />
-                    {statusInfo.label}
-                  </motion.span>
-                )}
-              </AnimatePresence>
+              {!isPaid && (
+                <span
+                  className={`inline-flex items-center gap-2 px-2 py-0.5 rounded-full border ${statusInfo.badgeClass}`}
+                >
+                  <span
+                    className={`w-2 h-2 rounded-full ${statusInfo.dotClass}`}
+                  />
+                  {statusInfo.label}
+                </span>
+              )}
             </div>
             {shouldShowWarehouseOnStatus && (
               <span className="text-amber-600 font-semibold">
@@ -113,57 +108,44 @@ const OrderListItem = memo(
             </div>
           </div>
           <div className="mt-3 flex flex-wrap justify-end gap-2 h-8 items-center">
-            <AnimatePresence mode="popLayout" initial={false}>
-              {/* Nút Thanh Toán / Huỷ Thanh Toán */}
-              {/* Tối ưu hóa: Loại bỏ prop layout để tránh tính toán lại layout gây giật lag trong danh sách dài */}
-              <motion.button
-                key={isPaid ? "btn-unpay" : "btn-pay"}
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.8 }}
-                onClick={(event) => {
-                  event.stopPropagation();
-                  handleTogglePaid(order);
-                }}
-                className={`text-xs font-semibold px-3 py-1.5 rounded-full border transition active:scale-95 relative z-20 whitespace-nowrap ${
-                  isPaid
-                    ? "text-red-600 bg-red-50 border-red-300"
-                    : "text-emerald-600 bg-emerald-50 border-emerald-300"
-                }`}
-              >
-                {isPaid ? "Huỷ thanh toán" : "Thanh toán"}
-              </motion.button>
+            {/* Nút Thanh Toán / Huỷ Thanh Toán */}
+            <button
+              onClick={(event) => {
+                event.stopPropagation();
+                handleTogglePaid(order);
+              }}
+              className={`text-xs font-semibold px-3 py-1.5 rounded-full border transition active:scale-95 relative z-20 whitespace-nowrap ${
+                isPaid
+                  ? "text-red-600 bg-red-50 border-red-300"
+                  : "text-emerald-600 bg-emerald-50 border-emerald-300"
+              }`}
+            >
+              {isPaid ? "Huỷ thanh toán" : "Thanh toán"}
+            </button>
 
-              {/* Các nút hành động khác (Sửa/Huỷ đơn) - Chỉ hiện khi chưa thanh toán */}
-              {!isPaid && (
-                <motion.div
-                  key="action-buttons"
-                  initial={{ opacity: 0, scale: 0.8, width: 0 }}
-                  animate={{ opacity: 1, scale: 1, width: "auto" }}
-                  exit={{ opacity: 0, scale: 0.8, width: 0 }}
-                  className="flex gap-2 overflow-hidden"
+            {/* Các nút hành động khác (Sửa/Huỷ đơn) - Chỉ hiện khi chưa thanh toán */}
+            {!isPaid && (
+              <div className="flex gap-2">
+                <button
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    handleEditOrder(order);
+                  }}
+                  className="text-xs font-semibold text-orange-600 bg-orange-50 border border-orange-300 px-3 py-1.5 rounded-full active:scale-95 transition whitespace-nowrap"
                 >
-                  <button
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      handleEditOrder(order);
-                    }}
-                    className="text-xs font-semibold text-orange-600 bg-orange-50 border border-orange-300 px-3 py-1.5 rounded-full active:scale-95 transition whitespace-nowrap"
-                  >
-                    Sửa đơn
-                  </button>
-                  <button
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      handleCancelOrder(order);
-                    }}
-                    className="text-xs font-semibold text-red-600 bg-red-50 border border-red-300 px-3 py-1.5 rounded-full active:scale-95 transition whitespace-nowrap"
-                  >
-                    Huỷ đơn
-                  </button>
-                </motion.div>
-              )}
-            </AnimatePresence>
+                  Sửa đơn
+                </button>
+                <button
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    handleCancelOrder(order);
+                  }}
+                  className="text-xs font-semibold text-red-600 bg-red-50 border border-red-300 px-3 py-1.5 rounded-full active:scale-95 transition whitespace-nowrap"
+                >
+                  Huỷ đơn
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </div>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
 import { Plus } from "lucide-react";
 import ProductFilterHeader from "../components/common/ProductFilterHeader";
@@ -97,6 +97,17 @@ const Inventory = ({
     ],
   });
 
+  // Tối ưu hóa: Memoize handlers tìm kiếm để tránh re-render ProductFilterHeader
+  const handleSearchChange = useCallback(
+    (e) => setSearchTerm(e.target.value),
+    [setSearchTerm],
+  );
+
+  const handleClearSearch = useCallback(
+    () => setSearchTerm(""),
+    [setSearchTerm],
+  );
+
   return (
     <div className="relative h-full bg-transparent flex flex-col">
       <AppHeader className="z-20" isScrolled={isScrolled} />
@@ -112,8 +123,8 @@ const Inventory = ({
         >
           <ProductFilterHeader
             searchTerm={searchTerm}
-            onSearchChange={(e) => setSearchTerm(e.target.value)}
-            onClearSearch={() => setSearchTerm("")}
+            onSearchChange={handleSearchChange}
+            onClearSearch={handleClearSearch}
             enableFilters={false} // Tắt filter trong header cố định
             activeCategory={activeCategory}
             setActiveCategory={setActiveCategory}

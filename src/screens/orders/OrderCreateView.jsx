@@ -1,5 +1,4 @@
-/* eslint-disable no-unused-vars */
-import React, { useState, useEffect } from "react";
+import React, { useMemo, useCallback } from "react";
 import { motion } from "framer-motion";
 import { getWarehouses } from "../../utils/inventory/warehouseUtils";
 
@@ -36,17 +35,14 @@ const OrderCreateView = ({
   totalAmount,
   reviewItems,
   isReviewOpen,
-  hideBackButton,
   orderComment,
   setOrderComment,
-  handleExitCreate,
   handleCancelDraft,
   handleQuantityChange,
   adjustQuantity,
   handleOpenReview,
   handleCloseReview,
   handleConfirmOrder,
-  setTabBarVisible,
   sortConfig,
   setSortConfig,
   customers,
@@ -73,12 +69,16 @@ const OrderCreateView = ({
     ],
   });
 
-  const handleScrollCombined = (e) => {
-    handleScroll(e);
-    if (isScrollNearBottom(e.target) && hasMore) {
-      loadMore();
-    }
-  };
+  // Tối ưu hóa: Memoize handleScrollCombined để tránh re-render list
+  const handleScrollCombined = useCallback(
+    (e) => {
+      handleScroll(e);
+      if (isScrollNearBottom(e.target) && hasMore) {
+        loadMore();
+      }
+    },
+    [handleScroll, hasMore, loadMore],
+  );
 
   const categories = React.useMemo(
     () => settings?.categories || ["Chung"],
@@ -99,9 +99,35 @@ const OrderCreateView = ({
   // Header tìm kiếm: ~56px
   // Chúng ta tính toán top/padding động dựa trên orderBeingEdited
 
-  const headerHeight = orderBeingEdited ? 68 : 52; // Giảm 53 -> 52 để đóng khoảng cách
+  // Tối ưu hóa: Memoize các tính toán chiều cao
+  const headerHeight = useMemo(
+    () => (orderBeingEdited ? 68 : 52),
+    [orderBeingEdited],
+  );
   const searchBarHeight = 60; // Hơi nhiều hơn 56 để tránh chồng chéo
-  const listPaddingTop = headerHeight + searchBarHeight;
+  const listPaddingTop = useMemo(
+    () => headerHeight + searchBarHeight,
+    [headerHeight],
+  );
+
+  // Tối ưu hóa: Memoize style object để tránh re-render không cần thiết
+  const listStyle = useMemo(
+    () => ({
+      paddingTop: `calc(${listPaddingTop}px + env(safe-area-inset-top))`,
+    }),
+    [listPaddingTop],
+  );
+
+  // Tối ưu hóa: Memoize handlers tìm kiếm để tránh re-render ProductFilterHeader
+  const handleSearchChange = useCallback(
+    (e) => setSearchTerm(e.target.value),
+    [setSearchTerm],
+  );
+
+  const handleClearSearch = useCallback(
+    () => setSearchTerm(""),
+    [setSearchTerm],
+  );
 
   return (
     <div className="flex flex-col h-full bg-rose-50 pb-safe-area relative">
@@ -125,8 +151,8 @@ const OrderCreateView = ({
       >
         <ProductFilterHeader
           searchTerm={searchTerm}
-          onSearchChange={(e) => setSearchTerm(e.target.value)}
-          onClearSearch={() => setSearchTerm("")}
+          onSearchChange={handleSearchChange}
+          onClearSearch={handleClearSearch}
           enableFilters={false} // Chỉ hiện Search Bar
           // Props thừa nhưng cần để component không lỗi nếu nó check
           activeCategory={activeCategory}
@@ -145,9 +171,7 @@ const OrderCreateView = ({
         <OrderCreateProductList
           filteredProducts={visibleProducts}
           handleScroll={handleScrollCombined}
-          style={{
-            paddingTop: `calc(${listPaddingTop}px + env(safe-area-inset-top))`,
-          }} // Truyền style động cho padding
+          style={listStyle} // Sử dụng style đã được memoized
           cart={cart}
           selectedWarehouse={selectedWarehouse}
           orderBeingEdited={orderBeingEdited}
