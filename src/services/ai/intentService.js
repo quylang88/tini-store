@@ -77,15 +77,33 @@ const LOCAL_KEYWORDS = [
 ];
 
 /**
+ * Helper to escape regex special characters
+ */
+const escapeRegExp = (string) => {
+  return string.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+};
+
+/**
+ * Precompiled Regex for performance
+ */
+const buildRegex = (keywords) => {
+  const pattern = keywords.map(escapeRegExp).join("|");
+  return new RegExp(pattern, "i");
+};
+
+const LOCAL_REGEX = buildRegex(LOCAL_KEYWORDS);
+const SEARCH_REGEX = buildRegex(SEARCH_KEYWORDS);
+const IMPORT_REGEX = buildRegex(IMPORT_KEYWORDS);
+const EXPORT_REGEX = buildRegex(EXPORT_KEYWORDS);
+
+/**
  * Phân loại ý định dựa trên từ khóa (Rule-based) - SIÊU NHANH
  */
 const detectIntentByKeywords = (query) => {
-  const lowerQuery = query.toLowerCase();
-
-  const isLocal = LOCAL_KEYWORDS.some((kw) => lowerQuery.includes(kw));
-  const isSearch = SEARCH_KEYWORDS.some((kw) => lowerQuery.includes(kw));
-  const isImport = IMPORT_KEYWORDS.some((kw) => lowerQuery.includes(kw));
-  const isExport = EXPORT_KEYWORDS.some((kw) => lowerQuery.includes(kw));
+  const isLocal = LOCAL_REGEX.test(query);
+  const isSearch = SEARCH_REGEX.test(query);
+  const isImport = IMPORT_REGEX.test(query);
+  const isExport = EXPORT_REGEX.test(query);
 
   // 1. Conflict Detection (Quan trọng nhất để fix lỗi nhận nhầm)
   // Nếu câu vừa có ý định Search (tìm, check, thị trường...)
