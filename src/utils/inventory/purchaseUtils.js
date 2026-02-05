@@ -126,6 +126,7 @@ export const getLatestLot = (product = {}) => {
 };
 
 // Cache lô hàng cũ nhất còn tồn kho (quantity > 0) để tránh loop O(N) lặp lại
+// Lưu ý: Key là tham chiếu mảng purchaseLots. Đảm bảo dữ liệu được cập nhật kiểu immutable.
 const oldestActiveLotCache = new WeakMap();
 
 export const getOldestActiveLot = (product = {}) => {
