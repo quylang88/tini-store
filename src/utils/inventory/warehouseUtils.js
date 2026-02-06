@@ -92,7 +92,12 @@ export const getWarehouseShortLabel = (key) => {
 };
 
 export const normalizeWarehouseStock = (product = {}) => {
-  if (!product.stockByWarehouse) return EMPTY_STOCK;
+  if (
+    !product.stockByWarehouse ||
+    typeof product.stockByWarehouse !== "object"
+  ) {
+    return EMPTY_STOCK;
+  }
 
   // Kiểm tra cache trước khi tính toán
   if (normalizedStockCache.has(product.stockByWarehouse)) {
