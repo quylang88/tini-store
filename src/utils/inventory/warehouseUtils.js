@@ -78,7 +78,35 @@ export const getWarehouseShortLabel = (key) => {
   return WAREHOUSE_SHORT_LABEL_MAP[resolvedKey] || key;
 };
 
+// Cache kết quả normalizeWarehouseStock để tránh tạo object lặp lại.
+// Key là object reference stockByWarehouse.
+const STOCK_CACHE = new WeakMap();
+
+// Object mặc định (đóng băng) khi không có dữ liệu kho.
+// Giúp tránh tạo object { vinhPhuc: 0, lamDong: 0 } mới mỗi lần gọi.
+const EMPTY_STOCK = Object.freeze(
+  ALL_WAREHOUSE_KEYS.reduce((acc, key) => {
+    acc[key] = 0;
+    return acc;
+  }, {}),
+);
+
 export const normalizeWarehouseStock = (product = {}) => {
+  // Nếu không có stockByWarehouse hoặc không phải object, trả về object rỗng mặc định.
+  // Check typeof để đảm bảo WeakMap không lỗi với primitive.
+  if (
+    !product ||
+    !product.stockByWarehouse ||
+    typeof product.stockByWarehouse !== "object"
+  ) {
+    return EMPTY_STOCK;
+  }
+
+  // Kiểm tra cache
+  if (STOCK_CACHE.has(product.stockByWarehouse)) {
+    return STOCK_CACHE.get(product.stockByWarehouse);
+  }
+
   const stock = {};
   const primaryKeys = getAllWarehouseKeys();
 
@@ -113,6 +141,8 @@ export const normalizeWarehouseStock = (product = {}) => {
   }
   // Đã bỏ logic fallback cho product.stock (dữ liệu cũ)
 
+  // Lưu vào cache trước khi trả về
+  STOCK_CACHE.set(product.stockByWarehouse, stock);
   return stock;
 };
 
