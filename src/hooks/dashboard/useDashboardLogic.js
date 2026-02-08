@@ -180,10 +180,16 @@ const useDashboardLogic = ({ products, orders, rangeMode = "dashboard" }) => {
 
   const filteredPaidOrders = useMemo(() => {
     if (!rangeStart && !rangeEnd) return paidOrders;
+
+    // Convert Date objects to ISO strings once (outside the loop) to enable fast string comparison.
+    // This assumes order.date is always in ISO 8601 format (e.g. from new Date().toISOString()),
+    // which allows direct lexicographical comparison.
+    const startISO = rangeStart ? rangeStart.toISOString() : null;
+    const endISO = rangeEnd ? rangeEnd.toISOString() : null;
+
     return paidOrders.filter((order) => {
-      const orderDate = new Date(order.date);
-      if (rangeStart && orderDate < rangeStart) return false;
-      if (rangeEnd && orderDate > rangeEnd) return false;
+      if (startISO && order.date < startISO) return false;
+      if (endISO && order.date > endISO) return false;
       return true;
     });
   }, [paidOrders, rangeStart, rangeEnd]);
