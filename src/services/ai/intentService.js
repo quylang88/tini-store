@@ -43,6 +43,7 @@ const SEARCH_KEYWORDS = [
   "tốt",
   "trend",
   "thị trường", // Added based on user feedback
+  "check", // Added based on user feedback
   // Force Search Triggers
   "bên nhật",
   "tại nhật",
