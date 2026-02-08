@@ -125,6 +125,37 @@ export const getLatestLot = (product = {}) => {
   return latest;
 };
 
+// Cache lô hàng cũ nhất còn tồn kho (quantity > 0) để tránh loop O(N) lặp lại
+// Lưu ý: Key là tham chiếu mảng purchaseLots. Đảm bảo dữ liệu được cập nhật kiểu immutable.
+const oldestActiveLotCache = new WeakMap();
+
+export const getOldestActiveLot = (product = {}) => {
+  const lots = product.purchaseLots;
+  if (!lots || !Array.isArray(lots) || lots.length === 0) return null;
+
+  if (oldestActiveLotCache.has(lots)) {
+    return oldestActiveLotCache.get(lots);
+  }
+
+  let oldest = null;
+  for (const lot of lots) {
+    if ((Number(lot.quantity) || 0) > 0) {
+      if (!oldest) {
+        oldest = lot;
+      } else {
+        const oldestDate = oldest.createdAt || "";
+        const currentDate = lot.createdAt || "";
+        if (currentDate < oldestDate) {
+          oldest = lot;
+        }
+      }
+    }
+  }
+
+  oldestActiveLotCache.set(lots, oldest);
+  return oldest;
+};
+
 // Returns all stats in one pass to avoid multiple array scans
 export const getProductStats = (product = {}) => {
   const latestLot = getLatestLot(product);
