@@ -211,8 +211,8 @@ const Assistant = ({
 
   return (
     <motion.div
-      // FIX 1: Dùng fixed inset-0 để neo cứng màn hình vào viewport, tránh bị đẩy lên khi bàn phím hiện
-      // FIX 2: overscroll-none ngăn chặn việc kéo cả trang web xuống
+      // FIX 1: Sử dụng fixed inset-0 để neo cứng màn hình vào viewport, tránh bị đẩy lên khi bàn phím hiện
+      // FIX 2: overscroll-none ngăn chặn việc kéo cả trang web xuống (prevent rubber-banding)
       className="fixed inset-0 z-40 flex flex-col w-full h-full overflow-hidden overscroll-none"
       animate={{
         backgroundColor: activeTheme.bgGradient,
