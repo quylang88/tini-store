@@ -205,9 +205,9 @@ const Assistant = ({
     setMessages((prev) => [...prev, cancelMsg]);
   };
 
-  // Chiều cao TabBar mặc định (ước lượng 60px + safe area)
-  // Bạn có thể chỉnh số 60px này cho khớp với chiều cao thực tế của TabBar app bạn
-  const TABBAR_HEIGHT_SPACER = "calc(60px + env(safe-area-inset-bottom))";
+  // Chiều cao TabBar thực tế (56px content + 1px border + safe area)
+  // Dùng để đẩy input lên trên TabBar khi bàn phím đóng
+  const TABBAR_HEIGHT_SPACER = "calc(57px + env(safe-area-inset-bottom, 0px))";
 
   return (
     <motion.div
