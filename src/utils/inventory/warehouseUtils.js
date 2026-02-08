@@ -57,6 +57,19 @@ const WAREHOUSE_SHORT_LABEL_MAP = (() => {
   return map;
 })();
 
+// Cache kết quả normalizeWarehouseStock để tránh tính toán lại
+// khi product.stockByWarehouse object reference không đổi (như khi sửa tên, giá).
+// Key là object reference của stockByWarehouse.
+const normalizedStockCache = new WeakMap();
+
+// Object mặc định khi không có dữ liệu tồn kho, được đóng băng để tránh mutation.
+const EMPTY_STOCK = Object.freeze(
+  ALL_WAREHOUSE_KEYS.reduce((acc, key) => {
+    acc[key] = 0;
+    return acc;
+  }, {}),
+);
+
 export const getAllWarehouseKeys = () => ALL_WAREHOUSE_KEYS;
 
 // Helper để map bất kỳ key nào (hiện tại hoặc cũ) sang key chính hiện tại
@@ -79,6 +92,18 @@ export const getWarehouseShortLabel = (key) => {
 };
 
 export const normalizeWarehouseStock = (product = {}) => {
+  if (
+    !product.stockByWarehouse ||
+    typeof product.stockByWarehouse !== "object"
+  ) {
+    return EMPTY_STOCK;
+  }
+
+  // Kiểm tra cache trước khi tính toán
+  if (normalizedStockCache.has(product.stockByWarehouse)) {
+    return normalizedStockCache.get(product.stockByWarehouse);
+  }
+
   const stock = {};
   const primaryKeys = getAllWarehouseKeys();
 
@@ -87,32 +112,29 @@ export const normalizeWarehouseStock = (product = {}) => {
     stock[key] = 0;
   });
 
-  if (product.stockByWarehouse) {
-    // Tối ưu hóa: Sử dụng for...in thay vì Object.keys().forEach() để tránh tạo mảng keys.
-    for (const sourceKey in product.stockByWarehouse) {
-      if (
-        Object.prototype.hasOwnProperty.call(
-          product.stockByWarehouse,
-          sourceKey,
-        )
-      ) {
-        const value = Number(product.stockByWarehouse[sourceKey]) || 0;
-        const targetKey = resolveWarehouseKey(sourceKey);
+  // Tối ưu hóa: Sử dụng for...in thay vì Object.keys().forEach() để tránh tạo mảng keys.
+  for (const sourceKey in product.stockByWarehouse) {
+    if (
+      Object.prototype.hasOwnProperty.call(product.stockByWarehouse, sourceKey)
+    ) {
+      const value = Number(product.stockByWarehouse[sourceKey]) || 0;
+      const targetKey = resolveWarehouseKey(sourceKey);
 
-        // Chỉ cộng dồn nếu key đích hợp lệ trong config
-        if (Object.prototype.hasOwnProperty.call(stock, targetKey)) {
-          stock[targetKey] += value;
-        } else {
-          // Nếu có dữ liệu cho key không có trong config (và không được alias),
-          // ta có thể bỏ qua hoặc giữ lại.
-          // Để an toàn/dễ kiểm tra, ta giữ lại trong object, nhưng nó sẽ không nằm trong danh sách primaryKeys.
-          stock[targetKey] = (stock[targetKey] || 0) + value;
-        }
+      // Chỉ cộng dồn nếu key đích hợp lệ trong config
+      if (Object.prototype.hasOwnProperty.call(stock, targetKey)) {
+        stock[targetKey] += value;
+      } else {
+        // Nếu có dữ liệu cho key không có trong config (và không được alias),
+        // ta có thể bỏ qua hoặc giữ lại.
+        // Để an toàn/dễ kiểm tra, ta giữ lại trong object, nhưng nó sẽ không nằm trong danh sách primaryKeys.
+        stock[targetKey] = (stock[targetKey] || 0) + value;
       }
     }
   }
   // Đã bỏ logic fallback cho product.stock (dữ liệu cũ)
 
+  // Lưu kết quả vào cache
+  normalizedStockCache.set(product.stockByWarehouse, stock);
   return stock;
 };
 
