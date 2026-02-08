@@ -168,7 +168,7 @@ const ChatBubble = ({ message, theme, swipeX }) => {
 
   return (
     <motion.div
-      style={{ zIndex: showMenu ? 50 : "auto", ...rowStyle }} // Fix z-index overlap issue
+      style={{ zIndex: showMenu ? 50 : "auto", ...rowStyle }} // Tăng z-index khi menu hiển thị để đảm bảo menu nằm trên các tin nhắn khác
       className={`flex w-full mb-4 relative items-end ${isUser ? "justify-end" : "justify-start"}`}
     >
       <motion.div
