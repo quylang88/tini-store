@@ -178,50 +178,66 @@ export const consumePurchaseLots = (product, warehouseKey, quantity) => {
   let remaining = Math.max(0, Number(quantity) || 0);
   if (remaining === 0) return { product, allocations: [] };
 
-  // Clone lots để tránh mutation trực tiếp
-  const lots = (product.purchaseLots || []).map((lot) => ({ ...lot }));
-  const allocations = [];
-
-  // Lọc các lot thuộc kho cần xuất
-  // Sử dụng resolveWarehouseKey để khớp cả key chính và key cũ
   const targetKey = resolveWarehouseKey(warehouseKey);
+  const originalLots = product.purchaseLots || [];
 
-  const availableLots = lots
-    .map((lot, index) => ({ ...lot, originalIndex: index })) // Giữ index gốc để cập nhật lại
-    .filter((lot) => {
-      const lotWarehouse = resolveWarehouseKey(lot.warehouse);
-      return lotWarehouse === targetKey && (Number(lot.quantity) || 0) > 0;
-    });
+  // 1. Identify candidates without cloning yet.
+  // We keep index to update later.
+  const candidates = [];
+  for (let i = 0; i < originalLots.length; i++) {
+    const lot = originalLots[i];
+    const lotWarehouse = resolveWarehouseKey(lot.warehouse);
+    if (lotWarehouse === targetKey && (Number(lot.quantity) || 0) > 0) {
+      candidates.push({ lot, index: i });
+    }
+  }
 
+  // 2. Sort candidates.
   // Sắp xếp theo giá nhập (cost) TĂNG DẦN (thấp nhất xuất trước)
-  // Nếu giá bằng nhau, ưu tiên lô cũ hơn (createdAt hoặc index nhỏ hơn)
-  availableLots.sort((a, b) => {
-    const costA = Number(a.cost) || 0;
-    const costB = Number(b.cost) || 0;
+  // Nếu giá bằng nhau, ưu tiên lô cũ hơn (index nhỏ hơn - FIFO)
+  candidates.sort((a, b) => {
+    const costA = Number(a.lot.cost) || 0;
+    const costB = Number(b.lot.cost) || 0;
     if (costA !== costB) {
       return costA - costB;
     }
-    // Nếu giá bằng nhau, ưu tiên nhập trước (FIFO theo thời gian)
-    // Giả sử mảng gốc đã sắp xếp theo thời gian nhập
-    return a.originalIndex - b.originalIndex;
+    return a.index - b.index;
   });
 
-  // Trừ tồn kho từ các lot đã sắp xếp
-  for (const lot of availableLots) {
+  // 3. Calculate updates.
+  const updates = new Map(); // index -> newQuantity
+  const allocations = [];
+
+  for (const candidate of candidates) {
     if (remaining <= 0) break;
-    const available = Number(lot.quantity) || 0;
+    const available = Number(candidate.lot.quantity) || 0;
     const used = Math.min(available, remaining);
 
-    // Cập nhật lại số lượng trong mảng gốc
-    lots[lot.originalIndex].quantity = available - used;
+    const newQuantity = available - used;
+    updates.set(candidate.index, newQuantity);
+
     remaining -= used;
-    allocations.push({ lotId: lot.id, quantity: used });
+    allocations.push({ lotId: candidate.lot.id, quantity: used });
   }
+
+  // If no allocations happen (e.g. no stock available), return original.
+  if (allocations.length === 0) {
+    return { product, allocations: [] };
+  }
+
+  // 4. Construct new lots array only if changes occurred.
+  // Use structural sharing.
+  const newLots = originalLots.map((lot, index) => {
+    if (updates.has(index)) {
+      return { ...lot, quantity: updates.get(index) };
+    }
+    return lot;
+  });
 
   return {
     product: {
       ...product,
-      purchaseLots: lots,
+      purchaseLots: newLots,
     },
     allocations,
   };
