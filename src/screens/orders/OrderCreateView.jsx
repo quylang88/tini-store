@@ -32,6 +32,7 @@ const OrderCreateView = ({
   setSearchTerm,
   debouncedSearchTerm,
   filteredProducts,
+  getAvailableStock,
   totalAmount,
   reviewItems,
   isReviewOpen,
@@ -170,6 +171,7 @@ const OrderCreateView = ({
       <div className="flex-1 overflow-hidden flex flex-col pt-0">
         <OrderCreateProductList
           filteredProducts={visibleProducts}
+          getAvailableStock={getAvailableStock}
           handleScroll={handleScrollCombined}
           style={listStyle} // Sử dụng style đã được memoized
           cart={cart}

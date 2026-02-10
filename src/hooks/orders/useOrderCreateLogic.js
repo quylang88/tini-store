@@ -69,10 +69,11 @@ const useOrderCreateLogic = ({
     setShippingFeeRaw,
   } = useOrderFormLogic();
 
-  const { filteredProducts, reviewItems, totalAmount } = useOrderCatalog({
-    products,
-    cart,
-    priceOverrides,
+  const { filteredProducts, reviewItems, totalAmount, getAvailableStock } =
+    useOrderCatalog({
+      products,
+      cart,
+      priceOverrides,
     searchTerm: debouncedSearchTerm,
     activeCategory,
     selectedWarehouse,
@@ -266,6 +267,7 @@ const useOrderCreateLogic = ({
     orderBeingEdited,
     totalAmount,
     reviewItems,
+    getAvailableStock,
     filteredProducts,
     handleQuantityChange,
     adjustQuantity,
