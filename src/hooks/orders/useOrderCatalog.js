@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from "react";
+import { useCallback, useMemo, useRef } from "react";
 import {
   getSpecificWarehouseStock,
   getDefaultWarehouse,
@@ -21,12 +21,37 @@ const useOrderCatalog = ({
   orderBeingEdited,
   sortConfig = { key: "date", direction: "desc" },
 }) => {
+  const prevProductsRef = useRef(null);
+  const productMapRef = useRef(new Map());
+
   const productMap = useMemo(() => {
+    const prevProducts = prevProductsRef.current;
+
+    // Check if products array content is shallowly equal to previous
+    let isSame = false;
+    if (prevProducts && prevProducts.length === products.length) {
+      isSame = true;
+      for (let i = 0; i < products.length; i++) {
+        if (products[i] !== prevProducts[i]) {
+          isSame = false;
+          break;
+        }
+      }
+    }
+
+    if (isSame) {
+      return productMapRef.current;
+    }
+
     // Tối ưu hóa: Sử dụng vòng lặp for...of để tránh tạo mảng trung gian từ map()
     const map = new Map();
     for (const product of products) {
       map.set(product.id, product);
     }
+
+    prevProductsRef.current = products;
+    productMapRef.current = map;
+
     return map;
   }, [products]);
 
