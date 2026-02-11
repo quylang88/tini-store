@@ -334,8 +334,10 @@ class StorageService {
       const chunk = items.slice(i, i + chunkSize);
 
       // Yield to event loop to keep UI responsive
+      // eslint-disable-next-line no-await-in-loop
       await new Promise((resolve) => setTimeout(resolve, 0));
 
+      // eslint-disable-next-line no-await-in-loop
       await new Promise((resolve, reject) => {
         const transaction = this.db.transaction([storeName], "readwrite");
         const store = transaction.objectStore(storeName);
