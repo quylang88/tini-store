@@ -1,12 +1,7 @@
 import React, { useState, memo, useMemo } from "react";
 import { Plus, Minus, ShoppingCart, Image as ImageIcon } from "lucide-react";
 import { formatInputNumber } from "../../utils/formatters/formatUtils";
-import {
-  getSpecificWarehouseStock,
-  getDefaultWarehouse,
-  getWarehouseShortLabel,
-  resolveWarehouseKey,
-} from "../../utils/inventory/warehouseUtils";
+import { getWarehouseShortLabel } from "../../utils/inventory/warehouseUtils";
 import ProductFilterSection from "../../components/common/ProductFilterSection";
 import ExpandableProductName from "../../components/common/ExpandableProductName";
 
@@ -50,7 +45,7 @@ const ProductItem = memo(
     p,
     qty,
     selectedWarehouse,
-    orderBeingEdited,
+    getAvailableStock,
     adjustQuantity,
     handleQuantityChange,
     activeCategory,
@@ -67,24 +62,11 @@ const ProductItem = memo(
 
     // Tính toán tồn kho khả dụng
     const availableStock = useMemo(() => {
-      // Tối ưu hóa: Sử dụng getSpecificWarehouseStock thay vì normalizeWarehouseStock để tránh tạo object không cần thiết.
-      const resolvedWarehouseKey = resolveWarehouseKey(selectedWarehouse);
-      let stock = getSpecificWarehouseStock(p, resolvedWarehouseKey);
-
-      if (orderBeingEdited) {
-        const orderWarehouse =
-          resolveWarehouseKey(orderBeingEdited.warehouse) ||
-          getDefaultWarehouse().key;
-
-        if (orderWarehouse === resolveWarehouseKey(selectedWarehouse)) {
-          const previousQty =
-            orderBeingEdited.items.find((item) => item.productId === p.id)
-              ?.quantity || 0;
-          stock += previousQty;
-        }
+      if (getAvailableStock) {
+        return getAvailableStock(p, selectedWarehouse);
       }
-      return stock;
-    }, [p, selectedWarehouse, orderBeingEdited]);
+      return 0;
+    }, [p, selectedWarehouse, getAvailableStock]);
 
     const isOutOfStock = availableStock <= 0;
     const isAdded = qty !== undefined;
@@ -190,10 +172,10 @@ ProductItem.displayName = "ProductItem";
 const OrderCreateProductList = memo(
   ({
     filteredProducts,
+    getAvailableStock,
     handleScroll,
     cart,
     selectedWarehouse,
-    orderBeingEdited,
     adjustQuantity,
     handleQuantityChange,
     activeCategory,
@@ -236,7 +218,7 @@ const OrderCreateProductList = memo(
             p={p}
             qty={cart[p.id]}
             selectedWarehouse={selectedWarehouse}
-            orderBeingEdited={orderBeingEdited}
+            getAvailableStock={getAvailableStock}
             adjustQuantity={adjustQuantity}
             handleQuantityChange={handleQuantityChange}
             activeCategory={activeCategory}

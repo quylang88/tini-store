@@ -106,6 +106,7 @@ const useOrdersLogic = ({
     totalAmount: createLogic.totalAmount,
     reviewItems: createLogic.reviewItems,
     filteredProducts: createLogic.filteredProducts,
+    getAvailableStock: createLogic.getAvailableStock,
     handleQuantityChange: createLogic.handleQuantityChange,
     adjustQuantity: createLogic.adjustQuantity,
     handleCreateOrder: createLogic.handleCreateOrder,
