@@ -41,13 +41,35 @@ const useOrderCatalog = ({
     return map;
   }, [orderBeingEdited]);
 
+  // Tối ưu hóa: Pre-calculate stock for the selected warehouse to avoid O(N) calculation during filtering
+  const stockMap = useMemo(() => {
+    const map = new Map();
+    const resolvedSelected = resolveWarehouseKey(selectedWarehouse);
+    const isAll = selectedWarehouse === "all";
+
+    for (const product of products) {
+      let stock = 0;
+      if (isAll) {
+        stock = getTotalStock(product);
+      } else {
+        stock = getSpecificWarehouseStock(product, resolvedSelected);
+      }
+      map.set(product.id, stock);
+    }
+    return map;
+  }, [products, selectedWarehouse]);
+
   const getAvailableStock = useCallback(
     (product, warehouseKey) => {
       let baseStock = 0;
       // Resolve warehouse key
       const resolvedKey = resolveWarehouseKey(warehouseKey);
 
-      if (warehouseKey === "all") {
+      // Tối ưu hóa: Nếu kho được yêu cầu trùng với kho đang chọn (case phổ biến nhất khi lọc),
+      // sử dụng giá trị đã tính toán trước trong stockMap (O(1)) thay vì tính lại (O(N) keys)
+      if (warehouseKey === selectedWarehouse) {
+        baseStock = stockMap.get(product.id) || 0;
+      } else if (warehouseKey === "all") {
         baseStock = getTotalStock(product);
       } else {
         // Tối ưu hóa: Tính trực tiếp tồn kho của kho cụ thể mà không cần chuẩn hóa toàn bộ object
@@ -65,7 +87,7 @@ const useOrderCatalog = ({
       const previousQty = orderItemsQuantityMap.get(product.id) || 0;
       return baseStock + previousQty;
     },
-    [orderBeingEdited, orderItemsQuantityMap],
+    [orderBeingEdited, orderItemsQuantityMap, stockMap, selectedWarehouse],
   );
 
   // Định nghĩa bộ lọc tùy chỉnh cho tính khả dụng
