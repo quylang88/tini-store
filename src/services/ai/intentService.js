@@ -29,6 +29,7 @@ const EXPORT_KEYWORDS = [
 const SEARCH_KEYWORDS = [
   // General Search Triggers
   "tìm",
+  "check",
   "trên mạng",
   "internet",
   "so sánh",
