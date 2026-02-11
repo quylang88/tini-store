@@ -4,8 +4,26 @@
  * (Tách biệt hoàn toàn khỏi logic format string của contextBuilder)
  */
 
+// Cache cho analyzeBusinessStats sử dụng WeakMap để tránh leak memory
+const analyticsCache = new WeakMap();
+
 // --- 1. PHÂN TÍCH TÀI CHÍNH TỔNG QUAN ---
 export const analyzeBusinessStats = (products = [], orders = []) => {
+  // Kiểm tra cache
+  // Chỉ cache nếu inputs là object (WeakMap key requirement)
+  const canCache =
+    products &&
+    typeof products === "object" &&
+    orders &&
+    typeof orders === "object";
+
+  if (canCache) {
+    const cachedOrdersMap = analyticsCache.get(products);
+    if (cachedOrdersMap && cachedOrdersMap.has(orders)) {
+      return cachedOrdersMap.get(orders);
+    }
+  }
+
   // TỔNG VỐN NHẬP (Lũy kế) & VỐN TỒN KHO (Hiện tại)
   // Gộp vòng lặp để tối ưu hiệu năng (tránh duyệt mảng products và purchaseLots 2 lần)
   let totalImportCapital = 0;
@@ -65,7 +83,7 @@ export const analyzeBusinessStats = (products = [], orders = []) => {
     totalUnpaidProfit += orderProfit;
   });
 
-  return {
+  const result = {
     totalImportCapital,
     totalInventoryCapital,
     unpaidOrderCount,
@@ -74,6 +92,18 @@ export const analyzeBusinessStats = (products = [], orders = []) => {
     totalUnpaidProfit,
     unpaidOrders,
   };
+
+  // Cập nhật cache
+  if (canCache) {
+    let cachedOrdersMap = analyticsCache.get(products);
+    if (!cachedOrdersMap) {
+      cachedOrdersMap = new WeakMap();
+      analyticsCache.set(products, cachedOrdersMap);
+    }
+    cachedOrdersMap.set(orders, result);
+  }
+
+  return result;
 };
 
 // --- 2. PHÂN TÍCH DOANH SỐ THÁNG HIỆN TẠI ---

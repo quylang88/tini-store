@@ -205,14 +205,13 @@ const Assistant = ({
     setMessages((prev) => [...prev, cancelMsg]);
   };
 
-  // Chiều cao TabBar thực tế (56px content + 1px border + safe area)
-  // Dùng để đẩy input lên trên TabBar khi bàn phím đóng
+  // Chiều cao TabBar chính xác: 56px content + 1px border = 57px + safe area
   const TABBAR_HEIGHT_SPACER = "calc(57px + env(safe-area-inset-bottom, 0px))";
 
   return (
     <motion.div
-      // FIX 1: Dùng fixed inset-0 để neo cứng màn hình vào viewport, tránh bị đẩy lên khi bàn phím hiện
-      // FIX 2: overscroll-none ngăn chặn việc kéo cả trang web xuống
+      // Use fixed inset-0 to anchor screen to viewport, preventing it from being pushed up when keyboard appears
+      // Use overscroll-none to prevent rubber-banding effect on the entire page
       className="fixed inset-0 z-40 flex flex-col w-full h-full overflow-hidden overscroll-none"
       animate={{
         backgroundColor: activeTheme.bgGradient,
