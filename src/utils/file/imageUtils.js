@@ -54,24 +54,29 @@ export const compressImage = async (file) => {
   // 2. Fallback: Sử dụng phương pháp cũ (FileReader + Canvas DOM)
   // Dành cho trình duyệt cũ hoặc nếu cách trên bị lỗi.
   // Lưu ý: Cách này chạy trên main thread nên có thể gây khựng nhẹ với ảnh lớn.
-  return new Promise((resolve) => {
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onload = (event) => {
-      const img = new Image();
-      img.src = event.target.result;
-      img.onload = () => {
-        const canvas = document.createElement("canvas");
-        // Logic scale tương tự: max 300px, no upscale
-        const maxDimension = Math.max(img.width, img.height);
-        const scale = maxDimension > 300 ? 300 / maxDimension : 1;
-        canvas.width = img.width * scale;
-        canvas.height = img.height * scale;
-        const ctx = canvas.getContext("2d");
-        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-        // Xuất ra dạng base64 chất lượng thấp hơn (0.7)
-        resolve(canvas.toDataURL("image/jpeg", 0.7));
-      };
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      const canvas = document.createElement("canvas");
+      // Logic scale tương tự: max 300px, no upscale
+      const maxDimension = Math.max(img.width, img.height);
+      const scale = maxDimension > 300 ? 300 / maxDimension : 1;
+      canvas.width = img.width * scale;
+      canvas.height = img.height * scale;
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      // Xuất ra dạng base64 chất lượng thấp hơn (0.7)
+      resolve(canvas.toDataURL("image/jpeg", 0.7));
     };
+
+    img.onerror = (error) => {
+      URL.revokeObjectURL(url);
+      reject(error);
+    };
+
+    img.src = url;
   });
 };
