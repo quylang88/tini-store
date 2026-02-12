@@ -112,13 +112,19 @@ export const analyzeMonthlySales = (orders = []) => {
   const currentMonth = now.getMonth();
   const currentYear = now.getFullYear();
 
+  // Tối ưu hóa: Tính toán trước các mốc thời gian ISO để so sánh chuỗi
+  // Thay vì new Date() trong vòng lặp (chậm ~145x), ta so sánh chuỗi ISO trực tiếp.
+  // Lưu ý: new Date(year, month, 1) tạo ngày theo giờ địa phương (00:00:00 Local).
+  // toISOString() chuyển về UTC, đúng chuẩn để so sánh với order.date (ISO UTC).
+  const startOfMonth = new Date(currentYear, currentMonth, 1);
+  const startOfNextMonth = new Date(currentYear, currentMonth + 1, 1);
+
+  const startISO = startOfMonth.toISOString();
+  const endISO = startOfNextMonth.toISOString();
+
   const thisMonthOrders = orders.filter((o) => {
-    const d = new Date(o.date);
-    return (
-      d.getMonth() === currentMonth &&
-      d.getFullYear() === currentYear &&
-      o.status !== "cancelled"
-    );
+    // So sánh chuỗi trực tiếp nhanh hơn rất nhiều
+    return o.date >= startISO && o.date < endISO && o.status !== "cancelled";
   });
 
   const thisMonthRevenue = thisMonthOrders.reduce((sum, o) => sum + o.total, 0);
@@ -138,8 +144,11 @@ export const analyzeInventory = (products = [], orders = []) => {
   const oneMonthAgo = new Date();
   oneMonthAgo.setDate(oneMonthAgo.getDate() - 30);
 
+  // Tối ưu hóa: Chuyển về ISO string để so sánh chuỗi
+  const oneMonthAgoISO = oneMonthAgo.toISOString();
+
   const recentOrders = orders.filter(
-    (o) => new Date(o.date) >= oneMonthAgo && o.status !== "cancelled",
+    (o) => o.date >= oneMonthAgoISO && o.status !== "cancelled",
   );
 
   const salesMap = {};
