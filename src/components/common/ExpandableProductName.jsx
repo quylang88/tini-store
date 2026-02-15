@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
 
 /**
  * ExpandableProductName
@@ -10,6 +9,9 @@ import { motion, AnimatePresence } from "framer-motion";
  *
  * FIX: Sử dụng style line-clamp thay vì class 'truncate' để tránh hiện tượng khựng
  * do thay đổi thuộc tính white-space (nowrap -> normal).
+ *
+ * OPTIMIZATION: Loại bỏ framer-motion để giảm overhead render trong danh sách dài.
+ * Sử dụng CSS transition và line-clamp.
  *
  * Props:
  * - name: string (Tên đầy đủ của sản phẩm)
@@ -52,38 +54,19 @@ const ExpandableProductName = ({
       onClick={handleToggle}
       className={`relative cursor-pointer transition-colors ${className}`}
     >
-      <motion.div
-        layout="size"
-        transition={{ type: "spring", stiffness: 300, damping: 30 }}
-        className="break-words" // Luôn cho phép xuống dòng để tránh layout thrashing
-        style={
-          !isExpanded
-            ? {
-                display: "-webkit-box",
-                WebkitLineClamp: 1,
-                WebkitBoxOrient: "vertical",
-                overflow: "hidden",
-              }
-            : {
-                display: "block",
-              }
-        }
-      >
+      <div className={`break-words ${!isExpanded ? "line-clamp-1" : ""}`}>
         {name}
-      </motion.div>
+      </div>
 
-      <AnimatePresence>
-        {!isExpanded && (
-          <motion.div
-            initial={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            className="overflow-hidden"
-          >
-            {children}
-          </motion.div>
-        )}
-      </AnimatePresence>
+      <div
+        className={`overflow-hidden transition-all duration-300 ease-in-out origin-top ${
+          !isExpanded
+            ? "opacity-100 max-h-20 scale-y-100 mt-0.5"
+            : "opacity-0 max-h-0 scale-y-0 mt-0"
+        }`}
+      >
+        {children}
+      </div>
     </div>
   );
 };

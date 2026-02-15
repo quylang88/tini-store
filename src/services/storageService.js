@@ -122,28 +122,56 @@ class StorageService {
   }
 
   async migrateProducts() {
-    const productCount = await this.count(STORES.PRODUCTS);
+    const migrationKey = "migration_products_in_progress";
+    let productCount = await this.count(STORES.PRODUCTS);
+
+    // Resume interrupted migration
+    if (localStorage.getItem(migrationKey)) {
+      console.log("Resuming interrupted product migration...");
+      productCount = 0;
+    }
+
     if (productCount === 0) {
       const rawProducts = localStorage.getItem("shop_products_v2");
       if (rawProducts) {
         console.log("Migrating Products...");
-        const products = JSON.parse(rawProducts);
-        if (Array.isArray(products)) {
-          await this.saveAll(STORES.PRODUCTS, products);
+        localStorage.setItem(migrationKey, "true");
+        try {
+          const products = await this.parseJSON(rawProducts);
+          if (Array.isArray(products)) {
+            await this.saveAllChunked(STORES.PRODUCTS, products);
+            localStorage.removeItem(migrationKey);
+          }
+        } catch (e) {
+          console.error("Product migration failed", e);
         }
       }
     }
   }
 
   async migrateOrders() {
-    const orderCount = await this.count(STORES.ORDERS);
+    const migrationKey = "migration_orders_in_progress";
+    let orderCount = await this.count(STORES.ORDERS);
+
+    // Resume interrupted migration
+    if (localStorage.getItem(migrationKey)) {
+      console.log("Resuming interrupted order migration...");
+      orderCount = 0;
+    }
+
     if (orderCount === 0) {
       const rawOrders = localStorage.getItem("shop_orders_v2");
       if (rawOrders) {
         console.log("Migrating Orders...");
-        const orders = JSON.parse(rawOrders);
-        if (Array.isArray(orders)) {
-          await this.saveAll(STORES.ORDERS, orders);
+        localStorage.setItem(migrationKey, "true");
+        try {
+          const orders = await this.parseJSON(rawOrders);
+          if (Array.isArray(orders)) {
+            await this.saveAllChunked(STORES.ORDERS, orders);
+            localStorage.removeItem(migrationKey);
+          }
+        } catch (e) {
+          console.error("Order migration failed", e);
         }
       }
     }
@@ -192,14 +220,28 @@ class StorageService {
   }
 
   async migrateCustomers() {
-    const customerCount = await this.count(STORES.CUSTOMERS);
+    const migrationKey = "migration_customers_in_progress";
+    let customerCount = await this.count(STORES.CUSTOMERS);
+
+    // Resume interrupted migration
+    if (localStorage.getItem(migrationKey)) {
+      console.log("Resuming interrupted customer migration...");
+      customerCount = 0;
+    }
+
     if (customerCount === 0) {
       const rawCustomers = localStorage.getItem("shop_customers_v1");
       if (rawCustomers) {
         console.log("Migrating Customers...");
-        const customers = JSON.parse(rawCustomers);
-        if (Array.isArray(customers)) {
-          await this.saveAll(STORES.CUSTOMERS, customers);
+        localStorage.setItem(migrationKey, "true");
+        try {
+          const customers = await this.parseJSON(rawCustomers);
+          if (Array.isArray(customers)) {
+            await this.saveAllChunked(STORES.CUSTOMERS, customers);
+            localStorage.removeItem(migrationKey);
+          }
+        } catch (e) {
+          console.error("Customer migration failed", e);
         }
       }
     }
@@ -247,6 +289,61 @@ class StorageService {
           console.warn("Invalid auth creds in localStorage", e);
         }
       }
+    }
+  }
+
+  // --- Helper Methods for Performance ---
+
+  /**
+   * Parse JSON asynchronously if possible (using Response)
+   * Fallback to JSON.parse
+   */
+  async parseJSON(jsonString) {
+    try {
+      if (typeof Response !== "undefined") {
+        return await new Response(jsonString).json();
+      }
+      //eslint-disable-next-line
+    } catch (e) {
+      // Fallback if Response fails or is not supported
+    }
+    return JSON.parse(jsonString);
+  }
+
+  /**
+   * Save items in chunks to avoid blocking the main thread
+   */
+  async saveAllChunked(storeName, items, chunkSize = 500) {
+    if (!items || items.length === 0) return;
+
+    // Use standard saveAll for small batches
+    if (items.length <= chunkSize) {
+      return this.saveAll(storeName, items);
+    }
+
+    // 1. Clear Store first (Transaction 1)
+    await new Promise((resolve, reject) => {
+      const transaction = this.db.transaction([storeName], "readwrite");
+      const store = transaction.objectStore(storeName);
+      store.clear();
+      transaction.oncomplete = () => resolve();
+      transaction.onerror = () => reject(transaction.error);
+    });
+
+    // 2. Insert in chunks
+    for (let i = 0; i < items.length; i += chunkSize) {
+      const chunk = items.slice(i, i + chunkSize);
+
+      // Yield to event loop to keep UI responsive
+      await new Promise((resolve) => setTimeout(resolve, 0));
+
+      await new Promise((resolve, reject) => {
+        const transaction = this.db.transaction([storeName], "readwrite");
+        const store = transaction.objectStore(storeName);
+        chunk.forEach((item) => store.put(item));
+        transaction.oncomplete = () => resolve();
+        transaction.onerror = () => reject(transaction.error);
+      });
     }
   }
 

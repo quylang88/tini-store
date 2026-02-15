@@ -50,6 +50,7 @@ const Orders = ({
     totalAmount,
     reviewItems,
     filteredProducts,
+    getAvailableStock,
     selectedWarehouse,
     setSelectedWarehouse,
     handleQuantityChange,
@@ -110,6 +111,7 @@ const Orders = ({
           setSearchTerm={setSearchTerm}
           debouncedSearchTerm={debouncedSearchTerm}
           filteredProducts={filteredProducts}
+          getAvailableStock={getAvailableStock}
           totalAmount={totalAmount}
           reviewItems={reviewItems}
           isReviewOpen={isReviewOpen}

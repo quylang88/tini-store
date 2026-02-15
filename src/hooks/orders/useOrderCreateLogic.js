@@ -69,16 +69,17 @@ const useOrderCreateLogic = ({
     setShippingFeeRaw,
   } = useOrderFormLogic();
 
-  const { filteredProducts, reviewItems, totalAmount } = useOrderCatalog({
-    products,
-    cart,
-    priceOverrides,
-    searchTerm: debouncedSearchTerm,
-    activeCategory,
-    selectedWarehouse,
-    orderBeingEdited,
-    sortConfig,
-  });
+  const { filteredProducts, reviewItems, totalAmount, getAvailableStock } =
+    useOrderCatalog({
+      products,
+      cart,
+      priceOverrides,
+      searchTerm: debouncedSearchTerm,
+      activeCategory,
+      selectedWarehouse,
+      orderBeingEdited,
+      sortConfig,
+    });
 
   const resetDraft = useCallback(() => {
     clearCart();
@@ -266,6 +267,7 @@ const useOrderCreateLogic = ({
     orderBeingEdited,
     totalAmount,
     reviewItems,
+    getAvailableStock,
     filteredProducts,
     handleQuantityChange,
     adjustQuantity,

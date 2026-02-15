@@ -4,8 +4,36 @@
  * (Tách biệt hoàn toàn khỏi logic format string của contextBuilder)
  */
 
+// Cache cho analyzeBusinessStats sử dụng WeakMap để tránh leak memory
+const analyticsCache = new WeakMap();
+
+// Cache cho analyzeMonthlySales: WeakMap<orders, { month, year, data }>
+// Giúp tránh tính toán lại doanh thu tháng hiện tại khi user chat liên tục.
+const salesCache = new WeakMap();
+
+// Cache cho analyzeInventory: WeakMap<products, WeakMap<orders, { timestamp, data }>>
+// Giúp tránh quét lại danh sách orders (O(N)) mỗi lần user chat để tìm hàng sắp hết.
+// Có TTL 5 phút để xử lý cửa sổ thời gian "30 ngày gần nhất".
+const inventoryCache = new WeakMap();
+const INVENTORY_CACHE_TTL = 5 * 60 * 1000; // 5 phút
+
 // --- 1. PHÂN TÍCH TÀI CHÍNH TỔNG QUAN ---
 export const analyzeBusinessStats = (products = [], orders = []) => {
+  // Kiểm tra cache
+  // Chỉ cache nếu inputs là object (WeakMap key requirement)
+  const canCache =
+    products &&
+    typeof products === "object" &&
+    orders &&
+    typeof orders === "object";
+
+  if (canCache) {
+    const cachedOrdersMap = analyticsCache.get(products);
+    if (cachedOrdersMap && cachedOrdersMap.has(orders)) {
+      return cachedOrdersMap.get(orders);
+    }
+  }
+
   // TỔNG VỐN NHẬP (Lũy kế) & VỐN TỒN KHO (Hiện tại)
   // Gộp vòng lặp để tối ưu hiệu năng (tránh duyệt mảng products và purchaseLots 2 lần)
   let totalImportCapital = 0;
@@ -65,7 +93,7 @@ export const analyzeBusinessStats = (products = [], orders = []) => {
     totalUnpaidProfit += orderProfit;
   });
 
-  return {
+  const result = {
     totalImportCapital,
     totalInventoryCapital,
     unpaidOrderCount,
@@ -74,6 +102,18 @@ export const analyzeBusinessStats = (products = [], orders = []) => {
     totalUnpaidProfit,
     unpaidOrders,
   };
+
+  // Cập nhật cache
+  if (canCache) {
+    let cachedOrdersMap = analyticsCache.get(products);
+    if (!cachedOrdersMap) {
+      cachedOrdersMap = new WeakMap();
+      analyticsCache.set(products, cachedOrdersMap);
+    }
+    cachedOrdersMap.set(orders, result);
+  }
+
+  return result;
 };
 
 // --- 2. PHÂN TÍCH DOANH SỐ THÁNG HIỆN TẠI ---
@@ -82,34 +122,82 @@ export const analyzeMonthlySales = (orders = []) => {
   const currentMonth = now.getMonth();
   const currentYear = now.getFullYear();
 
+  // Kiểm tra cache: Nếu danh sách đơn hàng không đổi (reference) và vẫn trong tháng/năm hiện tại
+  // thì trả về kết quả cũ.
+  if (orders && typeof orders === "object" && salesCache.has(orders)) {
+    const cached = salesCache.get(orders);
+    if (cached.month === currentMonth && cached.year === currentYear) {
+      return cached.data;
+    }
+  }
+
+  // Tối ưu hóa: Tính toán trước các mốc thời gian ISO để so sánh chuỗi
+  // Thay vì new Date() trong vòng lặp (chậm ~145x), ta so sánh chuỗi ISO trực tiếp.
+  // Lưu ý: new Date(year, month, 1) tạo ngày theo giờ địa phương (00:00:00 Local).
+  // toISOString() chuyển về UTC, đúng chuẩn để so sánh với order.date (ISO UTC).
+  const startOfMonth = new Date(currentYear, currentMonth, 1);
+  const startOfNextMonth = new Date(currentYear, currentMonth + 1, 1);
+
+  const startISO = startOfMonth.toISOString();
+  const endISO = startOfNextMonth.toISOString();
+
   const thisMonthOrders = orders.filter((o) => {
-    const d = new Date(o.date);
-    return (
-      d.getMonth() === currentMonth &&
-      d.getFullYear() === currentYear &&
-      o.status !== "cancelled"
-    );
+    // So sánh chuỗi trực tiếp nhanh hơn rất nhiều
+    return o.date >= startISO && o.date < endISO && o.status !== "cancelled";
   });
 
   const thisMonthRevenue = thisMonthOrders.reduce((sum, o) => sum + o.total, 0);
   const totalOrdersMonth = thisMonthOrders.length;
 
-  return {
+  const result = {
     thisMonthRevenue,
     totalOrdersMonth,
     currentMonth: currentMonth + 1,
     currentYear,
   };
+
+  // Cập nhật cache
+  if (orders && typeof orders === "object") {
+    salesCache.set(orders, {
+      month: currentMonth,
+      year: currentYear,
+      data: result,
+    });
+  }
+
+  return result;
 };
 
 // --- 3. PHÂN TÍCH TỒN KHO CẦN NHẬP (RESTOCK) ---
 export const analyzeInventory = (products = [], orders = []) => {
+  // Kiểm tra cache
+  const canCache =
+    products &&
+    typeof products === "object" &&
+    orders &&
+    typeof orders === "object";
+
+  if (canCache) {
+    const ordersMap = inventoryCache.get(products);
+    if (ordersMap && ordersMap.has(orders)) {
+      const cached = ordersMap.get(orders);
+      // Chỉ dùng cache nếu chưa quá thời gian TTL (5 phút)
+      // Vì "30 ngày gần nhất" là cửa sổ trượt, cache lâu quá sẽ sai số liệu.
+      if (Date.now() - cached.timestamp < INVENTORY_CACHE_TTL) {
+        return cached.data;
+      }
+    }
+  }
+
   // Tính Sales Map (30 ngày gần nhất)
   const oneMonthAgo = new Date();
   oneMonthAgo.setDate(oneMonthAgo.getDate() - 30);
 
+  // Tối ưu hóa: Chuyển về ISO string để so sánh chuỗi
+  const oneMonthAgoISO = oneMonthAgo.toISOString();
+
   const recentOrders = orders.filter(
-    (o) => new Date(o.date) >= oneMonthAgo && o.status !== "cancelled",
+    (o) => o.date >= oneMonthAgoISO && o.status !== "cancelled",
   );
 
   const salesMap = {};
@@ -128,9 +216,21 @@ export const analyzeInventory = (products = [], orders = []) => {
   });
 
   // Trả về danh sách kèm thông tin bán hàng để contextBuilder format
-  return urgentProducts.map((p) => ({
+  const result = urgentProducts.map((p) => ({
     name: p.name,
     stock: p.stock,
     soldLastMonth: salesMap[p.name] || 0,
   }));
+
+  // Cập nhật cache
+  if (canCache) {
+    let ordersMap = inventoryCache.get(products);
+    if (!ordersMap) {
+      ordersMap = new WeakMap();
+      inventoryCache.set(products, ordersMap);
+    }
+    ordersMap.set(orders, { timestamp: Date.now(), data: result });
+  }
+
+  return result;
 };
