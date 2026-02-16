@@ -8,66 +8,85 @@ import {
 const generateLotId = () =>
   `${Date.now()}-${Math.random().toString(16).slice(2, 8)}`;
 
+// Hàm hỗ trợ chuẩn hóa một lô hàng (lot). Trả về tham chiếu gốc nếu không cần thay đổi.
+const normalizeLot = (lot) => {
+  // Ánh xạ các key kho cũ sang key hiện tại
+  const currentWarehouse = resolveWarehouseKey(lot.warehouse);
+  const warehouseChanged =
+    currentWarehouse && currentWarehouse !== lot.warehouse;
+
+  const needsOriginalQtyUpdate = !lot.originalQuantity && lot.quantity;
+
+  let needsShippingUpdate = false;
+  let feeVnd = 0;
+  if (lot.shipping) {
+    feeVnd = Number(lot.shipping.feeVnd) || 0;
+    // Nếu chưa có perUnitVnd hoặc giá trị không khớp (ví dụ feeVnd thay đổi), cần update
+    // Sử dụng loose equality để handle trường hợp string/number
+    if (
+      lot.shipping.perUnitVnd === undefined ||
+      Number(lot.shipping.perUnitVnd) !== feeVnd
+    ) {
+      needsShippingUpdate = true;
+    }
+  }
+
+  if (!warehouseChanged && !needsOriginalQtyUpdate && !needsShippingUpdate) {
+    return lot;
+  }
+
+  let newLot = lot;
+
+  if (warehouseChanged) {
+    newLot = { ...newLot, warehouse: currentWarehouse };
+  }
+
+  if (needsOriginalQtyUpdate) {
+    newLot = {
+      ...newLot,
+      originalQuantity: newLot.originalQuantity || newLot.quantity,
+    };
+  }
+
+  if (needsShippingUpdate) {
+    newLot = {
+      ...newLot,
+      shipping: {
+        ...newLot.shipping,
+        perUnitVnd: feeVnd,
+      },
+    };
+  }
+  return newLot;
+};
+
 export const normalizePurchaseLots = (product = {}) => {
   if (Array.isArray(product.purchaseLots)) {
-    let hasChanges = false;
-    const normalizedLots = product.purchaseLots.map((lot) => {
-      // Ánh xạ các key kho cũ sang key hiện tại
-      const currentWarehouse = resolveWarehouseKey(lot.warehouse);
-      const warehouseChanged =
-        currentWarehouse && currentWarehouse !== lot.warehouse;
+    const lots = product.purchaseLots;
+    let changeIndex = -1;
 
-      const needsOriginalQtyUpdate = !lot.originalQuantity && lot.quantity;
-
-      let needsShippingUpdate = false;
-      let feeVnd = 0;
-      if (lot.shipping) {
-        feeVnd = Number(lot.shipping.feeVnd) || 0;
-        // Nếu chưa có perUnitVnd hoặc giá trị không khớp (ví dụ feeVnd thay đổi), cần update
-        // Sử dụng loose equality để handle trường hợp string/number
-        if (
-          lot.shipping.perUnitVnd === undefined ||
-          Number(lot.shipping.perUnitVnd) !== feeVnd
-        ) {
-          needsShippingUpdate = true;
-        }
+    // Tối ưu hóa: Kiểm tra thay đổi trước để tránh cấp phát mảng mới nếu không cần thiết.
+    // Điều này nhanh hơn đáng kể với dữ liệu "sạch" (trường hợp phổ biến khi load).
+    for (let i = 0; i < lots.length; i++) {
+      const lot = lots[i];
+      // Kiểm tra xem normalizeLot có trả về tham chiếu mới không
+      if (normalizeLot(lot) !== lot) {
+        changeIndex = i;
+        break;
       }
+    }
 
-      if (
-        !warehouseChanged &&
-        !needsOriginalQtyUpdate &&
-        !needsShippingUpdate
-      ) {
-        return lot;
-      }
+    // Nếu không tìm thấy thay đổi, trả về product gốc ngay lập tức (không cấp phát bộ nhớ).
+    if (changeIndex === -1) return product;
 
-      hasChanges = true;
-      let newLot = lot;
+    // Nếu có thay đổi, xây dựng mảng mới một cách hiệu quả theo mẫu Copy-On-Write.
+    // Bắt đầu với phần mảng không thay đổi.
+    const normalizedLots = lots.slice(0, changeIndex);
 
-      if (warehouseChanged) {
-        newLot = { ...newLot, warehouse: currentWarehouse };
-      }
-
-      if (needsOriginalQtyUpdate) {
-        newLot = {
-          ...newLot,
-          originalQuantity: newLot.originalQuantity || newLot.quantity,
-        };
-      }
-
-      if (needsShippingUpdate) {
-        newLot = {
-          ...newLot,
-          shipping: {
-            ...newLot.shipping,
-            perUnitVnd: feeVnd,
-          },
-        };
-      }
-      return newLot;
-    });
-
-    if (!hasChanges) return product;
+    // Xử lý phần còn lại bắt đầu từ item đầu tiên bị thay đổi.
+    for (let i = changeIndex; i < lots.length; i++) {
+      normalizedLots.push(normalizeLot(lots[i]));
+    }
 
     return { ...product, purchaseLots: normalizedLots };
   }
