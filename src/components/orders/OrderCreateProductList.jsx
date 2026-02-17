@@ -45,7 +45,7 @@ const ProductItem = memo(
     p,
     qty,
     selectedWarehouse,
-    getAvailableStock,
+    availableStock,
     adjustQuantity,
     handleQuantityChange,
     activeCategory,
@@ -60,14 +60,11 @@ const ProductItem = memo(
       setIsNameExpanded(targetState);
     };
 
-    // Tính toán tồn kho khả dụng
-    const availableStock = useMemo(() => {
-      if (getAvailableStock) {
-        return getAvailableStock(p, selectedWarehouse);
-      }
-      return 0;
-    }, [p, selectedWarehouse, getAvailableStock]);
-
+    // Tối ưu hóa: Loại bỏ việc truyền function getAvailableStock vào component con.
+    // Thay vào đó, tính toán giá trị availableStock ngay tại vòng lặp cha và truyền xuống dạng primitive (number).
+    // Điều này giúp React.memo hoạt động hiệu quả hơn:
+    // - Trước đây: getAvailableStock là function mới mỗi lần render cha -> ProductItem luôn render lại.
+    // - Bây giờ: availableStock là số (ví dụ: 10) -> ProductItem chỉ render lại khi số lượng thay đổi thực sự.
     const isOutOfStock = availableStock <= 0;
     const isAdded = qty !== undefined;
     const displayQty = isAdded ? qty : 0;
@@ -212,18 +209,25 @@ const OrderCreateProductList = memo(
         />
         {/* Thêm lại -mx-3 để bù cho padding của cha */}
 
-        {filteredProducts.map((p) => (
-          <ProductItem
-            key={p.id}
-            p={p}
-            qty={cart[p.id]}
-            selectedWarehouse={selectedWarehouse}
-            getAvailableStock={getAvailableStock}
-            adjustQuantity={adjustQuantity}
-            handleQuantityChange={handleQuantityChange}
-            activeCategory={activeCategory}
-          />
-        ))}
+        {filteredProducts.map((p) => {
+          // Tối ưu hóa: Tính toán tồn kho tại đây để truyền value thay vì function
+          const stock = getAvailableStock
+            ? getAvailableStock(p, selectedWarehouse)
+            : 0;
+
+          return (
+            <ProductItem
+              key={p.id}
+              p={p}
+              qty={cart[p.id]}
+              selectedWarehouse={selectedWarehouse}
+              availableStock={stock}
+              adjustQuantity={adjustQuantity}
+              handleQuantityChange={handleQuantityChange}
+              activeCategory={activeCategory}
+            />
+          );
+        })}
 
         {filteredProducts.length === 0 && (
           <div className="flex flex-col items-center justify-center pt-24 text-gray-500 w-full">
