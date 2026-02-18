@@ -4,8 +4,10 @@
  * (Tách biệt hoàn toàn khỏi logic format string của contextBuilder)
  */
 
-// Cache cho analyzeBusinessStats sử dụng WeakMap để tránh leak memory
-const analyticsCache = new WeakMap();
+// Cache riêng biệt cho product stats và order stats sử dụng WeakMap
+// Giúp tối ưu hiệu năng: Nếu chỉ products thay đổi, không cần tính lại orders và ngược lại.
+const productStatsCache = new WeakMap();
+const orderStatsCache = new WeakMap();
 
 // Cache cho analyzeMonthlySales: WeakMap<orders, { month, year, data }>
 // Giúp tránh tính toán lại doanh thu tháng hiện tại khi user chat liên tục.
@@ -17,55 +19,62 @@ const salesCache = new WeakMap();
 const inventoryCache = new WeakMap();
 const INVENTORY_CACHE_TTL = 5 * 60 * 1000; // 5 phút
 
-// --- 1. PHÂN TÍCH TÀI CHÍNH TỔNG QUAN ---
-export const analyzeBusinessStats = (products = [], orders = []) => {
-  // Kiểm tra cache
-  // Chỉ cache nếu inputs là object (WeakMap key requirement)
-  const canCache =
+// Hàm helper tính toán product stats (totalImportCapital, totalInventoryCapital)
+const calculateProductStats = (products) => {
+  if (
     products &&
     typeof products === "object" &&
-    orders &&
-    typeof orders === "object";
-
-  if (canCache) {
-    const cachedOrdersMap = analyticsCache.get(products);
-    if (cachedOrdersMap && cachedOrdersMap.has(orders)) {
-      return cachedOrdersMap.get(orders);
-    }
+    productStatsCache.has(products)
+  ) {
+    return productStatsCache.get(products);
   }
 
-  // TỔNG VỐN NHẬP (Lũy kế) & VỐN TỒN KHO (Hiện tại)
-  // Gộp vòng lặp để tối ưu hiệu năng (tránh duyệt mảng products và purchaseLots 2 lần)
   let totalImportCapital = 0;
   let totalInventoryCapital = 0;
 
-  for (const product of products) {
-    if (!product.purchaseLots || !Array.isArray(product.purchaseLots)) {
-      continue;
-    }
+  if (Array.isArray(products)) {
+    for (const product of products) {
+      if (!product.purchaseLots || !Array.isArray(product.purchaseLots)) {
+        continue;
+      }
 
-    for (const lot of product.purchaseLots) {
-      const cost = Number(lot.cost) || 0;
-      const shippingPerUnit = Number(lot.shipping?.perUnitVnd) || 0;
-      const unitCost = cost + shippingPerUnit;
+      for (const lot of product.purchaseLots) {
+        const cost = Number(lot.cost) || 0;
+        const shippingPerUnit = Number(lot.shipping?.perUnitVnd) || 0;
+        const unitCost = cost + shippingPerUnit;
 
-      // Tính cho vốn nhập (dựa trên số lượng nhập ban đầu)
-      const originalQty =
-        Number(lot.originalQuantity) || Number(lot.quantity) || 0;
-      totalImportCapital += unitCost * originalQty;
+        // Tính cho vốn nhập (dựa trên số lượng nhập ban đầu)
+        const originalQty =
+          Number(lot.originalQuantity) || Number(lot.quantity) || 0;
+        totalImportCapital += unitCost * originalQty;
 
-      // Tính cho vốn tồn (dựa trên số lượng hiện tại)
-      const currentQty = Number(lot.quantity) || 0;
-      totalInventoryCapital += unitCost * currentQty;
+        // Tính cho vốn tồn (dựa trên số lượng hiện tại)
+        const currentQty = Number(lot.quantity) || 0;
+        totalInventoryCapital += unitCost * currentQty;
+      }
     }
   }
 
-  // PHÂN TÍCH ĐƠN HÀNG CHƯA THANH TOÁN
-  const unpaidOrders = orders.filter(
-    (o) => o.status !== "paid" && o.status !== "cancelled",
-  );
-  const unpaidOrderCount = unpaidOrders.length;
+  const result = { totalImportCapital, totalInventoryCapital };
 
+  if (products && typeof products === "object") {
+    productStatsCache.set(products, result);
+  }
+
+  return result;
+};
+
+// Hàm helper tính toán order stats (unpaidOrders, unpaidOrderCount, revenue/capital/profit)
+const calculateOrderStats = (orders) => {
+  if (orders && typeof orders === "object" && orderStatsCache.has(orders)) {
+    return orderStatsCache.get(orders);
+  }
+
+  const unpaidOrders = Array.isArray(orders)
+    ? orders.filter((o) => o.status !== "paid" && o.status !== "cancelled")
+    : [];
+
+  const unpaidOrderCount = unpaidOrders.length;
   let totalUnpaidRevenue = 0;
   let totalUnpaidCapital = 0;
   let totalUnpaidProfit = 0;
@@ -94,8 +103,6 @@ export const analyzeBusinessStats = (products = [], orders = []) => {
   });
 
   const result = {
-    totalImportCapital,
-    totalInventoryCapital,
     unpaidOrderCount,
     totalUnpaidRevenue,
     totalUnpaidCapital,
@@ -103,17 +110,24 @@ export const analyzeBusinessStats = (products = [], orders = []) => {
     unpaidOrders,
   };
 
-  // Cập nhật cache
-  if (canCache) {
-    let cachedOrdersMap = analyticsCache.get(products);
-    if (!cachedOrdersMap) {
-      cachedOrdersMap = new WeakMap();
-      analyticsCache.set(products, cachedOrdersMap);
-    }
-    cachedOrdersMap.set(orders, result);
+  if (orders && typeof orders === "object") {
+    orderStatsCache.set(orders, result);
   }
 
   return result;
+};
+
+// --- 1. PHÂN TÍCH TÀI CHÍNH TỔNG QUAN ---
+export const analyzeBusinessStats = (products = [], orders = []) => {
+  // Tính toán độc lập và merge kết quả
+  // Tối ưu hóa: Nếu products thay đổi nhưng orders giữ nguyên, ta chỉ tính lại products (và ngược lại).
+  const productStats = calculateProductStats(products);
+  const orderStats = calculateOrderStats(orders);
+
+  return {
+    ...productStats,
+    ...orderStats,
+  };
 };
 
 // --- 2. PHÂN TÍCH DOANH SỐ THÁNG HIỆN TẠI ---
