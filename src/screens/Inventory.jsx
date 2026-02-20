@@ -42,6 +42,15 @@ const Inventory = ({
       setTabBarVisible,
       searchHideThreshold: 140,
       showTabBarOnlyAtTop: true,
+      // Override scroll callback to enforce tabBar hidden when in selection mode
+      onScrollCallback: useCallback(
+        (isUp) => {
+          if (isSelectionMode) {
+            setTabBarVisible(false);
+          }
+        },
+        [isSelectionMode, setTabBarVisible],
+      ),
     });
 
   const {
@@ -146,10 +155,9 @@ const Inventory = ({
           label: "Thêm hàng mới",
           color: "rose",
         });
-        // Note: We don't force setTabBarVisible(true) here because useScrollHandling manages it.
-        // But if we just exited selection mode, we might want to restore it.
-        // However, useScrollHandling will likely restore it on next scroll or render.
-        // To be safe/smooth:
+
+        // Restore visibility based on scroll logic if needed,
+        // but safe to default to true here.
         setTabBarVisible(true);
       }
     }
@@ -161,6 +169,14 @@ const Inventory = ({
     isSelectionMode,
     setTabBarVisible,
   ]);
+
+  // Force hide tab bar whenever selection mode is active (extra safeguard against scroll events)
+  useEffect(() => {
+    if (isActive && isSelectionMode) {
+      setTabBarVisible(false);
+    }
+  }, [isActive, isSelectionMode, isScrolled, setTabBarVisible]);
+
 
   const {
     visibleData: visibleProducts,
@@ -217,7 +233,11 @@ const Inventory = ({
         <div
           className="flex-1 overflow-y-auto min-h-0 pt-[56px] overscroll-y-contain pb-[80px]" // Added extra padding bottom for bar
           onScroll={(e) => {
-            handleScroll(e);
+            // If selection mode is active, do NOT call handleScroll to update UI state that might show TabBar
+            // or pass a custom handler that ignores show events.
+            // But handleScroll also manages isScrolled for header shadow.
+            // Let's rely on the useEffect safeguard and onScrollCallback above.
+             handleScroll(e);
             if (isScrollNearBottom(e.target) && hasMore) {
               loadMore();
             }

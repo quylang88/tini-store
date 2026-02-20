@@ -46,11 +46,12 @@ export const generateProductListImage = async (items, options = {}) => {
   // --- Configuration ---
   const CANVAS_WIDTH = 1125; // 375 * 3
   const PADDING = 40;
-  const HEADER_HEIGHT = 250; // Space for Logo + Title
+  const HEADER_HEIGHT = 400; // Increased Space for Larger Logo + Title (was 250)
   const ITEM_HEIGHT = 300;
   const ITEM_IMAGE_SIZE = 250;
   const ITEM_PADDING = 25;
   const FOOTER_HEIGHT = showTotal ? 150 : 50;
+  const FOOTER_PADDING_TOP = 20; // Extra padding before footer starts to avoid overlap
 
   // Font Sizes
   const FONT_TITLE = "bold 50px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
@@ -68,7 +69,8 @@ export const generateProductListImage = async (items, options = {}) => {
   const COLOR_DIVIDER = "#e5e7eb"; // gray-200
 
   // --- Calculate Height ---
-  const totalHeight = HEADER_HEIGHT + (items.length * ITEM_HEIGHT) + FOOTER_HEIGHT;
+  // Ensure totalHeight includes extra buffer before footer
+  const totalHeight = HEADER_HEIGHT + (items.length * ITEM_HEIGHT) + FOOTER_HEIGHT + FOOTER_PADDING_TOP;
 
   // --- Create Canvas ---
   const canvas = document.createElement("canvas");
@@ -90,15 +92,20 @@ export const generateProductListImage = async (items, options = {}) => {
   // --- Draw Header ---
   let currentY = PADDING;
 
-  // Logo
+  // Logo (Larger)
   if (logoImg) {
-    const logoHeight = 120;
+    const logoHeight = 250; // Increased from 120
     const logoWidth = (logoImg.width / logoImg.height) * logoHeight;
-    const logoX = (CANVAS_WIDTH - logoWidth) / 2;
-    ctx.drawImage(logoImg, logoX, currentY, logoWidth, logoHeight);
-    currentY += logoHeight + 20;
+    // Ensure logo doesn't exceed canvas width
+    const maxLogoWidth = CANVAS_WIDTH - (PADDING * 2);
+    const finalLogoWidth = Math.min(logoWidth, maxLogoWidth);
+    const finalLogoHeight = (finalLogoWidth / logoWidth) * logoHeight;
+
+    const logoX = (CANVAS_WIDTH - finalLogoWidth) / 2;
+    ctx.drawImage(logoImg, logoX, currentY, finalLogoWidth, finalLogoHeight);
+    currentY += finalLogoHeight + 30; // Increased spacing
   } else {
-    currentY += 100; // Placeholder if no logo
+    currentY += 200; // Placeholder if no logo
   }
 
   // Title
@@ -108,7 +115,7 @@ export const generateProductListImage = async (items, options = {}) => {
   ctx.fillText(title.toUpperCase(), CANVAS_WIDTH / 2, currentY + 40);
 
   // Draw separator below header
-  currentY = HEADER_HEIGHT;
+  currentY = HEADER_HEIGHT - 20; // Align separator at bottom of header area
   ctx.strokeStyle = COLOR_TEXT_PRICE;
   ctx.lineWidth = 4;
   ctx.beginPath();
@@ -117,10 +124,10 @@ export const generateProductListImage = async (items, options = {}) => {
   ctx.stroke();
 
   // --- Draw Items ---
-  currentY += PADDING; // Start items a bit lower
+  const itemsStartY = HEADER_HEIGHT;
 
   items.forEach((item, index) => {
-    const itemY = currentY + (index * ITEM_HEIGHT);
+    const itemY = itemsStartY + (index * ITEM_HEIGHT);
     const img = itemImages[index];
 
     // 1. Draw Image (Left)
@@ -208,10 +215,18 @@ export const generateProductListImage = async (items, options = {}) => {
 
   // --- Draw Footer ---
   if (showTotal) {
-    const footerY = totalHeight - FOOTER_HEIGHT + 20;
+    // Ensure footer starts AFTER the last item fully ends + padding
+    // itemsStartY + (items.length * ITEM_HEIGHT) is the Y coordinate where the next item *would* start.
+    // The previous item ends at that coordinate.
+    const lastItemEndY = itemsStartY + (items.length * ITEM_HEIGHT);
+    const footerStartY = lastItemEndY + FOOTER_PADDING_TOP;
 
     // Draw dashed separator
-    const lineY = totalHeight - FOOTER_HEIGHT;
+    // Ensure it doesn't overlap with the image of the last item.
+    // ITEM_HEIGHT (300) should cover the image (250) + padding (25 top + 25 bottom).
+    // So lastItemEndY is safe.
+
+    const lineY = footerStartY;
     ctx.setLineDash([15, 10]);
     ctx.strokeStyle = COLOR_TEXT_PRICE;
     ctx.lineWidth = 3;
@@ -222,10 +237,12 @@ export const generateProductListImage = async (items, options = {}) => {
     ctx.setLineDash([]); // Reset
 
     // Total Label
+    const textY = footerStartY + 60 + 20; // 20px padding from line
+
     ctx.textAlign = "left";
     ctx.font = FONT_TOTAL_LABEL;
     ctx.fillStyle = COLOR_TEXT_PRIMARY;
-    ctx.fillText("TỔNG CỘNG:", PADDING, footerY + 60);
+    ctx.fillText("TỔNG CỘNG:", PADDING, textY);
 
     // Total Value
     const total = items.reduce((sum, item) => {
@@ -237,7 +254,7 @@ export const generateProductListImage = async (items, options = {}) => {
     ctx.textAlign = "right";
     ctx.font = FONT_TOTAL_VALUE;
     ctx.fillStyle = COLOR_TEXT_PRICE;
-    ctx.fillText(`${formatNumber(total)}đ`, CANVAS_WIDTH - PADDING, footerY + 60);
+    ctx.fillText(`${formatNumber(total)}đ`, CANVAS_WIDTH - PADDING, textY);
   }
 
   // --- Return Blob ---

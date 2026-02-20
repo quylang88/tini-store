@@ -27,20 +27,23 @@ const SearchBar = memo(
         {onToggleSelect && (
           <button
             onClick={onToggleSelect}
-            className={`p-2.5 rounded-xl border transition-colors flex-shrink-0 ${
+            className={`w-[42px] h-[42px] flex items-center justify-center rounded-xl transition-all duration-300 flex-shrink-0 relative overflow-hidden ${
               isSelectionMode
-                ? "bg-rose-600 text-white border-rose-600 shadow-md"
-                : "bg-white text-gray-600 border-gray-300 hover:bg-gray-50 active:bg-gray-100"
+                ? "bg-rose-500 text-white shadow-md border border-rose-600 scale-105"
+                : "bg-rose-100 text-rose-600 border border-rose-200 active:bg-rose-200 active:scale-95"
             }`}
             aria-label={
               isSelectionMode ? "Thoát chế độ chọn" : "Bật chế độ chọn"
             }
           >
-            {isSelectionMode ? (
-              <CheckSquare size={20} strokeWidth={2} />
-            ) : (
-              <ListChecks size={20} strokeWidth={2} />
-            )}
+            <div className="relative z-10">
+              {isSelectionMode ? (
+                <CheckSquare size={20} strokeWidth={2} />
+              ) : (
+                <ListChecks size={20} strokeWidth={2} />
+              )}
+            </div>
+            {/* Ink ripple effect simulation or just use active:scale for simplicity */}
           </button>
         )}
       </div>
