@@ -14,6 +14,9 @@ const ProductList = memo(
     activeCategory,
     activeWarehouse,
     onEditBasicInfo,
+    isSelectionMode,
+    selectedProductIds,
+    onToggleProduct,
   }) => {
     return (
       <div className="flex-1 overflow-y-auto p-3 flex flex-col gap-3 pb-24">
@@ -31,6 +34,10 @@ const ProductList = memo(
             activeCategory={activeCategory}
             activeWarehouse={activeWarehouse}
             onEditBasicInfo={onEditBasicInfo}
+            // Selection Props
+            isSelectionMode={isSelectionMode}
+            isSelected={selectedProductIds?.has(product.id)}
+            onToggleProduct={onToggleProduct}
           />
         ))}
 
