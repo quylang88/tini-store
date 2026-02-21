@@ -31,7 +31,7 @@ const Inventory = ({
   const [detailProduct, setDetailProduct] = useState(null);
   const [editingBasicInfoProduct, setEditingBasicInfoProduct] = useState(null);
 
-  // New State for Selection Mode
+  // State mới cho Chế độ chọn (Selection Mode)
   const [isSelectionMode, setIsSelectionMode] = useState(false);
   const [selectedProductIds, setSelectedProductIds] = useState(new Set());
   const [isExporting, setIsExporting] = useState(false);
@@ -42,9 +42,9 @@ const Inventory = ({
       setTabBarVisible,
       searchHideThreshold: 140,
       showTabBarOnlyAtTop: true,
-      // Override scroll callback to enforce tabBar hidden when in selection mode
+      // Override scroll callback để ẩn tabBar khi đang ở chế độ chọn
       onScrollCallback: useCallback(
-        (isUp) => {
+        () => {
           if (isSelectionMode) {
             setTabBarVisible(false);
           }
@@ -88,12 +88,12 @@ const Inventory = ({
     debouncedSearchTerm,
   } = useInventoryLogic({ products, setProducts, orders, setOrders, settings });
 
-  // --- Selection Mode Handlers ---
+  // --- Handlers cho Chế độ Chọn ---
 
   const toggleSelectionMode = useCallback(() => {
     setIsSelectionMode((prev) => {
       if (prev) {
-        setSelectedProductIds(new Set()); // Clear on exit
+        setSelectedProductIds(new Set()); // Xoá danh sách chọn khi thoát
       }
       return !prev;
     });
@@ -114,7 +114,7 @@ const Inventory = ({
   const handleExportImage = async () => {
     if (selectedProductIds.size === 0) return;
     setIsExporting(true);
-    // Give UI a moment to update
+    // Chờ UI cập nhật
     await new Promise((resolve) => setTimeout(resolve, 100));
     try {
       const selectedProducts = products.filter((p) =>
@@ -129,8 +129,7 @@ const Inventory = ({
         `Bao_gia_${new Date().toISOString().slice(0, 10)}.png`,
         "image/png",
       );
-      // Optional: keep selection mode active for multiple exports? Or close it?
-      // For now, keep it open.
+      // Giữ nguyên chế độ chọn để có thể thao tác tiếp nếu cần
     } catch (err) {
       console.error(err);
       setErrorModal({
@@ -145,8 +144,8 @@ const Inventory = ({
   useEffect(() => {
     if (isActive) {
       if (isSelectionMode) {
-        updateFab({ isVisible: false }); // Hide FAB
-        setTabBarVisible(false); // Hide TabBar to make room for bottom bar
+        updateFab({ isVisible: false }); // Ẩn FAB
+        setTabBarVisible(false); // Ẩn TabBar để nhường chỗ cho thanh action
       } else {
         updateFab({
           isVisible: isAddButtonVisible,
@@ -156,8 +155,7 @@ const Inventory = ({
           color: "rose",
         });
 
-        // Restore visibility based on scroll logic if needed,
-        // but safe to default to true here.
+        // Khôi phục hiển thị TabBar nếu không ở chế độ chọn
         setTabBarVisible(true);
       }
     }
@@ -170,7 +168,7 @@ const Inventory = ({
     setTabBarVisible,
   ]);
 
-  // Force hide tab bar whenever selection mode is active (extra safeguard against scroll events)
+  // Bắt buộc ẩn tab bar bất cứ khi nào chế độ chọn đang bật (chống lại sự kiện cuộn)
   useEffect(() => {
     if (isActive && isSelectionMode) {
       setTabBarVisible(false);
@@ -224,19 +222,16 @@ const Inventory = ({
             onWarehouseChange={setWarehouseFilter}
             categories={settings.categories}
             namespace="inventory"
-            // New Props
+            // Props mới
             onToggleSelect={toggleSelectionMode}
             isSelectionMode={isSelectionMode}
           />
         </motion.div>
 
         <div
-          className="flex-1 overflow-y-auto min-h-0 pt-[56px] overscroll-y-contain pb-[80px]" // Added extra padding bottom for bar
+          className="flex-1 overflow-y-auto min-h-0 pt-[56px] overscroll-y-contain pb-[80px]" // Thêm padding dưới
           onScroll={(e) => {
-            // If selection mode is active, do NOT call handleScroll to update UI state that might show TabBar
-            // or pass a custom handler that ignores show events.
-            // But handleScroll also manages isScrolled for header shadow.
-            // Let's rely on the useEffect safeguard and onScrollCallback above.
+            // handleScroll vẫn quản lý shadow header
              handleScroll(e);
             if (isScrollNearBottom(e.target) && hasMore) {
               loadMore();
@@ -260,7 +255,7 @@ const Inventory = ({
             activeCategory={activeCategory}
             activeWarehouse={warehouseFilter}
             onEditBasicInfo={setEditingBasicInfoProduct}
-            // New Props
+            // Props mới
             isSelectionMode={isSelectionMode}
             selectedProductIds={selectedProductIds}
             onToggleProduct={toggleProductSelection}
@@ -268,7 +263,7 @@ const Inventory = ({
         </div>
       </div>
 
-      {/* Selection Action Bar */}
+      {/* Thanh tác vụ chọn */}
       {isSelectionMode && (
         <motion.div
           initial={{ y: 100 }}

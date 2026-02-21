@@ -8,22 +8,28 @@ const ToggleButton = memo(({
     inactiveIcon: InactiveIcon,
     label,
     className = "",
-    // Fallback if only one icon component is passed
+    // Dự phòng nếu chỉ truyền một component icon
     icon: SingleIcon
 }) => {
-    // Determine which icon to show
-    // If active and ActiveIcon exists, use it.
-    // Else if inactive and InactiveIcon exists, use it.
-    // Fallback to SingleIcon or null.
+    // Xác định icon cần hiển thị
+    // Nếu đang active và có ActiveIcon -> dùng nó.
+    // Ngược lại nếu inactive và có InactiveIcon -> dùng nó.
+    // Cuối cùng dùng SingleIcon hoặc null.
 
     const CurrentIcon = isActive
         ? (ActiveIcon || SingleIcon)
         : (InactiveIcon || SingleIcon);
 
+    // Tạo key dựa trên tên component icon hoặc trạng thái active
+    // Để AnimatePresence nhận biết sự thay đổi icon (ví dụ: mũi tên lên -> xuống)
+    const iconKey = CurrentIcon
+        ? (CurrentIcon.displayName || CurrentIcon.name || (isActive ? "active" : "inactive"))
+        : "no-icon";
+
     return (
         <motion.button
             onClick={onClick}
-            layout // Enable layout animation for size/position changes
+            layout // Bật animation layout cho thay đổi kích thước/vị trí
             className={`relative flex items-center justify-center rounded-xl transition-colors w-[42px] h-[42px] border flex-shrink-0 ${className} ${
                 isActive
                     ? "bg-rose-200 border-rose-300 text-rose-800 shadow-sm"
@@ -34,7 +40,7 @@ const ToggleButton = memo(({
         >
             <AnimatePresence mode="wait" initial={false}>
                 <motion.div
-                    key={isActive ? "active" : "inactive"}
+                    key={iconKey}
                     initial={{ opacity: 0, scale: 0.5, rotate: -15 }}
                     animate={{ opacity: 1, scale: 1, rotate: 0 }}
                     exit={{ opacity: 0, scale: 0.5, rotate: 15 }}

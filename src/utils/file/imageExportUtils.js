@@ -6,13 +6,14 @@ import { formatNumber } from "../formatters/formatUtils";
  * @returns {Promise<HTMLImageElement>}
  */
 const loadImage = (src) => {
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve) => {
     const img = new Image();
     img.crossOrigin = "Anonymous"; // Attempt to handle CORS if applicable
     img.onload = () => resolve(img);
     img.onerror = (err) => {
         console.warn("Failed to load image:", src, err);
-        resolve(null); // Resolve with null to continue processing other images
+        // Thay vì reject, resolve null để quy trình tiếp tục với các ảnh khác
+        resolve(null);
     };
     img.src = src;
   });
@@ -168,7 +169,7 @@ export const generateProductListImage = async (items, options = {}) => {
     const maxTextWidth = CANVAS_WIDTH - textX - PADDING;
     const words = (item.name || "").split(" ");
     let line = "";
-    let lineCount = 0;
+    // let lineCount = 0; // Removed unused variable
 
     for (let n = 0; n < words.length; n++) {
       const testLine = line + words[n] + " ";
@@ -178,7 +179,7 @@ export const generateProductListImage = async (items, options = {}) => {
         ctx.fillText(line, textX, textY);
         line = words[n] + " ";
         textY += 50; // Line height
-        lineCount++;
+        // lineCount++;
       } else {
         line = testLine;
       }

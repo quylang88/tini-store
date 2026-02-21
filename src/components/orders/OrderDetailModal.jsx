@@ -58,7 +58,7 @@ const OrderDetailModal = ({ order, products, onClose, getOrderStatusInfo }) => {
     try {
       await exportOrderToHTML(cachedOrder, products, format);
     } catch (error) {
-      console.error("Export error:", error);
+      console.error("Lỗi xuất file:", error);
       alert("Có lỗi khi xuất file");
     } finally {
       setIsExporting(false);
@@ -70,7 +70,7 @@ const OrderDetailModal = ({ order, products, onClose, getOrderStatusInfo }) => {
     setIsExporting(true);
     await new Promise((resolve) => setTimeout(resolve, 300));
     try {
-      // Prepare items for export
+      // Chuẩn bị danh sách sản phẩm cho xuất ảnh
       const exportItems = cachedOrder.items.map((item) => {
         const product = products?.find(
           (p) => p.id === item.productId || p.id === item.id,
@@ -94,7 +94,7 @@ const OrderDetailModal = ({ order, products, onClose, getOrderStatusInfo }) => {
         "image/png",
       );
     } catch (error) {
-      console.error("Export error:", error);
+      console.error("Lỗi xuất ảnh:", error);
       alert("Có lỗi khi xuất ảnh");
     } finally {
       setIsExporting(false);
@@ -106,10 +106,10 @@ const OrderDetailModal = ({ order, products, onClose, getOrderStatusInfo }) => {
     <div className="flex flex-col gap-2">
       <div className="grid grid-cols-3 gap-2">
         <Button
-          variant="secondary"
+          variant="secondary" // Sử dụng variant mặc định và override class
           size="sm"
           onClick={() => handleExport("receipt")}
-          className="h-auto py-2"
+          className="h-auto py-2 bg-rose-100 hover:bg-rose-200 text-rose-800 border-rose-200"
         >
           <div className="flex flex-col items-center gap-1">
             <Printer size={18} /> <span className="text-[10px]">K80</span>
@@ -119,17 +119,17 @@ const OrderDetailModal = ({ order, products, onClose, getOrderStatusInfo }) => {
           variant="secondary"
           size="sm"
           onClick={() => handleExport("a4")}
-          className="h-auto py-2"
+          className="h-auto py-2 bg-rose-100 hover:bg-rose-200 text-rose-800 border-rose-200"
         >
           <div className="flex flex-col items-center gap-1">
             <FileDown size={18} /> <span className="text-[10px]">A4</span>
           </div>
         </Button>
         <Button
-          variant="primary"
+          variant="secondary"
           size="sm"
           onClick={handleExportImage}
-          className="h-auto py-2"
+          className="h-auto py-2 bg-rose-100 hover:bg-rose-200 text-rose-800 border-rose-200"
         >
           <div className="flex flex-col items-center gap-1">
             <ImageIcon size={18} /> <span className="text-[10px]">Ảnh</span>
@@ -275,9 +275,7 @@ const OrderDetailModal = ({ order, products, onClose, getOrderStatusInfo }) => {
           )}
           <div className="flex justify-between text-sm text-gray-500 mt-2 pt-2 border-t border-rose-200/50">
             <span className="font-medium text-rose-900">Tổng số lượng</span>
-            <span className="text-lg font-bold text-rose-600">
-              {totalQuantity} sp
-            </span>
+            <span className="text-lg font-bold text-rose-600">{totalQuantity} sp</span>
           </div>
           <div className="flex justify-between text-sm text-gray-500 mt-1">
             <span className="font-medium text-rose-900">Tổng đơn</span>
