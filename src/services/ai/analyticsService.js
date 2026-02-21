@@ -4,8 +4,10 @@
  * (Tách biệt hoàn toàn khỏi logic format string của contextBuilder)
  */
 
-// Cache cho analyzeBusinessStats sử dụng WeakMap để tránh leak memory
-const analyticsCache = new WeakMap();
+// Cache cho analyzeBusinessStats sử dụng WeakMap riêng biệt để tránh leak memory
+// và tối ưu hóa tính toán lại khi chỉ một trong hai danh sách thay đổi.
+const productStatsCache = new WeakMap();
+const orderStatsCache = new WeakMap();
 
 // Cache cho analyzeMonthlySales: WeakMap<orders, { month, year, data }>
 // Giúp tránh tính toán lại doanh thu tháng hiện tại khi user chat liên tục.
@@ -17,28 +19,20 @@ const salesCache = new WeakMap();
 const inventoryCache = new WeakMap();
 const INVENTORY_CACHE_TTL = 5 * 60 * 1000; // 5 phút
 
-// --- 1. PHÂN TÍCH TÀI CHÍNH TỔNG QUAN ---
-export const analyzeBusinessStats = (products = [], orders = []) => {
-  // Kiểm tra cache
-  // Chỉ cache nếu inputs là object (WeakMap key requirement)
-  const canCache =
-    products &&
-    typeof products === "object" &&
-    orders &&
-    typeof orders === "object";
-
-  if (canCache) {
-    const cachedOrdersMap = analyticsCache.get(products);
-    if (cachedOrdersMap && cachedOrdersMap.has(orders)) {
-      return cachedOrdersMap.get(orders);
-    }
+// Helper: Tính toán thống kê vốn từ danh sách sản phẩm
+const calculateProductStats = (products) => {
+  if (!products || typeof products !== "object") {
+    return { totalImportCapital: 0, totalInventoryCapital: 0 };
   }
 
-  // TỔNG VỐN NHẬP (Lũy kế) & VỐN TỒN KHO (Hiện tại)
-  // Gộp vòng lặp để tối ưu hiệu năng (tránh duyệt mảng products và purchaseLots 2 lần)
+  if (productStatsCache.has(products)) {
+    return productStatsCache.get(products);
+  }
+
   let totalImportCapital = 0;
   let totalInventoryCapital = 0;
 
+  // Sử dụng vòng lặp for...of để tối ưu hiệu năng
   for (const product of products) {
     if (!product.purchaseLots || !Array.isArray(product.purchaseLots)) {
       continue;
@@ -60,9 +54,27 @@ export const analyzeBusinessStats = (products = [], orders = []) => {
     }
   }
 
-  // PHÂN TÍCH ĐƠN HÀNG CHƯA THANH TOÁN
-  // Tối ưu hóa: Gộp filter và tính toán vào một vòng lặp để tránh tạo mảng trung gian
-  // Vẫn giữ lại mảng unpaidOrders để đảm bảo tương thích ngược (API contract)
+  const result = { totalImportCapital, totalInventoryCapital };
+  productStatsCache.set(products, result);
+  return result;
+};
+
+// Helper: Tính toán thống kê đơn hàng chưa thanh toán
+const calculateOrderStats = (orders) => {
+  if (!orders || typeof orders !== "object") {
+    return {
+      unpaidOrderCount: 0,
+      totalUnpaidRevenue: 0,
+      totalUnpaidCapital: 0,
+      totalUnpaidProfit: 0,
+      unpaidOrders: [],
+    };
+  }
+
+  if (orderStatsCache.has(orders)) {
+    return orderStatsCache.get(orders);
+  }
+
   const unpaidOrders = [];
   let unpaidOrderCount = 0;
   let totalUnpaidRevenue = 0;
@@ -97,26 +109,30 @@ export const analyzeBusinessStats = (products = [], orders = []) => {
   }
 
   const result = {
-    totalImportCapital,
-    totalInventoryCapital,
     unpaidOrderCount,
     totalUnpaidRevenue,
     totalUnpaidCapital,
     totalUnpaidProfit,
     unpaidOrders,
   };
-
-  // Cập nhật cache
-  if (canCache) {
-    let cachedOrdersMap = analyticsCache.get(products);
-    if (!cachedOrdersMap) {
-      cachedOrdersMap = new WeakMap();
-      analyticsCache.set(products, cachedOrdersMap);
-    }
-    cachedOrdersMap.set(orders, result);
-  }
-
+  orderStatsCache.set(orders, result);
   return result;
+};
+
+// --- 1. PHÂN TÍCH TÀI CHÍNH TỔNG QUAN ---
+export const analyzeBusinessStats = (products = [], orders = []) => {
+  // Tách biệt cache cho products và orders.
+  // Nếu products thay đổi nhưng orders giữ nguyên -> Chỉ tính lại products, orders lấy từ cache.
+  // Nếu orders thay đổi nhưng products giữ nguyên -> Chỉ tính lại orders, products lấy từ cache.
+  // Điều này giúp giảm đáng kể chi phí tính toán khi một trong hai danh sách thay đổi thường xuyên.
+
+  const productStats = calculateProductStats(products);
+  const orderStats = calculateOrderStats(orders);
+
+  return {
+    ...productStats,
+    ...orderStats,
+  };
 };
 
 // --- 2. PHÂN TÍCH DOANH SỐ THÁNG HIỆN TẠI ---
