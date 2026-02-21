@@ -29,6 +29,10 @@ const ProductFilterHeader = memo(
     className = "",
     namespace = "common", // để đảm bảo tính duy nhất của layoutId
     placeholder = "Nhập tên hoặc mã sản phẩm...",
+
+    // Chế độ chọn (Mới)
+    onToggleSelect,
+    isSelectionMode,
   }) => {
     // Cấu hình kho mặc định (nếu không được cung cấp)
     const finalWarehouseTabs = useMemo(() => {
@@ -57,6 +61,8 @@ const ProductFilterHeader = memo(
             onSearchChange={onSearchChange}
             onClearSearch={onClearSearch}
             placeholder={placeholder}
+            onToggleSelect={onToggleSelect}
+            isSelectionMode={isSelectionMode}
           />
         </div>
 

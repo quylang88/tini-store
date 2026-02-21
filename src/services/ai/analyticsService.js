@@ -61,37 +61,40 @@ export const analyzeBusinessStats = (products = [], orders = []) => {
   }
 
   // PHÂN TÍCH ĐƠN HÀNG CHƯA THANH TOÁN
-  const unpaidOrders = orders.filter(
-    (o) => o.status !== "paid" && o.status !== "cancelled",
-  );
-  const unpaidOrderCount = unpaidOrders.length;
-
+  // Tối ưu hóa: Gộp filter và tính toán vào một vòng lặp để tránh tạo mảng trung gian
+  // Vẫn giữ lại mảng unpaidOrders để đảm bảo tương thích ngược (API contract)
+  const unpaidOrders = [];
+  let unpaidOrderCount = 0;
   let totalUnpaidRevenue = 0;
   let totalUnpaidCapital = 0;
   let totalUnpaidProfit = 0;
 
-  unpaidOrders.forEach((order) => {
-    totalUnpaidRevenue += Number(order.total) || 0;
+  for (const order of orders) {
+    if (order.status !== "paid" && order.status !== "cancelled") {
+      unpaidOrders.push(order);
+      unpaidOrderCount++;
+      totalUnpaidRevenue += Number(order.total) || 0;
 
-    let orderCost = 0;
-    let orderProfit = 0;
+      let orderCost = 0;
+      let orderProfit = 0;
 
-    if (Array.isArray(order.items)) {
-      const itemsProfit = order.items.reduce((sum, item) => {
-        const itemQty = Number(item.quantity) || 0;
-        const itemPrice = Number(item.price) || 0;
-        const itemCost = Number(item.cost) || 0;
+      if (Array.isArray(order.items)) {
+        const itemsProfit = order.items.reduce((sum, item) => {
+          const itemQty = Number(item.quantity) || 0;
+          const itemPrice = Number(item.price) || 0;
+          const itemCost = Number(item.cost) || 0;
 
-        orderCost += itemCost * itemQty;
-        return sum + (itemPrice - itemCost) * itemQty;
-      }, 0);
+          orderCost += itemCost * itemQty;
+          return sum + (itemPrice - itemCost) * itemQty;
+        }, 0);
 
-      orderProfit = itemsProfit - (Number(order.shippingFee) || 0);
+        orderProfit = itemsProfit - (Number(order.shippingFee) || 0);
+      }
+
+      totalUnpaidCapital += orderCost;
+      totalUnpaidProfit += orderProfit;
     }
-
-    totalUnpaidCapital += orderCost;
-    totalUnpaidProfit += orderProfit;
-  });
+  }
 
   const result = {
     totalImportCapital,
@@ -141,13 +144,16 @@ export const analyzeMonthlySales = (orders = []) => {
   const startISO = startOfMonth.toISOString();
   const endISO = startOfNextMonth.toISOString();
 
-  const thisMonthOrders = orders.filter((o) => {
-    // So sánh chuỗi trực tiếp nhanh hơn rất nhiều
-    return o.date >= startISO && o.date < endISO && o.status !== "cancelled";
-  });
+  // Tối ưu hóa: Gộp filter và reduce vào một vòng lặp để tránh tạo mảng trung gian
+  let thisMonthRevenue = 0;
+  let totalOrdersMonth = 0;
 
-  const thisMonthRevenue = thisMonthOrders.reduce((sum, o) => sum + o.total, 0);
-  const totalOrdersMonth = thisMonthOrders.length;
+  for (const o of orders) {
+    if (o.date >= startISO && o.date < endISO && o.status !== "cancelled") {
+      thisMonthRevenue += Number(o.total) || 0;
+      totalOrdersMonth++;
+    }
+  }
 
   const result = {
     thisMonthRevenue,
@@ -196,18 +202,18 @@ export const analyzeInventory = (products = [], orders = []) => {
   // Tối ưu hóa: Chuyển về ISO string để so sánh chuỗi
   const oneMonthAgoISO = oneMonthAgo.toISOString();
 
-  const recentOrders = orders.filter(
-    (o) => o.date >= oneMonthAgoISO && o.status !== "cancelled",
-  );
-
   const salesMap = {};
-  recentOrders.forEach((order) => {
-    if (Array.isArray(order.items)) {
-      order.items.forEach((item) => {
-        salesMap[item.name] = (salesMap[item.name] || 0) + item.quantity;
-      });
+  // Tối ưu hóa: Gộp filter và forEach vào một vòng lặp
+  for (const order of orders) {
+    if (order.date >= oneMonthAgoISO && order.status !== "cancelled") {
+      if (Array.isArray(order.items)) {
+        for (const item of order.items) {
+          salesMap[item.name] =
+            (salesMap[item.name] || 0) + (Number(item.quantity) || 0);
+        }
+      }
     }
-  });
+  }
 
   // Tìm sản phẩm sắp hết (<= 5) VÀ có bán được
   const urgentProducts = products.filter((p) => {

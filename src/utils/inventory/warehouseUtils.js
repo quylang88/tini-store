@@ -82,6 +82,10 @@ export const getWarehouseShortLabel = (key) => {
 // Key là object reference stockByWarehouse.
 const STOCK_CACHE = new WeakMap();
 
+// Cache kết quả getTotalStock để tránh tính toán lại.
+// Key là object reference stockByWarehouse.
+const TOTAL_STOCK_CACHE = new WeakMap();
+
 // Object mặc định (đóng băng) khi không có dữ liệu kho.
 // Giúp tránh tạo object { vinhPhuc: 0, lamDong: 0 } mới mỗi lần gọi.
 const EMPTY_STOCK = Object.freeze(
@@ -146,33 +150,32 @@ export const normalizeWarehouseStock = (product = {}) => {
   return stock;
 };
 
-// Tối ưu hóa: Tính tồn kho cho một kho cụ thể mà không cần tạo object mới.
-// Giúp giảm áp lực GC khi lọc danh sách lớn.
+// Tối ưu hóa: Sử dụng normalizeWarehouseStock (đã cache) để lấy tồn kho O(1).
+// Thay thế vòng lặp O(K) bằng lookup O(1) từ cache.
 export const getSpecificWarehouseStock = (product, targetWarehouseKey) => {
-  if (!product.stockByWarehouse || !targetWarehouseKey) return 0;
-
-  let total = 0;
-  for (const sourceKey in product.stockByWarehouse) {
-    if (
-      Object.prototype.hasOwnProperty.call(product.stockByWarehouse, sourceKey)
-    ) {
-      if (resolveWarehouseKey(sourceKey) === targetWarehouseKey) {
-        total += Number(product.stockByWarehouse[sourceKey]) || 0;
-      }
-    }
-  }
-  return total;
+  const stock = normalizeWarehouseStock(product);
+  const resolvedKey = resolveWarehouseKey(targetWarehouseKey);
+  return stock[resolvedKey] || 0;
 };
 
 export const getTotalStock = (product = {}) => {
-  if (!product.stockByWarehouse) return 0;
-  let total = 0;
-  // Tối ưu hóa: Sử dụng vòng lặp for...in để tránh tạo mảng (Object.values) mỗi lần gọi.
-  // Giúp giảm áp lực GC khi render danh sách dài.
-  for (const key in product.stockByWarehouse) {
-    if (Object.prototype.hasOwnProperty.call(product.stockByWarehouse, key)) {
-      total += Number(product.stockByWarehouse[key]) || 0;
-    }
+  // Check valid object for WeakMap key
+  if (
+    !product ||
+    !product.stockByWarehouse ||
+    typeof product.stockByWarehouse !== "object"
+  ) {
+    return 0;
   }
+
+  if (TOTAL_STOCK_CACHE.has(product.stockByWarehouse)) {
+    return TOTAL_STOCK_CACHE.get(product.stockByWarehouse);
+  }
+
+  // Sử dụng normalizeWarehouseStock để tận dụng cache object và xử lý key mapping
+  const stock = normalizeWarehouseStock(product);
+  const total = Object.values(stock).reduce((sum, val) => sum + val, 0);
+
+  TOTAL_STOCK_CACHE.set(product.stockByWarehouse, total);
   return total;
 };
