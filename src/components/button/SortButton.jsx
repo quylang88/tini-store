@@ -1,4 +1,4 @@
-import React from "react";
+import React, { memo, useMemo } from "react";
 import {
   ArrowUp,
   ArrowDown,
@@ -7,7 +7,7 @@ import {
   CalendarArrowDown,
   CalendarArrowUp,
 } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import ToggleButton from "./ToggleButton";
 
 // Use a static map to avoid any ambiguity about component creation
 const ICON_MAP = {
@@ -25,53 +25,35 @@ const ICON_MAP = {
   },
 };
 
-const SortButton = ({
+const SortButton = memo(({
   active,
   onClick,
-  icon: Icon,
+  icon: DefaultIcon, // Icon passed from parent (e.g. DollarSign, Calendar)
   direction,
   label,
   sortType,
+  className = ""
 }) => {
-  // Select the correct icon component
-  const ActiveIcon =
-    ICON_MAP[sortType]?.[direction] || ICON_MAP.default[direction] || ArrowDown;
+  // Select the correct icon component based on direction and type
+  // If active, show the directional icon.
+  // If inactive, show the DefaultIcon (generic type icon).
+
+  const ActiveDirectionIcon = useMemo(() =>
+    ICON_MAP[sortType]?.[direction] || ICON_MAP.default[direction] || ArrowDown
+  , [sortType, direction]);
 
   return (
-    <button
+    <ToggleButton
+      isActive={active}
       onClick={onClick}
-      className={`relative flex items-center justify-center p-2 rounded-lg border transition-all active:scale-95 w-10 h-10 ${
-        active
-          ? "bg-rose-200 border-rose-300 text-rose-700 shadow-sm"
-          : "bg-rose-100/80 border-rose-200 text-rose-400 hover:text-rose-500 hover:border-rose-300"
-      }`}
-      aria-label={label}
-    >
-      <AnimatePresence mode="wait">
-        {active ? (
-          <motion.div
-            key={`active-${direction}`}
-            initial={{ opacity: 0, scale: 0.5, rotate: -20 }}
-            animate={{ opacity: 1, scale: 1, rotate: 0 }}
-            exit={{ opacity: 0, scale: 0.5, rotate: 20 }}
-            transition={{ duration: 0.2 }}
-          >
-            <ActiveIcon size={20} strokeWidth={2} />
-          </motion.div>
-        ) : (
-          <motion.div
-            key="inactive"
-            initial={{ opacity: 0, scale: 0.5 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.5 }}
-            transition={{ duration: 0.2 }}
-          >
-            <Icon size={20} strokeWidth={2} />
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </button>
+      activeIcon={ActiveDirectionIcon}
+      inactiveIcon={DefaultIcon}
+      label={label}
+      className={`w-10 h-10 rounded-lg ${className}`} // Override size to match original SortButton (w-10 h-10) if needed, or stick to w-[42px] default
+    />
   );
-};
+});
+
+SortButton.displayName = "SortButton";
 
 export default SortButton;

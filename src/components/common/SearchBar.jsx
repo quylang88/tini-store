@@ -1,6 +1,7 @@
 import React, { memo } from "react";
 import SearchInput from "./SearchInput";
 import { ListChecks, CheckSquare } from "lucide-react";
+import ToggleButton from "../button/ToggleButton";
 
 const SearchBar = memo(
   ({
@@ -25,26 +26,14 @@ const SearchBar = memo(
           />
         </div>
         {onToggleSelect && (
-          <button
+          <ToggleButton
+            isActive={isSelectionMode}
             onClick={onToggleSelect}
-            className={`w-[42px] h-[42px] flex items-center justify-center rounded-xl transition-all duration-300 flex-shrink-0 relative overflow-hidden ${
-              isSelectionMode
-                ? "bg-rose-500 text-white shadow-md border border-rose-600 scale-105"
-                : "bg-rose-100 text-rose-600 border border-rose-200 active:bg-rose-200 active:scale-95"
-            }`}
-            aria-label={
-              isSelectionMode ? "Thoát chế độ chọn" : "Bật chế độ chọn"
-            }
-          >
-            <div className="relative z-10">
-              {isSelectionMode ? (
-                <CheckSquare size={20} strokeWidth={2} />
-              ) : (
-                <ListChecks size={20} strokeWidth={2} />
-              )}
-            </div>
-            {/* Ink ripple effect simulation or just use active:scale for simplicity */}
-          </button>
+            activeIcon={CheckSquare}
+            inactiveIcon={ListChecks}
+            label={isSelectionMode ? "Thoát chế độ chọn" : "Bật chế độ chọn"}
+            className="flex-shrink-0"
+          />
         )}
       </div>
     );
