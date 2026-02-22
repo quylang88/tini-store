@@ -10,12 +10,18 @@ import {
 import { getOrderDisplayName } from "../../utils/orders/orderUtils";
 import useModalCache from "../../hooks/ui/useModalCache";
 import Button from "../../components/button/Button";
-import { exportOrderToHTML } from "../../utils/file/fileUtils";
+import {
+  exportOrderToHTML,
+  shareOrDownloadFile,
+} from "../../utils/file/fileUtils";
+import { generateProductListImage } from "../../utils/file/imageExportUtils";
 import LoadingOverlay from "../../components/common/LoadingOverlay";
+import { FileDown, Image as ImageIcon, Printer } from "lucide-react";
 
 // OrderDetailModal: Xem chi tiết đơn hàng (Chỉ xem) -> showCloseIcon={false}
 const OrderDetailModal = ({ order, products, onClose, getOrderStatusInfo }) => {
   const [isExporting, setIsExporting] = useState(false);
+  const [showExportMenu, setShowExportMenu] = useState(false);
 
   // Giữ lại dữ liệu cũ để animation đóng vẫn hiển thị nội dung
   const cachedOrder = useModalCache(order, Boolean(order));
@@ -52,15 +58,95 @@ const OrderDetailModal = ({ order, products, onClose, getOrderStatusInfo }) => {
     try {
       await exportOrderToHTML(cachedOrder, products, format);
     } catch (error) {
-      console.error("Export error:", error);
+      console.error("Lỗi xuất file:", error);
       alert("Có lỗi khi xuất file");
     } finally {
       setIsExporting(false);
+      setShowExportMenu(false);
     }
   };
 
-  const footer = (
-    <div className="grid grid-cols-3 gap-2">
+  const handleExportImage = async () => {
+    setIsExporting(true);
+    await new Promise((resolve) => setTimeout(resolve, 300));
+    try {
+      // Chuẩn bị danh sách sản phẩm cho xuất ảnh
+      const exportItems = cachedOrder.items.map((item) => {
+        const product = products?.find(
+          (p) => p.id === item.productId || p.id === item.id,
+        );
+        return {
+          name: product ? product.name : item.name,
+          image: product ? product.image : null,
+          price: item.price !== undefined ? item.price : item.sellingPrice || 0,
+          quantity: item.quantity,
+        };
+      });
+
+      const blob = await generateProductListImage(exportItems, {
+        showTotal: true,
+        title: `ĐƠN HÀNG ${orderLabel}`,
+      });
+
+      await shareOrDownloadFile(
+        blob,
+        `Don_hang_${cachedOrder.orderNumber || cachedOrder.id.slice(-4)}.png`,
+        "image/png",
+      );
+    } catch (error) {
+      console.error("Lỗi xuất ảnh:", error);
+      alert("Có lỗi khi xuất ảnh");
+    } finally {
+      setIsExporting(false);
+      setShowExportMenu(false);
+    }
+  };
+
+  const footer = showExportMenu ? (
+    <div className="flex flex-col gap-2">
+      <div className="grid grid-cols-3 gap-2">
+        <Button
+          variant="softDanger" // Sử dụng variant mặc định và override class
+          size="sm"
+          onClick={() => handleExport("receipt")}
+          className="h-auto py-2 hover:bg-rose-100 text-rose-800 border-rose-300"
+        >
+          <div className="flex flex-col items-center gap-1">
+            <Printer size={18} /> <span className="text-[10px]">K80</span>
+          </div>
+        </Button>
+        <Button
+          variant="softDanger"
+          size="sm"
+          onClick={() => handleExport("a4")}
+          className="h-auto py-2 hover:bg-rose-100 text-rose-800 border-rose-300"
+        >
+          <div className="flex flex-col items-center gap-1">
+            <FileDown size={18} /> <span className="text-[10px]">A4</span>
+          </div>
+        </Button>
+        <Button
+          variant="softDanger"
+          size="sm"
+          onClick={handleExportImage}
+          className="h-auto py-2 hover:bg-rose-100 text-rose-800 border-rose-300"
+        >
+          <div className="flex flex-col items-center gap-1">
+            <ImageIcon size={18} /> <span className="text-[10px]">Ảnh</span>
+          </div>
+        </Button>
+      </div>
+      <Button
+        variant="danger"
+        size="sm"
+        onClick={() => setShowExportMenu(false)}
+        className="w-full"
+      >
+        Huỷ
+      </Button>
+    </div>
+  ) : (
+    <div className="grid grid-cols-2 gap-2">
       <Button
         variant="secondary"
         size="sm"
@@ -70,20 +156,12 @@ const OrderDetailModal = ({ order, products, onClose, getOrderStatusInfo }) => {
         Đóng
       </Button>
       <Button
-        variant="sheetClose"
-        size="sm"
-        onClick={() => handleExport("receipt")}
-        className="w-full"
-      >
-        Xuất Receipt
-      </Button>
-      <Button
         variant="primary"
         size="sm"
-        onClick={() => handleExport("a4")}
+        onClick={() => setShowExportMenu(true)}
         className="w-full"
       >
-        Xuất A4
+        Xuất / Chia sẻ
       </Button>
     </div>
   );
@@ -197,7 +275,9 @@ const OrderDetailModal = ({ order, products, onClose, getOrderStatusInfo }) => {
           )}
           <div className="flex justify-between text-sm text-gray-500 mt-2 pt-2 border-t border-rose-200/50">
             <span className="font-medium text-rose-900">Tổng số lượng</span>
-            <span className="text-lg font-bold text-rose-600">{totalQuantity} sp</span>
+            <span className="text-lg font-bold text-rose-600">
+              {totalQuantity} sp
+            </span>
           </div>
           <div className="flex justify-between text-sm text-gray-500 mt-1">
             <span className="font-medium text-rose-900">Tổng đơn</span>

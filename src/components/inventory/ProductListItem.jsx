@@ -1,5 +1,5 @@
 import React, { memo, useMemo } from "react";
-import { Image as ImageIcon, Trash2, Edit } from "lucide-react";
+import { Image as ImageIcon, Trash2, Edit, Check } from "lucide-react"; // Added Check
 import { formatNumber } from "../../utils/formatters/formatUtils";
 import { getProductStats } from "../../utils/inventory/purchaseUtils";
 import {
@@ -22,6 +22,10 @@ const ProductListItem = memo(
     activeCategory,
     activeWarehouse,
     onEditBasicInfo,
+    // Selection Props
+    isSelectionMode,
+    isSelected,
+    onToggleProduct,
   }) => {
     // Tối ưu hóa: Memoize việc tìm lot mới nhất và tính toán chi phí (O(N)).
     // Sử dụng helper getProductStats để đóng gói logic và tránh quét mảng nhiều lần.
@@ -47,14 +51,25 @@ const ProductListItem = memo(
     );
     const warehouses = getWarehouses();
 
+    const handleClick = (e) => {
+      if (isSelectionMode) {
+        e.preventDefault();
+        onToggleProduct(product.id);
+      } else {
+        onOpenDetail(product);
+      }
+    };
+
     return (
       <div
-        onClick={() => onOpenDetail(product)}
+        onClick={handleClick}
         className={`${
-          isOutOfStock
-            ? "bg-gray-100 border-gray-200"
-            : "bg-amber-50 border-amber-100"
-        } p-3 rounded-xl shadow-sm border flex gap-3 items-start cursor-pointer hover:shadow-md transition-all duration-200 active:scale-95 select-none`}
+          isSelectionMode && isSelected
+            ? "bg-rose-50 border-rose-500 ring-1 ring-rose-500"
+            : isOutOfStock
+              ? "bg-gray-100 border-gray-200"
+              : "bg-amber-50 border-amber-100"
+        } p-3 rounded-xl shadow-sm border flex gap-3 items-start cursor-pointer hover:shadow-md transition-all duration-200 active:scale-95 select-none relative`}
       >
         <div
           className={`w-16 h-16 rounded-lg overflow-hidden flex-shrink-0 border relative ${
@@ -165,36 +180,50 @@ const ProductListItem = memo(
             </div>
           </div>
         </div>
-        <div className="flex flex-col gap-2 self-center">
-          <button
-            onClick={(event) => {
-              event.stopPropagation();
-              onDelete(product);
-            }}
-            className={`w-8 h-8 rounded-full flex items-center justify-center shadow-sm border ${
-              isOutOfStock
-                ? "bg-gray-200 text-gray-500 border-gray-400 active:bg-gray-300"
-                : "bg-rose-50 text-rose-600 active:bg-rose-100 border-rose-300"
-            }`}
-            aria-label={`Xoá ${product.name}`}
-          >
-            <Trash2 size={18} />
-          </button>
-          <button
-            onClick={(event) => {
-              event.stopPropagation();
-              onEditBasicInfo(product);
-            }}
-            className={`w-8 h-8 rounded-full flex items-center justify-center shadow-sm border ${
-              isOutOfStock
-                ? "bg-gray-200 text-gray-600 border-gray-400 active:bg-gray-300"
-                : "bg-emerald-50 text-emerald-600 active:bg-emerald-100 border-emerald-300"
-            }`}
-            aria-label={`Sửa ${product.name}`}
-          >
-            <Edit size={16} />
-          </button>
-        </div>
+
+        {/* Action Buttons or Selection Checkbox */}
+        {isSelectionMode ? (
+          <div className="self-center ml-2">
+            {isSelected ? (
+              <div className="w-8 h-8 rounded-full bg-rose-500 flex items-center justify-center text-white shadow-sm">
+                <Check size={18} strokeWidth={3} />
+              </div>
+            ) : (
+              <div className="w-8 h-8 rounded-full border-2 border-gray-300 bg-white" />
+            )}
+          </div>
+        ) : (
+          <div className="flex flex-col gap-2 self-center">
+            <button
+              onClick={(event) => {
+                event.stopPropagation();
+                onDelete(product);
+              }}
+              className={`w-8 h-8 rounded-full flex items-center justify-center shadow-sm border ${
+                isOutOfStock
+                  ? "bg-gray-200 text-gray-500 border-gray-400 active:bg-gray-300"
+                  : "bg-rose-50 text-rose-600 active:bg-rose-100 border-rose-300"
+              }`}
+              aria-label={`Xoá ${product.name}`}
+            >
+              <Trash2 size={18} />
+            </button>
+            <button
+              onClick={(event) => {
+                event.stopPropagation();
+                onEditBasicInfo(product);
+              }}
+              className={`w-8 h-8 rounded-full flex items-center justify-center shadow-sm border ${
+                isOutOfStock
+                  ? "bg-gray-200 text-gray-600 border-gray-400 active:bg-gray-300"
+                  : "bg-emerald-50 text-emerald-600 active:bg-emerald-100 border-emerald-300"
+              }`}
+              aria-label={`Sửa ${product.name}`}
+            >
+              <Edit size={16} />
+            </button>
+          </div>
+        )}
       </div>
     );
   },

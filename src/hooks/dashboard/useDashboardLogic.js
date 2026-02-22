@@ -1,5 +1,8 @@
 import { useMemo, useState } from "react";
-import { getProductStats } from "../../utils/inventory/purchaseUtils";
+import {
+  getProductStats,
+  getOldestActiveLot,
+} from "../../utils/inventory/purchaseUtils";
 
 // Tạo label thời gian động theo tháng/năm hiện tại và tách bộ lọc cho dashboard vs chi tiết.
 const buildRangeOptions = (mode = "dashboard", now) => {
@@ -97,23 +100,10 @@ const useDashboardLogic = ({ products, orders, rangeMode = "dashboard" }) => {
             dateToCheckTime = new Date(product.createdAt).getTime();
           }
 
-          if (product.purchaseLots && product.purchaseLots.length > 0) {
-            let oldestLot = null;
-            for (const lot of product.purchaseLots) {
-              const qty = Number(lot.quantity) || 0;
-              if (qty > 0) {
-                if (!oldestLot) {
-                  oldestLot = lot;
-                } else if (lot.createdAt < oldestLot.createdAt) {
-                  // Direct string comparison is efficient for ISO dates
-                  oldestLot = lot;
-                }
-              }
-            }
-
-            if (oldestLot && oldestLot.createdAt) {
-              dateToCheckTime = new Date(oldestLot.createdAt).getTime();
-            }
+          // Optimization: Use memoized O(1) lookup instead of O(N) loop
+          const oldestLot = getOldestActiveLot(product);
+          if (oldestLot && oldestLot.createdAt) {
+            dateToCheckTime = new Date(oldestLot.createdAt).getTime();
           }
 
           const diffTime = Math.abs(nowTime - dateToCheckTime);
