@@ -13,25 +13,45 @@ import { useEffect, useRef } from "react";
 const useDataPersistence = (data, saveBatchFn, isLoaded, idKey = "id") => {
   const previousDataMapRef = useRef(new Map());
   const hasInitializedRef = useRef(false);
+  // Cache để lưu trữ Map hiện tại, tránh tạo lại Map O(N) nếu data/idKey không đổi
+  const currentDataMapCacheRef = useRef({ data: null, idKey: null, map: null });
 
   useEffect(() => {
     // Nếu chưa load xong dữ liệu thì không làm gì (và reset cờ init nếu vừa logout)
     if (!isLoaded) {
       hasInitializedRef.current = false;
-      previousDataMapRef.current.clear();
+      // Khởi tạo lại Map mới thay vì clear() để tránh ảnh hưởng đến cache nếu đang dùng chung tham chiếu
+      previousDataMapRef.current = new Map();
       return;
     }
 
-    // Chuyển đổi danh sách hiện tại thành Map để tra cứu O(1)
-    const currentDataMap = new Map();
-    data.forEach((item) => {
-      if (item && item[idKey]) {
-        currentDataMap.set(item[idKey], item);
+    // Tối ưu hóa: Tạo Map một cách lười biếng (lazy) và cache lại.
+    // Việc này giữ logic O(N) trong useEffect thay vì useMemo để không ảnh hưởng render phase.
+    if (
+      currentDataMapCacheRef.current.data !== data ||
+      currentDataMapCacheRef.current.idKey !== idKey
+    ) {
+      const map = new Map();
+      for (const item of data) {
+        if (item && item[idKey]) {
+          map.set(item[idKey], item);
+        }
       }
-    });
+      currentDataMapCacheRef.current = { data, idKey, map };
+    }
+
+    const currentDataMap = currentDataMapCacheRef.current.map;
+
+    // Tối ưu hóa: Nếu currentDataMap giống hệt previousDataMap (theo tham chiếu),
+    // và chúng ta đã khởi tạo xong, thì có thể bỏ qua việc so sánh.
+    if (
+      currentDataMap === previousDataMapRef.current &&
+      hasInitializedRef.current
+    ) {
+      return;
+    }
 
     // Nếu đây là lần render đầu tiên sau khi load dữ liệu, chỉ đồng bộ reference chứ không lưu.
-    // Tối ưu này ngăn chặn việc "Ghi ngay sau khi Đọc" (Write-After-Read) thừa thãi lúc khởi tạo.
     if (!hasInitializedRef.current) {
       previousDataMapRef.current = currentDataMap;
       hasInitializedRef.current = true;
@@ -51,7 +71,6 @@ const useDataPersistence = (data, saveBatchFn, isLoaded, idKey = "id") => {
       } else {
         const prevItem = previousDataMap.get(id);
         // Dựa vào so sánh tham chiếu (referential equality) để phát hiện thay đổi.
-        // Trong React, khi state update thì object reference thường thay đổi.
         if (prevItem !== item) {
           updated.push(item);
         }
