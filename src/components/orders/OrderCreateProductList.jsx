@@ -44,8 +44,8 @@ const ProductItem = memo(
   ({
     p,
     qty,
-    selectedWarehouse,
-    getAvailableStock,
+    availableStock, // Tối ưu hóa: Prop dạng nguyên thủy giúp React.memo hoạt động hiệu quả
+    warehouseLabel, // Tối ưu hóa: Prop dạng nguyên thủy
     adjustQuantity,
     handleQuantityChange,
     activeCategory,
@@ -60,22 +60,11 @@ const ProductItem = memo(
       setIsNameExpanded(targetState);
     };
 
-    // Tính toán tồn kho khả dụng
-    const availableStock = useMemo(() => {
-      if (getAvailableStock) {
-        return getAvailableStock(p, selectedWarehouse);
-      }
-      return 0;
-    }, [p, selectedWarehouse, getAvailableStock]);
-
+    // Đã loại bỏ việc tính toán availableStock bằng useMemo tốn kém tại đây.
+    // Logic đã được chuyển lên component cha để giảm overhead cho từng item.
     const isOutOfStock = availableStock <= 0;
     const isAdded = qty !== undefined;
     const displayQty = isAdded ? qty : 0;
-
-    const warehouseLabel = useMemo(
-      () => getWarehouseShortLabel(selectedWarehouse),
-      [selectedWarehouse],
-    );
 
     return (
       <div
@@ -190,6 +179,12 @@ const OrderCreateProductList = memo(
     sortConfig,
     onSortChange,
   }) => {
+    // Tối ưu hóa: Tính toán nhãn kho một lần cho toàn bộ danh sách thay vì từng item
+    const shortLabel = useMemo(
+      () => getWarehouseShortLabel(selectedWarehouse),
+      [selectedWarehouse],
+    );
+
     return (
       <div
         className={`flex-1 overflow-y-auto p-3 space-y-3 pb-40 min-h-0 ${className}`}
@@ -212,18 +207,26 @@ const OrderCreateProductList = memo(
         />
         {/* Thêm lại -mx-3 để bù cho padding của cha */}
 
-        {filteredProducts.map((p) => (
-          <ProductItem
-            key={p.id}
-            p={p}
-            qty={cart[p.id]}
-            selectedWarehouse={selectedWarehouse}
-            getAvailableStock={getAvailableStock}
-            adjustQuantity={adjustQuantity}
-            handleQuantityChange={handleQuantityChange}
-            activeCategory={activeCategory}
-          />
-        ))}
+        {filteredProducts.map((p) => {
+          // Tối ưu hóa: Tính toán tồn kho ở đây để truyền xuống dưới dạng prop nguyên thủy.
+          // Giúp tránh việc React.memo bị vô hiệu hóa do prop function thay đổi reference.
+          const stock = getAvailableStock
+            ? getAvailableStock(p, selectedWarehouse)
+            : 0;
+
+          return (
+            <ProductItem
+              key={p.id}
+              p={p}
+              qty={cart[p.id]}
+              availableStock={stock}
+              warehouseLabel={shortLabel}
+              adjustQuantity={adjustQuantity}
+              handleQuantityChange={handleQuantityChange}
+              activeCategory={activeCategory}
+            />
+          );
+        })}
 
         {filteredProducts.length === 0 && (
           <div className="flex flex-col items-center justify-center pt-24 text-gray-500 w-full">
