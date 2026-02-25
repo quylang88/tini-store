@@ -128,11 +128,15 @@ const useDashboardLogic = ({ products, orders, rangeMode = "dashboard" }) => {
     };
   }, [products, currentDate]);
 
-  // Chỉ lấy đơn đã thanh toán để tránh lệch doanh thu/lợi nhuận
-  const paidOrders = useMemo(
-    () => orders.filter((order) => order.status === "paid"),
-    [orders],
-  );
+  // Chỉ lấy đơn đã thanh toán để tránh lệch doanh thu/lợi nhuận.
+  // Tối ưu hóa: Chỉ tính toán danh sách đầy đủ khi ở chế độ 'detail'.
+  // Ở chế độ 'dashboard', ta bỏ qua bước này để tiết kiệm bộ nhớ và CPU (tránh tạo mảng lớn).
+  const paidOrders = useMemo(() => {
+    if (rangeMode === "detail") {
+      return orders.filter((order) => order.status === "paid");
+    }
+    return [];
+  }, [orders, rangeMode]);
 
   const activeOption = useMemo(
     () =>
@@ -169,20 +173,25 @@ const useDashboardLogic = ({ products, orders, rangeMode = "dashboard" }) => {
   }, [activeOption, activeRange, customRange.end, currentDate]);
 
   const filteredPaidOrders = useMemo(() => {
-    if (!rangeStart && !rangeEnd) return paidOrders;
-
-    // Convert Date objects to ISO strings once (outside the loop) to enable fast string comparison.
-    // This assumes order.date is always in ISO 8601 format (e.g. from new Date().toISOString()),
-    // which allows direct lexicographical comparison.
+    // Tối ưu hóa: Lọc trực tiếp từ danh sách `orders` gốc thay vì qua `paidOrders`.
+    // Giúp giảm số lần duyệt mảng và cấp phát bộ nhớ trung gian, đặc biệt hiệu quả khi số lượng đơn lớn.
     const startISO = rangeStart ? rangeStart.toISOString() : null;
     const endISO = rangeEnd ? rangeEnd.toISOString() : null;
 
-    return paidOrders.filter((order) => {
-      if (startISO && order.date < startISO) return false;
-      if (endISO && order.date > endISO) return false;
-      return true;
-    });
-  }, [paidOrders, rangeStart, rangeEnd]);
+    const result = [];
+    // Sử dụng vòng lặp for...of để tối ưu hiệu suất so với .filter()
+    for (const order of orders) {
+      // 1. Kiểm tra trạng thái thanh toán trước (nhanh nhất)
+      if (order.status !== "paid") continue;
+
+      // 2. Kiểm tra khoảng thời gian (so sánh chuỗi ISO nhanh hơn Date object)
+      if (startISO && order.date < startISO) continue;
+      if (endISO && order.date > endISO) continue;
+
+      result.push(order);
+    }
+    return result;
+  }, [orders, rangeStart, rangeEnd]);
 
   // Unified Revenue & Profit & Stats Calculation
   // Consolidates multiple iterations over `orders` into a single pass (O(N)) for performance.
