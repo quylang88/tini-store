@@ -7,6 +7,8 @@ import {
   AlertTriangle,
   ShoppingCart,
   ArchiveX,
+  ArrowLeft,
+  RotateCcw,
 } from "lucide-react";
 import { formatNumber } from "../utils/formatters/formatUtils";
 import useDashboardLogic from "../hooks/dashboard/useDashboardLogic";
@@ -41,6 +43,9 @@ const Dashboard = ({ products, orders, onOpenDetail, updateFab, isActive }) => {
     outOfStockProducts, // Danh sách hết hàng
     topByProfit,
     topByQuantity,
+    isPreviousPeriod,
+    setIsPreviousPeriod,
+    rangeStart,
   } = useDashboardLogic({ products, orders, rangeMode: "dashboard" });
 
   const [activeModal, setActiveModal] = useState(null);
@@ -56,14 +61,16 @@ const Dashboard = ({ products, orders, onOpenDetail, updateFab, isActive }) => {
   // Tính số lượng đơn hàng
   const orderCount = filteredPaidOrders.length;
 
-  // Tạo nhãn tháng hiện tại sử dụng ngày tập trung
+  // Tạo nhãn tháng hiện tại sử dụng ngày tập trung hoặc rangeStart (ngày bắt đầu thực tế của view)
   const currentMonthLabel = useMemo(() => {
-    if (!currentDate) return "Đang tải...";
-    return `Tháng ${String(currentDate.getMonth() + 1).padStart(
+    // Ưu tiên rangeStart nếu có (đã tính toán theo tháng trước/hiện tại)
+    const targetDate = rangeStart || currentDate;
+    if (!targetDate) return "Đang tải...";
+    return `Tháng ${String(targetDate.getMonth() + 1).padStart(
       2,
       "0",
-    )}/${currentDate.getFullYear()}`;
-  }, [currentDate]);
+    )}/${targetDate.getFullYear()}`;
+  }, [currentDate, rangeStart]);
 
   const [isScrolled, setIsScrolled] = useState(false);
 
@@ -84,10 +91,30 @@ const Dashboard = ({ products, orders, onOpenDetail, updateFab, isActive }) => {
         {/* Nhãn tiêu đề */}
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-xl font-bold text-rose-700">
+            <h2 className="text-xl font-bold text-rose-700 transition-all duration-300">
               {currentMonthLabel}
             </h2>
           </div>
+          <button
+            onClick={() => setIsPreviousPeriod(!isPreviousPeriod)}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold shadow-sm transition-all duration-300 ${
+              isPreviousPeriod
+                ? "bg-rose-100 text-rose-700 hover:bg-rose-200"
+                : "bg-white border border-rose-200 text-rose-600 hover:bg-rose-50"
+            }`}
+          >
+            {isPreviousPeriod ? (
+              <>
+                <RotateCcw size={14} />
+                Tháng này
+              </>
+            ) : (
+              <>
+                <ArrowLeft size={14} />
+                Tháng trước
+              </>
+            )}
+          </button>
         </div>
 
         {/* Lưới chỉ số (Metrics Grid) */}
