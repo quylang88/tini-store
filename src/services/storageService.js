@@ -516,6 +516,10 @@ class StorageService {
     return this.saveBatch(STORES.ORDERS, changes);
   }
 
+  async saveCustomersBatch(changes) {
+    return this.saveBatch(STORES.CUSTOMERS, changes);
+  }
+
   saveAll(storeName, items) {
     return new Promise((resolve, reject) => {
       const transaction = this.db.transaction([storeName], "readwrite");

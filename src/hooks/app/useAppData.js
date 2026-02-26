@@ -48,10 +48,15 @@ const useAppData = (isAuthenticated) => {
     (changes) => storageService.saveOrdersBatch(changes),
     [],
   );
+  const handleSaveCustomers = useCallback(
+    (changes) => storageService.saveCustomersBatch(changes),
+    [],
+  );
 
   // Hooks Persistance (Lưu trữ)
   useDataPersistence(products, handleSaveProducts, isDataLoaded);
   useDataPersistence(orders, handleSaveOrders, isDataLoaded);
+  useDataPersistence(customers, handleSaveCustomers, isDataLoaded);
 
   // Các Effect đơn giản
   useEffect(() => {
@@ -59,12 +64,6 @@ const useAppData = (isAuthenticated) => {
       storageService.saveSettings(settings);
     }
   }, [settings, isDataLoaded]);
-
-  useEffect(() => {
-    if (isDataLoaded) {
-      storageService.saveAllCustomers(customers);
-    }
-  }, [customers, isDataLoaded]);
 
   useEffect(() => {
     if (isDataLoaded) {
