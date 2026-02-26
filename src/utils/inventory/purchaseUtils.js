@@ -60,6 +60,36 @@ const normalizeLot = (lot) => {
   return newLot;
 };
 
+// Helper function to check if array is sorted by createdAt
+const isSortedByDate = (lots) => {
+  for (let i = 0; i < lots.length - 1; i++) {
+    const d1 = lots[i].createdAt || "";
+    const d2 = lots[i + 1].createdAt || "";
+    if (d1 > d2) return false;
+  }
+  return true;
+};
+
+// Helper to insert a lot into a sorted array while maintaining order
+const insertSorted = (lots, newLot) => {
+  const newDate = newLot.createdAt || "";
+  // Optimization: check if it belongs at the end (common case for new lots)
+  if (lots.length === 0 || (lots[lots.length - 1].createdAt || "") <= newDate) {
+    return [...lots, newLot];
+  }
+
+  // Find insertion index
+  const index = lots.findIndex(l => (l.createdAt || "") > newDate);
+  if (index === -1) {
+    // Should be covered by optimization above, but safe fallback
+    return [...lots, newLot];
+  }
+
+  const newLots = [...lots];
+  newLots.splice(index, 0, newLot);
+  return newLots;
+};
+
 export const normalizePurchaseLots = (product = {}) => {
   if (Array.isArray(product.purchaseLots)) {
     const lots = product.purchaseLots;
@@ -76,17 +106,35 @@ export const normalizePurchaseLots = (product = {}) => {
       }
     }
 
-    // Nếu không tìm thấy thay đổi, trả về product gốc ngay lập tức (không cấp phát bộ nhớ).
-    if (changeIndex === -1) return product;
+    let normalizedLots = lots;
 
-    // Nếu có thay đổi, xây dựng mảng mới một cách hiệu quả theo mẫu Copy-On-Write.
-    // Bắt đầu với phần mảng không thay đổi.
-    const normalizedLots = lots.slice(0, changeIndex);
-
-    // Xử lý phần còn lại bắt đầu từ item đầu tiên bị thay đổi.
-    for (let i = changeIndex; i < lots.length; i++) {
-      normalizedLots.push(normalizeLot(lots[i]));
+    // Nếu có thay đổi, xây dựng mảng mới
+    if (changeIndex !== -1) {
+      // Bắt đầu với phần mảng không thay đổi.
+      normalizedLots = lots.slice(0, changeIndex);
+      // Xử lý phần còn lại bắt đầu từ item đầu tiên bị thay đổi.
+      for (let i = changeIndex; i < lots.length; i++) {
+        normalizedLots.push(normalizeLot(lots[i]));
+      }
     }
+
+    // Ensure sorted order
+    if (!isSortedByDate(normalizedLots)) {
+      // If we haven't cloned yet (changeIndex === -1), we must clone now
+      if (normalizedLots === lots) {
+        normalizedLots = [...lots];
+      }
+      normalizedLots.sort((a, b) => {
+        const d1 = a.createdAt || "";
+        const d2 = b.createdAt || "";
+        if (d1 < d2) return -1;
+        if (d1 > d2) return 1;
+        return 0;
+      });
+    }
+
+    // If nothing changed (no normalize changes AND already sorted), return original product
+    if (normalizedLots === lots) return product;
 
     return { ...product, purchaseLots: normalizedLots };
   }
@@ -112,67 +160,37 @@ export const normalizePurchaseLots = (product = {}) => {
     }
   });
 
+  // Lots generated here have same createdAt, so they are sorted by default.
+
   return {
     ...product,
     purchaseLots: lots,
   };
 };
 
-// Cache kết quả tìm kiếm lot mới nhất để tránh loop O(N) lặp lại.
-// Key là reference của array purchaseLots.
-const latestLotCache = new WeakMap();
-
 export const getLatestLot = (product = {}) => {
   const lots = product.purchaseLots;
   if (!lots || !Array.isArray(lots) || lots.length === 0) return null;
 
-  if (latestLotCache.has(lots)) {
-    return latestLotCache.get(lots);
-  }
-
-  // Find lot with latest createdAt using string comparison (ISO format).
-  // Note: We must scan the array (O(N)) because lots are not guaranteed to be sorted by date.
-  // Using string comparison is faster than new Date() parsing.
-  const latest = lots.reduce((latest, current) => {
-    if (!latest) return current;
-    const latestDate = latest.createdAt || "";
-    const currentDate = current.createdAt || "";
-    return currentDate > latestDate ? current : latest;
-  }, lots[0]);
-
-  latestLotCache.set(lots, latest);
-  return latest;
+  // Assuming lots are sorted by createdAt ASC due to normalizePurchaseLots and insertSorted.
+  // We can just take the last element. O(1).
+  return lots[lots.length - 1];
 };
-
-// Cache lô hàng cũ nhất còn tồn kho (quantity > 0) để tránh loop O(N) lặp lại
-// Lưu ý: Key là tham chiếu mảng purchaseLots. Đảm bảo dữ liệu được cập nhật kiểu immutable.
-const oldestActiveLotCache = new WeakMap();
 
 export const getOldestActiveLot = (product = {}) => {
   const lots = product.purchaseLots;
   if (!lots || !Array.isArray(lots) || lots.length === 0) return null;
 
-  if (oldestActiveLotCache.has(lots)) {
-    return oldestActiveLotCache.get(lots);
-  }
-
-  let oldest = null;
+  // Assuming lots are sorted by createdAt ASC.
+  // We find the first lot with quantity > 0.
+  // This avoids scanning the whole array if we find one early.
   for (const lot of lots) {
     if ((Number(lot.quantity) || 0) > 0) {
-      if (!oldest) {
-        oldest = lot;
-      } else {
-        const oldestDate = oldest.createdAt || "";
-        const currentDate = lot.createdAt || "";
-        if (currentDate < oldestDate) {
-          oldest = lot;
-        }
-      }
+      return lot;
     }
   }
 
-  oldestActiveLotCache.set(lots, oldest);
-  return oldest;
+  return null;
 };
 
 // Returns all stats in one pass to avoid multiple array scans
@@ -215,7 +233,9 @@ export const addPurchaseLot = (product, lot) => {
         }
       : null,
   };
-  const nextLots = [...(product.purchaseLots || []), nextLot];
+
+  // Insert while maintaining sort order
+  const nextLots = insertSorted(product.purchaseLots || [], nextLot);
 
   return {
     ...product,
@@ -330,8 +350,10 @@ export const restockPurchaseLots = (product, warehouseKey, quantity, cost) => {
     shipping: null,
   };
 
+  const nextLots = insertSorted(product.purchaseLots || [], nextLot);
+
   return {
     ...product,
-    purchaseLots: [...(product.purchaseLots || []), nextLot],
+    purchaseLots: nextLots,
   };
 };
