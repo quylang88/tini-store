@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useRef } from "react";
 import { normalizeString } from "../../utils/formatters/formatUtils";
 import { getProductDate } from "../../utils/common/sortingUtils";
 
@@ -15,30 +15,59 @@ const useProductFilterSort = ({
 }) => {
   const { searchTerm = "", activeCategory = "Tất cả" } = filterConfig;
 
+  const prevProductsRef = useRef([]);
+  const prevSearchableProductsRef = useRef([]);
+
   // Tối ưu hóa: Tính toán trước các trường tìm kiếm đã được chuẩn hóa.
   // Việc này giúp tránh gọi hàm normalizeString (sử dụng regex tốn kém) trong vòng lặp lọc.
   // Thay vì độ phức tạp O(N * M) với M là số ký tự gõ, ta chỉ tốn O(N) một lần khi danh sách sản phẩm thay đổi.
   // Sử dụng WeakMap cache để O(1) khi tái sử dụng wrapper cho các sản phẩm không đổi.
   const searchableProducts = useMemo(() => {
-    return products.map((product) => {
-      if (searchableProductCache.has(product)) {
-        return searchableProductCache.get(product);
+    const prevProducts = prevProductsRef.current;
+    const prevSearchable = prevSearchableProductsRef.current;
+
+    // Fast path: Nếu mảng sản phẩm hoàn toàn giống hệt (reference equality)
+    if (products === prevProducts) {
+      return prevSearchable;
+    }
+
+    const newSearchable = new Array(products.length);
+    const prevLength = prevProducts.length;
+
+    for (let i = 0; i < products.length; i++) {
+      const product = products[i];
+
+      // Optimization: Kiểm tra nếu sản phẩm tại index này giống hệt phiên bản trước (reference equality)
+      // thì tái sử dụng wrapper cũ luôn, tránh cả việc lookup WeakMap.
+      if (i < prevLength && product === prevProducts[i]) {
+        newSearchable[i] = prevSearchable[i];
+        continue;
       }
 
-      const searchable = {
-        original: product,
-        normalizedName: normalizeString(product.name),
-        searchableProductCode: product.productCode
-          ? String(product.productCode)
-          : "",
-        // Pre-calculate sort values (date is expensive O(N) due to lot traversal)
-        sortDate: getProductDate(product),
-        sortPrice: Number(product.price) || 0,
-      };
+      // Fallback: Kiểm tra WeakMap cache (trường hợp reorder hoặc insert/delete làm lệch index)
+      if (searchableProductCache.has(product)) {
+        newSearchable[i] = searchableProductCache.get(product);
+      } else {
+        const searchable = {
+          original: product,
+          normalizedName: normalizeString(product.name),
+          searchableProductCode: product.productCode
+            ? String(product.productCode)
+            : "",
+          // Pre-calculate sort values (date is expensive O(N) due to lot traversal)
+          sortDate: getProductDate(product),
+          sortPrice: Number(product.price) || 0,
+        };
 
-      searchableProductCache.set(product, searchable);
-      return searchable;
-    });
+        searchableProductCache.set(product, searchable);
+        newSearchable[i] = searchable;
+      }
+    }
+
+    prevProductsRef.current = products;
+    prevSearchableProductsRef.current = newSearchable;
+
+    return newSearchable;
   }, [products]);
 
   const filteredProducts = useMemo(() => {
