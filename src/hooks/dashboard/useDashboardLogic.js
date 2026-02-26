@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import {
   getProductStats,
   getOldestActiveLot,
@@ -128,15 +128,11 @@ const useDashboardLogic = ({ products, orders, rangeMode = "dashboard" }) => {
     };
   }, [products, currentDate]);
 
-  // Chỉ lấy đơn đã thanh toán để tránh lệch doanh thu/lợi nhuận.
-  // Tối ưu hóa: Chỉ tính toán danh sách đầy đủ khi ở chế độ 'detail'.
-  // Ở chế độ 'dashboard', ta bỏ qua bước này để tiết kiệm bộ nhớ và CPU (tránh tạo mảng lớn).
-  const paidOrders = useMemo(() => {
-    if (rangeMode === "detail") {
-      return orders.filter((order) => order.status === "paid");
-    }
-    return [];
-  }, [orders, rangeMode]);
+  // Chỉ lấy đơn đã thanh toán để tránh lệch doanh thu/lợi nhuận
+  const paidOrders = useMemo(
+    () => orders.filter((order) => order.status === "paid"),
+    [orders],
+  );
 
   const activeOption = useMemo(
     () =>
@@ -173,78 +169,123 @@ const useDashboardLogic = ({ products, orders, rangeMode = "dashboard" }) => {
   }, [activeOption, activeRange, customRange.end, currentDate]);
 
   const filteredPaidOrders = useMemo(() => {
-    // Tối ưu hóa: Lọc trực tiếp từ danh sách `orders` gốc thay vì qua `paidOrders`.
-    // Giúp giảm số lần duyệt mảng và cấp phát bộ nhớ trung gian, đặc biệt hiệu quả khi số lượng đơn lớn.
+    if (!rangeStart && !rangeEnd) return paidOrders;
+
+    // Convert Date objects to ISO strings once (outside the loop) to enable fast string comparison.
+    // This assumes order.date is always in ISO 8601 format (e.g. from new Date().toISOString()),
+    // which allows direct lexicographical comparison.
     const startISO = rangeStart ? rangeStart.toISOString() : null;
     const endISO = rangeEnd ? rangeEnd.toISOString() : null;
 
-    const result = [];
-    // Sử dụng vòng lặp for...of để tối ưu hiệu suất so với .filter()
-    for (const order of orders) {
-      // 1. Kiểm tra trạng thái thanh toán trước (nhanh nhất)
-      if (order.status !== "paid") continue;
-
-      // 2. Kiểm tra khoảng thời gian (so sánh chuỗi ISO nhanh hơn Date object)
-      if (startISO && order.date < startISO) continue;
-      if (endISO && order.date > endISO) continue;
-
-      result.push(order);
-    }
-    return result;
-  }, [orders, rangeStart, rangeEnd]);
+    return paidOrders.filter((order) => {
+      if (startISO && order.date < startISO) return false;
+      if (endISO && order.date > endISO) return false;
+      return true;
+    });
+  }, [paidOrders, rangeStart, rangeEnd]);
 
   // Unified Revenue & Profit & Stats Calculation
   // Consolidates multiple iterations over `orders` into a single pass (O(N)) for performance.
-  const { totalRevenue, totalProfit, productStats } = useMemo(() => {
-    let revenue = 0;
-    let profit = 0;
-    const stats = new Map();
+  // Updated to use Async Chunked Processing to prevent blocking the main thread.
+  const [stats, setStats] = useState({
+    totalRevenue: 0,
+    totalProfit: 0,
+    productStats: [],
+  });
+  const [isCalculating, setIsCalculating] = useState(false);
 
-    for (const order of filteredPaidOrders) {
-      revenue += order.total;
+  useEffect(() => {
+    let isCancelled = false;
+    const CHUNK_SIZE = 2000;
+    const SYNC_THRESHOLD = 1000;
 
-      let orderProfit = 0;
-      const shippingFee = order.shippingFee || 0;
+    const processChunk = (orders, currentStats) => {
+      let { revenue, profit, statsObj } = currentStats;
 
-      for (const item of order.items) {
-        // Calculate item profit
-        const cost = Number.isFinite(item.cost)
-          ? item.cost
-          : costMap.get(item.productId) || 0;
-        const itemProfit = (item.price - cost) * item.quantity;
+      for (const order of orders) {
+        revenue += order.total;
+        let orderProfit = 0;
+        const shippingFee = order.shippingFee || 0;
 
-        orderProfit += itemProfit;
+        for (const item of order.items) {
+          const cost = Number.isFinite(item.cost)
+            ? item.cost
+            : costMap.get(item.productId) || 0;
+          const itemProfit = (item.price - cost) * item.quantity;
+          orderProfit += itemProfit;
 
-        // Update product stats
-        const key = item.productId || item.name;
-        let entry = stats.get(key);
-
-        if (!entry) {
-          const product = productMeta.get(item.productId);
-          entry = {
-            id: item.productId,
-            name: product?.name || item.name || "Sản phẩm khác",
-            image: product?.image || "",
-            quantity: 0,
-            profit: 0,
-          };
-          stats.set(key, entry);
+          const key = item.productId || item.name;
+          if (!statsObj[key]) {
+            const product = productMeta.get(item.productId);
+            statsObj[key] = {
+              id: item.productId,
+              name: product?.name || item.name || "Sản phẩm khác",
+              image: product?.image || "",
+              quantity: 0,
+              profit: 0,
+            };
+          }
+          statsObj[key].quantity += item.quantity;
+          statsObj[key].profit += itemProfit;
         }
+        profit += orderProfit - shippingFee;
+      }
+      return { revenue, profit, statsObj };
+    };
 
-        entry.quantity += item.quantity;
-        entry.profit += itemProfit;
+    const calculate = async () => {
+      // Small dataset: Synchronous execution to avoid flicker
+      if (filteredPaidOrders.length <= SYNC_THRESHOLD) {
+        const result = processChunk(filteredPaidOrders, {
+          revenue: 0,
+          profit: 0,
+          statsObj: {},
+        });
+        if (!isCancelled) {
+          setStats({
+            totalRevenue: result.revenue,
+            totalProfit: result.profit,
+            productStats: Object.values(result.statsObj),
+          });
+          setIsCalculating(false);
+        }
+        return;
       }
 
-      // Trừ phí gửi vì đây là chi phí phát sinh của đơn
-      profit += orderProfit - shippingFee;
-    }
+      // Large dataset: Async execution with yielding
+      setIsCalculating(true);
+      await new Promise((r) => setTimeout(r, 0)); // Yield before starting
+      if (isCancelled) return;
 
-    return {
-      totalRevenue: revenue,
-      totalProfit: profit,
-      productStats: Array.from(stats.values()),
+      let currentStats = { revenue: 0, profit: 0, statsObj: {} };
+
+      for (let i = 0; i < filteredPaidOrders.length; i += CHUNK_SIZE) {
+        if (isCancelled) return;
+        const chunk = filteredPaidOrders.slice(i, i + CHUNK_SIZE);
+        currentStats = processChunk(chunk, currentStats);
+
+        // Yield to main thread
+        await new Promise((r) => setTimeout(r, 0));
+      }
+
+      if (!isCancelled) {
+        setStats({
+          totalRevenue: currentStats.revenue,
+          totalProfit: currentStats.profit,
+          productStats: Object.values(currentStats.statsObj),
+        });
+        setIsCalculating(false);
+      }
+    };
+
+    calculate();
+
+    return () => {
+      isCancelled = true;
     };
   }, [filteredPaidOrders, costMap, productMeta]);
+
+  const { totalRevenue, totalProfit, productStats } = stats;
 
   const topByProfit = useMemo(
     () =>
@@ -288,6 +329,7 @@ const useDashboardLogic = ({ products, orders, rangeMode = "dashboard" }) => {
         : (activeOption?.days ?? null),
     paidOrders,
     filteredPaidOrders,
+    isCalculating, // Expose loading state
     totalRevenue,
     totalProfit,
     totalCapital, // Đã export
