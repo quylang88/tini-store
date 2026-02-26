@@ -43,6 +43,15 @@ const useDashboardLogic = ({ products, orders, rangeMode = "dashboard" }) => {
     [rangeMode, currentDate],
   );
 
+  // Cache for stats per product reference to avoid recalculation on re-renders.
+  const [statsCache, setStatsCache] = useState(() => new WeakMap());
+  const [lastDate, setLastDate] = useState(currentDate);
+
+  if (currentDate !== lastDate) {
+    setLastDate(currentDate);
+    setStatsCache(new WeakMap());
+  }
+
   // Unified Inventory Stats Calculation
   // Consolidates multiple iterations over `products` into a single pass (O(N)).
   const {
@@ -52,6 +61,8 @@ const useDashboardLogic = ({ products, orders, rangeMode = "dashboard" }) => {
     slowMovingProducts,
     outOfStockProducts,
   } = useMemo(() => {
+    const cache = statsCache;
+
     const costMap = new Map();
     const productMeta = new Map();
     const slowMoving = [];
@@ -62,56 +73,71 @@ const useDashboardLogic = ({ products, orders, rangeMode = "dashboard" }) => {
     const nowTime = currentDate.getTime();
 
     for (const product of products) {
-      // 1. Cost Map
-      const { unitCost } = getProductStats(product);
-      costMap.set(product.id, unitCost);
+      let stats = cache.get(product);
 
-      // 2. Product Meta
-      productMeta.set(product.id, product);
+      if (!stats) {
+        const { unitCost } = getProductStats(product);
+        const stock = product.stock || 0;
+        let capitalContribution = 0;
+        let isOutOfStock = false;
+        let slowMovingEntry = null;
 
-      const stock = product.stock || 0;
-
-      // 3. Out of Stock
-      if (stock <= 0) {
-        outOfStock.push(product);
-        // Continue is removed because we still want to process costMap and productMeta
-        // But capital and slow moving require stock > 0
-      } else {
-        // 4. Total Capital
-        if (product.purchaseLots && product.purchaseLots.length > 0) {
-          // Use for...of loop for slightly better performance than reduce
-          let lotSum = 0;
-          for (const lot of product.purchaseLots) {
-            const qty = Number(lot.quantity) || 0;
-            const cost = Number(lot.cost) || 0;
-            lotSum += qty * cost;
-          }
-          capital += lotSum;
+        if (stock <= 0) {
+          isOutOfStock = true;
         } else {
-          // Fallback to latest unit cost
-          capital += stock * unitCost;
+          // Capital calculation
+          if (product.purchaseLots && product.purchaseLots.length > 0) {
+            let lotSum = 0;
+            for (const lot of product.purchaseLots) {
+              const qty = Number(lot.quantity) || 0;
+              const cost = Number(lot.cost) || 0;
+              lotSum += qty * cost;
+            }
+            capitalContribution = lotSum;
+          } else {
+            capitalContribution = stock * unitCost;
+          }
+
+          // Slow Moving calculation
+          if (currentDate) {
+            let dateToCheckTime = nowTime;
+            if (product.createdAt) {
+              dateToCheckTime = new Date(product.createdAt).getTime();
+            }
+
+            const oldestLot = getOldestActiveLot(product);
+            if (oldestLot && oldestLot.createdAt) {
+              dateToCheckTime = new Date(oldestLot.createdAt).getTime();
+            }
+
+            const diffTime = Math.abs(nowTime - dateToCheckTime);
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+            if (diffDays > warningDays) {
+              slowMovingEntry = { ...product, daysNoSale: diffDays };
+            }
+          }
         }
 
-        // 5. Slow Moving Products
-        if (currentDate) {
-          let dateToCheckTime = nowTime;
-          // If createdAt exists, start with it
-          if (product.createdAt) {
-            dateToCheckTime = new Date(product.createdAt).getTime();
-          }
+        stats = {
+          unitCost,
+          capitalContribution,
+          isOutOfStock,
+          slowMovingEntry,
+        };
+        cache.set(product, stats);
+      }
 
-          // Optimization: Use memoized O(1) lookup instead of O(N) loop
-          const oldestLot = getOldestActiveLot(product);
-          if (oldestLot && oldestLot.createdAt) {
-            dateToCheckTime = new Date(oldestLot.createdAt).getTime();
-          }
+      // Apply stats
+      costMap.set(product.id, stats.unitCost);
+      productMeta.set(product.id, product);
 
-          const diffTime = Math.abs(nowTime - dateToCheckTime);
-          const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-          if (diffDays > warningDays) {
-            slowMoving.push({ ...product, daysNoSale: diffDays });
-          }
+      if (stats.isOutOfStock) {
+        outOfStock.push(product);
+      } else {
+        capital += stats.capitalContribution;
+        if (stats.slowMovingEntry) {
+          slowMoving.push(stats.slowMovingEntry);
         }
       }
     }
@@ -126,7 +152,7 @@ const useDashboardLogic = ({ products, orders, rangeMode = "dashboard" }) => {
       slowMovingProducts: slowMoving,
       outOfStockProducts: outOfStock,
     };
-  }, [products, currentDate]);
+  }, [products, currentDate, statsCache]);
 
   // Chỉ lấy đơn đã thanh toán để tránh lệch doanh thu/lợi nhuận
   const paidOrders = useMemo(
