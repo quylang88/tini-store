@@ -364,12 +364,8 @@ const useDashboardLogic = ({ products, orders, rangeMode = "dashboard" }) => {
     outOfStockProducts, // Đã export: Danh sách hết hàng
     topByProfit,
     topByQuantity,
-    // Hàm wrapper để set state với startTransition
-    setPreviousPeriod: (value) => {
-      startTransition(() => {
-        setIsPreviousPeriod(value);
-      });
-    },
+    // Trả về trực tiếp setter thay vì bọc trong startTransition để UI update ngay lập tức
+    setPreviousPeriod: setIsPreviousPeriod,
   };
 };
 

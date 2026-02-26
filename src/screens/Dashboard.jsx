@@ -16,7 +16,6 @@ import MetricCard from "../components/stats/MetricCard";
 import TopSellingSection from "../components/stats/TopSellingSection";
 import StatListModal from "../components/dashboard/StatListModal";
 import AppHeader from "../components/common/AppHeader";
-import { motion, AnimatePresence } from "framer-motion";
 
 const Dashboard = ({ products, orders, onOpenDetail, updateFab, isActive }) => {
   useEffect(() => {
@@ -93,18 +92,12 @@ const Dashboard = ({ products, orders, onOpenDetail, updateFab, isActive }) => {
         {/* Nhãn tiêu đề */}
         <div className="flex items-center justify-between min-h-[40px]">
           <div className="overflow-hidden">
-            <AnimatePresence mode="wait" initial={false}>
-              <motion.h2
-                key={currentMonthLabel}
-                initial={{ y: 20, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                exit={{ y: -20, opacity: 0 }}
-                transition={{ duration: 0.2 }}
-                className="text-xl font-bold text-rose-700"
-              >
-                {currentMonthLabel}
-              </motion.h2>
-            </AnimatePresence>
+            <h2
+              key={currentMonthLabel}
+              className="text-xl font-bold text-rose-700 filter-transition"
+            >
+              {currentMonthLabel}
+            </h2>
           </div>
 
           <button
@@ -115,33 +108,23 @@ const Dashboard = ({ products, orders, onOpenDetail, updateFab, isActive }) => {
                 : "bg-white border border-rose-200 text-rose-600 hover:bg-rose-50"
             }`}
           >
-            <AnimatePresence mode="wait" initial={false}>
-              {isPreviousPeriod ? (
-                <motion.span
-                  key="reset"
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.8 }}
-                  transition={{ duration: 0.15 }}
-                  className="flex items-center gap-1.5"
-                >
-                  <RotateCcw size={14} />
-                  Tháng này
-                </motion.span>
-              ) : (
-                <motion.span
-                  key="prev"
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.8 }}
-                  transition={{ duration: 0.15 }}
-                  className="flex items-center gap-1.5"
-                >
-                  <ArrowLeft size={14} />
-                  Tháng trước
-                </motion.span>
-              )}
-            </AnimatePresence>
+            {isPreviousPeriod ? (
+              <span
+                key="this"
+                className="flex items-center gap-1.5 filter-transition"
+              >
+                <RotateCcw size={14} />
+                Tháng này
+              </span>
+            ) : (
+              <span
+                key="prev"
+                className="flex items-center gap-1.5 filter-transition"
+              >
+                <ArrowLeft size={14} />
+                Tháng trước
+              </span>
+            )}
           </button>
         </div>
 
