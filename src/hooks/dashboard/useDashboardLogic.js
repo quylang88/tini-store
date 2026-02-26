@@ -312,22 +312,32 @@ const useDashboardLogic = ({ products, orders, rangeMode = "dashboard" }) => {
 
   const { totalRevenue, totalProfit, productStats } = stats;
 
-  const topByProfit = useMemo(
+  // Tách biệt việc sắp xếp và cắt danh sách (slicing).
+  // Việc sắp xếp chỉ thực hiện khi productStats thay đổi, không chạy lại khi topLimit thay đổi.
+  const sortedByProfit = useMemo(
     () =>
       [...productStats]
         .filter((item) => item.profit > 0 || item.quantity > 0)
-        .sort((a, b) => b.profit - a.profit)
-        .slice(0, topLimit),
-    [productStats, topLimit],
+        .sort((a, b) => b.profit - a.profit),
+    [productStats],
   );
 
-  const topByQuantity = useMemo(
+  const topByProfit = useMemo(
+    () => sortedByProfit.slice(0, topLimit),
+    [sortedByProfit, topLimit],
+  );
+
+  const sortedByQuantity = useMemo(
     () =>
       [...productStats]
         .filter((item) => item.quantity > 0)
-        .sort((a, b) => b.quantity - a.quantity)
-        .slice(0, topLimit),
-    [productStats, topLimit],
+        .sort((a, b) => b.quantity - a.quantity),
+    [productStats],
+  );
+
+  const topByQuantity = useMemo(
+    () => sortedByQuantity.slice(0, topLimit),
+    [sortedByQuantity, topLimit],
   );
 
   return {

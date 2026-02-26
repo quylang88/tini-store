@@ -1,21 +1,10 @@
-import React, { useState, useMemo, useEffect } from "react";
-import {
-  ArrowUpRight,
-  DollarSign,
-  TrendingUp,
-  Package,
-  AlertTriangle,
-  ShoppingCart,
-  ArchiveX,
-  ArrowLeft,
-  RotateCcw,
-} from "lucide-react";
-import { formatNumber } from "../utils/formatters/formatUtils";
+import React, { useState, useMemo, useEffect, useCallback } from "react";
+import { ArrowUpRight, ArrowLeft, RotateCcw } from "lucide-react";
 import useDashboardLogic from "../hooks/dashboard/useDashboardLogic";
-import MetricCard from "../components/stats/MetricCard";
 import TopSellingSection from "../components/stats/TopSellingSection";
 import StatListModal from "../components/dashboard/StatListModal";
 import AppHeader from "../components/common/AppHeader";
+import DashboardMetrics from "../components/dashboard/DashboardMetrics";
 
 const Dashboard = ({ products, orders, onOpenDetail, updateFab, isActive }) => {
   useEffect(() => {
@@ -54,8 +43,17 @@ const Dashboard = ({ products, orders, onOpenDetail, updateFab, isActive }) => {
   const [showInventoryWarningModal, setShowInventoryWarningModal] =
     useState(false);
 
-  const openTopModal = (type) => setActiveModal(type);
-  const closeTopModal = () => setActiveModal(null);
+  // Memoize handlers to prevent unnecessary re-renders of DashboardMetrics
+  const handleShowOutOfStock = useCallback(
+    () => setShowOutOfStockModal(true),
+    [],
+  );
+  const handleShowSlowMoving = useCallback(
+    () => setShowInventoryWarningModal(true),
+    [],
+  );
+  const openTopModal = useCallback((type) => setActiveModal(type), []);
+  const closeTopModal = useCallback(() => setActiveModal(null), []);
 
   const modalItems = activeModal === "quantity" ? topByQuantity : topByProfit;
 
@@ -128,66 +126,18 @@ const Dashboard = ({ products, orders, onOpenDetail, updateFab, isActive }) => {
           </button>
         </div>
 
-        {/* Lưới chỉ số (Metrics Grid) */}
-        <div
-          className={`grid grid-cols-2 gap-3 transition-opacity duration-200 ${
-            isCalculating ? "opacity-60 pointer-events-none" : "opacity-100"
-          }`}
-        >
-          <MetricCard
-            icon={DollarSign}
-            label="Doanh thu"
-            value={
-              isCalculating ? "Đang tính..." : `${formatNumber(totalRevenue)}đ`
-            }
-            className="bg-rose-400 shadow-rose-200"
-          />
-
-          <MetricCard
-            icon={TrendingUp}
-            label="Lợi nhuận"
-            value={
-              isCalculating ? "Đang tính..." : `${formatNumber(totalProfit)}đ`
-            }
-            className="bg-emerald-400 shadow-emerald-100"
-          />
-
-          <MetricCard
-            icon={ShoppingCart}
-            label="Số đơn"
-            value={isCalculating ? "..." : orderCount}
-            className="bg-amber-400 shadow-amber-200"
-          />
-
-          <MetricCard
-            icon={Package}
-            label="Vốn tồn kho"
-            value={
-              isCalculating ? "Đang tính..." : `${formatNumber(totalCapital)}đ`
-            }
-            className="bg-blue-400 shadow-blue-200"
-          />
-
-          {outOfStockProducts.length >= 1 && (
-            <MetricCard
-              icon={ArchiveX}
-              label="Hết hàng"
-              value={outOfStockProducts.length}
-              className="bg-slate-400 shadow-slate-200"
-              onClick={() => setShowOutOfStockModal(true)}
-            />
-          )}
-
-          {slowMovingProducts.length >= 1 && (
-            <MetricCard
-              icon={AlertTriangle}
-              label="Hàng tồn"
-              value={slowMovingProducts.length}
-              className="bg-violet-400 shadow-violet-200"
-              onClick={() => setShowInventoryWarningModal(true)}
-            />
-          )}
-        </div>
+        {/* Lưới chỉ số (Metrics Grid) - Đã tách thành component memoized */}
+        <DashboardMetrics
+          totalRevenue={totalRevenue}
+          totalProfit={totalProfit}
+          orderCount={orderCount}
+          totalCapital={totalCapital}
+          outOfStockProducts={outOfStockProducts}
+          slowMovingProducts={slowMovingProducts}
+          isCalculating={isCalculating}
+          onShowOutOfStock={handleShowOutOfStock}
+          onShowSlowMoving={handleShowSlowMoving}
+        />
 
         {/* Phần Top Bán Chạy (Tái sử dụng) */}
         <TopSellingSection
