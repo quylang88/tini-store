@@ -16,9 +16,9 @@ const buildRangeOptions = (mode = "dashboard", now) => {
   }
 
   return [
-    { id: "month", label: monthLabel, days: 30 },
-    { id: "year", label: yearLabel, days: 365 },
-    { id: "all", label: "Tất cả", days: null },
+    { id: "month", label: monthLabel },
+    { id: "year", label: yearLabel },
+    { id: "all", label: "Tất cả" },
   ];
 };
 const TOP_OPTIONS = [
@@ -35,6 +35,7 @@ const useDashboardLogic = ({ products, orders, rangeMode = "dashboard" }) => {
   const [activeRange, setActiveRange] = useState(
     rangeMode === "detail" ? "custom" : "month",
   );
+  const [isPreviousPeriod, setIsPreviousPeriod] = useState(false);
   const [topLimit, setTopLimit] = useState(3);
   const [customRange, setCustomRange] = useState({ start: null, end: null });
 
@@ -134,13 +135,6 @@ const useDashboardLogic = ({ products, orders, rangeMode = "dashboard" }) => {
     [orders],
   );
 
-  const activeOption = useMemo(
-    () =>
-      rangeOptions.find((option) => option.id === activeRange) ||
-      rangeOptions[0] || { days: null },
-    [activeRange, rangeOptions],
-  );
-
   const rangeStart = useMemo(() => {
     if (activeRange === "custom") {
       if (!customRange.start) return null;
@@ -148,12 +142,27 @@ const useDashboardLogic = ({ products, orders, rangeMode = "dashboard" }) => {
       start.setHours(0, 0, 0, 0);
       return start;
     }
-    if (!activeOption.days || !currentDate) return null;
-    const start = new Date(currentDate);
-    start.setHours(0, 0, 0, 0);
-    start.setDate(start.getDate() - activeOption.days + 1);
-    return start;
-  }, [activeOption, activeRange, customRange.start, currentDate]);
+    if (!currentDate) return null;
+
+    const year = currentDate.getFullYear();
+    const month = currentDate.getMonth();
+
+    if (activeRange === "month") {
+      const targetMonth = isPreviousPeriod ? month - 1 : month;
+      const start = new Date(year, targetMonth, 1);
+      start.setHours(0, 0, 0, 0);
+      return start;
+    }
+
+    if (activeRange === "year") {
+      const targetYear = isPreviousPeriod ? year - 1 : year;
+      const start = new Date(targetYear, 0, 1);
+      start.setHours(0, 0, 0, 0);
+      return start;
+    }
+
+    return null;
+  }, [activeRange, customRange.start, currentDate, isPreviousPeriod]);
 
   const rangeEnd = useMemo(() => {
     if (activeRange === "custom") {
@@ -162,11 +171,27 @@ const useDashboardLogic = ({ products, orders, rangeMode = "dashboard" }) => {
       end.setHours(23, 59, 59, 999);
       return end;
     }
-    if (!activeOption.days || !currentDate) return null;
-    const end = new Date(currentDate);
-    end.setHours(23, 59, 59, 999);
-    return end;
-  }, [activeOption, activeRange, customRange.end, currentDate]);
+    if (!currentDate) return null;
+
+    const year = currentDate.getFullYear();
+    const month = currentDate.getMonth();
+
+    if (activeRange === "month") {
+      const targetMonth = isPreviousPeriod ? month - 1 : month;
+      const end = new Date(year, targetMonth + 1, 0);
+      end.setHours(23, 59, 59, 999);
+      return end;
+    }
+
+    if (activeRange === "year") {
+      const targetYear = isPreviousPeriod ? year - 1 : year;
+      const end = new Date(targetYear, 11, 31);
+      end.setHours(23, 59, 59, 999);
+      return end;
+    }
+
+    return null;
+  }, [activeRange, customRange.end, currentDate, isPreviousPeriod]);
 
   const filteredPaidOrders = useMemo(() => {
     if (!rangeStart && !rangeEnd) return paidOrders;
@@ -313,12 +338,14 @@ const useDashboardLogic = ({ products, orders, rangeMode = "dashboard" }) => {
     setTopLimit,
     activeRange,
     setActiveRange,
+    isPreviousPeriod,
+    setIsPreviousPeriod,
     customRange,
     setCustomRange,
     rangeStart,
     rangeEnd,
     rangeDays:
-      activeRange === "custom" && rangeStart && rangeEnd
+      rangeStart && rangeEnd
         ? (() => {
             const startDay = new Date(rangeStart);
             const endDay = new Date(rangeEnd);
@@ -326,7 +353,7 @@ const useDashboardLogic = ({ products, orders, rangeMode = "dashboard" }) => {
             endDay.setHours(0, 0, 0, 0);
             return Math.max(1, Math.round((endDay - startDay) / 86400000) + 1);
           })()
-        : (activeOption?.days ?? null),
+        : null,
     paidOrders,
     filteredPaidOrders,
     isCalculating, // Expose loading state
@@ -337,6 +364,8 @@ const useDashboardLogic = ({ products, orders, rangeMode = "dashboard" }) => {
     outOfStockProducts, // Đã export: Danh sách hết hàng
     topByProfit,
     topByQuantity,
+    // Trả về trực tiếp setter thay vì bọc trong startTransition để UI update ngay lập tức
+    setPreviousPeriod: setIsPreviousPeriod,
   };
 };
 
