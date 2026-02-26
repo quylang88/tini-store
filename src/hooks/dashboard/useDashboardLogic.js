@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect, startTransition } from "react";
+import { useMemo, useState, useEffect, useDeferredValue } from "react";
 import {
   getProductStats,
   getOldestActiveLot,
@@ -36,6 +36,10 @@ const useDashboardLogic = ({ products, orders, rangeMode = "dashboard" }) => {
     rangeMode === "detail" ? "custom" : "month",
   );
   const [isPreviousPeriod, setIsPreviousPeriod] = useState(false);
+  // Defer trạng thái previous period để UI button phản hồi ngay lập tức,
+  // còn việc tính toán dữ liệu nặng sẽ chạy sau.
+  const deferredIsPreviousPeriod = useDeferredValue(isPreviousPeriod);
+
   const [topLimit, setTopLimit] = useState(3);
   const [customRange, setCustomRange] = useState({ start: null, end: null });
 
@@ -148,21 +152,22 @@ const useDashboardLogic = ({ products, orders, rangeMode = "dashboard" }) => {
     const month = currentDate.getMonth();
 
     if (activeRange === "month") {
-      const targetMonth = isPreviousPeriod ? month - 1 : month;
+      // Dùng deferred value để tính toán range, tránh block UI button
+      const targetMonth = deferredIsPreviousPeriod ? month - 1 : month;
       const start = new Date(year, targetMonth, 1);
       start.setHours(0, 0, 0, 0);
       return start;
     }
 
     if (activeRange === "year") {
-      const targetYear = isPreviousPeriod ? year - 1 : year;
+      const targetYear = deferredIsPreviousPeriod ? year - 1 : year;
       const start = new Date(targetYear, 0, 1);
       start.setHours(0, 0, 0, 0);
       return start;
     }
 
     return null;
-  }, [activeRange, customRange.start, currentDate, isPreviousPeriod]);
+  }, [activeRange, customRange.start, currentDate, deferredIsPreviousPeriod]);
 
   const rangeEnd = useMemo(() => {
     if (activeRange === "custom") {
@@ -177,21 +182,21 @@ const useDashboardLogic = ({ products, orders, rangeMode = "dashboard" }) => {
     const month = currentDate.getMonth();
 
     if (activeRange === "month") {
-      const targetMonth = isPreviousPeriod ? month - 1 : month;
+      const targetMonth = deferredIsPreviousPeriod ? month - 1 : month;
       const end = new Date(year, targetMonth + 1, 0);
       end.setHours(23, 59, 59, 999);
       return end;
     }
 
     if (activeRange === "year") {
-      const targetYear = isPreviousPeriod ? year - 1 : year;
+      const targetYear = deferredIsPreviousPeriod ? year - 1 : year;
       const end = new Date(targetYear, 11, 31);
       end.setHours(23, 59, 59, 999);
       return end;
     }
 
     return null;
-  }, [activeRange, customRange.end, currentDate, isPreviousPeriod]);
+  }, [activeRange, customRange.end, currentDate, deferredIsPreviousPeriod]);
 
   const filteredPaidOrders = useMemo(() => {
     if (!rangeStart && !rangeEnd) return paidOrders;
@@ -217,7 +222,10 @@ const useDashboardLogic = ({ products, orders, rangeMode = "dashboard" }) => {
     totalProfit: 0,
     productStats: [],
   });
-  const [isCalculating, setIsCalculating] = useState(false);
+  // State calculating bao gồm cả khi deferred value đang update
+  const isPendingDeferred = isPreviousPeriod !== deferredIsPreviousPeriod;
+  const [isProcessing, setIsProcessing] = useState(false);
+  const isCalculating = isPendingDeferred || isProcessing;
 
   useEffect(() => {
     let isCancelled = false;
@@ -272,13 +280,13 @@ const useDashboardLogic = ({ products, orders, rangeMode = "dashboard" }) => {
             totalProfit: result.profit,
             productStats: Object.values(result.statsObj),
           });
-          setIsCalculating(false);
+          setIsProcessing(false);
         }
         return;
       }
 
       // Large dataset: Async execution with yielding
-      setIsCalculating(true);
+      setIsProcessing(true);
       await new Promise((r) => setTimeout(r, 0)); // Yield before starting
       if (isCancelled) return;
 
@@ -299,7 +307,7 @@ const useDashboardLogic = ({ products, orders, rangeMode = "dashboard" }) => {
           totalProfit: currentStats.profit,
           productStats: Object.values(currentStats.statsObj),
         });
-        setIsCalculating(false);
+        setIsProcessing(false);
       }
     };
 
