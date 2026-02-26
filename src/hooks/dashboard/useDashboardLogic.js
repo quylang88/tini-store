@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState, useEffect, startTransition } from "react";
 import {
   getProductStats,
   getOldestActiveLot,
@@ -364,6 +364,12 @@ const useDashboardLogic = ({ products, orders, rangeMode = "dashboard" }) => {
     outOfStockProducts, // Đã export: Danh sách hết hàng
     topByProfit,
     topByQuantity,
+    // Hàm wrapper để set state với startTransition
+    setPreviousPeriod: (value) => {
+      startTransition(() => {
+        setIsPreviousPeriod(value);
+      });
+    },
   };
 };
 
