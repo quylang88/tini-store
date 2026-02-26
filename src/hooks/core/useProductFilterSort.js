@@ -1,4 +1,4 @@
-import { useMemo, useRef, useEffect } from "react";
+import { useMemo, useState } from "react";
 import { normalizeString } from "../../utils/formatters/formatUtils";
 import { getProductDate } from "../../utils/common/sortingUtils";
 
@@ -15,24 +15,20 @@ const useProductFilterSort = ({
 }) => {
   const { searchTerm = "", activeCategory = "Tất cả" } = filterConfig;
 
-  const prevProductsRef = useRef([]);
-  const prevSearchableProductsRef = useRef([]);
+  const [cache, setCache] = useState({
+    products: [],
+    searchableProducts: [],
+  });
 
   // Tối ưu hóa: Tính toán trước các trường tìm kiếm đã được chuẩn hóa.
-  // Việc này giúp tránh gọi hàm normalizeString (sử dụng regex tốn kém) trong vòng lặp lọc.
-  // Thay vì độ phức tạp O(N * M) với M là số ký tự gõ, ta chỉ tốn O(N) một lần khi danh sách sản phẩm thay đổi.
-  // Sử dụng WeakMap cache để O(1) khi tái sử dụng wrapper cho các sản phẩm không đổi.
-  const searchableProducts = useMemo(() => {
-    const prevProducts = prevProductsRef.current;
-    const prevSearchable = prevSearchableProductsRef.current;
-
-    // Fast path: Nếu mảng sản phẩm hoàn toàn giống hệt (reference equality)
-    if (products === prevProducts) {
-      return prevSearchable;
-    }
+  // Sử dụng state để lưu trữ cache và cập nhật ngay trong render (Derived State pattern).
+  // Pattern này tránh lỗi "access refs during render" và vẫn đảm bảo hiệu năng cao nhờ O(N) diffing.
+  if (products !== cache.products) {
+    const prevProducts = cache.products;
+    const prevSearchable = cache.searchableProducts;
+    const prevLength = prevProducts.length;
 
     const newSearchable = new Array(products.length);
-    const prevLength = prevProducts.length;
 
     for (let i = 0; i < products.length; i++) {
       const product = products[i];
@@ -64,15 +60,13 @@ const useProductFilterSort = ({
       }
     }
 
-    return newSearchable;
-  }, [products]);
+    setCache({
+      products: products,
+      searchableProducts: newSearchable,
+    });
+  }
 
-  // Update refs after render to avoid "ref access during render" errors for writing
-  // and to ensure we have the correct "previous" value for the next render.
-  useEffect(() => {
-    prevProductsRef.current = products;
-    prevSearchableProductsRef.current = searchableProducts;
-  }, [products, searchableProducts]);
+  const searchableProducts = cache.searchableProducts;
 
   const filteredProducts = useMemo(() => {
     // 1. Lọc dữ liệu
