@@ -111,9 +111,6 @@ const detectIntentByKeywords = (query) => {
   // VÀ vừa có ý định hành động (nhập, xuất, tồn kho...)
   // -> Khả năng cao là câu phức -> Trả về "AMBIGUOUS" để đẩy sang AI phân tích kỹ hơn (bất kể độ dài).
   if (isSearch && (isImport || isExport || isLocal)) {
-    console.log(
-      "Intent Ambiguity Detected (Search mixed with Action) -> Fallback to AI",
-    );
     return "AMBIGUOUS";
   }
 
@@ -172,7 +169,6 @@ export const detectIntent = async (query) => {
 
   // Nếu detect ra intent cụ thể (IMPORT, EXPORT...) -> Return luôn
   if (keywordIntent && keywordIntent !== "AMBIGUOUS") {
-    console.log(`Intent detected by Keyword: ${keywordIntent}`);
     return keywordIntent;
   }
 
@@ -187,6 +183,5 @@ export const detectIntent = async (query) => {
   }
 
   const aiIntent = await detectIntentByAI(query);
-  console.log(`Intent detected by AI Router: ${aiIntent}`);
   return aiIntent;
 };
