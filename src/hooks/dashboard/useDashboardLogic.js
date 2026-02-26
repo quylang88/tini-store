@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import {
   getProductStats,
   getOldestActiveLot,
@@ -16,9 +16,9 @@ const buildRangeOptions = (mode = "dashboard", now) => {
   }
 
   return [
-    { id: "month", label: monthLabel, days: 30 },
-    { id: "year", label: yearLabel, days: 365 },
-    { id: "all", label: "Tất cả", days: null },
+    { id: "month", label: monthLabel },
+    { id: "year", label: yearLabel },
+    { id: "all", label: "Tất cả" },
   ];
 };
 const TOP_OPTIONS = [
@@ -35,6 +35,7 @@ const useDashboardLogic = ({ products, orders, rangeMode = "dashboard" }) => {
   const [activeRange, setActiveRange] = useState(
     rangeMode === "detail" ? "custom" : "month",
   );
+  const [isPreviousPeriod, setIsPreviousPeriod] = useState(false);
   const [topLimit, setTopLimit] = useState(3);
   const [customRange, setCustomRange] = useState({ start: null, end: null });
 
@@ -134,13 +135,6 @@ const useDashboardLogic = ({ products, orders, rangeMode = "dashboard" }) => {
     [orders],
   );
 
-  const activeOption = useMemo(
-    () =>
-      rangeOptions.find((option) => option.id === activeRange) ||
-      rangeOptions[0] || { days: null },
-    [activeRange, rangeOptions],
-  );
-
   const rangeStart = useMemo(() => {
     if (activeRange === "custom") {
       if (!customRange.start) return null;
@@ -148,12 +142,27 @@ const useDashboardLogic = ({ products, orders, rangeMode = "dashboard" }) => {
       start.setHours(0, 0, 0, 0);
       return start;
     }
-    if (!activeOption.days || !currentDate) return null;
-    const start = new Date(currentDate);
-    start.setHours(0, 0, 0, 0);
-    start.setDate(start.getDate() - activeOption.days + 1);
-    return start;
-  }, [activeOption, activeRange, customRange.start, currentDate]);
+    if (!currentDate) return null;
+
+    const year = currentDate.getFullYear();
+    const month = currentDate.getMonth();
+
+    if (activeRange === "month") {
+      const targetMonth = isPreviousPeriod ? month - 1 : month;
+      const start = new Date(year, targetMonth, 1);
+      start.setHours(0, 0, 0, 0);
+      return start;
+    }
+
+    if (activeRange === "year") {
+      const targetYear = isPreviousPeriod ? year - 1 : year;
+      const start = new Date(targetYear, 0, 1);
+      start.setHours(0, 0, 0, 0);
+      return start;
+    }
+
+    return null;
+  }, [activeRange, customRange.start, currentDate, isPreviousPeriod]);
 
   const rangeEnd = useMemo(() => {
     if (activeRange === "custom") {
@@ -162,11 +171,27 @@ const useDashboardLogic = ({ products, orders, rangeMode = "dashboard" }) => {
       end.setHours(23, 59, 59, 999);
       return end;
     }
-    if (!activeOption.days || !currentDate) return null;
-    const end = new Date(currentDate);
-    end.setHours(23, 59, 59, 999);
-    return end;
-  }, [activeOption, activeRange, customRange.end, currentDate]);
+    if (!currentDate) return null;
+
+    const year = currentDate.getFullYear();
+    const month = currentDate.getMonth();
+
+    if (activeRange === "month") {
+      const targetMonth = isPreviousPeriod ? month - 1 : month;
+      const end = new Date(year, targetMonth + 1, 0);
+      end.setHours(23, 59, 59, 999);
+      return end;
+    }
+
+    if (activeRange === "year") {
+      const targetYear = isPreviousPeriod ? year - 1 : year;
+      const end = new Date(targetYear, 11, 31);
+      end.setHours(23, 59, 59, 999);
+      return end;
+    }
+
+    return null;
+  }, [activeRange, customRange.end, currentDate, isPreviousPeriod]);
 
   const filteredPaidOrders = useMemo(() => {
     if (!rangeStart && !rangeEnd) return paidOrders;
@@ -186,73 +211,133 @@ const useDashboardLogic = ({ products, orders, rangeMode = "dashboard" }) => {
 
   // Unified Revenue & Profit & Stats Calculation
   // Consolidates multiple iterations over `orders` into a single pass (O(N)) for performance.
-  const { totalRevenue, totalProfit, productStats } = useMemo(() => {
-    let revenue = 0;
-    let profit = 0;
-    const stats = new Map();
+  // Updated to use Async Chunked Processing to prevent blocking the main thread.
+  const [stats, setStats] = useState({
+    totalRevenue: 0,
+    totalProfit: 0,
+    productStats: [],
+  });
+  const [isCalculating, setIsCalculating] = useState(false);
 
-    for (const order of filteredPaidOrders) {
-      revenue += order.total;
+  useEffect(() => {
+    let isCancelled = false;
+    const CHUNK_SIZE = 2000;
+    const SYNC_THRESHOLD = 1000;
 
-      let orderProfit = 0;
-      const shippingFee = order.shippingFee || 0;
+    const processChunk = (orders, currentStats) => {
+      let { revenue, profit, statsObj } = currentStats;
 
-      for (const item of order.items) {
-        // Calculate item profit
-        const cost = Number.isFinite(item.cost)
-          ? item.cost
-          : costMap.get(item.productId) || 0;
-        const itemProfit = (item.price - cost) * item.quantity;
+      for (const order of orders) {
+        revenue += order.total;
+        let orderProfit = 0;
+        const shippingFee = order.shippingFee || 0;
 
-        orderProfit += itemProfit;
+        for (const item of order.items) {
+          const cost = Number.isFinite(item.cost)
+            ? item.cost
+            : costMap.get(item.productId) || 0;
+          const itemProfit = (item.price - cost) * item.quantity;
+          orderProfit += itemProfit;
 
-        // Update product stats
-        const key = item.productId || item.name;
-        let entry = stats.get(key);
-
-        if (!entry) {
-          const product = productMeta.get(item.productId);
-          entry = {
-            id: item.productId,
-            name: product?.name || item.name || "Sản phẩm khác",
-            image: product?.image || "",
-            quantity: 0,
-            profit: 0,
-          };
-          stats.set(key, entry);
+          const key = item.productId || item.name;
+          if (!statsObj[key]) {
+            const product = productMeta.get(item.productId);
+            statsObj[key] = {
+              id: item.productId,
+              name: product?.name || item.name || "Sản phẩm khác",
+              image: product?.image || "",
+              quantity: 0,
+              profit: 0,
+            };
+          }
+          statsObj[key].quantity += item.quantity;
+          statsObj[key].profit += itemProfit;
         }
+        profit += orderProfit - shippingFee;
+      }
+      return { revenue, profit, statsObj };
+    };
 
-        entry.quantity += item.quantity;
-        entry.profit += itemProfit;
+    const calculate = async () => {
+      // Small dataset: Synchronous execution to avoid flicker
+      if (filteredPaidOrders.length <= SYNC_THRESHOLD) {
+        const result = processChunk(filteredPaidOrders, {
+          revenue: 0,
+          profit: 0,
+          statsObj: {},
+        });
+        if (!isCancelled) {
+          setStats({
+            totalRevenue: result.revenue,
+            totalProfit: result.profit,
+            productStats: Object.values(result.statsObj),
+          });
+          setIsCalculating(false);
+        }
+        return;
       }
 
-      // Trừ phí gửi vì đây là chi phí phát sinh của đơn
-      profit += orderProfit - shippingFee;
-    }
+      // Large dataset: Async execution with yielding
+      setIsCalculating(true);
+      await new Promise((r) => setTimeout(r, 0)); // Yield before starting
+      if (isCancelled) return;
 
-    return {
-      totalRevenue: revenue,
-      totalProfit: profit,
-      productStats: Array.from(stats.values()),
+      let currentStats = { revenue: 0, profit: 0, statsObj: {} };
+
+      for (let i = 0; i < filteredPaidOrders.length; i += CHUNK_SIZE) {
+        if (isCancelled) return;
+        const chunk = filteredPaidOrders.slice(i, i + CHUNK_SIZE);
+        currentStats = processChunk(chunk, currentStats);
+
+        // Yield to main thread
+        await new Promise((r) => setTimeout(r, 0));
+      }
+
+      if (!isCancelled) {
+        setStats({
+          totalRevenue: currentStats.revenue,
+          totalProfit: currentStats.profit,
+          productStats: Object.values(currentStats.statsObj),
+        });
+        setIsCalculating(false);
+      }
+    };
+
+    calculate();
+
+    return () => {
+      isCancelled = true;
     };
   }, [filteredPaidOrders, costMap, productMeta]);
 
-  const topByProfit = useMemo(
+  const { totalRevenue, totalProfit, productStats } = stats;
+
+  // Tách biệt việc sắp xếp và cắt danh sách (slicing).
+  // Việc sắp xếp chỉ thực hiện khi productStats thay đổi, không chạy lại khi topLimit thay đổi.
+  const sortedByProfit = useMemo(
     () =>
       [...productStats]
         .filter((item) => item.profit > 0 || item.quantity > 0)
-        .sort((a, b) => b.profit - a.profit)
-        .slice(0, topLimit),
-    [productStats, topLimit],
+        .sort((a, b) => b.profit - a.profit),
+    [productStats],
   );
 
-  const topByQuantity = useMemo(
+  const topByProfit = useMemo(
+    () => sortedByProfit.slice(0, topLimit),
+    [sortedByProfit, topLimit],
+  );
+
+  const sortedByQuantity = useMemo(
     () =>
       [...productStats]
         .filter((item) => item.quantity > 0)
-        .sort((a, b) => b.quantity - a.quantity)
-        .slice(0, topLimit),
-    [productStats, topLimit],
+        .sort((a, b) => b.quantity - a.quantity),
+    [productStats],
+  );
+
+  const topByQuantity = useMemo(
+    () => sortedByQuantity.slice(0, topLimit),
+    [sortedByQuantity, topLimit],
   );
 
   return {
@@ -263,12 +348,14 @@ const useDashboardLogic = ({ products, orders, rangeMode = "dashboard" }) => {
     setTopLimit,
     activeRange,
     setActiveRange,
+    isPreviousPeriod,
+    setIsPreviousPeriod,
     customRange,
     setCustomRange,
     rangeStart,
     rangeEnd,
     rangeDays:
-      activeRange === "custom" && rangeStart && rangeEnd
+      rangeStart && rangeEnd
         ? (() => {
             const startDay = new Date(rangeStart);
             const endDay = new Date(rangeEnd);
@@ -276,9 +363,10 @@ const useDashboardLogic = ({ products, orders, rangeMode = "dashboard" }) => {
             endDay.setHours(0, 0, 0, 0);
             return Math.max(1, Math.round((endDay - startDay) / 86400000) + 1);
           })()
-        : (activeOption?.days ?? null),
+        : null,
     paidOrders,
     filteredPaidOrders,
+    isCalculating, // Expose loading state
     totalRevenue,
     totalProfit,
     totalCapital, // Đã export
@@ -286,6 +374,8 @@ const useDashboardLogic = ({ products, orders, rangeMode = "dashboard" }) => {
     outOfStockProducts, // Đã export: Danh sách hết hàng
     topByProfit,
     topByQuantity,
+    // Trả về trực tiếp setter thay vì bọc trong startTransition để UI update ngay lập tức
+    setPreviousPeriod: setIsPreviousPeriod,
   };
 };
 

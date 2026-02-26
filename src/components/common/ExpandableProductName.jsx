@@ -7,15 +7,8 @@ import React, { useState } from "react";
  * Mặc định sẽ hiển thị dạng line-clamp (1 dòng),
  * và mở rộng để hiện toàn bộ tên khi chạm vào.
  *
- * FIX: Sử dụng style line-clamp thay vì class 'truncate' để tránh hiện tượng khựng
- * do thay đổi thuộc tính white-space (nowrap -> normal).
- *
- * OPTIMIZATION: Loại bỏ framer-motion để giảm overhead render trong danh sách dài.
- * Sử dụng CSS transition và line-clamp.
- *
  * Props:
  * - name: string (Tên đầy đủ của sản phẩm)
- * - limit: number (Giới hạn ký tự - dùng để tính toán sơ bộ, logic chính dựa vào css)
  * - className: string (Các class CSS bổ sung)
  * - children: ReactNode (Nội dung phụ cần ẩn khi mở rộng, ví dụ: giá/tồn kho)
  * - onExpandChange: function (Callback khi trạng thái mở rộng thay đổi)
@@ -23,7 +16,6 @@ import React, { useState } from "react";
  */
 const ExpandableProductName = ({
   name,
-  limit = 25,
   className = "",
   children,
   onExpandChange,
@@ -35,17 +27,13 @@ const ExpandableProductName = ({
       ? controlledIsExpanded
       : internalIsExpanded;
 
-  const isLong = name.length > limit;
-
   const handleToggle = () => {
-    if (isLong) {
-      const newState = !isExpanded;
-      if (controlledIsExpanded === undefined) {
-        setInternalIsExpanded(newState);
-      }
-      if (onExpandChange) {
-        onExpandChange(newState);
-      }
+    const newState = !isExpanded;
+    if (controlledIsExpanded === undefined) {
+      setInternalIsExpanded(newState);
+    }
+    if (onExpandChange) {
+      onExpandChange(newState);
     }
   };
 
