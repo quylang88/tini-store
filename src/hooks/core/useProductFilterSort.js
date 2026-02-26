@@ -1,4 +1,4 @@
-import { useMemo, useRef } from "react";
+import { useMemo } from "react";
 import { normalizeString } from "../../utils/formatters/formatUtils";
 import { getProductDate } from "../../utils/common/sortingUtils";
 
@@ -15,16 +15,23 @@ const useProductFilterSort = ({
 }) => {
   const { searchTerm = "", activeCategory = "Tất cả" } = filterConfig;
 
-  const prevProductsRef = useRef([]);
-  const prevSearchableProductsRef = useRef([]);
+  // Cache state manually via useMemo to avoid "ref access in render" and "setState double render".
+  // This object is stable across renders but mutable.
+  const cache = useMemo(
+    () => ({
+      products: [],
+      searchableProducts: [],
+    }),
+    [],
+  );
 
   // Tối ưu hóa: Tính toán trước các trường tìm kiếm đã được chuẩn hóa.
   // Việc này giúp tránh gọi hàm normalizeString (sử dụng regex tốn kém) trong vòng lặp lọc.
   // Thay vì độ phức tạp O(N * M) với M là số ký tự gõ, ta chỉ tốn O(N) một lần khi danh sách sản phẩm thay đổi.
   // Sử dụng WeakMap cache để O(1) khi tái sử dụng wrapper cho các sản phẩm không đổi.
   const searchableProducts = useMemo(() => {
-    const prevProducts = prevProductsRef.current;
-    const prevSearchable = prevSearchableProductsRef.current;
+    const prevProducts = cache.products;
+    const prevSearchable = cache.searchableProducts;
 
     // Fast path: Nếu mảng sản phẩm hoàn toàn giống hệt (reference equality)
     if (products === prevProducts) {
@@ -64,11 +71,12 @@ const useProductFilterSort = ({
       }
     }
 
-    prevProductsRef.current = products;
-    prevSearchableProductsRef.current = newSearchable;
+    // Update stable cache
+    cache.products = products;
+    cache.searchableProducts = newSearchable;
 
     return newSearchable;
-  }, [products]);
+  }, [products, cache]);
 
   const filteredProducts = useMemo(() => {
     // 1. Lọc dữ liệu
