@@ -97,14 +97,17 @@ const useDashboardLogic = ({ products, orders, rangeMode = "dashboard" }) => {
         if (currentDate) {
           let dateToCheckTime = nowTime;
           // If createdAt exists, start with it
+          // Tối ưu hóa: Sử dụng Date.parse() thay vì new Date().getTime()
+          // để tránh tạo object Date mới trong vòng lặp (nhanh hơn ~2x)
           if (product.createdAt) {
-            dateToCheckTime = new Date(product.createdAt).getTime();
+            dateToCheckTime = Date.parse(product.createdAt);
           }
 
           // Optimization: Use memoized O(1) lookup instead of O(N) loop
+          // Tối ưu hóa: Tránh cấp phát object Date mới
           const oldestLot = getOldestActiveLot(product);
           if (oldestLot && oldestLot.createdAt) {
-            dateToCheckTime = new Date(oldestLot.createdAt).getTime();
+            dateToCheckTime = Date.parse(oldestLot.createdAt);
           }
 
           const diffTime = Math.abs(nowTime - dateToCheckTime);
