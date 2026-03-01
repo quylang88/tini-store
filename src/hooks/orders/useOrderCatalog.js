@@ -111,32 +111,38 @@ const useOrderCatalog = ({
     customFilterFn: checkAvailability,
   });
 
-  const reviewItems = useMemo(
-    () =>
-      Object.entries(cart)
-        .map(([productId, quantity]) => {
-          const product = productMap.get(productId);
-          if (!product) return null;
+  const reviewItems = useMemo(() => {
+    // Tối ưu hóa: Thay thế .map().filter() bằng một vòng lặp duy nhất
+    // Việc này tránh tạo ra mảng trung gian và các đối tượng null không cần thiết
+    const items = [];
+    for (const productId in cart) {
+      if (!Object.prototype.hasOwnProperty.call(cart, productId)) continue;
 
-          const overriddenPrice = priceOverrides[productId];
+      const quantity = cart[productId];
+      // Lọc bỏ số lượng <= 0 (bao gồm cả chuỗi rỗng) ngay từ đầu
+      if (!quantity || quantity <= 0) continue;
 
-          return {
-            id: product.id,
-            productId: product.id,
-            name: product.name,
-            price:
-              overriddenPrice !== undefined
-                ? Number(overriddenPrice)
-                : product.price,
-            originalPrice: product.price,
-            quantity,
-            // Giá vốn dùng cho đơn hàng cần gồm cả phí gửi/đơn vị.
-            cost: getProductStats(product).unitCost,
-          };
-        })
-        .filter((item) => item && item.quantity > 0), // Lọc bỏ item null hoặc số lượng <= 0 (bao gồm cả chuỗi rỗng)
-    [cart, productMap, priceOverrides],
-  );
+      const product = productMap.get(productId);
+      if (!product) continue;
+
+      const overriddenPrice = priceOverrides[productId];
+
+      items.push({
+        id: product.id,
+        productId: product.id,
+        name: product.name,
+        price:
+          overriddenPrice !== undefined
+            ? Number(overriddenPrice)
+            : product.price,
+        originalPrice: product.price,
+        quantity,
+        // Giá vốn dùng cho đơn hàng cần gồm cả phí gửi/đơn vị.
+        cost: getProductStats(product).unitCost,
+      });
+    }
+    return items;
+  }, [cart, productMap, priceOverrides]);
 
   const totalAmount = useMemo(
     () =>
