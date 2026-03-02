@@ -169,7 +169,7 @@ export const normalizePurchaseLots = (product = {}) => {
 };
 
 export const getLatestLot = (product = {}) => {
-  const lots = product.purchaseLots;
+  const lots = product?.purchaseLots;
   if (!lots || !Array.isArray(lots) || lots.length === 0) return null;
 
   // Assuming lots are sorted by createdAt ASC due to normalizePurchaseLots and insertSorted.
@@ -178,7 +178,7 @@ export const getLatestLot = (product = {}) => {
 };
 
 export const getOldestActiveLot = (product = {}) => {
-  const lots = product.purchaseLots;
+  const lots = product?.purchaseLots;
   if (!lots || !Array.isArray(lots) || lots.length === 0) return null;
 
   // Assuming lots are sorted by createdAt ASC.
@@ -193,12 +193,20 @@ export const getOldestActiveLot = (product = {}) => {
   return null;
 };
 
-// Returns all stats in one pass to avoid multiple array scans
+// Tối ưu hóa: Sử dụng WeakMap để cache kết quả tính toán dựa trên tham chiếu của sản phẩm.
+// Giúp tránh tạo object mới (giảm GC pressure) và tính toán lại khi gọi nhiều lần trong vòng lặp.
+const productStatsCache = new WeakMap();
+
+// Trả về tất cả thống kê trong một lần duyệt để tránh quét mảng nhiều lần
 export const getProductStats = (product = {}) => {
+  if (product && typeof product === "object" && productStatsCache.has(product)) {
+    return productStatsCache.get(product);
+  }
+
   const latestLot = getLatestLot(product);
   const cost = latestLot
     ? Number(latestLot.cost) || 0
-    : Number(product.cost) || 0;
+    : Number(product?.cost) || 0;
 
   const shippingPerUnit = latestLot
     ? Number(latestLot.shipping?.perUnitVnd) || 0
@@ -206,7 +214,14 @@ export const getProductStats = (product = {}) => {
   const unitCost = cost + shippingPerUnit;
   const isJpy = latestLot ? Number(latestLot.costJpy) > 0 : false;
 
-  return { latestLot, cost, unitCost, isJpy };
+  const result = { latestLot, cost, unitCost, isJpy };
+
+  // Chỉ lưu vào cache nếu product là object hợp lệ và có dữ liệu (không phải {})
+  if (product && typeof product === "object" && Object.keys(product).length > 0) {
+    productStatsCache.set(product, result);
+  }
+
+  return result;
 };
 
 export const addPurchaseLot = (product, lot) => {
