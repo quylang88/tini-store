@@ -1,0 +1,3 @@
+## 2024-03-03 - Component Prop Passing Optimization
+**Learning:** `ProductItem` inside `OrderCreateProductList` recalculates `availableStock` on every render by calling `getAvailableStock`, undermining its `memo` wrapper because `getAvailableStock` is a reference prop that might change (or at least forces re-calculation). By pre-calculating `availableStock` and `warehouseLabel` in the parent loop and passing them as primitive props (`number` and `string`), we preserve referential equality and enable `React.memo` to skip re-renders for unchanged list items.
+**Action:** Move `availableStock` calculation and `warehouseLabel` derivation to the parent component `OrderCreateProductList` and pass them as primitives to `ProductItem`.

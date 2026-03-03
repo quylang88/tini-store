@@ -44,8 +44,8 @@ const ProductItem = memo(
   ({
     p,
     qty,
-    selectedWarehouse,
-    getAvailableStock,
+    availableStock,
+    warehouseLabel,
     adjustQuantity,
     handleQuantityChange,
     activeCategory,
@@ -60,22 +60,9 @@ const ProductItem = memo(
       setIsNameExpanded(targetState);
     };
 
-    // Tính toán tồn kho khả dụng
-    const availableStock = useMemo(() => {
-      if (getAvailableStock) {
-        return getAvailableStock(p, selectedWarehouse);
-      }
-      return 0;
-    }, [p, selectedWarehouse, getAvailableStock]);
-
     const isOutOfStock = availableStock <= 0;
     const isAdded = qty !== undefined;
     const displayQty = isAdded ? qty : 0;
-
-    const warehouseLabel = useMemo(
-      () => getWarehouseShortLabel(selectedWarehouse),
-      [selectedWarehouse],
-    );
 
     return (
       <div
@@ -190,6 +177,13 @@ const OrderCreateProductList = memo(
     sortConfig,
     onSortChange,
   }) => {
+    // Tiền tính toán nhãn kho để truyền xuống dưới dạng tham số nguyên thuỷ
+    // Giúp tối ưu hóa React.memo cho các component con (không cần phải gọi useMemo bên trong mỗi item)
+    const shortWarehouseLabel = useMemo(
+      () => getWarehouseShortLabel(selectedWarehouse),
+      [selectedWarehouse],
+    );
+
     return (
       <div
         className={`flex-1 overflow-y-auto p-3 space-y-3 pb-40 min-h-0 ${className}`}
@@ -212,18 +206,24 @@ const OrderCreateProductList = memo(
         />
         {/* Thêm lại -mx-3 để bù cho padding của cha */}
 
-        {filteredProducts.map((p) => (
-          <ProductItem
-            key={p.id}
-            p={p}
-            qty={cart[p.id]}
-            selectedWarehouse={selectedWarehouse}
-            getAvailableStock={getAvailableStock}
-            adjustQuantity={adjustQuantity}
-            handleQuantityChange={handleQuantityChange}
-            activeCategory={activeCategory}
-          />
-        ))}
+        {filteredProducts.map((p) => {
+          // Tiền tính toán số lượng tồn kho khả dụng để truyền xuống dưới dạng primitive prop.
+          // Cách tiếp cận này giúp duy trì referential equality (so sánh bằng ===) trong React.memo của ProductItem,
+          // ngăn ngừa các lần render lại không cần thiết khi function reference getAvailableStock thay đổi hoặc bị làm mới.
+          const availableStock = getAvailableStock ? getAvailableStock(p, selectedWarehouse) : 0;
+          return (
+            <ProductItem
+              key={p.id}
+              p={p}
+              qty={cart[p.id]}
+              availableStock={availableStock}
+              warehouseLabel={shortWarehouseLabel}
+              adjustQuantity={adjustQuantity}
+              handleQuantityChange={handleQuantityChange}
+              activeCategory={activeCategory}
+            />
+          );
+        })}
 
         {filteredProducts.length === 0 && (
           <div className="flex flex-col items-center justify-center pt-24 text-gray-500 w-full">
