@@ -1,0 +1,3 @@
+## 2024-03-04 - Optimize calculateOrderStats with for...of loop
+**Learning:** In highly iterated loops (like `calculateOrderStats` scanning thousands of orders and their items), using `Array.prototype.reduce()` introduces measurable overhead due to callback function allocation and scope accesses per iteration. A primitive `for...of` loop is significantly faster.
+**Action:** Prefer `for...of` or `for` loops over higher-order array methods (like `reduce`, `map`, `filter`) when iterating over large datasets or inside nested hot paths, especially when accumulating multiple values simultaneously (which avoids tuple return allocations).
