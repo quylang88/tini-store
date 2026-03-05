@@ -69,11 +69,14 @@ export const generateReceiptHTMLContent = async (order, products = []) => {
     </style>
   `;
 
+  const productMap = new Map();
+  products.forEach((p) => {
+    productMap.set(p.id, p);
+  });
+
   const itemsRows = items
     .map((item, index) => {
-      const product = products.find(
-        (p) => p.id === item.productId || p.id === item.id,
-      );
+      const product = productMap.get(item.productId) || productMap.get(item.id);
       const displayName = product ? product.name : item.name;
       const unitPrice =
         item.price !== undefined ? item.price : item.sellingPrice || 0;
@@ -235,11 +238,14 @@ export const generateA4InvoiceHTMLContent = async (order, products = []) => {
     </style>
   `;
 
+  const productMap = new Map();
+  products.forEach((p) => {
+    productMap.set(p.id, p);
+  });
+
   const itemsRows = items
     .map((item, index) => {
-      const product = products.find(
-        (p) => p.id === item.productId || p.id === item.id,
-      );
+      const product = productMap.get(item.productId) || productMap.get(item.id);
       const displayName = product ? product.name : item.name;
       const barcode = product && product.barcode ? product.barcode : "-";
       const unitPrice =
