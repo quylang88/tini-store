@@ -105,12 +105,64 @@ class StorageService {
 
   async migrateFromLocalStorageIfNeeded() {
     try {
+      // 1. Determine which stores actually need migration
+      const [productCount, orderCount, customerCount] = await Promise.all([
+        this.count(STORES.PRODUCTS),
+        this.count(STORES.ORDERS),
+        this.count(STORES.CUSTOMERS),
+      ]);
+
+      const needsProductMigration =
+        productCount === 0 ||
+        localStorage.getItem("migration_products_in_progress");
+      const needsOrderMigration =
+        orderCount === 0 ||
+        localStorage.getItem("migration_orders_in_progress");
+      const needsCustomerMigration =
+        customerCount === 0 ||
+        localStorage.getItem("migration_customers_in_progress");
+
+      // 2. Fetch raw strings only for stores that need it
+      const rawProducts = needsProductMigration
+        ? localStorage.getItem("shop_products_v2")
+        : null;
+      const rawOrders = needsOrderMigration
+        ? localStorage.getItem("shop_orders_v2")
+        : null;
+      const rawCustomers = needsCustomerMigration
+        ? localStorage.getItem("shop_customers_v1")
+        : null;
+
+      // 3. Concurrently parse the JSON strings if they exist to avoid blocking
+      const [parsedProducts, parsedOrders, parsedCustomers] = await Promise.all(
+        [
+          rawProducts
+            ? this.parseJSON(rawProducts).catch((e) => {
+                console.error("Product migration parsing failed", e);
+                return null;
+              })
+            : Promise.resolve(null),
+          rawOrders
+            ? this.parseJSON(rawOrders).catch((e) => {
+                console.error("Order migration parsing failed", e);
+                return null;
+              })
+            : Promise.resolve(null),
+          rawCustomers
+            ? this.parseJSON(rawCustomers).catch((e) => {
+                console.error("Customer migration parsing failed", e);
+                return null;
+              })
+            : Promise.resolve(null),
+        ],
+      );
+
       // Parallelize migration tasks
       await Promise.all([
-        this.migrateProducts(),
-        this.migrateOrders(),
+        this.migrateProducts(needsProductMigration, parsedProducts),
+        this.migrateOrders(needsOrderMigration, parsedOrders),
         this.migrateSettings(),
-        this.migrateCustomers(),
+        this.migrateCustomers(needsCustomerMigration, parsedCustomers),
         this.migrateChatSummary(),
         this.migratePendingBuffer(),
         this.migrateAuthCreds(),
@@ -121,58 +173,36 @@ class StorageService {
     }
   }
 
-  async migrateProducts() {
+  async migrateProducts(needsMigration, parsedProducts) {
     const migrationKey = "migration_products_in_progress";
-    let productCount = await this.count(STORES.PRODUCTS);
 
-    // Resume interrupted migration
-    if (localStorage.getItem(migrationKey)) {
-      console.log("Resuming interrupted product migration...");
-      productCount = 0;
-    }
-
-    if (productCount === 0) {
-      const rawProducts = localStorage.getItem("shop_products_v2");
-      if (rawProducts) {
-        console.log("Migrating Products...");
-        localStorage.setItem(migrationKey, "true");
-        try {
-          const products = await this.parseJSON(rawProducts);
-          if (Array.isArray(products)) {
-            await this.saveAllChunked(STORES.PRODUCTS, products);
-            localStorage.removeItem(migrationKey);
-          }
-        } catch (e) {
-          console.error("Product migration failed", e);
+    if (needsMigration && parsedProducts) {
+      console.log("Migrating Products...");
+      localStorage.setItem(migrationKey, "true");
+      try {
+        if (Array.isArray(parsedProducts)) {
+          await this.saveAllChunked(STORES.PRODUCTS, parsedProducts);
+          localStorage.removeItem(migrationKey);
         }
+      } catch (e) {
+        console.error("Product migration failed", e);
       }
     }
   }
 
-  async migrateOrders() {
+  async migrateOrders(needsMigration, parsedOrders) {
     const migrationKey = "migration_orders_in_progress";
-    let orderCount = await this.count(STORES.ORDERS);
 
-    // Resume interrupted migration
-    if (localStorage.getItem(migrationKey)) {
-      console.log("Resuming interrupted order migration...");
-      orderCount = 0;
-    }
-
-    if (orderCount === 0) {
-      const rawOrders = localStorage.getItem("shop_orders_v2");
-      if (rawOrders) {
-        console.log("Migrating Orders...");
-        localStorage.setItem(migrationKey, "true");
-        try {
-          const orders = await this.parseJSON(rawOrders);
-          if (Array.isArray(orders)) {
-            await this.saveAllChunked(STORES.ORDERS, orders);
-            localStorage.removeItem(migrationKey);
-          }
-        } catch (e) {
-          console.error("Order migration failed", e);
+    if (needsMigration && parsedOrders) {
+      console.log("Migrating Orders...");
+      localStorage.setItem(migrationKey, "true");
+      try {
+        if (Array.isArray(parsedOrders)) {
+          await this.saveAllChunked(STORES.ORDERS, parsedOrders);
+          localStorage.removeItem(migrationKey);
         }
+      } catch (e) {
+        console.error("Order migration failed", e);
       }
     }
   }
@@ -219,30 +249,19 @@ class StorageService {
     }
   }
 
-  async migrateCustomers() {
+  async migrateCustomers(needsMigration, parsedCustomers) {
     const migrationKey = "migration_customers_in_progress";
-    let customerCount = await this.count(STORES.CUSTOMERS);
 
-    // Resume interrupted migration
-    if (localStorage.getItem(migrationKey)) {
-      console.log("Resuming interrupted customer migration...");
-      customerCount = 0;
-    }
-
-    if (customerCount === 0) {
-      const rawCustomers = localStorage.getItem("shop_customers_v1");
-      if (rawCustomers) {
-        console.log("Migrating Customers...");
-        localStorage.setItem(migrationKey, "true");
-        try {
-          const customers = await this.parseJSON(rawCustomers);
-          if (Array.isArray(customers)) {
-            await this.saveAllChunked(STORES.CUSTOMERS, customers);
-            localStorage.removeItem(migrationKey);
-          }
-        } catch (e) {
-          console.error("Customer migration failed", e);
+    if (needsMigration && parsedCustomers) {
+      console.log("Migrating Customers...");
+      localStorage.setItem(migrationKey, "true");
+      try {
+        if (Array.isArray(parsedCustomers)) {
+          await this.saveAllChunked(STORES.CUSTOMERS, parsedCustomers);
+          localStorage.removeItem(migrationKey);
         }
+      } catch (e) {
+        console.error("Customer migration failed", e);
       }
     }
   }
