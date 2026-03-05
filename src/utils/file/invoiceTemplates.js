@@ -14,20 +14,34 @@ const escapeHtml = (unsafe) => {
     .replace(/'/g, "&#039;");
 };
 
+let cachedLogoBase64 = null;
+let logoFetchPromise = null;
+
 const fetchLogoBase64 = async () => {
-  try {
-    const response = await fetch("/tiny-shop-transparent.png");
-    const blob = await response.blob();
-    return new Promise((resolve) => {
-      const reader = new FileReader();
-      reader.onloadend = () => resolve(reader.result);
-      reader.onerror = () => resolve(null);
-      reader.readAsDataURL(blob);
-    });
-  } catch (error) {
-    console.error("Failed to load logo", error);
-    return null;
-  }
+  if (cachedLogoBase64) return cachedLogoBase64;
+  if (logoFetchPromise) return logoFetchPromise;
+
+  logoFetchPromise = (async () => {
+    try {
+      const response = await fetch("/tiny-shop-transparent.png");
+      const blob = await response.blob();
+      const base64 = await new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result);
+        reader.onerror = () => resolve(null);
+        reader.readAsDataURL(blob);
+      });
+      cachedLogoBase64 = base64;
+      return base64;
+    } catch (error) {
+      console.error("Failed to load logo", error);
+      return null;
+    } finally {
+      logoFetchPromise = null;
+    }
+  })();
+
+  return logoFetchPromise;
 };
 
 /**
