@@ -307,6 +307,11 @@ class StorageService {
     } catch (e) {
       // Fallback if Response fails or is not supported
     }
+
+    // Yield to the event loop before falling back to synchronous JSON.parse
+    // to prevent completely blocking the UI thread if multiple large JSON strings
+    // are parsed sequentially or concurrently via Promise.all.
+    await new Promise((resolve) => setTimeout(resolve, 0));
     return JSON.parse(jsonString);
   }
 
