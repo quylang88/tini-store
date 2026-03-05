@@ -174,7 +174,16 @@ export const getTotalStock = (product = {}) => {
 
   // Sử dụng normalizeWarehouseStock để tận dụng cache object và xử lý key mapping
   const stock = normalizeWarehouseStock(product);
-  const total = Object.values(stock).reduce((sum, val) => sum + val, 0);
+
+  // Tối ưu hóa: Sử dụng vòng lặp for...in thay vì Object.values().reduce()
+  // để tránh việc tạo thêm mảng trung gian, giảm thiểu garbage collection
+  // khi tính toán số lượng hàng hóa tồn kho lớn.
+  let total = 0;
+  for (const key in stock) {
+    if (Object.prototype.hasOwnProperty.call(stock, key)) {
+      total += stock[key];
+    }
+  }
 
   TOTAL_STOCK_CACHE.set(product.stockByWarehouse, total);
   return total;
