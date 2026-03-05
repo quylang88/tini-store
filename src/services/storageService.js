@@ -340,7 +340,18 @@ class StorageService {
       await new Promise((resolve, reject) => {
         const transaction = this.db.transaction([storeName], "readwrite");
         const store = transaction.objectStore(storeName);
-        chunk.forEach((item) => store.put(item));
+
+        Promise.all(
+          chunk.map(
+            (item) =>
+              new Promise((res, rej) => {
+                const req = store.put(item);
+                req.onsuccess = res;
+                req.onerror = () => rej(req.error);
+              }),
+          ),
+        ).catch(reject);
+
         transaction.oncomplete = () => resolve();
         transaction.onerror = () => reject(transaction.error);
       });
@@ -496,12 +507,31 @@ class StorageService {
       const transaction = this.db.transaction([storeName], "readwrite");
       const store = transaction.objectStore(storeName);
 
+      const promises = [];
+
       // Thêm mới và cập nhật dùng chung .put()
-      added.forEach((item) => store.put(item));
-      updated.forEach((item) => store.put(item));
+      const putItem = (item) =>
+        new Promise((res, rej) => {
+          const req = store.put(item);
+          req.onsuccess = res;
+          req.onerror = () => rej(req.error);
+        });
+
+      added.forEach((item) => promises.push(putItem(item)));
+      updated.forEach((item) => promises.push(putItem(item)));
 
       // Xóa items
-      deleted.forEach((id) => store.delete(id));
+      deleted.forEach((id) => {
+        promises.push(
+          new Promise((res, rej) => {
+            const req = store.delete(id);
+            req.onsuccess = res;
+            req.onerror = () => rej(req.error);
+          }),
+        );
+      });
+
+      Promise.all(promises).catch(reject);
 
       transaction.oncomplete = () => resolve();
       transaction.onerror = () => reject(transaction.error);
@@ -526,9 +556,17 @@ class StorageService {
       const store = transaction.objectStore(storeName);
 
       store.clear(); // Xóa cũ
-      items.forEach((item) => {
-        store.put(item); // Thêm mới
-      });
+
+      Promise.all(
+        items.map(
+          (item) =>
+            new Promise((res, rej) => {
+              const req = store.put(item);
+              req.onsuccess = res;
+              req.onerror = () => rej(req.error);
+            }),
+        ),
+      ).catch(reject);
 
       transaction.oncomplete = () => resolve();
       transaction.onerror = () => reject(transaction.error);
