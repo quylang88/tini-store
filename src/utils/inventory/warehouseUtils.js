@@ -22,40 +22,37 @@ export const getDefaultWarehouse = () => {
   return WAREHOUSES.find((w) => w.isDefault) || WAREHOUSES[0];
 };
 
-// Cache keys để tránh map() mỗi lần gọi
-const ALL_WAREHOUSE_KEYS = WAREHOUSES.map((w) => w.key);
+// Initialize all caches in a single pass to avoid multiple O(N) iterations
+const ALL_WAREHOUSE_KEYS = [];
+const WAREHOUSE_KEY_MAP = {};
+const WAREHOUSE_LABEL_MAP = {};
+const WAREHOUSE_SHORT_LABEL_MAP = {};
+const _emptyStockAcc = {};
 
-// Cache mapping key -> resolvedKey để tránh find() mỗi lần gọi
-const WAREHOUSE_KEY_MAP = (() => {
-  const map = {};
-  WAREHOUSES.forEach((w) => {
-    map[w.key] = w.key;
-    if (w.legacyKeys) {
-      w.legacyKeys.forEach((legacyKey) => {
-        map[legacyKey] = w.key;
-      });
+for (const w of WAREHOUSES) {
+  const key = w.key;
+  const label = w.label;
+
+  ALL_WAREHOUSE_KEYS.push(key);
+
+  // Cache mapping key -> resolvedKey để tránh find() mỗi lần gọi
+  WAREHOUSE_KEY_MAP[key] = key;
+  const legacyKeys = w.legacyKeys;
+  if (legacyKeys) {
+    for (const legacyKey of legacyKeys) {
+      WAREHOUSE_KEY_MAP[legacyKey] = key;
     }
-  });
-  return map;
-})();
+  }
 
-// Cache label để lookup O(1) thay vì find()
-const WAREHOUSE_LABEL_MAP = (() => {
-  const map = {};
-  WAREHOUSES.forEach((w) => {
-    map[w.key] = w.label;
-  });
-  return map;
-})();
+  // Cache label để lookup O(1) thay vì find()
+  WAREHOUSE_LABEL_MAP[key] = label;
 
-// Cache short label để lookup O(1)
-const WAREHOUSE_SHORT_LABEL_MAP = (() => {
-  const map = {};
-  WAREHOUSES.forEach((w) => {
-    map[w.key] = w.shortLabel || w.label;
-  });
-  return map;
-})();
+  // Cache short label để lookup O(1)
+  WAREHOUSE_SHORT_LABEL_MAP[key] = w.shortLabel || label;
+
+  // Prepare object for EMPTY_STOCK
+  _emptyStockAcc[key] = 0;
+}
 
 export const getAllWarehouseKeys = () => ALL_WAREHOUSE_KEYS;
 
@@ -88,12 +85,7 @@ const TOTAL_STOCK_CACHE = new WeakMap();
 
 // Object mặc định (đóng băng) khi không có dữ liệu kho.
 // Giúp tránh tạo object { vinhPhuc: 0, lamDong: 0 } mới mỗi lần gọi.
-const EMPTY_STOCK = Object.freeze(
-  ALL_WAREHOUSE_KEYS.reduce((acc, key) => {
-    acc[key] = 0;
-    return acc;
-  }, {}),
-);
+const EMPTY_STOCK = Object.freeze(_emptyStockAcc);
 
 export const normalizeWarehouseStock = (product = {}) => {
   // Nếu không có stockByWarehouse hoặc không phải object, trả về object rỗng mặc định.
