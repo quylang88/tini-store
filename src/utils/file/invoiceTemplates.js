@@ -69,11 +69,16 @@ export const generateReceiptHTMLContent = async (order, products = []) => {
     </style>
   `;
 
+  // Chuyển danh sách sản phẩm thành Map để tối ưu hóa việc tra cứu từ O(M) xuống O(1).
+  // Tổng độ phức tạp giảm từ O(N*M) xuống O(N+M).
+  const productMap = new Map();
+  products.forEach((p) => {
+    if (p.id) productMap.set(p.id, p);
+  });
+
   const itemsRows = items
     .map((item, index) => {
-      const product = products.find(
-        (p) => p.id === item.productId || p.id === item.id,
-      );
+      const product = productMap.get(item.productId) || productMap.get(item.id);
       const displayName = product ? product.name : item.name;
       const unitPrice =
         item.price !== undefined ? item.price : item.sellingPrice || 0;
@@ -235,11 +240,16 @@ export const generateA4InvoiceHTMLContent = async (order, products = []) => {
     </style>
   `;
 
+  // Chuyển danh sách sản phẩm thành Map để tối ưu hóa việc tra cứu từ O(M) xuống O(1).
+  // Tổng độ phức tạp giảm từ O(N*M) xuống O(N+M).
+  const productMap = new Map();
+  products.forEach((p) => {
+    if (p.id) productMap.set(p.id, p);
+  });
+
   const itemsRows = items
     .map((item, index) => {
-      const product = products.find(
-        (p) => p.id === item.productId || p.id === item.id,
-      );
+      const product = productMap.get(item.productId) || productMap.get(item.id);
       const displayName = product ? product.name : item.name;
       const barcode = product && product.barcode ? product.barcode : "-";
       const unitPrice =
