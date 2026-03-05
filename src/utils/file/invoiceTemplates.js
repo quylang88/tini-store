@@ -4,14 +4,22 @@ import {
 } from "../formatters/formatUtils.js";
 
 // Simple HTML escaping to prevent XSS
+const matchHtmlRegExp = /["'&<>]/g;
 const escapeHtml = (unsafe) => {
   if (unsafe === null || unsafe === undefined) return "";
-  return String(unsafe)
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
+  const str = String(unsafe);
+  if (str.search(matchHtmlRegExp) === -1) {
+    return str;
+  }
+  return str.replace(matchHtmlRegExp, (match) => {
+    switch (match) {
+      case '&': return '&amp;';
+      case '<': return '&lt;';
+      case '>': return '&gt;';
+      case '"': return '&quot;';
+      case "'": return '&#039;';
+    }
+  });
 };
 
 const fetchLogoBase64 = async () => {
