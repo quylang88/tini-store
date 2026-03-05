@@ -312,9 +312,15 @@ export const restorePurchaseLots = (product, allocations) => {
   // Shallow copy
   const lots = [...(product.purchaseLots || [])];
 
+  // Optimize findIndex (O(N)) to O(1) lookups by mapping id to index.
+  const lotIndexMap = new Map();
+  for (let i = 0; i < lots.length; i++) {
+    lotIndexMap.set(lots[i].id, i);
+  }
+
   for (const alloc of allocations) {
-    const lotIndex = lots.findIndex((l) => l.id === alloc.lotId);
-    if (lotIndex !== -1) {
+    const lotIndex = lotIndexMap.get(alloc.lotId);
+    if (lotIndex !== undefined) {
       // Clone only the modified lot
       lots[lotIndex] = {
         ...lots[lotIndex],
