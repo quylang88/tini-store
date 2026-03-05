@@ -91,16 +91,18 @@ const calculateOrderStats = (orders) => {
       let orderProfit = 0;
 
       if (Array.isArray(order.items)) {
-        const itemsProfit = order.items.reduce((sum, item) => {
+        let itemsProfitSum = 0;
+        // Tối ưu hóa: Sử dụng for...of thay vì reduce để tránh tạo mảng trung gian và callback
+        for (const item of order.items) {
           const itemQty = Number(item.quantity) || 0;
           const itemPrice = Number(item.price) || 0;
           const itemCost = Number(item.cost) || 0;
 
           orderCost += itemCost * itemQty;
-          return sum + (itemPrice - itemCost) * itemQty;
-        }, 0);
+          itemsProfitSum += (itemPrice - itemCost) * itemQty;
+        }
 
-        orderProfit = itemsProfit - (Number(order.shippingFee) || 0);
+        orderProfit = itemsProfitSum - (Number(order.shippingFee) || 0);
       }
 
       totalUnpaidCapital += orderCost;

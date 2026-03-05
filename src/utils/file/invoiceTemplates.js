@@ -4,30 +4,57 @@ import {
 } from "../formatters/formatUtils.js";
 
 // Simple HTML escaping to prevent XSS
+const matchHtmlRegExp = /["'&<>]/g;
 const escapeHtml = (unsafe) => {
   if (unsafe === null || unsafe === undefined) return "";
-  return String(unsafe)
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
+  const str = String(unsafe);
+  if (str.search(matchHtmlRegExp) === -1) {
+    return str;
+  }
+  return str.replace(matchHtmlRegExp, (match) => {
+    switch (match) {
+      case "&":
+        return "&amp;";
+      case "<":
+        return "&lt;";
+      case ">":
+        return "&gt;";
+      case '"':
+        return "&quot;";
+      case "'":
+        return "&#039;";
+    }
+  });
 };
 
+let cachedLogoBase64 = null;
+let logoFetchPromise = null;
+
 const fetchLogoBase64 = async () => {
-  try {
-    const response = await fetch("/tiny-shop-transparent.png");
-    const blob = await response.blob();
-    return new Promise((resolve) => {
-      const reader = new FileReader();
-      reader.onloadend = () => resolve(reader.result);
-      reader.onerror = () => resolve(null);
-      reader.readAsDataURL(blob);
-    });
-  } catch (error) {
-    console.error("Failed to load logo", error);
-    return null;
-  }
+  if (cachedLogoBase64) return cachedLogoBase64;
+  if (logoFetchPromise) return logoFetchPromise;
+
+  logoFetchPromise = (async () => {
+    try {
+      const response = await fetch("/tiny-shop-transparent.png");
+      const blob = await response.blob();
+      const base64 = await new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result);
+        reader.onerror = () => resolve(null);
+        reader.readAsDataURL(blob);
+      });
+      cachedLogoBase64 = base64;
+      return base64;
+    } catch (error) {
+      console.error("Failed to load logo", error);
+      return null;
+    } finally {
+      logoFetchPromise = null;
+    }
+  })();
+
+  return logoFetchPromise;
 };
 
 /**
@@ -69,11 +96,16 @@ export const generateReceiptHTMLContent = async (order, products = []) => {
     </style>
   `;
 
+  // Chuyển danh sách sản phẩm thành Map để tối ưu hóa việc tra cứu từ O(M) xuống O(1).
+  // Tổng độ phức tạp giảm từ O(N*M) xuống O(N+M).
+  const productMap = new Map();
+  products.forEach((p) => {
+    if (p.id) productMap.set(p.id, p);
+  });
+
   const itemsRows = items
     .map((item, index) => {
-      const product = products.find(
-        (p) => p.id === item.productId || p.id === item.id,
-      );
+      const product = productMap.get(item.productId) || productMap.get(item.id);
       const displayName = product ? product.name : item.name;
       const unitPrice =
         item.price !== undefined ? item.price : item.sellingPrice || 0;
@@ -235,11 +267,16 @@ export const generateA4InvoiceHTMLContent = async (order, products = []) => {
     </style>
   `;
 
+  // Chuyển danh sách sản phẩm thành Map để tối ưu hóa việc tra cứu từ O(M) xuống O(1).
+  // Tổng độ phức tạp giảm từ O(N*M) xuống O(N+M).
+  const productMap = new Map();
+  products.forEach((p) => {
+    if (p.id) productMap.set(p.id, p);
+  });
+
   const itemsRows = items
     .map((item, index) => {
-      const product = products.find(
-        (p) => p.id === item.productId || p.id === item.id,
-      );
+      const product = productMap.get(item.productId) || productMap.get(item.id);
       const displayName = product ? product.name : item.name;
       const barcode = product && product.barcode ? product.barcode : "-";
       const unitPrice =
