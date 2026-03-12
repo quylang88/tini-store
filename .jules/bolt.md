@@ -1,0 +1,3 @@
+## 2024-05-18 - Replacing Nested filter.reduce Chains with Single for...of Loops
+**Learning:** In React components like `StatsDetail.jsx`, calculating derived state using chained array methods (`.filter().reduce()`) introduces significant overhead due to intermediate array allocations and nested callback execution. Furthermore, parsing dates inside the loop using `new Date()` incurs heavy object instantiation penalties.
+**Action:** When calculating derived statistics from large arrays (like `orders`), always default to a single `for...of` loop to accumulate multiple metrics simultaneously. Use `Date.parse()` to get primitive timestamps for fast numeric comparisons instead of creating Date objects inside the loop.
