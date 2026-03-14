@@ -2,6 +2,7 @@ import {
   normalizeWarehouseStock,
   getAllWarehouseKeys,
   resolveWarehouseKey,
+  calculateTotalStock,
 } from "../inventory/warehouseUtils";
 import {
   consumePurchaseLots,
@@ -33,7 +34,7 @@ const updateWarehouseStock = (
   const nextProduct = {
     ...product,
     stockByWarehouse: nextStock,
-    stock: Object.values(nextStock).reduce((sum, val) => sum + val, 0),
+    stock: calculateTotalStock(nextStock),
   };
 
   if (delta < 0) {
