@@ -150,6 +150,19 @@ export const getSpecificWarehouseStock = (product, targetWarehouseKey) => {
   return stock[resolvedKey] || 0;
 };
 
+// Helper tính tổng số lượng tồn kho sử dụng for...in để tránh cấp phát mảng
+// từ Object.values và callback từ reduce, giúp cải thiện hiệu năng khi số lượng
+// gọi lớn (vd: tính lại tổng sau mỗi lần nhập hàng).
+export const calculateTotalStock = (stockObj) => {
+  let total = 0;
+  for (const key in stockObj) {
+    if (Object.prototype.hasOwnProperty.call(stockObj, key)) {
+      total += stockObj[key];
+    }
+  }
+  return total;
+};
+
 export const getTotalStock = (product = {}) => {
   // Check valid object for WeakMap key
   if (
@@ -166,7 +179,7 @@ export const getTotalStock = (product = {}) => {
 
   // Sử dụng normalizeWarehouseStock để tận dụng cache object và xử lý key mapping
   const stock = normalizeWarehouseStock(product);
-  const total = Object.values(stock).reduce((sum, val) => sum + val, 0);
+  const total = calculateTotalStock(stock);
 
   TOTAL_STOCK_CACHE.set(product.stockByWarehouse, total);
   return total;
