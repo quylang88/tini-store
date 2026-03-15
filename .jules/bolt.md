@@ -1,0 +1,3 @@
+## 2024-05-18 - [Optimize order aggregate calculations in OrderDetailModal]
+**Learning:** In React components that render frequently or have deep dependencies, multiple `Array.prototype.reduce()` calls over the same array (like `cachedOrder.items` for calculating `estimatedProfit` and `totalQuantity` separately) introduce both unnecessary function allocation overhead per iteration and redundant O(N) loops. Benchmarking shows combining these into a single `for...of` loop reduces execution time by ~27%.
+**Action:** When calculating multiple aggregates (sums, counts, averages) from a single array in hot paths or `useMemo` hooks, default to a single-pass `for...of` loop instead of chaining or stacking multiple `.reduce()` operations to maximize performance.

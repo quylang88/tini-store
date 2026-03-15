@@ -35,11 +35,13 @@ const OrderListItem = memo(
     // Với đơn gửi khách, cần hiển thị kho xuất ở hàng trạng thái bên phải.
     const shouldShowWarehouseOnStatus = order.orderType !== "warehouse";
     // Lợi nhuận = (giá bán - giá vốn) - phí gửi để xem nhanh hiệu quả đơn hàng.
-    const estimatedProfit =
-      order.items.reduce((sum, item) => {
-        const cost = item.cost || 0;
-        return sum + (item.price - cost) * item.quantity;
-      }, 0) - (order.shippingFee || 0);
+    // Tối ưu hóa: Thay thế .reduce() bằng vòng lặp for...of để tránh tạo function trong quá trình lặp và tăng hiệu suất render danh sách.
+    let itemsProfit = 0;
+    for (const item of order.items) {
+      const cost = item.cost || 0;
+      itemsProfit += (item.price - cost) * item.quantity;
+    }
+    const estimatedProfit = itemsProfit - (order.shippingFee || 0);
 
     return (
       <div
