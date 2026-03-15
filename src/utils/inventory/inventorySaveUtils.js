@@ -4,6 +4,7 @@ import {
   getAllWarehouseKeys,
   getDefaultWarehouse,
   resolveWarehouseKey,
+  calculateTotalStock,
 } from "./warehouseUtils.js";
 import {
   addPurchaseLot,
@@ -176,10 +177,7 @@ export const buildNextProductFromForm = ({
     cost: costValue || getProductStats(baseProduct).cost,
     image: formData.image,
     stockByWarehouse: nextStockByWarehouse,
-    stock: Object.values(nextStockByWarehouse).reduce(
-      (sum, val) => sum + val,
-      0,
-    ),
+    stock: calculateTotalStock(nextStockByWarehouse),
   };
 
   // Lưu lại từng lần nhập hàng thành "lô giá nhập" để quản lý tồn kho theo giá.
@@ -247,7 +245,7 @@ export const buildNextProductFromForm = ({
         ...nextProduct,
         purchaseLots: nextLots,
         stockByWarehouse: adjustedStock,
-        stock: Object.values(adjustedStock).reduce((sum, val) => sum + val, 0),
+        stock: calculateTotalStock(adjustedStock),
         cost: getProductStats({ ...nextProduct, purchaseLots: nextLots }).cost,
       };
     } else {
