@@ -38,18 +38,16 @@ const OrderDetailModal = ({ order, products, onClose, getOrderStatusInfo }) => {
     resolveWarehouseKey(cachedOrder.warehouse) || getDefaultWarehouse().key,
   );
 
-  // Tính lợi nhuận ước tính (giống logic ở OrderListView)
-  const estimatedProfit =
-    cachedOrder.items.reduce((sum, item) => {
-      const cost = item.cost || 0;
-      return sum + (item.price - cost) * item.quantity;
-    }, 0) - (cachedOrder.shippingFee || 0);
+  // Tối ưu hoá: Sử dụng vòng lặp for...of duy nhất để tính cả lợi nhuận ước tính và tổng số lượng
+  // Thay vì dùng 2 lần Array.prototype.reduce() (O(2N)), vòng lặp này giúp giảm chi phí phân bổ callback và lặp lại
+  let estimatedProfit = -(cachedOrder.shippingFee || 0);
+  let totalQuantity = 0;
 
-  // Tính tổng số lượng
-  const totalQuantity = cachedOrder.items.reduce(
-    (sum, item) => sum + item.quantity,
-    0,
-  );
+  for (const item of cachedOrder.items) {
+    const cost = item.cost || 0;
+    estimatedProfit += (item.price - cost) * item.quantity;
+    totalQuantity += item.quantity;
+  }
 
   const handleExport = async (format = "receipt") => {
     setIsExporting(true);
