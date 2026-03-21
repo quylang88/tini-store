@@ -109,16 +109,21 @@ const detectIntentByKeywords = (query) => {
   // 1. Conflict Detection (Quan trọng nhất để fix lỗi nhận nhầm)
   // Nếu câu vừa có ý định Search (tìm, check, thị trường...)
   // VÀ vừa có ý định hành động (nhập, xuất, tồn kho...)
+  // HOẶC vừa Nhập vừa Xuất
   // -> Khả năng cao là câu phức -> Trả về "AMBIGUOUS" để đẩy sang AI phân tích kỹ hơn (bất kể độ dài).
-  if (isSearch && (isImport || isExport || isLocal)) {
+  if (
+    (isSearch && (isImport || isExport || isLocal)) ||
+    (isImport && isExport)
+  ) {
     return "AMBIGUOUS";
   }
 
   // 2. Nếu không có mâu thuẫn, trả về theo thứ tự ưu tiên
-  if (isLocal) return "LOCAL";
-  if (isSearch) return "SEARCH";
+  // Chú ý: IMPORT và EXPORT có keyword cụ thể hơn LOCAL nên được ưu tiên trước
   if (isImport) return "IMPORT";
   if (isExport) return "EXPORT";
+  if (isLocal) return "LOCAL";
+  if (isSearch) return "SEARCH";
 
   return null; // Không tìm thấy keyword
 };

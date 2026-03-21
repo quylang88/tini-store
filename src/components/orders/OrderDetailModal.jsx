@@ -12,9 +12,8 @@ import useModalCache from "../../hooks/ui/useModalCache";
 import Button from "../../components/button/Button";
 import {
   exportOrderToHTML,
-  shareOrDownloadFile,
+  exportOrdersToImages,
 } from "../../utils/file/fileUtils";
-import { generateProductListImage } from "../../utils/file/imageExportUtils";
 import LoadingOverlay from "../../components/common/LoadingOverlay";
 import { FileDown, Image as ImageIcon, Printer } from "lucide-react";
 
@@ -38,18 +37,15 @@ const OrderDetailModal = ({ order, products, onClose, getOrderStatusInfo }) => {
     resolveWarehouseKey(cachedOrder.warehouse) || getDefaultWarehouse().key,
   );
 
-  // Tính lợi nhuận ước tính (giống logic ở OrderListView)
-  const estimatedProfit =
-    cachedOrder.items.reduce((sum, item) => {
-      const cost = item.cost || 0;
-      return sum + (item.price - cost) * item.quantity;
-    }, 0) - (cachedOrder.shippingFee || 0);
-
-  // Tính tổng số lượng
-  const totalQuantity = cachedOrder.items.reduce(
-    (sum, item) => sum + item.quantity,
-    0,
-  );
+  // Tối ưu hoá: Tính lợi nhuận ước tính và tổng số lượng trong 1 vòng lặp for...of duy nhất
+  // Tránh việc lặp lại qua mảng items (O(N)) nhiều lần và giảm thiểu chi phí phân bổ callback của reduce()
+  let estimatedProfit = -(cachedOrder.shippingFee || 0);
+  let totalQuantity = 0;
+  for (const item of cachedOrder.items) {
+    const cost = item.cost || 0;
+    estimatedProfit += (item.price - cost) * item.quantity;
+    totalQuantity += item.quantity;
+  }
 
   const handleExport = async (format = "receipt") => {
     setIsExporting(true);
@@ -70,29 +66,7 @@ const OrderDetailModal = ({ order, products, onClose, getOrderStatusInfo }) => {
     setIsExporting(true);
     await new Promise((resolve) => setTimeout(resolve, 300));
     try {
-      // Chuẩn bị danh sách sản phẩm cho xuất ảnh
-      const exportItems = cachedOrder.items.map((item) => {
-        const product = products?.find(
-          (p) => p.id === item.productId || p.id === item.id,
-        );
-        return {
-          name: product ? product.name : item.name,
-          image: product ? product.image : null,
-          price: item.price !== undefined ? item.price : item.sellingPrice || 0,
-          quantity: item.quantity,
-        };
-      });
-
-      const blob = await generateProductListImage(exportItems, {
-        showTotal: true,
-        title: `ĐƠN HÀNG ${orderLabel}`,
-      });
-
-      await shareOrDownloadFile(
-        blob,
-        `Don_hang_${cachedOrder.orderNumber || cachedOrder.id.slice(-4)}.png`,
-        "image/png",
-      );
+      await exportOrdersToImages([cachedOrder], products);
     } catch (error) {
       console.error("Lỗi xuất ảnh:", error);
       alert("Có lỗi khi xuất ảnh");

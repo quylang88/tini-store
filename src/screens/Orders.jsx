@@ -1,9 +1,10 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { AnimatePresence } from "framer-motion";
 // Tách giao diện tạo đơn/danh sách đơn để file Orders.jsx gọn hơn
 import OrderCreateView from "./orders/OrderCreateView";
 import OrderListView from "./orders/OrderListView";
 import OrderDetailModal from "../components/orders/OrderDetailModal";
+import OrderMergeExportModal from "../components/orders/OrderMergeExportModal";
 import ConfirmModalHost from "../components/modals/ConfirmModalHost";
 import ErrorModal from "../components/modals/ErrorModal";
 import ScreenTransition from "../components/common/ScreenTransition";
@@ -21,6 +22,8 @@ const Orders = ({
   updateFab,
   isActive,
 }) => {
+  const [isMergeExportOpen, setIsMergeExportOpen] = useState(false);
+
   const {
     cart,
     selectedOrder,
@@ -65,6 +68,12 @@ const Orders = ({
     handleTogglePaid,
     handleCancelOrder,
     getOrderStatusInfo,
+    isMergeMode,
+    selectedOrderIds,
+    toggleMergeMode,
+    toggleOrderSelection,
+    getOrderMergeEligibility,
+    clearMergeSelection,
     isCreateView,
     sortConfig,
     setSortConfig,
@@ -86,6 +95,21 @@ const Orders = ({
       updateFab({ isVisible: false });
     }
   }, [isCreateView, updateFab]);
+
+  const selectedMergeOrders = useMemo(
+    () => orders.filter((order) => selectedOrderIds.has(order.id)),
+    [orders, selectedOrderIds],
+  );
+
+  const handleToggleMergeMode = () => {
+    setIsMergeExportOpen(false);
+    toggleMergeMode();
+  };
+
+  const handleClearMergeSelection = () => {
+    setIsMergeExportOpen(false);
+    clearMergeSelection();
+  };
 
   const renderContent = () => {
     if (isCreateView) {
@@ -163,6 +187,17 @@ const Orders = ({
           setTabBarVisible={setTabBarVisible}
           updateFab={updateFab}
           isActive={isActive}
+          isMergeMode={isMergeMode}
+          selectedOrderIds={selectedOrderIds}
+          toggleMergeMode={handleToggleMergeMode}
+          toggleOrderSelection={toggleOrderSelection}
+          getOrderMergeEligibility={getOrderMergeEligibility}
+          clearMergeSelection={handleClearMergeSelection}
+          onOpenMergeExport={() => {
+            if (selectedMergeOrders.length >= 2) {
+              setIsMergeExportOpen(true);
+            }
+          }}
         />
         <OrderDetailModal
           order={selectedOrder}
@@ -201,6 +236,13 @@ const Orders = ({
         title={errorModal?.title}
         message={errorModal?.message}
         onClose={() => setErrorModal(null)}
+      />
+
+      <OrderMergeExportModal
+        open={isMergeExportOpen && selectedMergeOrders.length >= 2}
+        orders={selectedMergeOrders}
+        products={products}
+        onClose={() => setIsMergeExportOpen(false)}
       />
     </>
   );

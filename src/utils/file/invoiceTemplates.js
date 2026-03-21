@@ -2,8 +2,11 @@ import {
   formatNumber,
   readMoneyToVietnamese,
 } from "../formatters/formatUtils.js";
+import {
+  estimateWrappedLineCount,
+  paginateByBudget,
+} from "./orderExportUtils.js";
 
-// Simple HTML escaping to prevent XSS
 const matchHtmlRegExp = /["'&<>]/g;
 const escapeHtml = (unsafe) => {
   if (unsafe === null || unsafe === undefined) return "";
@@ -11,6 +14,7 @@ const escapeHtml = (unsafe) => {
   if (str.search(matchHtmlRegExp) === -1) {
     return str;
   }
+
   return str.replace(matchHtmlRegExp, (match) => {
     switch (match) {
       case "&":
@@ -23,6 +27,8 @@ const escapeHtml = (unsafe) => {
         return "&quot;";
       case "'":
         return "&#039;";
+      default:
+        return match;
     }
   });
 };
@@ -57,25 +63,148 @@ const fetchLogoBase64 = async () => {
   return logoFetchPromise;
 };
 
-/**
- * Generates HTML for a standard small receipt (Bill K80).
- */
-export const generateReceiptHTMLContent = async (order, products = []) => {
-  const items = order.items || order.products || [];
-  const orderId = order.orderNumber
-    ? `#${order.orderNumber}`
-    : `#${order.id.slice(-4)}`;
-  const orderDate = new Date(order.date).toLocaleString("vi-VN");
-  const total = formatNumber(order.total || 0);
+const renderOrderNotesHTML = (exportData, tone = "receipt") => {
+  if (!exportData) return "";
 
-  const customerName = escapeHtml(order.customerName || "Khách lẻ");
-  const customerAddress = escapeHtml(order.customerAddress || "");
-  const orderComment = escapeHtml(order.comment || "");
+  const wrapperClass =
+    tone === "a4"
+      ? "notes-block"
+      : "margin-top:8px; padding-top:8px; border-top:1px dashed #fda4af;";
+
+  if (exportData.sharedComment) {
+    return tone === "a4"
+      ? `<div class="notes-block"><div class="notes-title">Ghi chú</div><div class="notes-item">${escapeHtml(exportData.sharedComment)}</div></div>`
+      : `<div style="${wrapperClass}"><div style="font-weight:600; color:#9f1239;">Ghi chú</div><div style="margin-top:4px; font-style:italic; color:#e11d48;">${escapeHtml(exportData.sharedComment)}</div></div>`;
+  }
+
+  if (!exportData.noteEntries?.length) {
+    return "";
+  }
+
+  const notesHtml = exportData.noteEntries
+    .map(
+      (entry) =>
+        tone === "a4"
+          ? `<div class="notes-item"><strong>${escapeHtml(entry.orderReference)}:</strong> ${escapeHtml(entry.comment)}</div>`
+          : `<div style="margin-top:4px;"><strong>${escapeHtml(entry.orderReference)}:</strong> ${escapeHtml(entry.comment)}</div>`,
+    )
+    .join("");
+
+  return tone === "a4"
+    ? `<div class="notes-block"><div class="notes-title">Ghi chú đơn</div>${notesHtml}</div>`
+    : `<div style="${wrapperClass}"><div style="font-weight:600; color:#9f1239;">Ghi chú đơn</div>${notesHtml}</div>`;
+};
+
+const renderReceiptCustomerInfo = (exportData) => {
+  const addressHtml =
+    exportData.orderType === "delivery" && exportData.customerAddress
+      ? `<div><strong>Địa chỉ:</strong> ${escapeHtml(exportData.customerAddress)}</div>`
+      : "";
+
+  const mergedMetaHtml = exportData.isMerged
+    ? `
+      <div><strong>Mã đơn:</strong> ${escapeHtml(exportData.orderReferencesText)}</div>
+      <div><strong>Ngày xuất:</strong> ${escapeHtml(exportData.exportedAtDisplay)}</div>
+    `
+    : "";
+
+  return `
+    <div class="customer-info">
+      <div><strong>${escapeHtml(exportData.partyLabel)}:</strong> ${escapeHtml(exportData.partyValue)}</div>
+      ${addressHtml}
+      ${mergedMetaHtml}
+      ${renderOrderNotesHTML(exportData, "receipt")}
+    </div>
+  `;
+};
+
+const getA4PageBudget = (exportData) => {
+  const sharedCommentBudget = exportData.sharedComment
+    ? estimateWrappedLineCount(exportData.sharedComment, 90)
+    : 0;
+  const orderNoteBudget = (exportData.noteEntries || []).reduce(
+    (total, entry) =>
+      total +
+      estimateWrappedLineCount(`${entry.orderReference}: ${entry.comment}`, 90),
+    0,
+  );
+  const penalty = Math.min(
+    8,
+    Math.ceil((sharedCommentBudget + orderNoteBudget) / 3),
+  );
+
+  return Math.max(12, 22 - penalty);
+};
+
+const paginateA4Items = (exportData) => {
+  const maxBudget = getA4PageBudget(exportData);
+  const pages = paginateByBudget(
+    exportData.items,
+    (item) => Math.max(1, estimateWrappedLineCount(item.name, 30)),
+    maxBudget,
+  );
+
+  return pages.length > 0 ? pages : [[]];
+};
+
+const renderA4CustomerTable = (exportData) => {
+  const addressRow =
+    exportData.orderType === "delivery"
+      ? `
+      <tr>
+        <td style="width: 110px; border: none; padding: 2px;"><strong>Địa chỉ:</strong></td>
+        <td style="border: none; padding: 2px;">${escapeHtml(exportData.customerAddress || "-")}</td>
+      </tr>
+    `
+      : "";
+
+  return `
+    <table style="width: 100%; border: none;">
+      <tr>
+        <td style="width: 110px; border: none; padding: 2px;"><strong>${escapeHtml(exportData.partyLabel)}:</strong></td>
+        <td style="border: none; padding: 2px;">${escapeHtml(exportData.partyValue)}</td>
+      </tr>
+      ${addressRow}
+      <tr>
+        <td style="border: none; padding: 2px;"><strong>Mã đơn:</strong></td>
+        <td style="border: none; padding: 2px;">${escapeHtml(exportData.orderReferencesText)}</td>
+      </tr>
+      <tr>
+        <td style="border: none; padding: 2px;"><strong>Ngày xuất:</strong></td>
+        <td style="border: none; padding: 2px;">${escapeHtml(exportData.exportedAtDisplay)}</td>
+      </tr>
+    </table>
+  `;
+};
+
+export const generateReceiptHTMLContent = async (exportData) => {
+  if (!exportData) return "";
 
   const logoBase64 = await fetchLogoBase64();
   const logoHtml = logoBase64
     ? `<img src="${logoBase64}" alt="Tiny Shop Logo" style="height: 100px; margin-bottom: 5px;">`
     : `<h1 class="shop-name">Tiny Shop</h1>`;
+
+  const titleText = exportData.isMerged ? "HÓA ĐƠN GỘP" : "Hóa đơn";
+  const metaText = exportData.isMerged
+    ? `Ngày xuất: ${escapeHtml(exportData.exportedAtDisplay)}`
+    : `${escapeHtml(exportData.primaryOrderReference)} - ${escapeHtml(exportData.primaryOrderDateDisplay)}`;
+
+  const itemsRows = exportData.items
+    .map(
+      (item, index) => `
+      <tr>
+        <td style="width: 5%; color: #999;">${index + 1}</td>
+        <td>
+          <div style="font-weight: 500;">${escapeHtml(item.name)}</div>
+        </td>
+        <td class="right" style="width: 20%;">${formatNumber(item.price)}đ</td>
+        <td class="center" style="width: 10%;">${item.quantity}</td>
+        <td class="right" style="width: 25%; font-weight: 500;">${formatNumber(item.total)}đ</td>
+      </tr>
+    `,
+    )
+    .join("");
 
   const style = `
     <style>
@@ -96,54 +225,23 @@ export const generateReceiptHTMLContent = async (order, products = []) => {
     </style>
   `;
 
-  // Chuyển danh sách sản phẩm thành Map để tối ưu hóa việc tra cứu từ O(M) xuống O(1).
-  // Tổng độ phức tạp giảm từ O(N*M) xuống O(N+M).
-  const productMap = new Map();
-  products.forEach((p) => {
-    if (p.id) productMap.set(p.id, p);
-  });
-
-  const itemsRows = items
-    .map((item, index) => {
-      const product = productMap.get(item.productId) || productMap.get(item.id);
-      const displayName = product ? product.name : item.name;
-      const unitPrice =
-        item.price !== undefined ? item.price : item.sellingPrice || 0;
-      return `
-    <tr>
-      <td style="width: 5%; color: #999;">${index + 1}</td>
-      <td>
-        <div style="font-weight: 500;">${escapeHtml(displayName)}</div>
-      </td>
-      <td class="right" style="width: 20%;">${formatNumber(unitPrice)}đ</td>
-      <td class="center" style="width: 10%;">${item.quantity}</td>
-      <td class="right" style="width: 25%; font-weight: 500;">${formatNumber(unitPrice * item.quantity)}đ</td>
-    </tr>
-  `;
-    })
-    .join("");
-
   return `
 <!DOCTYPE html>
 <html lang="vi">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Đơn hàng ${orderId}</title>
+  <title>${escapeHtml(titleText)}</title>
   ${style}
 </head>
 <body>
   <div class="header">
     ${logoHtml}
-    <div class="meta">Hóa đơn</div>
-    <div class="meta">${orderId} - ${orderDate}</div>
+    <div class="meta">${titleText}</div>
+    <div class="meta">${metaText}</div>
   </div>
 
-  <div class="customer-info">
-    <div><strong>Khách hàng:</strong> ${customerName}</div>
-    ${customerAddress ? `<div><strong>Địa chỉ:</strong> ${customerAddress}</div>` : ""}
-    ${orderComment ? `<div style="margin-top:5px; font-style:italic; color: #e11d48;">Ghi chú: ${orderComment}</div>` : ""}
-  </div>
+  ${renderReceiptCustomerInfo(exportData)}
 
   <table>
     <thead>
@@ -161,9 +259,13 @@ export const generateReceiptHTMLContent = async (order, products = []) => {
   </table>
 
   <div class="total-section">
+    <div class="row">
+      <span>Tổng số lượng:</span>
+      <span>${exportData.totalQuantity} sp</span>
+    </div>
     <div class="row final-total">
       <span>Tổng cộng:</span>
-      <span>${total}đ</span>
+      <span>${formatNumber(exportData.totalAmount)}đ</span>
     </div>
   </div>
 
@@ -175,42 +277,126 @@ export const generateReceiptHTMLContent = async (order, products = []) => {
   `;
 };
 
-/**
- * Generates HTML for an A4 Warehouse Receipt (Phiếu Xuất Kho).
- */
-export const generateA4InvoiceHTMLContent = async (order, products = []) => {
-  const items = order.items || order.products || [];
-  const orderId = order.orderNumber
-    ? `#${order.orderNumber}`
-    : `#${order.id.slice(-4)}`;
-  const orderDate = new Date(order.date).toLocaleString("vi-VN");
-  const total = formatNumber(order.total || 0);
+export const generateA4InvoiceHTMLContent = async (exportData) => {
+  if (!exportData) return "";
 
-  // Tính tổng số lượng
-  const totalQuantity = items.reduce((sum, item) => sum + item.quantity, 0);
-  const totalAmountText = readMoneyToVietnamese(order.total || 0);
-
-  const customerName = escapeHtml(order.customerName || "");
-  const customerAddress = escapeHtml(order.customerAddress || "");
-  const orderComment = escapeHtml(order.comment || "");
-
+  const totalAmountText = readMoneyToVietnamese(exportData.totalAmount || 0);
   const logoBase64 = await fetchLogoBase64();
   const logoHtml = logoBase64
     ? `<img src="${logoBase64}" alt="Logo" style="height: 80px;">`
     : `<h2 style="margin:0; color: #e11d48;">TINY SHOP</h2>`;
+
+  const pages = paginateA4Items(exportData);
+  let runningIndex = 0;
+
+  const pageHtml = pages
+    .map((pageItems, pageIndex) => {
+      const isLastPage = pageIndex === pages.length - 1;
+      const rowsHtml = pageItems
+        .map((item) => {
+          runningIndex += 1;
+          return `
+            <tr>
+              <td class="text-center" style="width: 5%;">${runningIndex}</td>
+              <td class="text-center" style="width: 15%;">${escapeHtml(item.barcode || "-")}</td>
+              <td>${escapeHtml(item.name)}</td>
+              <td class="text-right" style="width: 15%;">${formatNumber(item.price)}</td>
+              <td class="text-center" style="width: 10%;">${item.quantity}</td>
+              <td class="text-right" style="width: 20%;">${formatNumber(item.total)}</td>
+            </tr>
+          `;
+        })
+        .join("");
+
+      return `
+        <section class="a4-page ${isLastPage ? "" : "page-break"}">
+          <div class="header-section">
+            <div class="shop-info">
+              ${logoHtml}
+              <div style="font-size: 14px; margin-top: 5px;">
+                <div>Uy tín - Chất lượng - Tận tâm</div>
+                <div>Điện thoại: 0972 766 717</div>
+              </div>
+            </div>
+            <div class="order-meta">
+              <div>${exportData.isMerged ? `Số đơn gộp: <strong>${exportData.orderCount}</strong>` : `Mã phiếu: <strong>${escapeHtml(exportData.primaryOrderReference)}</strong>`}</div>
+              <div>Ngày xuất: ${escapeHtml(exportData.exportedAtDisplay)}</div>
+              <div>Trang: ${pageIndex + 1} / ${pages.length}</div>
+            </div>
+          </div>
+
+          <div class="doc-title">${exportData.isMerged ? "ĐƠN HÀNG GỘP" : "ĐƠN HÀNG"}</div>
+
+          <div class="customer-section">
+            ${renderA4CustomerTable(exportData)}
+            ${renderOrderNotesHTML(exportData, "a4")}
+          </div>
+
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>STT</th>
+                <th>Mã SP</th>
+                <th>Tên hàng hóa, dịch vụ</th>
+                <th>Đơn giá</th>
+                <th>SL</th>
+                <th>Thành tiền</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${rowsHtml}
+            </tbody>
+          </table>
+
+          ${
+            isLastPage
+              ? `
+                <div class="total-section">
+                  <table style="width: 100%; border-collapse: collapse; border: none;">
+                    <tr>
+                      <td style="text-align: right; padding: 4px; border: none;">Tổng số lượng:</td>
+                      <td style="width: 150px; text-align: right; padding: 4px; border: none; font-weight: bold; font-size: 16px;">${exportData.totalQuantity}</td>
+                    </tr>
+                    <tr>
+                      <td style="text-align: right; padding: 4px; border: none;">Tổng tiền:</td>
+                      <td style="width: 150px; text-align: right; padding: 4px; border: none; font-weight: bold; font-size: 20px;">${formatNumber(exportData.totalAmount)}đ</td>
+                    </tr>
+                  </table>
+                  <div style="text-align: right; font-size: 14px; font-style: italic; font-weight: normal; margin-top: 5px;">
+                    (Bằng chữ: ${totalAmountText})
+                  </div>
+                </div>
+              `
+              : `<div class="continuation-text">Tiếp trang sau</div>`
+          }
+
+          <div class="footer-msg">
+            Cảm ơn Quý khách và hẹn gặp lại!
+          </div>
+        </section>
+      `;
+    })
+    .join("");
 
   const style = `
     <style>
       @page { size: A4; margin: 0; }
       body {
         font-family: "Times New Roman", Times, serif;
+        margin: 0;
+        color: #000;
+        background: white;
+      }
+      .a4-page {
         width: 210mm;
         min-height: 297mm;
         padding: 20mm;
         margin: 0 auto;
         box-sizing: border-box;
-        color: #000;
         background: white;
+      }
+      .page-break {
+        page-break-after: always;
       }
       .header-section {
         display: flex;
@@ -224,7 +410,7 @@ export const generateA4InvoiceHTMLContent = async (order, products = []) => {
       .order-meta {
         text-align: right;
         font-size: 14px;
-        line-height: 1.5;
+        line-height: 1.6;
       }
       .doc-title {
         text-align: center;
@@ -247,6 +433,7 @@ export const generateA4InvoiceHTMLContent = async (order, products = []) => {
       .data-table th, .data-table td {
         border: 1px solid #000;
         padding: 8px;
+        vertical-align: top;
       }
       .data-table th {
         background-color: #f0f0f0;
@@ -264,35 +451,27 @@ export const generateA4InvoiceHTMLContent = async (order, products = []) => {
         font-size: 13px;
         color: #555;
       }
+      .notes-block {
+        margin-top: 8px;
+        padding-top: 8px;
+        border-top: 1px dashed #555;
+        font-size: 14px;
+      }
+      .notes-title {
+        font-weight: bold;
+        margin-bottom: 4px;
+      }
+      .notes-item {
+        margin-top: 3px;
+      }
+      .continuation-text {
+        text-align: right;
+        font-style: italic;
+        font-size: 13px;
+        color: #555;
+      }
     </style>
   `;
-
-  // Chuyển danh sách sản phẩm thành Map để tối ưu hóa việc tra cứu từ O(M) xuống O(1).
-  // Tổng độ phức tạp giảm từ O(N*M) xuống O(N+M).
-  const productMap = new Map();
-  products.forEach((p) => {
-    if (p.id) productMap.set(p.id, p);
-  });
-
-  const itemsRows = items
-    .map((item, index) => {
-      const product = productMap.get(item.productId) || productMap.get(item.id);
-      const displayName = product ? product.name : item.name;
-      const barcode = product && product.barcode ? product.barcode : "-";
-      const unitPrice =
-        item.price !== undefined ? item.price : item.sellingPrice || 0;
-      return `
-    <tr>
-      <td class="text-center" style="width: 5%;">${index + 1}</td>
-      <td class="text-center" style="width: 15%;">${escapeHtml(barcode)}</td>
-      <td>${escapeHtml(displayName)}</td>
-      <td class="text-right" style="width: 15%;">${formatNumber(unitPrice)}</td>
-      <td class="text-center" style="width: 10%;">${item.quantity}</td>
-      <td class="text-right" style="width: 20%;">${formatNumber(unitPrice * item.quantity)}</td>
-    </tr>
-  `;
-    })
-    .join("");
 
   return `
 <!DOCTYPE html>
@@ -300,84 +479,11 @@ export const generateA4InvoiceHTMLContent = async (order, products = []) => {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Đơn hàng ${orderId}</title>
+  <title>${escapeHtml(exportData.isMerged ? "Đơn hàng gộp" : `Đơn hàng ${exportData.primaryOrderReference}`)}</title>
   ${style}
 </head>
 <body>
-  <div class="header-section">
-    <div class="shop-info">
-      ${logoHtml}
-      <div style="font-size: 14px; margin-top: 5px;">
-        <div>Uy tín - Chất lượng - Tận tâm</div>
-        <div>Điện thoại: 0972 766 717</div>
-      </div>
-    </div>
-    <div class="order-meta">
-      <div>Mã phiếu: <strong>${orderId}</strong></div>
-      <div>Ngày: ${orderDate}</div>
-    </div>
-  </div>
-
-  <div class="doc-title">ĐƠN HÀNG</div>
-
-  <div class="customer-section">
-    <table style="width: 100%; border: none;">
-      <tr>
-        <td style="width: 100px; border: none; padding: 2px;"><strong>Khách hàng:</strong></td>
-        <td style="border: none; padding: 2px;">${customerName}</td>
-      </tr>
-      <tr>
-        <td style="border: none; padding: 2px;"><strong>Địa chỉ:</strong></td>
-        <td style="border: none; padding: 2px;">${customerAddress || "-"}</td>
-      </tr>
-      ${
-        orderComment
-          ? `
-      <tr>
-        <td style="border: none; padding: 2px;"><strong>Ghi chú:</strong></td>
-        <td style="border: none; padding: 2px;">${orderComment}</td>
-      </tr>
-      `
-          : ""
-      }
-    </table>
-  </div>
-
-  <table class="data-table">
-    <thead>
-      <tr>
-        <th>STT</th>
-        <th>Mã SP</th>
-        <th>Tên hàng hóa, dịch vụ</th>
-        <th>Đơn giá</th>
-        <th>SL</th>
-        <th>Thành tiền</th>
-      </tr>
-    </thead>
-    <tbody>
-      ${itemsRows}
-    </tbody>
-  </table>
-
-  <div class="total-section">
-    <table style="width: 100%; border-collapse: collapse; border: none;">
-        <tr>
-            <td style="text-align: right; padding: 4px; border: none;">Tổng số lượng:</td>
-            <td style="width: 150px; text-align: right; padding: 4px; border: none; font-weight: bold; font-size: 16px;">${totalQuantity}</td>
-        </tr>
-        <tr>
-            <td style="text-align: right; padding: 4px; border: none;">Tổng tiền:</td>
-            <td style="width: 150px; text-align: right; padding: 4px; border: none; font-weight: bold; font-size: 20px;">${total}đ</td>
-        </tr>
-    </table>
-    <div style="text-align: right; font-size: 14px; font-style: italic; font-weight: normal; margin-top: 5px;">
-      (Bằng chữ: ${totalAmountText})
-    </div>
-  </div>
-
-  <div class="footer-msg">
-    Cảm ơn Quý khách và hẹn gặp lại!
-  </div>
+  ${pageHtml}
 </body>
 </html>
   `;
