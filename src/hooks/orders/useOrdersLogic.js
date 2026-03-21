@@ -79,6 +79,13 @@ const useOrdersLogic = ({
     // List Logic Exposure
     selectedOrder: listLogic.selectedOrder,
     setSelectedOrder: listLogic.setSelectedOrder,
+    isMergeMode: listLogic.isMergeMode,
+    selectedOrderIds: listLogic.selectedOrderIds,
+    mergeAnchorOrder: listLogic.mergeAnchorOrder,
+    toggleMergeMode: listLogic.toggleMergeMode,
+    toggleOrderSelection: listLogic.toggleOrderSelection,
+    getOrderMergeEligibility: listLogic.getOrderMergeEligibility,
+    clearMergeSelection: listLogic.clearMergeSelection,
     handleTogglePaid: listLogic.handleTogglePaid,
     handleCancelOrder: listLogic.handleCancelOrder,
     getOrderStatusInfo: listLogic.getOrderStatusInfo,

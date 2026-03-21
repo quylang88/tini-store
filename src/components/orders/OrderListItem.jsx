@@ -1,4 +1,5 @@
 import React, { memo } from "react";
+import { Check } from "lucide-react";
 import PaidStamp from "../common/PaidStamp";
 import {
   formatNumber,
@@ -21,9 +22,15 @@ const OrderListItem = memo(
     handleEditOrder,
     handleCancelOrder,
     onSelectOrder,
+    isMergeMode = false,
+    isSelected = false,
+    mergeEligibility = { canSelect: true, reason: "" },
+    onToggleOrderSelection,
   }) => {
     const statusInfo = getOrderStatusInfo(order);
     const isPaid = order.status === "paid";
+    const isDisabledInMerge =
+      isMergeMode && !isSelected && !mergeEligibility?.canSelect;
     const orderLabel = order.orderNumber
       ? `#${order.orderNumber}`
       : `#${order.id.slice(-4)}`;
@@ -45,9 +52,25 @@ const OrderListItem = memo(
     return (
       <div
         className={`p-4 rounded-xl shadow-sm border cursor-pointer hover:shadow-md transition-all duration-200 active:scale-95 relative overflow-hidden ${
-          isPaid ? "bg-gray-50 border-gray-200" : "bg-amber-50 border-amber-100"
+          isMergeMode
+            ? isSelected
+              ? "bg-rose-50 border-rose-500 ring-1 ring-rose-500"
+              : isDisabledInMerge
+                ? "bg-gray-100 border-gray-200 opacity-75"
+                : "bg-amber-50 border-amber-100"
+            : isPaid
+              ? "bg-gray-50 border-gray-200"
+              : "bg-amber-50 border-amber-100"
         }`}
-        onClick={() => onSelectOrder?.(order)}
+        onClick={() => {
+          if (isMergeMode) {
+            if (isDisabledInMerge) return;
+            onToggleOrderSelection?.(order);
+            return;
+          }
+
+          onSelectOrder?.(order);
+        }}
       >
         <PaidStamp isPaid={isPaid} variant="list" />
         <div
@@ -69,8 +92,8 @@ const OrderListItem = memo(
             </span>
           </div>
           <div className="flex items-center justify-between text-xs text-gray-500 mb-2">
-            <div className="h-6 flex items-center">
-              {!isPaid && (
+            <div className="h-6 flex items-center gap-2">
+              {!isPaid && !isMergeMode && (
                 <span
                   className={`inline-flex items-center gap-2 px-2 py-0.5 rounded-full border ${statusInfo.badgeClass}`}
                 >
@@ -78,6 +101,21 @@ const OrderListItem = memo(
                     className={`w-2 h-2 rounded-full ${statusInfo.dotClass}`}
                   />
                   {statusInfo.label}
+                </span>
+              )}
+              {isMergeMode && (
+                <span
+                  className={`inline-flex items-center px-2 py-0.5 rounded-full border text-[11px] font-semibold ${
+                    isSelected
+                      ? "border-rose-300 bg-rose-100 text-rose-700"
+                      : mergeEligibility?.reason
+                        ? "border-gray-300 bg-gray-100 text-gray-600"
+                        : "border-amber-200 bg-amber-100 text-amber-700"
+                  }`}
+                >
+                  {isSelected
+                    ? "Đã chọn"
+                    : mergeEligibility?.reason || "Có thể gộp"}
                 </span>
               )}
             </div>
@@ -108,46 +146,56 @@ const OrderListItem = memo(
               </span>
             </div>
           </div>
-          <div className="mt-3 flex flex-wrap justify-end gap-2 h-8 items-center">
-            {/* Nút Thanh Toán / Huỷ Thanh Toán */}
-            <button
-              onClick={(event) => {
-                event.stopPropagation();
-                handleTogglePaid(order);
-              }}
-              className={`text-xs font-semibold px-3 py-1.5 rounded-full border transition active:scale-95 relative z-20 whitespace-nowrap ${
-                isPaid
-                  ? "text-red-600 bg-red-50 border-red-300"
-                  : "text-emerald-600 bg-emerald-50 border-emerald-300"
-              }`}
-            >
-              {isPaid ? "Huỷ thanh toán" : "Thanh toán"}
-            </button>
+          {isMergeMode ? (
+            <div className="mt-3 flex justify-end">
+              {isSelected ? (
+                <div className="w-9 h-9 rounded-full bg-rose-500 flex items-center justify-center text-white shadow-sm">
+                  <Check size={18} strokeWidth={3} />
+                </div>
+              ) : (
+                <div className="w-9 h-9 rounded-full border-2 border-gray-300 bg-white" />
+              )}
+            </div>
+          ) : (
+            <div className="mt-3 flex flex-wrap justify-end gap-2 h-8 items-center">
+              <button
+                onClick={(event) => {
+                  event.stopPropagation();
+                  handleTogglePaid(order);
+                }}
+                className={`text-xs font-semibold px-3 py-1.5 rounded-full border transition active:scale-95 relative z-20 whitespace-nowrap ${
+                  isPaid
+                    ? "text-red-600 bg-red-50 border-red-300"
+                    : "text-emerald-600 bg-emerald-50 border-emerald-300"
+                }`}
+              >
+                {isPaid ? "Huỷ thanh toán" : "Thanh toán"}
+              </button>
 
-            {/* Các nút hành động khác (Sửa/Huỷ đơn) - Chỉ hiện khi chưa thanh toán */}
-            {!isPaid && (
-              <div className="flex gap-2">
-                <button
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    handleEditOrder(order);
-                  }}
-                  className="text-xs font-semibold text-orange-600 bg-orange-50 border border-orange-300 px-3 py-1.5 rounded-full active:scale-95 transition whitespace-nowrap"
-                >
-                  Sửa đơn
-                </button>
-                <button
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    handleCancelOrder(order);
-                  }}
-                  className="text-xs font-semibold text-red-600 bg-red-50 border border-red-300 px-3 py-1.5 rounded-full active:scale-95 transition whitespace-nowrap"
-                >
-                  Huỷ đơn
-                </button>
-              </div>
-            )}
-          </div>
+              {!isPaid && (
+                <div className="flex gap-2">
+                  <button
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      handleEditOrder(order);
+                    }}
+                    className="text-xs font-semibold text-orange-600 bg-orange-50 border border-orange-300 px-3 py-1.5 rounded-full active:scale-95 transition whitespace-nowrap"
+                  >
+                    Sửa đơn
+                  </button>
+                  <button
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      handleCancelOrder(order);
+                    }}
+                    className="text-xs font-semibold text-red-600 bg-red-50 border border-red-300 px-3 py-1.5 rounded-full active:scale-95 transition whitespace-nowrap"
+                  >
+                    Huỷ đơn
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
     );

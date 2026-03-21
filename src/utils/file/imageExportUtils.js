@@ -1,4 +1,8 @@
 import { formatNumber } from "../formatters/formatUtils";
+import {
+  estimateWrappedLineCount,
+  paginateByBudget,
+} from "./orderExportUtils";
 
 /**
  * Loads an image from a source (URL, Base64, Blob) and returns an HTMLImageElement.
@@ -283,4 +287,321 @@ export const generateProductListImage = async (items, options = {}) => {
       resolve(blob);
     }, "image/png");
   });
+};
+
+const wrapCanvasText = (ctx, text, maxWidth) => {
+  const normalizedText = String(text || "").trim();
+  if (!normalizedText) return [""];
+
+  const words = normalizedText.split(/\s+/);
+  const lines = [];
+  let currentLine = "";
+
+  for (const word of words) {
+    const testLine = currentLine ? `${currentLine} ${word}` : word;
+    if (ctx.measureText(testLine).width > maxWidth && currentLine) {
+      lines.push(currentLine);
+      currentLine = word;
+    } else {
+      currentLine = testLine;
+    }
+  }
+
+  if (currentLine) {
+    lines.push(currentLine);
+  }
+
+  return lines.length > 0 ? lines : [normalizedText];
+};
+
+const drawWrappedText = (ctx, text, x, y, maxWidth, lineHeight) => {
+  const lines = wrapCanvasText(ctx, text, maxWidth);
+  lines.forEach((line, index) => {
+    ctx.fillText(line, x, y + index * lineHeight);
+  });
+  return y + lines.length * lineHeight;
+};
+
+const getOrderImageMetaRows = (exportData, pageIndex, totalPages) => {
+  const rows = [
+    `${exportData.partyLabel}: ${exportData.partyValue}`,
+    `Mã đơn: ${exportData.orderReferencesText}`,
+    `Ngày xuất: ${exportData.exportedAtDisplay}`,
+    `Trang: ${pageIndex + 1}/${totalPages}`,
+  ];
+
+  if (exportData.orderType === "delivery" && exportData.customerAddress) {
+    rows.splice(1, 0, `Địa chỉ: ${exportData.customerAddress}`);
+  }
+
+  if (exportData.sharedComment) {
+    rows.push(`Ghi chú: ${exportData.sharedComment}`);
+  } else if (exportData.noteEntries?.length) {
+    rows.push("Ghi chú đơn:");
+    exportData.noteEntries.forEach((entry) => {
+      rows.push(`${entry.orderReference}: ${entry.comment}`);
+    });
+  }
+
+  return rows;
+};
+
+const estimateOrderImageHeaderHeight = (exportData) => {
+  const rows = getOrderImageMetaRows(exportData, 0, 1);
+  const wrappedLineCount = rows.reduce(
+    (total, row) => total + estimateWrappedLineCount(row, 38),
+    0,
+  );
+
+  return 300 + wrappedLineCount * 34;
+};
+
+const getOrderImageItemHeight = (item) => {
+  const extraNameLines = Math.max(
+    0,
+    estimateWrappedLineCount(item.name, 16) - 1,
+  );
+  return 300 + extraNameLines * 50;
+};
+
+const preloadOrderImages = async (items) => {
+  const imagePairs = await Promise.all(
+    items.map(async (item) => [
+      item.key,
+      item.image ? await loadImage(item.image) : null,
+    ]),
+  );
+
+  return new Map(imagePairs);
+};
+
+const renderOrderImagePage = async ({
+  exportData,
+  pageItems,
+  pageIndex,
+  totalPages,
+  logoImg,
+  itemImageMap,
+}) => {
+  const CANVAS_WIDTH = 1125;
+  const PADDING = 40;
+  const HEADER_HEIGHT = estimateOrderImageHeaderHeight(exportData);
+  const ITEM_IMAGE_SIZE = 250;
+  const ITEM_PADDING = 25;
+  const CONTINUATION_FOOTER_HEIGHT = 100;
+  const FINAL_FOOTER_HEIGHT = 180;
+  const footerHeight =
+    pageIndex === totalPages - 1
+      ? FINAL_FOOTER_HEIGHT
+      : CONTINUATION_FOOTER_HEIGHT;
+
+  const totalItemsHeight = pageItems.reduce(
+    (sum, item) => sum + getOrderImageItemHeight(item),
+    0,
+  );
+
+  const canvas = document.createElement("canvas");
+  canvas.width = CANVAS_WIDTH;
+  canvas.height = HEADER_HEIGHT + totalItemsHeight + footerHeight;
+  const ctx = canvas.getContext("2d");
+
+  const COLOR_BG = "#ffffff";
+  const COLOR_TEXT_PRIMARY = "#1f2937";
+  const COLOR_TEXT_PRICE = "#e11d48";
+  const COLOR_TEXT_META = "#6b7280";
+  const COLOR_DIVIDER = "#e5e7eb";
+
+  ctx.fillStyle = COLOR_BG;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  let currentY = PADDING;
+
+  if (logoImg) {
+    const logoHeight = 160;
+    const logoWidth = (logoImg.width / logoImg.height) * logoHeight;
+    const maxLogoWidth = CANVAS_WIDTH - PADDING * 2;
+    const finalLogoWidth = Math.min(logoWidth, maxLogoWidth);
+    const finalLogoHeight = (finalLogoWidth / logoWidth) * logoHeight;
+    const logoX = (CANVAS_WIDTH - finalLogoWidth) / 2;
+    ctx.drawImage(logoImg, logoX, currentY, finalLogoWidth, finalLogoHeight);
+    currentY += finalLogoHeight + 24;
+  } else {
+    currentY += 90;
+  }
+
+  ctx.textAlign = "center";
+  ctx.font =
+    "bold 48px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
+  ctx.fillStyle = COLOR_TEXT_PRICE;
+  ctx.fillText(
+    exportData.isMerged ? "ĐƠN HÀNG GỘP" : "ĐƠN HÀNG",
+    CANVAS_WIDTH / 2,
+    currentY + 40,
+  );
+  currentY += 72;
+
+  ctx.strokeStyle = COLOR_TEXT_PRICE;
+  ctx.lineWidth = 4;
+  ctx.beginPath();
+  ctx.moveTo(PADDING, currentY);
+  ctx.lineTo(CANVAS_WIDTH - PADDING, currentY);
+  ctx.stroke();
+  currentY += 36;
+
+  ctx.textAlign = "left";
+  ctx.fillStyle = COLOR_TEXT_PRIMARY;
+  ctx.font =
+    "28px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
+
+  const metaRows = getOrderImageMetaRows(exportData, pageIndex, totalPages);
+  metaRows.forEach((row) => {
+    currentY = drawWrappedText(
+      ctx,
+      row,
+      PADDING,
+      currentY,
+      CANVAS_WIDTH - PADDING * 2,
+      34,
+    );
+    currentY += 8;
+  });
+
+  currentY += 16;
+
+  pageItems.forEach((item, index) => {
+    const itemHeight = getOrderImageItemHeight(item);
+    const itemY = currentY;
+    const image = itemImageMap.get(item.key);
+    const imageX = PADDING;
+    const imageY = itemY + ITEM_PADDING;
+
+    ctx.fillStyle = "#f3f4f6";
+    ctx.fillRect(imageX, imageY, ITEM_IMAGE_SIZE, ITEM_IMAGE_SIZE);
+
+    if (image) {
+      const scale = Math.min(
+        ITEM_IMAGE_SIZE / image.width,
+        ITEM_IMAGE_SIZE / image.height,
+      );
+      const width = image.width * scale;
+      const height = image.height * scale;
+      const x = imageX + (ITEM_IMAGE_SIZE - width) / 2;
+      const y = imageY + (ITEM_IMAGE_SIZE - height) / 2;
+      ctx.drawImage(image, x, y, width, height);
+    } else {
+      ctx.fillStyle = "#d1d5db";
+      ctx.textAlign = "center";
+      ctx.font = "bold 80px sans-serif";
+      ctx.fillText(
+        "?",
+        imageX + ITEM_IMAGE_SIZE / 2,
+        imageY + ITEM_IMAGE_SIZE / 2 + 30,
+      );
+    }
+
+    const textX = PADDING + ITEM_IMAGE_SIZE + 40;
+    const maxTextWidth = CANVAS_WIDTH - textX - PADDING;
+    let textY = itemY + ITEM_PADDING + 48;
+
+    ctx.textAlign = "left";
+    ctx.font =
+      "bold 40px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
+    ctx.fillStyle = COLOR_TEXT_PRIMARY;
+    textY = drawWrappedText(ctx, item.name, textX, textY, maxTextWidth, 46) + 10;
+
+    ctx.font =
+      "bold 45px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
+    ctx.fillStyle = COLOR_TEXT_PRICE;
+    ctx.fillText(`${formatNumber(item.price)}đ`, textX, textY);
+    textY += 52;
+
+    ctx.font =
+      "30px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
+    ctx.fillStyle = COLOR_TEXT_META;
+    ctx.fillText(`Số lượng: ${item.quantity}`, textX, textY);
+    textY += 42;
+    ctx.fillText(`Thành tiền: ${formatNumber(item.total)}đ`, textX, textY);
+
+    if (index < pageItems.length - 1) {
+      const dividerY = itemY + itemHeight;
+      ctx.strokeStyle = COLOR_DIVIDER;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(PADDING, dividerY);
+      ctx.lineTo(CANVAS_WIDTH - PADDING, dividerY);
+      ctx.stroke();
+    }
+
+    currentY += itemHeight;
+  });
+
+  const footerStartY = canvas.height - footerHeight;
+  ctx.setLineDash([15, 10]);
+  ctx.strokeStyle = COLOR_TEXT_PRICE;
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(PADDING, footerStartY);
+  ctx.lineTo(CANVAS_WIDTH - PADDING, footerStartY);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  if (pageIndex === totalPages - 1) {
+    const textY = footerStartY + 72;
+    ctx.textAlign = "left";
+    ctx.font =
+      "bold 38px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
+    ctx.fillStyle = COLOR_TEXT_PRIMARY;
+    ctx.fillText(`TỔNG SL: ${exportData.totalQuantity} sp`, PADDING, textY);
+
+    ctx.textAlign = "right";
+    ctx.font =
+      "bold 58px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
+    ctx.fillStyle = COLOR_TEXT_PRICE;
+    ctx.fillText(
+      `${formatNumber(exportData.totalAmount)}đ`,
+      CANVAS_WIDTH - PADDING,
+      textY + 12,
+    );
+  } else {
+    ctx.textAlign = "center";
+    ctx.font =
+      "32px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
+    ctx.fillStyle = COLOR_TEXT_META;
+    ctx.fillText("Tiếp trang sau", CANVAS_WIDTH / 2, footerStartY + 60);
+  }
+
+  return new Promise((resolve) => {
+    canvas.toBlob((blob) => {
+      resolve(blob);
+    }, "image/png");
+  });
+};
+
+export const generateOrderImages = async (exportData) => {
+  if (!exportData) return [];
+
+  const MAX_CANVAS_HEIGHT = 3600;
+  const headerHeight = estimateOrderImageHeaderHeight(exportData);
+  const availableItemsBudget = Math.max(320, MAX_CANVAS_HEIGHT - headerHeight - 200);
+  const pages = paginateByBudget(
+    exportData.items,
+    getOrderImageItemHeight,
+    availableItemsBudget,
+  );
+  const pageItemsList = pages.length > 0 ? pages : [[]];
+  const logoImg = await loadLogo();
+  const itemImageMap = await preloadOrderImages(exportData.items);
+
+  return Promise.all(
+    pageItemsList.map((pageItems, pageIndex) =>
+      renderOrderImagePage({
+        exportData,
+        pageItems,
+        pageIndex,
+        totalPages: pageItemsList.length,
+        logoImg,
+        itemImageMap,
+      }),
+    ),
+  );
 };

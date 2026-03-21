@@ -12,9 +12,8 @@ import useModalCache from "../../hooks/ui/useModalCache";
 import Button from "../../components/button/Button";
 import {
   exportOrderToHTML,
-  shareOrDownloadFile,
+  exportOrdersToImages,
 } from "../../utils/file/fileUtils";
-import { generateProductListImage } from "../../utils/file/imageExportUtils";
 import LoadingOverlay from "../../components/common/LoadingOverlay";
 import { FileDown, Image as ImageIcon, Printer } from "lucide-react";
 
@@ -67,29 +66,7 @@ const OrderDetailModal = ({ order, products, onClose, getOrderStatusInfo }) => {
     setIsExporting(true);
     await new Promise((resolve) => setTimeout(resolve, 300));
     try {
-      // Chuẩn bị danh sách sản phẩm cho xuất ảnh
-      const exportItems = cachedOrder.items.map((item) => {
-        const product = products?.find(
-          (p) => p.id === item.productId || p.id === item.id,
-        );
-        return {
-          name: product ? product.name : item.name,
-          image: product ? product.image : null,
-          price: item.price !== undefined ? item.price : item.sellingPrice || 0,
-          quantity: item.quantity,
-        };
-      });
-
-      const blob = await generateProductListImage(exportItems, {
-        showTotal: true,
-        title: `ĐƠN HÀNG ${orderLabel}`,
-      });
-
-      await shareOrDownloadFile(
-        blob,
-        `Don_hang_${cachedOrder.orderNumber || cachedOrder.id.slice(-4)}.png`,
-        "image/png",
-      );
+      await exportOrdersToImages([cachedOrder], products);
     } catch (error) {
       console.error("Lỗi xuất ảnh:", error);
       alert("Có lỗi khi xuất ảnh");

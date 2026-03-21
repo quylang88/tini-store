@@ -2,6 +2,11 @@ import {
   generateReceiptHTMLContent,
   generateA4InvoiceHTMLContent,
 } from "./invoiceTemplates";
+import { generateOrderImages } from "./imageExportUtils";
+import {
+  buildOrdersExportBaseName,
+  buildOrdersExportData,
+} from "./orderExportUtils";
 
 /**
  * Handles file export by prioritizing Web Share API (for Mobile/PWA)
@@ -14,43 +19,57 @@ import {
  * @returns {Promise<boolean>} - Returns true if shared/downloaded successfully.
  */
 export const shareOrDownloadFile = async (content, fileName, mimeType) => {
-  // 1. Ưu tiên sử dụng Web Share API (dành cho Mobile/Tablet/PWA)
-  // Cách này giúp mở trực tiếp Share Sheet của OS (Save to Files, AirDrop, etc.)
-  // Tránh việc mở file preview text trên iOS Safari
+  return shareOrDownloadFiles([{ content, fileName, mimeType }]);
+};
+
+export const shareOrDownloadFiles = async (entries = []) => {
+  if (!Array.isArray(entries) || entries.length === 0) {
+    return false;
+  }
+
+  const files = entries.map(({ content, fileName, mimeType }) => {
+    if (content instanceof File) {
+      return content;
+    }
+
+    return new File([content], fileName, { type: mimeType });
+  });
+
   try {
-    const file = new File([content], fileName, { type: mimeType });
-    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+    if (navigator.canShare && navigator.canShare({ files })) {
       const shareData = {
-        files: [file],
+        files,
       };
 
       await navigator.share(shareData);
-      return true; // Đã chia sẻ thành công
+      return true;
     }
   } catch (error) {
-    // Nếu user huỷ share hoặc lỗi, log và fall back (nếu cần thiết, nhưng thường Cancel là do user)
     if (error.name !== "AbortError") {
       console.error("Lỗi chia sẻ file:", error);
     } else {
-      // User huỷ chia sẻ -> coi như xong, không cần fallback download làm phiền
       return false;
     }
   }
 
-  // 2. Fallback: Download truyền thống qua thẻ <a> (Desktop)
-  // Sử dụng application/octet-stream để ép buộc trình duyệt download thay vì preview
-  const blob = new Blob([content], { type: "application/octet-stream" });
-  const url = URL.createObjectURL(blob);
+  for (const entry of entries) {
+    const blob =
+      entry.content instanceof Blob
+        ? entry.content
+        : new Blob([entry.content], { type: "application/octet-stream" });
+    const url = URL.createObjectURL(blob);
 
-  const link = document.createElement("a");
-  link.href = url;
-  link.setAttribute("download", fileName);
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", entry.fileName);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
 
-  // Cleanup
-  setTimeout(() => URL.revokeObjectURL(url), 100);
+    setTimeout(() => URL.revokeObjectURL(url), 200);
+    await new Promise((resolve) => setTimeout(resolve, 150));
+  }
+
   return true;
 };
 
@@ -119,20 +138,50 @@ export const exportOrderToHTML = async (
   products = [],
   format = "receipt",
 ) => {
-  if (!order) return;
+  return exportOrdersToHTML([order], products, format);
+};
 
-  const orderId = order.orderNumber ? order.orderNumber : order.id.slice(-4);
+export const exportOrdersToHTML = async (
+  orders,
+  products = [],
+  format = "receipt",
+) => {
+  const exportData = buildOrdersExportData(orders, products);
+  if (!exportData) return;
+
   let htmlContent = "";
   let fileName = "";
 
   if (format === "a4") {
-    htmlContent = await generateA4InvoiceHTMLContent(order, products);
-    fileName = `Don_hang_${orderId}.html`;
+    htmlContent = await generateA4InvoiceHTMLContent(exportData);
+    fileName = `${buildOrdersExportBaseName(exportData, "Don_hang", "Don_gop")}.html`;
   } else {
-    // Default to receipt
-    htmlContent = await generateReceiptHTMLContent(order, products);
-    fileName = `Bill_${orderId}.html`;
+    htmlContent = await generateReceiptHTMLContent(exportData);
+    fileName = `${buildOrdersExportBaseName(exportData, "Bill", "Bill_gop")}.html`;
   }
 
   await shareOrDownloadFile(htmlContent, fileName, "text/html");
+};
+
+export const exportOrdersToImages = async (orders, products = []) => {
+  const exportData = buildOrdersExportData(orders, products);
+  if (!exportData) return;
+
+  const imageBlobs = await generateOrderImages(exportData);
+  const baseName = buildOrdersExportBaseName(
+    exportData,
+    "Don_hang",
+    "Don_gop",
+  );
+
+  const files = imageBlobs.map((blob, index) => ({
+    content: blob,
+    fileName:
+      imageBlobs.length === 1
+        ? `${baseName}.png`
+        : `${baseName}_trang_${index + 1}.png`,
+    mimeType: "image/png",
+  }));
+
+  await shareOrDownloadFiles(files);
 };
