@@ -98,7 +98,7 @@ const OrderMergeExportModal = ({ open, orders, products, onClose }) => {
               <div className="mt-1 text-sm text-gray-700">
                 {exportData.partyLabel}: {exportData.partyValue}
               </div>
-              {exportData.orderType === "delivery" && (
+              {exportData.customerAddress && (
                 <div className="mt-1 text-xs text-gray-500">
                   Địa chỉ: {exportData.customerAddress || "-"}
                 </div>

@@ -102,9 +102,7 @@ export const buildOrdersExportData = (ordersInput, products = []) => {
   const warehouseKey =
     resolveWarehouseKey(firstOrder.warehouse) || getDefaultWarehouse().key;
   const warehouseLabel = getWarehouseLabel(warehouseKey);
-  const customerName =
-    normalizeText(firstOrder.customerName) ||
-    (orderType === "warehouse" ? warehouseLabel : "Khách lẻ");
+  const customerName = normalizeText(firstOrder.customerName) || "Khách lẻ";
 
   const itemMap = new Map();
   const orderReferences = [];
@@ -169,11 +167,13 @@ export const buildOrdersExportData = (ordersInput, products = []) => {
     }
   }
 
-  const normalizedAddresses = rawAddresses.map((address) => normalizeString(address));
+  const normalizedAddresses = rawAddresses
+    .map((address) => normalizeString(address))
+    .filter(Boolean);
   const distinctAddressKeys = new Set(normalizedAddresses);
   let customerAddress = normalizeText(firstOrder.customerAddress);
 
-  if (orderType === "delivery" && distinctAddressKeys.size > 1) {
+  if (distinctAddressKeys.size > 1) {
     customerAddress = "Nhiều địa chỉ";
   }
 
@@ -214,8 +214,8 @@ export const buildOrdersExportData = (ordersInput, products = []) => {
     primaryOrderReference: orderReferences[0],
     primaryOrderDateDisplay: primaryOrderDate.toLocaleString("vi-VN"),
     exportedAtDisplay: exportedAt.toLocaleString("vi-VN"),
-    partyLabel: orderType === "warehouse" ? "Kho xuất" : "Khách hàng",
-    partyValue: orderType === "warehouse" ? warehouseLabel : customerName,
+    partyLabel: "Khách hàng",
+    partyValue: customerName,
     sharedComment,
     noteEntries: uniqueNotes.size > 1 ? noteEntries : [],
   };
