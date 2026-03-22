@@ -113,15 +113,18 @@ const getContactIconMarkup = (contact) => {
 </svg>`;
 };
 
-const renderContactStripHTML = () => {
+const renderContactStripHTML = (isA4 = false) => {
   const contacts = getExportContacts();
   if (!contacts.length) return "";
+
+  const stripClass = isA4 ? "contact-strip a4-contact" : "contact-strip";
+  const itemClass = isA4 ? "contact-item a4-contact-item" : "contact-item";
 
   const contactsHtml = contacts
     .map(
       (contact) => `
         <a
-          class="contact-item"
+          class="${itemClass}"
           href="${escapeHtml(contact.href)}"
           target="_blank"
           rel="noreferrer"
@@ -136,7 +139,7 @@ const renderContactStripHTML = () => {
     )
     .join("");
 
-  return `<div class="contact-strip">${contactsHtml}</div>`;
+  return `<div class="${stripClass}">${contactsHtml}</div>`;
 };
 
 const renderReceiptCustomerInfo = (exportData) => {
@@ -192,31 +195,30 @@ const paginateA4Items = (exportData) => {
 };
 
 const renderA4CustomerTable = (exportData) => {
-  const addressRow =
-    exportData.orderType === "delivery"
-      ? `
-      <tr>
-        <td style="width: 110px; border: none; padding: 2px;"><strong>Địa chỉ:</strong></td>
-        <td style="border: none; padding: 2px;">${escapeHtml(exportData.customerAddress || "-")}</td>
-      </tr>
-    `
-      : "";
+  const leftCol = [];
+  const rightCol = [];
+
+  leftCol.push(`<strong>${escapeHtml(exportData.partyLabel)}:</strong> ${escapeHtml(exportData.partyValue)}`);
+
+  if (exportData.orderType === "delivery" && exportData.customerAddress) {
+    leftCol.push(`<strong>Địa chỉ:</strong> ${escapeHtml(exportData.customerAddress)}`);
+  }
+
+  rightCol.push(`<strong>Mã đơn:</strong> ${escapeHtml(exportData.orderReferencesText)}`);
+  rightCol.push(`<strong>Ngày xuất:</strong> ${escapeHtml(exportData.exportedAtDisplay)}`);
+
+  // Ghép leftCol và rightCol thành hàng
+  const maxRows = Math.max(leftCol.length, rightCol.length);
+  const rowsHtml = Array.from({ length: maxRows }).map((_, i) => `
+    <tr>
+      <td style="border: none; padding: 2px; width: 50%;">${leftCol[i] || ""}</td>
+      <td style="border: none; padding: 2px; width: 50%;">${rightCol[i] || ""}</td>
+    </tr>
+  `).join("");
 
   return `
-    <table style="width: 100%; border: none;">
-      <tr>
-        <td style="width: 110px; border: none; padding: 2px;"><strong>${escapeHtml(exportData.partyLabel)}:</strong></td>
-        <td style="border: none; padding: 2px;">${escapeHtml(exportData.partyValue)}</td>
-      </tr>
-      ${addressRow}
-      <tr>
-        <td style="border: none; padding: 2px;"><strong>Mã đơn:</strong></td>
-        <td style="border: none; padding: 2px;">${escapeHtml(exportData.orderReferencesText)}</td>
-      </tr>
-      <tr>
-        <td style="border: none; padding: 2px;"><strong>Ngày xuất:</strong></td>
-        <td style="border: none; padding: 2px;">${escapeHtml(exportData.exportedAtDisplay)}</td>
-      </tr>
+    <table style="width: 100%; border: none; font-size: 14px; margin-bottom: 8px;">
+      ${rowsHtml}
     </table>
   `;
 };
@@ -378,12 +380,12 @@ export const generateA4InvoiceHTMLContent = async (exportData) => {
 
           <div class="doc-title">${exportData.isMerged ? "ĐƠN HÀNG GỘP" : "ĐƠN HÀNG"}</div>
 
-          ${renderContactStripHTML()}
-
           <div class="customer-section">
             ${renderA4CustomerTable(exportData)}
             ${renderOrderNotesHTML(exportData, "a4")}
           </div>
+
+          ${renderContactStripHTML(true)}
 
           <table class="data-table">
             <thead>
@@ -492,10 +494,23 @@ export const generateA4InvoiceHTMLContent = async (exportData) => {
         color: #111827;
         padding: 6px 12px;
       }
+      .a4-contact {
+        justify-content: flex-start;
+        margin: -5px 0 12px 0;
+        gap: 20px;
+      }
+      .a4-contact-item {
+        gap: 6px;
+        padding: 2px 6px;
+      }
       .contact-icon {
         width: 36px;
         height: 36px;
         flex-shrink: 0;
+      }
+      .a4-contact-item .contact-icon {
+        width: 24px;
+        height: 24px;
       }
       .contact-copy {
         display: flex;
@@ -510,10 +525,16 @@ export const generateA4InvoiceHTMLContent = async (exportData) => {
         text-transform: uppercase;
         color: #be123c;
       }
+      .a4-contact-item .contact-title {
+        font-size: 9px;
+      }
       .contact-value {
         font-size: 14px;
         font-weight: bold;
         color: #0f172a;
+      }
+      .a4-contact-item .contact-value {
+        font-size: 12px;
       }
       .data-table {
         width: 100%;

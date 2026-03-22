@@ -323,16 +323,21 @@ const drawWrappedText = (ctx, text, x, y, maxWidth, lineHeight) => {
   return y + lines.length * lineHeight;
 };
 
-const estimateContactStripHeight = () =>
-  getExportContacts().length > 0 ? 80 : 0;
+const estimateContactStripHeight = (isSmall = false) => {
+  if (getExportContacts().length === 0) return 0;
+  return isSmall ? 60 : 80;
+};
 
-const drawContactStrip = async (ctx, startY, canvasWidth) => {
+const drawContactStrip = async (ctx, startY, canvasWidth, isSmall = false) => {
   const contacts = getExportContacts();
   if (!contacts.length) return startY;
 
-  const gap = 48; // Space between contact items
-  const iconSize = 48; // Size of the SVG icon
-  const itemHeight = 56; // Total height of the contact row
+  const gap = isSmall ? 32 : 48; // Space between contact items
+  const iconSize = isSmall ? 32 : 48; // Size of the SVG icon
+  const itemHeight = isSmall ? 40 : 56; // Total height of the contact row
+  const titleFontSize = isSmall ? 14 : 18;
+  const valueFontSize = isSmall ? 20 : 24;
+  const iconTextGap = isSmall ? 8 : 12;
 
   // Map to load icons and measure text widths
   const items = await Promise.all(
@@ -361,13 +366,13 @@ const drawContactStrip = async (ctx, startY, canvasWidth) => {
       const svgBase64 = `data:image/svg+xml;base64,${btoa(svgStr)}`;
       const iconImg = await loadImage(svgBase64);
 
-      ctx.font = "bold 18px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
+      ctx.font = `bold ${titleFontSize}px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif`;
       const titleWidth = ctx.measureText(title).width;
-      ctx.font = "bold 24px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
+      ctx.font = `bold ${valueFontSize}px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif`;
       const valueWidth = ctx.measureText(value).width;
 
-      // Total width for this item: icon (48px) + space (12px) + max text width
-      const width = iconSize + 12 + Math.max(titleWidth, valueWidth);
+      // Total width for this item
+      const width = iconSize + iconTextGap + Math.max(titleWidth, valueWidth);
 
       return { ...contact, width, iconImg };
     })
@@ -383,57 +388,68 @@ const drawContactStrip = async (ctx, startY, canvasWidth) => {
       ctx.drawImage(item.iconImg, currentX, startY + (itemHeight - iconSize) / 2, iconSize, iconSize);
     }
 
-    const textX = currentX + iconSize + 12; // 12px gap between icon and text
+    const textX = currentX + iconSize + iconTextGap;
 
     // Draw Title
     ctx.textAlign = "left";
     ctx.fillStyle = "#be123c"; // rose-700
-    ctx.font = "bold 18px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
-    ctx.fillText(item.title.toUpperCase(), textX, startY + 22);
+    ctx.font = `bold ${titleFontSize}px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif`;
+    ctx.fillText(item.title.toUpperCase(), textX, startY + (isSmall ? 16 : 22));
 
     // Draw Value
     ctx.fillStyle = "#0f172a"; // slate-900
-    ctx.font = "bold 24px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
-    ctx.fillText(item.value, textX, startY + 50);
+    ctx.font = `bold ${valueFontSize}px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif`;
+    ctx.fillText(item.value, textX, startY + (isSmall ? 38 : 50));
 
     currentX += item.width + gap;
   });
 
-  return startY + itemHeight + 20;
+  return startY + itemHeight + (isSmall ? 10 : 20);
 };
 
-const getOrderImageMetaRows = (exportData, pageIndex, totalPages) => {
-  const rows = [
+const getOrderImageMetaColumns = (exportData, pageIndex, totalPages) => {
+  const leftCol = [
     `${exportData.partyLabel}: ${exportData.partyValue}`,
-    `Mã đơn: ${exportData.orderReferencesText}`,
-    `Ngày xuất: ${exportData.exportedAtDisplay}`,
-    `Trang: ${pageIndex + 1}/${totalPages}`,
   ];
-
   if (exportData.orderType === "delivery" && exportData.customerAddress) {
-    rows.splice(1, 0, `Địa chỉ: ${exportData.customerAddress}`);
+    leftCol.push(`Địa chỉ: ${exportData.customerAddress}`);
   }
 
+  const rightCol = [
+    `Mã đơn: ${exportData.orderReferencesText}`,
+    `Ngày xuất: ${exportData.exportedAtDisplay}`,
+    `Trang: ${pageIndex + 1}/${totalPages}`
+  ];
+
+  const notes = [];
   if (exportData.sharedComment) {
-    rows.push(`Ghi chú: ${exportData.sharedComment}`);
+    notes.push(`Ghi chú: ${exportData.sharedComment}`);
   } else if (exportData.noteEntries?.length) {
-    rows.push("Ghi chú đơn:");
+    notes.push("Ghi chú đơn:");
     exportData.noteEntries.forEach((entry) => {
-      rows.push(`${entry.orderReference}: ${entry.comment}`);
+      notes.push(`${entry.orderReference}: ${entry.comment}`);
     });
   }
 
-  return rows;
+  return { leftCol, rightCol, notes };
 };
 
 const estimateOrderImageHeaderHeight = (exportData) => {
-  const rows = getOrderImageMetaRows(exportData, 0, 1);
-  const wrappedLineCount = rows.reduce(
-    (total, row) => total + estimateWrappedLineCount(row, 38),
-    0,
-  );
+  const { leftCol, rightCol, notes } = getOrderImageMetaColumns(exportData, 0, 1);
 
-  return 220 + wrappedLineCount * 28 + estimateContactStripHeight();
+  // Calculate max lines for the two columns
+  let colLines = 0;
+  const maxRows = Math.max(leftCol.length, rightCol.length);
+  for (let i = 0; i < maxRows; i++) {
+    const leftLines = leftCol[i] ? estimateWrappedLineCount(leftCol[i], 18) : 0;
+    const rightLines = rightCol[i] ? estimateWrappedLineCount(rightCol[i], 18) : 0;
+    colLines += Math.max(leftLines, rightLines);
+  }
+
+  const notesLines = notes.reduce((total, row) => total + estimateWrappedLineCount(row, 38), 0);
+
+  // Base height + Columns height + Notes height + Contact Strip height + Buffer
+  return 220 + colLines * 30 + notesLines * 30 + estimateContactStripHeight(true) + 30;
 };
 
 const getOrderImageItemHeight = (item) => {
@@ -520,7 +536,40 @@ const renderOrderImagePage = async ({
   );
   currentY += 56;
 
-  currentY = await drawContactStrip(ctx, currentY, CANVAS_WIDTH);
+  ctx.textAlign = "left";
+  ctx.fillStyle = COLOR_TEXT_PRIMARY;
+  ctx.font =
+    "24px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
+
+  const { leftCol, rightCol, notes } = getOrderImageMetaColumns(exportData, pageIndex, totalPages);
+
+  const midPointX = CANVAS_WIDTH / 2;
+  const colMaxWidth = (CANVAS_WIDTH - PADDING * 2) / 2 - 20;
+
+  const maxRows = Math.max(leftCol.length, rightCol.length);
+  for (let i = 0; i < maxRows; i++) {
+    let nextLeftY = currentY;
+    let nextRightY = currentY;
+
+    if (leftCol[i]) {
+      nextLeftY = drawWrappedText(ctx, leftCol[i], PADDING, currentY, colMaxWidth, 30);
+    }
+
+    if (rightCol[i]) {
+      nextRightY = drawWrappedText(ctx, rightCol[i], midPointX + 10, currentY, colMaxWidth, 30);
+    }
+
+    currentY = Math.max(nextLeftY, nextRightY) + 8; // Row gap
+  }
+
+  notes.forEach((note) => {
+    currentY = drawWrappedText(ctx, note, PADDING, currentY, CANVAS_WIDTH - PADDING * 2, 30);
+    currentY += 8;
+  });
+
+  currentY += 12; // Gap before contact strip
+
+  currentY = await drawContactStrip(ctx, currentY, CANVAS_WIDTH, true); // Use small variant
 
   ctx.strokeStyle = COLOR_TEXT_PRICE;
   ctx.lineWidth = 4;
@@ -529,26 +578,6 @@ const renderOrderImagePage = async ({
   ctx.lineTo(CANVAS_WIDTH - PADDING, currentY);
   ctx.stroke();
   currentY += 24;
-
-  ctx.textAlign = "left";
-  ctx.fillStyle = COLOR_TEXT_PRIMARY;
-  ctx.font =
-    "24px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
-
-  const metaRows = getOrderImageMetaRows(exportData, pageIndex, totalPages);
-  metaRows.forEach((row) => {
-    currentY = drawWrappedText(
-      ctx,
-      row,
-      PADDING,
-      currentY,
-      CANVAS_WIDTH - PADDING * 2,
-      28,
-    );
-    currentY += 4;
-  });
-
-  currentY += 12;
 
   pageItems.forEach((item, index) => {
     const itemHeight = getOrderImageItemHeight(item);
