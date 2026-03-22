@@ -83,6 +83,26 @@ export const paginateByBudget = (items, getItemBudget, maxBudget) => {
   return pages;
 };
 
+export const paginateBalancedByCount = (items, maxItemsPerPage = 6) => {
+  if (!Array.isArray(items) || items.length === 0) return [];
+
+  const safeMaxItems = Math.max(1, Number(maxItemsPerPage) || 1);
+  const pageCount = Math.ceil(items.length / safeMaxItems);
+  const baseSize = Math.floor(items.length / pageCount);
+  const remainder = items.length % pageCount;
+
+  const pages = [];
+  let startIndex = 0;
+
+  for (let pageIndex = 0; pageIndex < pageCount; pageIndex += 1) {
+    const pageSize = baseSize + (pageIndex < remainder ? 1 : 0);
+    pages.push(items.slice(startIndex, startIndex + pageSize));
+    startIndex += pageSize;
+  }
+
+  return pages.filter((page) => page.length > 0);
+};
+
 export const buildOrdersExportData = (ordersInput, products = []) => {
   const orders = Array.isArray(ordersInput)
     ? ordersInput.filter(Boolean)
@@ -102,9 +122,7 @@ export const buildOrdersExportData = (ordersInput, products = []) => {
   const warehouseKey =
     resolveWarehouseKey(firstOrder.warehouse) || getDefaultWarehouse().key;
   const warehouseLabel = getWarehouseLabel(warehouseKey);
-  const customerName =
-    normalizeText(firstOrder.customerName) ||
-    (orderType === "warehouse" ? warehouseLabel : "Khách lẻ");
+  const customerName = normalizeText(firstOrder.customerName) || "Khách lẻ";
 
   const itemMap = new Map();
   const orderReferences = [];
@@ -169,11 +187,13 @@ export const buildOrdersExportData = (ordersInput, products = []) => {
     }
   }
 
-  const normalizedAddresses = rawAddresses.map((address) => normalizeString(address));
+  const normalizedAddresses = rawAddresses
+    .map((address) => normalizeString(address))
+    .filter(Boolean);
   const distinctAddressKeys = new Set(normalizedAddresses);
   let customerAddress = normalizeText(firstOrder.customerAddress);
 
-  if (orderType === "delivery" && distinctAddressKeys.size > 1) {
+  if (distinctAddressKeys.size > 1) {
     customerAddress = "Nhiều địa chỉ";
   }
 
@@ -214,8 +234,8 @@ export const buildOrdersExportData = (ordersInput, products = []) => {
     primaryOrderReference: orderReferences[0],
     primaryOrderDateDisplay: primaryOrderDate.toLocaleString("vi-VN"),
     exportedAtDisplay: exportedAt.toLocaleString("vi-VN"),
-    partyLabel: orderType === "warehouse" ? "Kho xuất" : "Khách hàng",
-    partyValue: orderType === "warehouse" ? warehouseLabel : customerName,
+    partyLabel: "Khách hàng",
+    partyValue: customerName,
     sharedComment,
     noteEntries: uniqueNotes.size > 1 ? noteEntries : [],
   };

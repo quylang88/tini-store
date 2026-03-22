@@ -1,20 +1,25 @@
-const FACEBOOK_URL = String(import.meta.env.VITE_CONTACT_FACEBOOK_URL || "").trim();
+const FACEBOOK = String(import.meta.env.VITE_CONTACT_FACEBOOK || "").trim();
 const ZALO_PHONE = String(import.meta.env.VITE_CONTACT_ZALO_PHONE || "").trim();
 
-const normalizeDisplayUrl = (url) =>
-  url.replace(/^https?:\/\//i, "").replace(/^www\./i, "").replace(/\/+$/g, "");
+const normalizeFacebookName = (value) =>
+  value
+    .replace(/^https?:\/\/(?:www\.)?(?:m\.)?facebook\.com\//i, "")
+    .replace(/\/+$/g, "")
+    .trim();
 
 const normalizePhone = (value) => value.replace(/[^\d+]/g, "");
 
 export const getExportContacts = () => {
   const contacts = [];
 
-  if (FACEBOOK_URL) {
+  const facebookName = normalizeFacebookName(FACEBOOK);
+
+  if (facebookName) {
     contacts.push({
       key: "facebook",
       title: "Facebook",
-      value: normalizeDisplayUrl(FACEBOOK_URL),
-      href: FACEBOOK_URL,
+      value: facebookName,
+      href: "",
       accent: "#1877F2",
       iconText: "f",
     });

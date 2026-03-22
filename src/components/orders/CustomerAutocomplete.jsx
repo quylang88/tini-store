@@ -1,6 +1,10 @@
 import React, { useState, useEffect, useRef } from "react";
 import { User, MapPin, ShoppingBag } from "lucide-react";
 import { normalizeString } from "../../utils/formatters/formatUtils";
+import {
+  matchesAnySearchTerms,
+  parseSearchTerms,
+} from "../../utils/common/searchUtils";
 
 const CustomerAutocomplete = ({
   value,
@@ -16,14 +20,23 @@ const CustomerAutocomplete = ({
 
   // Lọc danh sách khách hàng dựa trên input
   // Chỉ hiển thị nếu giá trị nhập vào > 0 ký tự
-  const suggestions =
-    value && value.trim().length > 0
-      ? customers
-          .filter((c) =>
-            normalizeString(c.name).includes(normalizeString(value)),
-          )
-          .slice(0, 3)
-      : [];
+  // Tối ưu hóa: Thay vì dùng .filter().slice(0, 3) duyệt qua toàn bộ mảng và tạo mảng trung gian (O(N)),
+  // dùng vòng lặp for...of để dừng sớm khi đủ 3 kết quả (O(M), với M là vị trí kết quả thứ 3).
+  let suggestions = [];
+  if (value && value.trim().length > 0) {
+    const searchTerms = parseSearchTerms(value);
+    for (const c of customers) {
+      const normalizedFields = [
+        normalizeString(c.name),
+        ...(c.addresses || []).map((address) => normalizeString(address)),
+      ];
+
+      if (matchesAnySearchTerms(normalizedFields, searchTerms)) {
+        suggestions.push(c);
+        if (suggestions.length === 3) break;
+      }
+    }
+  }
 
   useEffect(() => {
     const handleClickOutside = (event) => {

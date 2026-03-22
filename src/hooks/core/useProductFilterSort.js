@@ -1,6 +1,10 @@
 import { useMemo, useState } from "react";
 import { normalizeString } from "../../utils/formatters/formatUtils";
 import { getProductDate } from "../../utils/common/sortingUtils";
+import {
+  matchesAnySearchTerms,
+  parseSearchTerms,
+} from "../../utils/common/searchUtils";
 
 // Cache cấp module để tái sử dụng các object wrapper khi sản phẩm (reference) không đổi.
 // Giúp giảm thiểu việc tạo object mới (GC pressure) và gọi normalizeString khi danh sách sản phẩm cập nhật (ví dụ: edit 1 item).
@@ -47,9 +51,7 @@ const useProductFilterSort = ({
         const searchable = {
           original: product,
           normalizedName: normalizeString(product.name),
-          searchableProductCode: product.productCode
-            ? String(product.productCode)
-            : "",
+          searchableProductCode: normalizeString(product.productCode),
           // Pre-calculate sort values (date is expensive O(N) due to lot traversal)
           sortDate: getProductDate(product),
           sortPrice: Number(product.price) || 0,
@@ -68,20 +70,21 @@ const useProductFilterSort = ({
 
   const searchableProducts = cache.searchableProducts;
 
+  const searchTerms = useMemo(() => parseSearchTerms(searchTerm), [searchTerm]);
+
   const filteredProducts = useMemo(() => {
     // 1. Lọc dữ liệu
-    const keyword = normalizeString(searchTerm);
-
     // Lọc dựa trên các trường đã tính toán trước
     let result = searchableProducts.filter((item) => {
       // Lọc theo từ khóa tìm kiếm
-      if (keyword) {
-        if (
-          !item.normalizedName.includes(keyword) &&
-          !item.searchableProductCode.includes(keyword)
-        ) {
+      if (
+        searchTerms.length &&
+        !matchesAnySearchTerms(
+          [item.normalizedName, item.searchableProductCode],
+          searchTerms,
+        )
+      ) {
           return false;
-        }
       }
 
       const product = item.original;
@@ -139,7 +142,7 @@ const useProductFilterSort = ({
     return result.map((item) => item.original);
   }, [
     searchableProducts,
-    searchTerm,
+    searchTerms,
     activeCategory,
     sortConfig,
     customFilterFn,
