@@ -1,9 +1,9 @@
-import { normalizeString } from "../formatters/formatUtils";
+import {  normalizeString } from "../formatters/formatUtils.js";
 import {
   getDefaultWarehouse,
   getWarehouseLabel,
   resolveWarehouseKey,
-} from "../inventory/warehouseUtils";
+} from "../inventory/warehouseUtils.js";
 
 const normalizeText = (value) => String(value || "").replace(/\s+/g, " ").trim();
 

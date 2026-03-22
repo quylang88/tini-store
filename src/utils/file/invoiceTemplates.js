@@ -82,14 +82,13 @@ const renderOrderNotesHTML = (exportData, tone = "receipt") => {
     return "";
   }
 
-  const notesHtml = exportData.noteEntries
-    .map(
-      (entry) =>
-        tone === "a4"
-          ? `<div class="notes-item"><strong>${escapeHtml(entry.orderReference)}:</strong> ${escapeHtml(entry.comment)}</div>`
-          : `<div style="margin-top:4px;"><strong>${escapeHtml(entry.orderReference)}:</strong> ${escapeHtml(entry.comment)}</div>`,
-    )
-    .join("");
+  let notesHtml = "";
+  for (const entry of exportData.noteEntries) {
+    notesHtml +=
+      tone === "a4"
+        ? `<div class="notes-item"><strong>${escapeHtml(entry.orderReference)}:</strong> ${escapeHtml(entry.comment)}</div>`
+        : `<div style="margin-top:4px;"><strong>${escapeHtml(entry.orderReference)}:</strong> ${escapeHtml(entry.comment)}</div>`;
+  }
 
   return tone === "a4"
     ? `<div class="notes-block"><div class="notes-title">Ghi chú đơn</div>${notesHtml}</div>`
@@ -108,9 +107,9 @@ const renderContactStripHTML = () => {
   const contacts = getExportContacts();
   if (!contacts.length) return "";
 
-  const contactsHtml = contacts
-    .map(
-      (contact) => `
+  let contactsHtml = "";
+  for (const contact of contacts) {
+    contactsHtml += `
         <a
           class="contact-pill"
           href="${escapeHtml(contact.href)}"
@@ -123,9 +122,8 @@ const renderContactStripHTML = () => {
             <span class="contact-value">${escapeHtml(contact.value)}</span>
           </span>
         </a>
-      `,
-    )
-    .join("");
+      `;
+  }
 
   return `<div class="contact-strip">${contactsHtml}</div>`;
 };
@@ -225,9 +223,10 @@ export const generateReceiptHTMLContent = async (exportData) => {
     ? `Ngày xuất: ${escapeHtml(exportData.exportedAtDisplay)}`
     : `${escapeHtml(exportData.primaryOrderReference)} - ${escapeHtml(exportData.primaryOrderDateDisplay)}`;
 
-  const itemsRows = exportData.items
-    .map(
-      (item, index) => `
+  let itemsRows = "";
+  for (let index = 0; index < exportData.items.length; index++) {
+    const item = exportData.items[index];
+    itemsRows += `
       <tr>
         <td style="width: 5%; color: #999;">${index + 1}</td>
         <td>
@@ -237,9 +236,8 @@ export const generateReceiptHTMLContent = async (exportData) => {
         <td class="center" style="width: 10%;">${item.quantity}</td>
         <td class="right" style="width: 25%; font-weight: 500;">${formatNumber(item.total)}đ</td>
       </tr>
-    `,
-    )
-    .join("");
+    `;
+  }
 
   const style = `
     <style>
@@ -332,13 +330,14 @@ export const generateA4InvoiceHTMLContent = async (exportData) => {
   const pages = paginateA4Items(exportData);
   let runningIndex = 0;
 
-  const pageHtml = pages
-    .map((pageItems, pageIndex) => {
-      const isLastPage = pageIndex === pages.length - 1;
-      const rowsHtml = pageItems
-        .map((item) => {
-          runningIndex += 1;
-          return `
+  let pageHtml = "";
+  for (let pageIndex = 0; pageIndex < pages.length; pageIndex++) {
+    const pageItems = pages[pageIndex];
+    const isLastPage = pageIndex === pages.length - 1;
+    let rowsHtml = "";
+    for (const item of pageItems) {
+      runningIndex += 1;
+      rowsHtml += `
             <tr>
               <td class="text-center" style="width: 5%;">${runningIndex}</td>
               <td class="text-center" style="width: 15%;">${escapeHtml(item.barcode || "-")}</td>
@@ -348,10 +347,9 @@ export const generateA4InvoiceHTMLContent = async (exportData) => {
               <td class="text-right" style="width: 20%;">${formatNumber(item.total)}</td>
             </tr>
           `;
-        })
-        .join("");
+    }
 
-      return `
+    pageHtml += `
         <section class="a4-page ${isLastPage ? "" : "page-break"}">
           <div class="header-section">
             <div class="shop-info">
@@ -419,8 +417,7 @@ export const generateA4InvoiceHTMLContent = async (exportData) => {
           </div>
         </section>
       `;
-    })
-    .join("");
+  }
 
   const style = `
     <style>
