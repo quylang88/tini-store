@@ -1,5 +1,8 @@
 import { formatNumber } from "../formatters/formatUtils";
-import { estimateWrappedLineCount, paginateByBudget } from "./orderExportUtils";
+import {
+  estimateWrappedLineCount,
+  paginateBalancedByCount,
+} from "./orderExportUtils";
 import { getExportContacts } from "./exportContactInfo";
 
 /**
@@ -763,17 +766,7 @@ const renderOrderImagePage = async ({
 export const generateOrderImages = async (exportData) => {
   if (!exportData) return [];
 
-  const MAX_CANVAS_HEIGHT = 1950;
-  const headerHeight = estimateOrderImageHeaderHeight(exportData);
-  const availableItemsBudget = Math.max(
-    320,
-    MAX_CANVAS_HEIGHT - headerHeight - 200,
-  );
-  const pages = paginateByBudget(
-    exportData.items,
-    getOrderImageItemHeight,
-    availableItemsBudget,
-  );
+  const pages = paginateBalancedByCount(exportData.items, 6);
   const pageItemsList = pages.length > 0 ? pages : [[]];
   const logoImg = await loadLogo();
   const itemImageMap = await preloadOrderImages(exportData.items);

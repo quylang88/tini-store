@@ -2,10 +2,7 @@ import {
   formatNumber,
   readMoneyToVietnamese,
 } from "../formatters/formatUtils.js";
-import {
-  estimateWrappedLineCount,
-  paginateByBudget,
-} from "./orderExportUtils.js";
+import { paginateBalancedByCount } from "./orderExportUtils.js";
 import { getExportContacts } from "./exportContactInfo.js";
 
 const matchHtmlRegExp = /["'&<>]/g;
@@ -164,31 +161,8 @@ const renderReceiptCustomerInfo = (exportData) => {
   `;
 };
 
-const getA4PageBudget = (exportData) => {
-  const sharedCommentBudget = exportData.sharedComment
-    ? estimateWrappedLineCount(exportData.sharedComment, 90)
-    : 0;
-  const orderNoteBudget = (exportData.noteEntries || []).reduce(
-    (total, entry) =>
-      total +
-      estimateWrappedLineCount(`${entry.orderReference}: ${entry.comment}`, 90),
-    0,
-  );
-  const penalty = Math.min(
-    8,
-    Math.ceil((sharedCommentBudget + orderNoteBudget) / 3),
-  );
-
-  return Math.max(12, 22 - penalty);
-};
-
 const paginateA4Items = (exportData) => {
-  const maxBudget = getA4PageBudget(exportData);
-  const pages = paginateByBudget(
-    exportData.items,
-    (item) => Math.max(1, estimateWrappedLineCount(item.name, 30)),
-    maxBudget,
-  );
+  const pages = paginateBalancedByCount(exportData.items, 6);
 
   return pages.length > 0 ? pages : [[]];
 };

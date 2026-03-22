@@ -83,6 +83,26 @@ export const paginateByBudget = (items, getItemBudget, maxBudget) => {
   return pages;
 };
 
+export const paginateBalancedByCount = (items, maxItemsPerPage = 6) => {
+  if (!Array.isArray(items) || items.length === 0) return [];
+
+  const safeMaxItems = Math.max(1, Number(maxItemsPerPage) || 1);
+  const pageCount = Math.ceil(items.length / safeMaxItems);
+  const baseSize = Math.floor(items.length / pageCount);
+  const remainder = items.length % pageCount;
+
+  const pages = [];
+  let startIndex = 0;
+
+  for (let pageIndex = 0; pageIndex < pageCount; pageIndex += 1) {
+    const pageSize = baseSize + (pageIndex < remainder ? 1 : 0);
+    pages.push(items.slice(startIndex, startIndex + pageSize));
+    startIndex += pageSize;
+  }
+
+  return pages.filter((page) => page.length > 0);
+};
+
 export const buildOrdersExportData = (ordersInput, products = []) => {
   const orders = Array.isArray(ordersInput)
     ? ordersInput.filter(Boolean)
