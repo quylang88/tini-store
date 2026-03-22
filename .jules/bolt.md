@@ -1,0 +1,3 @@
+## 2024-03-22 - Optimizing React Render Loops with `useMemo` and `Map`
+**Learning:** In list rendering components like `OrderDetailModal` and `OrderListItem`, recalculating aggregates using nested `find` calls inside `.map` creates an O(N*M) bottleneck during renders. `.reduce` calls to compute intermediate values like `estimatedProfit` or `totalQuantity` also impose measurable overhead per render cycle due to callback instantiation and iterations across arrays.
+**Action:** Default to creating an O(1) `Map` lookup cached with `useMemo` when looking up relationships in rendering arrays. Consolidate multiple aggregate `.reduce` calculations into a single `for...of` loop, reducing callback overhead, particularly in frequently rendered components like ListItems.
