@@ -6,6 +6,7 @@ import {
   estimateWrappedLineCount,
   paginateByBudget,
 } from "./orderExportUtils.js";
+import { getExportContacts } from "./exportContactInfo.js";
 
 const matchHtmlRegExp = /["'&<>]/g;
 const escapeHtml = (unsafe) => {
@@ -93,6 +94,40 @@ const renderOrderNotesHTML = (exportData, tone = "receipt") => {
   return tone === "a4"
     ? `<div class="notes-block"><div class="notes-title">Ghi chú đơn</div>${notesHtml}</div>`
     : `<div style="${wrapperClass}"><div style="font-weight:600; color:#9f1239;">Ghi chú đơn</div>${notesHtml}</div>`;
+};
+
+const getContactIconMarkup = (contact) => {
+  if (contact.key === "facebook") {
+    return `<span class="contact-icon-letter" style="background:${contact.accent};">f</span>`;
+  }
+
+  return `<span class="contact-icon-letter" style="background:${contact.accent};">Z</span>`;
+};
+
+const renderContactStripHTML = () => {
+  const contacts = getExportContacts();
+  if (!contacts.length) return "";
+
+  const contactsHtml = contacts
+    .map(
+      (contact) => `
+        <a
+          class="contact-pill"
+          href="${escapeHtml(contact.href)}"
+          target="_blank"
+          rel="noreferrer"
+        >
+          ${getContactIconMarkup(contact)}
+          <span class="contact-copy">
+            <span class="contact-title">${escapeHtml(contact.title)}</span>
+            <span class="contact-value">${escapeHtml(contact.value)}</span>
+          </span>
+        </a>
+      `,
+    )
+    .join("");
+
+  return `<div class="contact-strip">${contactsHtml}</div>`;
 };
 
 const renderReceiptCustomerInfo = (exportData) => {
@@ -213,6 +248,12 @@ export const generateReceiptHTMLContent = async (exportData) => {
       .shop-name { font-size: 24px; font-weight: bold; color: #e11d48; margin: 0; }
       .meta { font-size: 14px; color: #666; margin-top: 5px; }
       .customer-info { margin-bottom: 20px; font-size: 14px; background: #fff1f2; padding: 10px; border-radius: 8px; }
+      .contact-strip { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin: 16px 0 18px; }
+      .contact-pill { display: inline-flex; align-items: center; gap: 10px; min-width: 220px; text-decoration: none; color: #1f2937; background: linear-gradient(135deg, #fff, #fff1f2); border: 1px solid #fecdd3; border-radius: 999px; padding: 8px 14px; box-shadow: 0 10px 25px -18px rgba(225, 29, 72, 0.9); }
+      .contact-icon-letter { width: 32px; height: 32px; border-radius: 999px; color: white; display: inline-flex; align-items: center; justify-content: center; font-weight: 800; font-size: 18px; text-transform: uppercase; flex-shrink: 0; }
+      .contact-copy { display: flex; flex-direction: column; align-items: flex-start; line-height: 1.2; }
+      .contact-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: #be123c; }
+      .contact-value { font-size: 13px; font-weight: 700; color: #0f172a; }
       table { width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 14px; }
       th { text-align: left; border-bottom: 2px solid #e11d48; padding: 8px 4px; color: #9f1239; font-weight: 600; }
       td { padding: 8px 4px; border-bottom: 1px solid #eee; vertical-align: top; }
@@ -240,6 +281,8 @@ export const generateReceiptHTMLContent = async (exportData) => {
     <div class="meta">${titleText}</div>
     <div class="meta">${metaText}</div>
   </div>
+
+  ${renderContactStripHTML()}
 
   ${renderReceiptCustomerInfo(exportData)}
 
@@ -315,7 +358,6 @@ export const generateA4InvoiceHTMLContent = async (exportData) => {
               ${logoHtml}
               <div style="font-size: 14px; margin-top: 5px;">
                 <div>Uy tín - Chất lượng - Tận tâm</div>
-                <div>Điện thoại: 0972 766 717</div>
               </div>
             </div>
             <div class="order-meta">
@@ -326,6 +368,8 @@ export const generateA4InvoiceHTMLContent = async (exportData) => {
           </div>
 
           <div class="doc-title">${exportData.isMerged ? "ĐƠN HÀNG GỘP" : "ĐƠN HÀNG"}</div>
+
+          ${renderContactStripHTML()}
 
           <div class="customer-section">
             ${renderA4CustomerTable(exportData)}
@@ -423,6 +467,57 @@ export const generateA4InvoiceHTMLContent = async (exportData) => {
         margin-bottom: 20px;
         font-size: 15px;
         line-height: 1.6;
+      }
+      .contact-strip {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 12px;
+        margin: -5px 0 18px;
+      }
+      .contact-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 12px;
+        min-width: 250px;
+        text-decoration: none;
+        color: #111827;
+        background: linear-gradient(135deg, #fff, #fff1f2);
+        border: 1px solid #fda4af;
+        border-radius: 999px;
+        padding: 10px 16px;
+        box-shadow: 0 14px 30px -24px rgba(225, 29, 72, 0.9);
+      }
+      .contact-icon-letter {
+        width: 36px;
+        height: 36px;
+        border-radius: 999px;
+        color: white;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 18px;
+        font-weight: 800;
+        text-transform: uppercase;
+        flex-shrink: 0;
+      }
+      .contact-copy {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        line-height: 1.15;
+      }
+      .contact-title {
+        font-size: 11px;
+        font-weight: bold;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: #be123c;
+      }
+      .contact-value {
+        font-size: 14px;
+        font-weight: bold;
+        color: #0f172a;
       }
       .data-table {
         width: 100%;

@@ -149,7 +149,7 @@ const OrderListItem = memo(
           {isMergeMode ? (
             <div className="mt-3 flex justify-end">
               {isSelected ? (
-                <div className="w-9 h-9 rounded-full bg-rose-500 flex items-center justify-center text-white shadow-sm">
+                <div className="w-9 h-9 rounded-full bg-rose-500 flex items-center justify-center text-white shadow-lg shadow-rose-200">
                   <Check size={18} strokeWidth={3} />
                 </div>
               ) : (

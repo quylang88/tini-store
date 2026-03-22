@@ -185,7 +185,7 @@ const ProductListItem = memo(
         {isSelectionMode ? (
           <div className="self-center ml-2">
             {isSelected ? (
-              <div className="w-8 h-8 rounded-full bg-rose-500 flex items-center justify-center text-white shadow-sm">
+              <div className="w-8 h-8 rounded-full bg-rose-500 flex items-center justify-center text-white shadow-lg shadow-rose-200">
                 <Check size={18} strokeWidth={3} />
               </div>
             ) : (
