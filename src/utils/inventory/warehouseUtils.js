@@ -150,9 +150,9 @@ export const getSpecificWarehouseStock = (product, targetWarehouseKey) => {
   return stock[resolvedKey] || 0;
 };
 
-// Helper tính tổng số lượng tồn kho sử dụng for...in để tránh cấp phát mảng
-// từ Object.values và callback từ reduce, giúp cải thiện hiệu năng khi số lượng
-// gọi lớn (vd: tính lại tổng sau mỗi lần nhập hàng).
+// Helper tính tổng số lượng tồn kho sử dụng vòng lặp for...in để tránh cấp phát mảng
+// từ Object.values và callback từ reduce. Tránh tạo mảng key tĩnh để cộng gộp đúng
+// các key extra (không có trong config).
 export const calculateTotalStock = (stockObj) => {
   let total = 0;
   for (const key in stockObj) {

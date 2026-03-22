@@ -279,10 +279,16 @@ const useDashboardLogic = ({ products, orders, rangeMode = "dashboard" }) => {
           statsObj: {},
         });
         if (!isCancelled) {
+          const statsArray = [];
+          for (const key in result.statsObj) {
+            if (Object.prototype.hasOwnProperty.call(result.statsObj, key)) {
+              statsArray.push(result.statsObj[key]);
+            }
+          }
           setStats({
             totalRevenue: result.revenue,
             totalProfit: result.profit,
-            productStats: Object.values(result.statsObj),
+            productStats: statsArray,
           });
           setIsCalculating(false);
         }
@@ -306,10 +312,16 @@ const useDashboardLogic = ({ products, orders, rangeMode = "dashboard" }) => {
       }
 
       if (!isCancelled) {
+        const statsArray = [];
+        for (const key in currentStats.statsObj) {
+          if (Object.prototype.hasOwnProperty.call(currentStats.statsObj, key)) {
+            statsArray.push(currentStats.statsObj[key]);
+          }
+        }
         setStats({
           totalRevenue: currentStats.revenue,
           totalProfit: currentStats.profit,
-          productStats: Object.values(currentStats.statsObj),
+          productStats: statsArray,
         });
         setIsCalculating(false);
       }
