@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import SheetModal from "../../components/modals/SheetModal";
 import PaidStamp from "../common/PaidStamp";
 import { formatNumber } from "../../utils/formatters/formatUtils";
@@ -24,6 +24,17 @@ const OrderDetailModal = ({ order, products, onClose, getOrderStatusInfo }) => {
 
   // Giữ lại dữ liệu cũ để animation đóng vẫn hiển thị nội dung
   const cachedOrder = useModalCache(order, Boolean(order));
+
+  // Tối ưu hoá: Tạo Map để lookup product với độ phức tạp O(1) thay vì O(N) với .find() trong render loop
+  const productMap = useMemo(() => {
+    const map = new Map();
+    if (products) {
+      for (const p of products) {
+        map.set(p.id, p);
+      }
+    }
+    return map;
+  }, [products]);
 
   if (!cachedOrder) return null;
 
@@ -184,9 +195,8 @@ const OrderDetailModal = ({ order, products, onClose, getOrderStatusInfo }) => {
         {/* Danh sách sản phẩm */}
         <div className="space-y-3">
           {cachedOrder.items.map((item, index) => {
-            const product = products?.find(
-              (p) => p.id === item.productId || p.id === item.id,
-            );
+            const product =
+              productMap.get(item.productId) || productMap.get(item.id);
             const displayName = product ? product.name : item.name;
 
             return (
