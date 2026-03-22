@@ -2,6 +2,9 @@ import React, { useState, useMemo, useRef, useLayoutEffect } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 
+const MONTHS = new Array(12);
+for (let i = 0; i < 12; i++) MONTHS[i] = i;
+
 const CustomCalendar = ({
   mode = "single", // 'single' | 'range'
   selectedDate, // Date | null (cho chế độ single)
@@ -109,7 +112,14 @@ const CustomCalendar = ({
   // Tạo danh sách năm cuộn được từ 1900 đến 2100 hoặc +/- 50 năm quanh viewDate
   const rangeYears = useMemo(
     () =>
-      Array.from({ length: 101 }, (_, i) => viewDate.getFullYear() - 50 + i),
+      (() => {
+        const years = new Array(101);
+        const startYear = viewDate.getFullYear() - 50;
+        for (let i = 0; i < 101; i++) {
+          years[i] = startYear + i;
+        }
+        return years;
+      })(),
     [viewDate],
   );
 
@@ -144,7 +154,7 @@ const CustomCalendar = ({
                 ref={setMonthListRef}
                 className="overflow-y-auto overscroll-contain border-r border-rose-100 pr-1 h-full relative"
               >
-                {Array.from({ length: 12 }, (_, i) => i).map((m) => (
+                {MONTHS.map((m) => (
                   <button
                     key={m}
                     onClick={() => handleMonthSelect(m)}
