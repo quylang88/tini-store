@@ -4,6 +4,10 @@ import {
   resolveWarehouseKey,
 } from "../inventory/warehouseUtils";
 import { normalizeString } from "../formatters/formatUtils";
+import {
+  matchesAllSearchTerms,
+  parseSearchTerms,
+} from "../common/searchUtils";
 
 export const getOrderDisplayName = (order) => {
   // Nếu là bán tại kho thì hiển thị rõ "Tại kho: <địa điểm>" để nhận biết nhanh.
@@ -28,11 +32,7 @@ export const getOrderDisplayName = (order) => {
   return [name, shortAddress].filter(Boolean).join(" • ");
 };
 
-export const parseOrderSearchTerms = (query) =>
-  String(query || "")
-    .split(",")
-    .map((term) => normalizeString(term))
-    .filter(Boolean);
+export const parseOrderSearchTerms = (query) => parseSearchTerms(query);
 
 export const orderMatchesSearchTerms = (order, searchTerms = []) => {
   if (!searchTerms.length) return true;
@@ -44,7 +44,5 @@ export const orderMatchesSearchTerms = (order, searchTerms = []) => {
     ) || []),
   ].filter(Boolean);
 
-  return searchTerms.every((term) =>
-    searchableFields.some((field) => field.includes(term)),
-  );
+  return matchesAllSearchTerms(searchableFields, searchTerms);
 };

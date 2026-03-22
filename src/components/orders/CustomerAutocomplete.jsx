@@ -1,6 +1,10 @@
 import React, { useState, useEffect, useRef } from "react";
 import { User, MapPin, ShoppingBag } from "lucide-react";
 import { normalizeString } from "../../utils/formatters/formatUtils";
+import {
+  matchesAnySearchTerms,
+  parseSearchTerms,
+} from "../../utils/common/searchUtils";
 
 const CustomerAutocomplete = ({
   value,
@@ -20,9 +24,14 @@ const CustomerAutocomplete = ({
   // dùng vòng lặp for...of để dừng sớm khi đủ 3 kết quả (O(M), với M là vị trí kết quả thứ 3).
   let suggestions = [];
   if (value && value.trim().length > 0) {
-    const normalizedSearch = normalizeString(value);
+    const searchTerms = parseSearchTerms(value);
     for (const c of customers) {
-      if (normalizeString(c.name).includes(normalizedSearch)) {
+      const normalizedFields = [
+        normalizeString(c.name),
+        ...(c.addresses || []).map((address) => normalizeString(address)),
+      ];
+
+      if (matchesAnySearchTerms(normalizedFields, searchTerms)) {
         suggestions.push(c);
         if (suggestions.length === 3) break;
       }
