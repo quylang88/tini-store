@@ -5,6 +5,30 @@ import ScrollableTabs from "./ScrollableTabs";
 import { motion, AnimatePresence } from "framer-motion";
 import { getWarehouses } from "../../utils/inventory/warehouseUtils";
 
+// Cấu hình kho mặc định (nếu không được cung cấp)
+// Tối ưu hóa: Khởi tạo tĩnh mảng tabs một lần để tránh tái cấp phát bộ nhớ.
+const DEFAULT_WAREHOUSE_TABS = (() => {
+  const warehouses = getWarehouses();
+  const hasAll = warehouses.some((w) => w.key === "all");
+
+  const tabs = new Array(
+    hasAll ? warehouses.length : warehouses.length + 1,
+  );
+  let offset = 0;
+
+  if (!hasAll) {
+    tabs[0] = { key: "all", label: "Tất cả" };
+    offset = 1;
+  }
+
+  for (let i = 0; i < warehouses.length; i++) {
+    const w = warehouses[i];
+    tabs[i + offset] = { key: w.key, label: w.label };
+  }
+
+  return tabs;
+})();
+
 const ProductFilterHeader = memo(
   ({
     // Tìm kiếm
@@ -35,28 +59,10 @@ const ProductFilterHeader = memo(
     isSelectionMode,
   }) => {
     // Cấu hình kho mặc định (nếu không được cung cấp)
-    // Tối ưu hóa: Sử dụng vòng lặp for...of thay vì map và spread để tránh tạo mảng trung gian.
+    // Tối ưu hóa: Trả về mảng tĩnh để tránh tái cấp phát bộ nhớ.
     const finalWarehouseTabs = useMemo(() => {
       if (warehouseTabs) return warehouseTabs;
-      const warehouses = getWarehouses();
-      const hasAll = warehouses.some((w) => w.key === "all");
-
-      const tabs = new Array(
-        hasAll ? warehouses.length : warehouses.length + 1,
-      );
-      let offset = 0;
-
-      if (!hasAll) {
-        tabs[0] = { key: "all", label: "Tất cả" };
-        offset = 1;
-      }
-
-      for (let i = 0; i < warehouses.length; i++) {
-        const w = warehouses[i];
-        tabs[i + offset] = { key: w.key, label: w.label };
-      }
-
-      return tabs;
+      return DEFAULT_WAREHOUSE_TABS;
     }, [warehouseTabs]);
 
     // Cấu hình danh mục (Thống nhất)
