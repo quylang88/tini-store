@@ -1,6 +1,7 @@
 import { useState, useCallback } from "react";
 import useOrderListLogic from "./useOrderListLogic";
 import useOrderCreateLogic from "./useOrderCreateLogic";
+import useDebounce from "../core/useDebounce";
 
 const useOrdersLogic = ({
   products,
@@ -12,6 +13,8 @@ const useOrdersLogic = ({
   setCustomers,
 }) => {
   const [view, setView] = useState("list");
+  const [orderListSearchTerm, setOrderListSearchTerm] = useState("");
+  const debouncedOrderListSearchTerm = useDebounce(orderListSearchTerm, 200);
 
   // Các modal dùng chung (global level cho màn hình Orders)
   const [confirmModal, setConfirmModal] = useState(null);
@@ -79,6 +82,9 @@ const useOrdersLogic = ({
     // List Logic Exposure
     selectedOrder: listLogic.selectedOrder,
     setSelectedOrder: listLogic.setSelectedOrder,
+    orderListSearchTerm,
+    setOrderListSearchTerm,
+    debouncedOrderListSearchTerm,
     isMergeMode: listLogic.isMergeMode,
     selectedOrderIds: listLogic.selectedOrderIds,
     mergeAnchorOrder: listLogic.mergeAnchorOrder,

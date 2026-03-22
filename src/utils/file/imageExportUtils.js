@@ -3,6 +3,7 @@ import {
   estimateWrappedLineCount,
   paginateByBudget,
 } from "./orderExportUtils";
+import { getExportContacts } from "./exportContactInfo";
 
 /**
  * Loads an image from a source (URL, Base64, Blob) and returns an HTMLImageElement.
@@ -322,6 +323,75 @@ const drawWrappedText = (ctx, text, x, y, maxWidth, lineHeight) => {
   return y + lines.length * lineHeight;
 };
 
+const estimateContactStripHeight = () =>
+  getExportContacts().length > 0 ? 84 : 0;
+
+const drawContactPills = (ctx, startY, canvasWidth) => {
+  const contacts = getExportContacts();
+  if (!contacts.length) return startY;
+
+  const gap = 16;
+  const pillHeight = 52;
+  const iconSize = 28;
+  const pills = contacts.map((contact) => {
+    const title = contact.title.toUpperCase();
+    const value = contact.value;
+    ctx.font =
+      "bold 13px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
+    const titleWidth = ctx.measureText(title).width;
+    ctx.font =
+      "bold 18px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
+    const valueWidth = ctx.measureText(value).width;
+    const width = Math.max(240, 68 + Math.max(titleWidth, valueWidth) + 34);
+
+    return { ...contact, width };
+  });
+
+  const totalWidth =
+    pills.reduce((sum, pill) => sum + pill.width, 0) + gap * (pills.length - 1);
+  let currentX = Math.max(40, (canvasWidth - totalWidth) / 2);
+
+  pills.forEach((pill) => {
+    ctx.fillStyle = "#fff7f8";
+    ctx.strokeStyle = "#fecdd3";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.roundRect(currentX, startY, pill.width, pillHeight, 26);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = pill.accent;
+    ctx.beginPath();
+    ctx.arc(currentX + 28, startY + pillHeight / 2, iconSize / 2, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = "#ffffff";
+    ctx.textAlign = "center";
+    ctx.font =
+      `bold ${pill.key === "facebook" ? 18 : 15}px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif`;
+    ctx.fillText(
+      pill.key === "facebook" ? "f" : "Z",
+      currentX + 28,
+      startY + pillHeight / 2 + 6,
+    );
+
+    ctx.textAlign = "left";
+    ctx.fillStyle = "#be123c";
+    ctx.font =
+      "bold 13px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
+    ctx.fillText(pill.title.toUpperCase(), currentX + 54, startY + 20);
+
+    ctx.fillStyle = "#0f172a";
+    ctx.font =
+      "bold 18px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
+    ctx.fillText(pill.value, currentX + 54, startY + 40);
+
+    currentX += pill.width + gap;
+  });
+
+  return startY + pillHeight + 20;
+};
+
 const getOrderImageMetaRows = (exportData, pageIndex, totalPages) => {
   const rows = [
     `${exportData.partyLabel}: ${exportData.partyValue}`,
@@ -353,7 +423,7 @@ const estimateOrderImageHeaderHeight = (exportData) => {
     0,
   );
 
-  return 300 + wrappedLineCount * 34;
+  return 220 + wrappedLineCount * 28 + estimateContactStripHeight();
 };
 
 const getOrderImageItemHeight = (item) => {
@@ -361,7 +431,7 @@ const getOrderImageItemHeight = (item) => {
     0,
     estimateWrappedLineCount(item.name, 16) - 1,
   );
-  return 300 + extraNameLines * 50;
+  return 220 + extraNameLines * 36;
 };
 
 const preloadOrderImages = async (items) => {
@@ -386,10 +456,10 @@ const renderOrderImagePage = async ({
   const CANVAS_WIDTH = 1125;
   const PADDING = 40;
   const HEADER_HEIGHT = estimateOrderImageHeaderHeight(exportData);
-  const ITEM_IMAGE_SIZE = 250;
-  const ITEM_PADDING = 25;
-  const CONTINUATION_FOOTER_HEIGHT = 100;
-  const FINAL_FOOTER_HEIGHT = 180;
+  const ITEM_IMAGE_SIZE = 180;
+  const ITEM_PADDING = 20;
+  const CONTINUATION_FOOTER_HEIGHT = 80;
+  const FINAL_FOOTER_HEIGHT = 140;
   const footerHeight =
     pageIndex === totalPages - 1
       ? FINAL_FOOTER_HEIGHT
@@ -417,28 +487,30 @@ const renderOrderImagePage = async ({
   let currentY = PADDING;
 
   if (logoImg) {
-    const logoHeight = 160;
+    const logoHeight = 120;
     const logoWidth = (logoImg.width / logoImg.height) * logoHeight;
     const maxLogoWidth = CANVAS_WIDTH - PADDING * 2;
     const finalLogoWidth = Math.min(logoWidth, maxLogoWidth);
     const finalLogoHeight = (finalLogoWidth / logoWidth) * logoHeight;
     const logoX = (CANVAS_WIDTH - finalLogoWidth) / 2;
     ctx.drawImage(logoImg, logoX, currentY, finalLogoWidth, finalLogoHeight);
-    currentY += finalLogoHeight + 24;
+    currentY += finalLogoHeight + 16;
   } else {
-    currentY += 90;
+    currentY += 60;
   }
 
   ctx.textAlign = "center";
   ctx.font =
-    "bold 48px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
+    "bold 40px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
   ctx.fillStyle = COLOR_TEXT_PRICE;
   ctx.fillText(
     exportData.isMerged ? "ĐƠN HÀNG GỘP" : "ĐƠN HÀNG",
     CANVAS_WIDTH / 2,
-    currentY + 40,
+    currentY + 34,
   );
-  currentY += 72;
+  currentY += 56;
+
+  currentY = drawContactPills(ctx, currentY, CANVAS_WIDTH);
 
   ctx.strokeStyle = COLOR_TEXT_PRICE;
   ctx.lineWidth = 4;
@@ -446,12 +518,12 @@ const renderOrderImagePage = async ({
   ctx.moveTo(PADDING, currentY);
   ctx.lineTo(CANVAS_WIDTH - PADDING, currentY);
   ctx.stroke();
-  currentY += 36;
+  currentY += 24;
 
   ctx.textAlign = "left";
   ctx.fillStyle = COLOR_TEXT_PRIMARY;
   ctx.font =
-    "28px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
+    "24px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
 
   const metaRows = getOrderImageMetaRows(exportData, pageIndex, totalPages);
   metaRows.forEach((row) => {
@@ -461,12 +533,12 @@ const renderOrderImagePage = async ({
       PADDING,
       currentY,
       CANVAS_WIDTH - PADDING * 2,
-      34,
+      28,
     );
-    currentY += 8;
+    currentY += 4;
   });
 
-  currentY += 16;
+  currentY += 12;
 
   pageItems.forEach((item, index) => {
     const itemHeight = getOrderImageItemHeight(item);
@@ -501,25 +573,25 @@ const renderOrderImagePage = async ({
 
     const textX = PADDING + ITEM_IMAGE_SIZE + 40;
     const maxTextWidth = CANVAS_WIDTH - textX - PADDING;
-    let textY = itemY + ITEM_PADDING + 48;
+    let textY = itemY + ITEM_PADDING + 34;
 
     ctx.textAlign = "left";
     ctx.font =
-      "bold 40px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
+      "bold 34px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
     ctx.fillStyle = COLOR_TEXT_PRIMARY;
-    textY = drawWrappedText(ctx, item.name, textX, textY, maxTextWidth, 46) + 10;
+    textY = drawWrappedText(ctx, item.name, textX, textY, maxTextWidth, 38) + 8;
 
     ctx.font =
-      "bold 45px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
+      "bold 38px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
     ctx.fillStyle = COLOR_TEXT_PRICE;
     ctx.fillText(`${formatNumber(item.price)}đ`, textX, textY);
-    textY += 52;
+    textY += 42;
 
     ctx.font =
-      "30px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
+      "26px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
     ctx.fillStyle = COLOR_TEXT_META;
     ctx.fillText(`Số lượng: ${item.quantity}`, textX, textY);
-    textY += 42;
+    textY += 34;
     ctx.fillText(`Thành tiền: ${formatNumber(item.total)}đ`, textX, textY);
 
     if (index < pageItems.length - 1) {
@@ -546,28 +618,28 @@ const renderOrderImagePage = async ({
   ctx.setLineDash([]);
 
   if (pageIndex === totalPages - 1) {
-    const textY = footerStartY + 72;
+    const textY = footerStartY + 56;
     ctx.textAlign = "left";
     ctx.font =
-      "bold 38px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
+      "bold 32px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
     ctx.fillStyle = COLOR_TEXT_PRIMARY;
     ctx.fillText(`TỔNG SL: ${exportData.totalQuantity} sp`, PADDING, textY);
 
     ctx.textAlign = "right";
     ctx.font =
-      "bold 58px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
+      "bold 48px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
     ctx.fillStyle = COLOR_TEXT_PRICE;
     ctx.fillText(
       `${formatNumber(exportData.totalAmount)}đ`,
       CANVAS_WIDTH - PADDING,
-      textY + 12,
+      textY + 10,
     );
   } else {
     ctx.textAlign = "center";
     ctx.font =
-      "32px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
+      "28px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
     ctx.fillStyle = COLOR_TEXT_META;
-    ctx.fillText("Tiếp trang sau", CANVAS_WIDTH / 2, footerStartY + 60);
+    ctx.fillText("Tiếp trang sau", CANVAS_WIDTH / 2, footerStartY + 50);
   }
 
   return new Promise((resolve) => {
@@ -580,7 +652,7 @@ const renderOrderImagePage = async ({
 export const generateOrderImages = async (exportData) => {
   if (!exportData) return [];
 
-  const MAX_CANVAS_HEIGHT = 3600;
+  const MAX_CANVAS_HEIGHT = 1950;
   const headerHeight = estimateOrderImageHeaderHeight(exportData);
   const availableItemsBudget = Math.max(320, MAX_CANVAS_HEIGHT - headerHeight - 200);
   const pages = paginateByBudget(

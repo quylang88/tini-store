@@ -82,18 +82,15 @@ const ProductFilterHeader = memo(
     }, [categories]);
 
     return (
-      <div className={`bg-rose-50/90 backdrop-blur ${className}`}>
-        {/* Hàng thanh tìm kiếm */}
-        <div className="px-3 pt-3 pb-1">
-          <SearchBar
-            searchTerm={searchTerm}
-            onSearchChange={onSearchChange}
-            onClearSearch={onClearSearch}
-            placeholder={placeholder}
-            onToggleSelect={onToggleSelect}
-            isSelectionMode={isSelectionMode}
-          />
-        </div>
+      <div className={className}>
+        <SearchBar
+          searchTerm={searchTerm}
+          onSearchChange={onSearchChange}
+          onClearSearch={onClearSearch}
+          placeholder={placeholder}
+          onToggleSelect={onToggleSelect}
+          isSelectionMode={isSelectionMode}
+        />
 
         {/* Khu vực bộ lọc mở rộng (Kho + Danh mục) */}
         {enableFilters && (
@@ -106,7 +103,7 @@ const ProductFilterHeader = memo(
                 transition={{ duration: 0.3, ease: "easeInOut" }}
                 className="overflow-hidden"
               >
-                <div className="px-3 pb-3 pt-3 space-y-3">
+                <div className="bg-rose-50/90 backdrop-blur px-3 pb-3 pt-3 space-y-3">
                   {/* Tab kho */}
                   <div className="flex items-center gap-2">
                     {warehouseLabel && (

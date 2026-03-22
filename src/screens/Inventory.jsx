@@ -17,6 +17,7 @@ import { isScrollNearBottom } from "../utils/ui/scrollUtils";
 import { generateProductListImage } from "../utils/file/imageExportUtils"; // Added
 import { shareOrDownloadFile } from "../utils/file/fileUtils"; // Added
 import LoadingOverlay from "../components/common/LoadingOverlay"; // Added
+import SelectionActionBar from "../components/common/SelectionActionBar";
 
 const Inventory = ({
   products,
@@ -42,12 +43,7 @@ const Inventory = ({
       setTabBarVisible,
       searchHideThreshold: 140,
       showTabBarOnlyAtTop: true,
-      // Override scroll callback để ẩn tabBar khi đang ở chế độ chọn
-      onScrollCallback: useCallback(() => {
-        if (isSelectionMode) {
-          setTabBarVisible(false);
-        }
-      }, [isSelectionMode, setTabBarVisible]),
+      lockTabBarHidden: isSelectionMode,
     });
 
   const {
@@ -225,7 +221,9 @@ const Inventory = ({
         </motion.div>
 
         <div
-          className="flex-1 overflow-y-auto min-h-0 pt-[56px] overscroll-y-contain pb-[80px]" // Thêm padding dưới
+          className={`flex-1 overflow-y-auto min-h-0 pt-[56px] overscroll-y-contain ${
+            isSelectionMode ? "pb-[11rem]" : "pb-[80px]"
+          }`}
           onScroll={(e) => {
             // handleScroll vẫn quản lý shadow header
             handleScroll(e);
@@ -259,43 +257,31 @@ const Inventory = ({
         </div>
       </div>
 
-      {/* Thanh tác vụ chọn */}
-      {isSelectionMode && (
-        <motion.div
-          initial={{ y: 100 }}
-          animate={{ y: 0 }}
-          exit={{ y: 100 }}
-          className="absolute bottom-0 left-0 right-0 z-50 bg-white border-t border-rose-200 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] px-4 py-3 pb-[calc(12px+env(safe-area-inset-bottom))]"
-        >
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className="font-bold text-lg text-rose-700">
-                {selectedProductIds.size}
-              </span>
-              <span className="text-sm text-gray-500">đã chọn</span>
-            </div>
-            <div className="flex gap-3">
-              <button
-                onClick={toggleSelectionMode}
-                className="px-4 py-2 rounded-lg bg-gray-100 text-gray-700 font-medium active:bg-gray-200 transition-colors flex items-center gap-2"
-              >
-                <X size={18} /> Huỷ
-              </button>
-              <button
-                onClick={handleExportImage}
-                disabled={selectedProductIds.size === 0}
-                className={`px-4 py-2 rounded-lg font-medium flex items-center gap-2 transition-colors ${
-                  selectedProductIds.size === 0
-                    ? "bg-rose-200 text-rose-400 cursor-not-allowed"
-                    : "bg-rose-600 text-white shadow-lg shadow-rose-200 active:scale-95"
-                }`}
-              >
-                <ImageIcon size={18} /> Xuất ảnh
-              </button>
-            </div>
-          </div>
-        </motion.div>
-      )}
+      <SelectionActionBar
+        visible={isSelectionMode}
+        count={selectedProductIds.size}
+        title={
+          selectedProductIds.size > 0
+            ? "Sẵn sàng tạo ảnh báo giá"
+            : "Chọn sản phẩm để xuất ảnh"
+        }
+        subtitle={
+          selectedProductIds.size > 0
+            ? "Giữ nguyên lựa chọn sau khi xuất để thao tác tiếp."
+            : "Bạn có thể chọn một hoặc nhiều sản phẩm trong cùng danh sách."
+        }
+        secondaryAction={{
+          label: "Thoát",
+          icon: X,
+          onClick: toggleSelectionMode,
+        }}
+        primaryAction={{
+          label: "Xuất ảnh",
+          icon: ImageIcon,
+          onClick: handleExportImage,
+          disabled: selectedProductIds.size === 0,
+        }}
+      />
 
       {/* Loading Overlay */}
       {isExporting && <LoadingOverlay text="Đang tạo ảnh báo giá..." />}

@@ -10,6 +10,7 @@ import { useState, useRef, useCallback } from "react";
  * @param {number} config.searchHideThreshold - Ngưỡng tùy chỉnh để ẩn thanh tìm kiếm (mặc định 60).
  * @param {number} config.tabBarHideThreshold - Ngưỡng cuộn tối thiểu trước khi ẩn TabBar (mặc định 100).
  * @param {boolean} config.showTabBarOnlyAtTop - Nếu true, chỉ hiện lại TabBar khi cuộn lên đến đỉnh trang (mặc định false).
+ * @param {boolean} config.lockTabBarHidden - Nếu true, luôn giữ TabBar bị ẩn bất kể hướng cuộn.
  * @returns {Object} { isSearchVisible, isAddButtonVisible, handleScroll, isScrolled }
  */
 const useScrollHandling = ({
@@ -18,6 +19,7 @@ const useScrollHandling = ({
   searchHideThreshold = 60,
   tabBarHideThreshold = 100,
   showTabBarOnlyAtTop = false,
+  lockTabBarHidden = false,
 } = {}) => {
   const [isSearchVisible, setSearchVisible] = useState(true); // Cho Header/Search
   const [isAddButtonVisible, setAddButtonVisible] = useState(true); // Cho FAB
@@ -46,6 +48,13 @@ const useScrollHandling = ({
 
       // Bỏ qua khi nảy ở đáy trang
       const isNearBottom = currentScrollTop + clientHeight > scrollHeight - 50;
+
+      if (lockTabBarHidden) {
+        setAddButtonVisible(false);
+        if (setTabBarVisible) setTabBarVisible(false);
+        lastScrollTop.current = currentScrollTop;
+        return;
+      }
 
       // Kiểm tra ngưỡng/debounce
       if (Math.abs(diff) < scrollThreshold) return;
@@ -111,6 +120,7 @@ const useScrollHandling = ({
       searchHideThreshold,
       tabBarHideThreshold,
       showTabBarOnlyAtTop,
+      lockTabBarHidden,
     ],
   );
 

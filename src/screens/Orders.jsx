@@ -28,6 +28,9 @@ const Orders = ({
     cart,
     selectedOrder,
     setSelectedOrder,
+    orderListSearchTerm,
+    setOrderListSearchTerm,
+    debouncedOrderListSearchTerm,
     isReviewOpen,
     setIsReviewOpen,
     orderComment,
@@ -193,6 +196,9 @@ const Orders = ({
           toggleOrderSelection={toggleOrderSelection}
           getOrderMergeEligibility={getOrderMergeEligibility}
           clearMergeSelection={handleClearMergeSelection}
+          searchTerm={orderListSearchTerm}
+          setSearchTerm={setOrderListSearchTerm}
+          debouncedSearchTerm={debouncedOrderListSearchTerm}
           onOpenMergeExport={() => {
             if (selectedMergeOrders.length >= 2) {
               setIsMergeExportOpen(true);

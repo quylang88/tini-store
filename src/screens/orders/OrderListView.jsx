@@ -1,19 +1,17 @@
-import React, { useMemo, useEffect } from "react";
+import React, { useMemo, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
-import {
-  ShoppingCart,
-  Plus,
-  CheckSquare,
-  ListChecks,
-  FileStack,
-  X,
-} from "lucide-react";
+import { ShoppingCart, Plus, FileStack, X } from "lucide-react";
 import AppHeader from "../../components/common/AppHeader";
 import useScrollHandling from "../../hooks/ui/useScrollHandling";
 import OrderListItem from "../../components/orders/OrderListItem";
 import usePagination from "../../hooks/ui/usePagination";
 import { isScrollNearBottom } from "../../utils/ui/scrollUtils";
-import ToggleButton from "../../components/button/ToggleButton";
+import SelectionActionBar from "../../components/common/SelectionActionBar";
+import SearchBar from "../../components/common/SearchBar";
+import {
+  orderMatchesSearchTerms,
+  parseOrderSearchTerms,
+} from "../../utils/orders/orderUtils";
 
 // Giao diện danh sách đơn tách riêng để dễ quản lý và thêm nút huỷ đơn
 const OrderListView = ({
@@ -34,12 +32,19 @@ const OrderListView = ({
   getOrderMergeEligibility,
   clearMergeSelection,
   onOpenMergeExport,
+  searchTerm,
+  setSearchTerm,
+  debouncedSearchTerm,
 }) => {
   // Logic scroll ẩn/hiện UI sử dụng hook mới
-  const { isAddButtonVisible, isScrolled, handleScroll } = useScrollHandling({
-    mode: "simple",
-    setTabBarVisible,
-  });
+  const { isSearchVisible, isAddButtonVisible, isScrolled, handleScroll } =
+    useScrollHandling({
+      mode: "staged",
+      setTabBarVisible,
+      searchHideThreshold: 140,
+      showTabBarOnlyAtTop: true,
+      lockTabBarHidden: isMergeMode,
+    });
 
   const handleToggleMergeMode = () => {
     const nextIsMergeMode = !isMergeMode;
@@ -87,6 +92,11 @@ const OrderListView = ({
     }
   }, [isActive, isMergeMode, setTabBarVisible]);
 
+  const orderSearchTerms = useMemo(
+    () => parseOrderSearchTerms(debouncedSearchTerm),
+    [debouncedSearchTerm],
+  );
+
   // Memoize danh sách đơn hàng đã sắp xếp để tránh sắp xếp lại mỗi lần render
   const sortedOrders = useMemo(() => {
     return [...orders].sort((a, b) => {
@@ -104,104 +114,125 @@ const OrderListView = ({
     });
   }, [orders]);
 
+  const filteredOrders = useMemo(
+    () =>
+      sortedOrders.filter((order) =>
+        orderMatchesSearchTerms(order, orderSearchTerms),
+      ),
+    [orderSearchTerms, sortedOrders],
+  );
+
   const {
     visibleData: visibleOrders,
     loadMore,
     hasMore,
-  } = usePagination(sortedOrders, {
+  } = usePagination(filteredOrders, {
     pageSize: 20,
     // Danh sách đơn hàng giữ nguyên vị trí cuộn ngay cả khi cập nhật, trừ khi chúng ta quyết định khác
-    resetDeps: [],
+    resetDeps: [debouncedSearchTerm],
   });
 
-  return (
-    <div className="relative h-full bg-transparent">
-      <AppHeader
-        isScrolled={isScrolled}
-        rightSlot={
-          <ToggleButton
-            isActive={isMergeMode}
-            onClick={handleToggleMergeMode}
-            activeIcon={CheckSquare}
-            inactiveIcon={ListChecks}
-            label={
-              isMergeMode ? "Thoát chế độ gộp đơn" : "Bật chế độ gộp đơn"
-            }
-          />
-        }
-      />
+  const handleSearchChange = useCallback(
+    (event) => setSearchTerm(event.target.value),
+    [setSearchTerm],
+  );
 
-      <div
-        className={`h-full overflow-y-auto p-3 pt-[calc(80px+env(safe-area-inset-top))] ${
-          isMergeMode ? "pb-36" : "pb-24"
-        } space-y-3 min-h-0 overscroll-y-contain`}
-        onScroll={(e) => {
-          handleScroll(e);
-          if (isScrollNearBottom(e.target) && hasMore) {
-            loadMore();
-          }
-        }}
-      >
-        {visibleOrders.map((order) => (
-          <OrderListItem
-            key={order.id}
-            order={order}
-            getOrderStatusInfo={getOrderStatusInfo}
-            handleTogglePaid={handleTogglePaid}
-            handleEditOrder={handleEditOrder}
-            handleCancelOrder={handleCancelOrder}
-            onSelectOrder={onSelectOrder}
-            isMergeMode={isMergeMode}
-            isSelected={selectedOrderIds.has(order.id)}
-            mergeEligibility={getOrderMergeEligibility(order)}
-            onToggleOrderSelection={toggleOrderSelection}
+  const handleClearSearch = useCallback(
+    () => setSearchTerm(""),
+    [setSearchTerm],
+  );
+
+  return (
+    <div className="relative h-full bg-transparent flex flex-col">
+      <AppHeader className="z-20" isScrolled={isScrolled} />
+
+      <div className="flex flex-col h-full pt-[calc(72px+env(safe-area-inset-top))] relative">
+        <motion.div
+          className="absolute top-[calc(72px+env(safe-area-inset-top))] left-0 right-0 z-10 bg-amber-50"
+          initial={{ y: 0 }}
+          animate={{ y: isSearchVisible ? 0 : -80 }}
+          transition={{ duration: 0.3 }}
+        >
+          <SearchBar
+            searchTerm={searchTerm}
+            onSearchChange={handleSearchChange}
+            onClearSearch={handleClearSearch}
+            placeholder="Tìm tên kh, sp... ngăn cách bằng dấu phẩy"
+            onToggleSelect={handleToggleMergeMode}
+            isSelectionMode={isMergeMode}
           />
-        ))}
-        {orders.length === 0 && (
-          <div className="flex flex-col items-center justify-center mt-20 text-gray-500">
-            <ShoppingCart size={48} className="mb-2 opacity-20" />
-            <p>Chưa có đơn hàng nào</p>
+        </motion.div>
+
+        <div
+          className={`flex-1 overflow-y-auto min-h-0 pt-[56px] overscroll-y-contain px-3 ${
+            isMergeMode ? "pb-[11rem]" : "pb-24"
+          }`}
+          onScroll={(e) => {
+            handleScroll(e);
+            if (isScrollNearBottom(e.target) && hasMore) {
+              loadMore();
+            }
+          }}
+        >
+          <div className="space-y-3 pb-3">
+            {visibleOrders.map((order) => (
+              <OrderListItem
+                key={order.id}
+                order={order}
+                getOrderStatusInfo={getOrderStatusInfo}
+                handleTogglePaid={handleTogglePaid}
+                handleEditOrder={handleEditOrder}
+                handleCancelOrder={handleCancelOrder}
+                onSelectOrder={onSelectOrder}
+                isMergeMode={isMergeMode}
+                isSelected={selectedOrderIds.has(order.id)}
+                mergeEligibility={getOrderMergeEligibility(order)}
+                onToggleOrderSelection={toggleOrderSelection}
+              />
+            ))}
+
+            {orders.length === 0 && (
+              <div className="flex flex-col items-center justify-center mt-20 text-gray-500">
+                <ShoppingCart size={48} className="mb-2 opacity-20" />
+                <p>Chưa có đơn hàng nào</p>
+              </div>
+            )}
+
+            {orders.length > 0 && filteredOrders.length === 0 && (
+              <div className="flex flex-col items-center justify-center mt-20 text-gray-500">
+                <ShoppingCart size={48} className="mb-2 opacity-20" />
+                <p>Không tìm thấy đơn phù hợp</p>
+              </div>
+            )}
           </div>
-        )}
+        </div>
       </div>
 
-      {isMergeMode && (
-        <motion.div
-          initial={{ y: 100 }}
-          animate={{ y: 0 }}
-          exit={{ y: 100 }}
-          className="absolute bottom-0 left-0 right-0 z-50 bg-white border-t border-rose-200 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] px-4 py-3 pb-[calc(12px+env(safe-area-inset-bottom))]"
-        >
-          <div className="flex items-center justify-between gap-3">
-            <div className="flex items-center gap-2">
-              <span className="font-bold text-lg text-rose-700">
-                {selectedOrderIds.size}
-              </span>
-              <span className="text-sm text-gray-500">đơn đã chọn</span>
-            </div>
-
-            <div className="flex gap-3">
-              <button
-                onClick={handleCancelMergeMode}
-                className="px-4 py-2 rounded-lg bg-gray-100 text-gray-700 font-medium active:bg-gray-200 transition-colors flex items-center gap-2"
-              >
-                <X size={18} /> Huỷ
-              </button>
-              <button
-                onClick={onOpenMergeExport}
-                disabled={selectedOrderIds.size < 2}
-                className={`px-4 py-2 rounded-lg font-medium flex items-center gap-2 transition-colors ${
-                  selectedOrderIds.size < 2
-                    ? "bg-rose-200 text-rose-400 cursor-not-allowed"
-                    : "bg-rose-600 text-white shadow-lg shadow-rose-200 active:scale-95"
-                }`}
-              >
-                <FileStack size={18} /> Xuất
-              </button>
-            </div>
-          </div>
-        </motion.div>
-      )}
+      <SelectionActionBar
+        visible={isMergeMode}
+        count={selectedOrderIds.size}
+        title={
+          selectedOrderIds.size >= 2
+            ? "Sẵn sàng xuất đơn gộp"
+            : "Chọn tối thiểu 2 đơn hợp lệ"
+        }
+        subtitle={
+          selectedOrderIds.size >= 2
+            ? "Xuất K80, A4 hoặc ảnh mà không tạo đơn mới."
+            : "Chỉ chọn các đơn chưa thanh toán, cùng khách hoặc cùng kho."
+        }
+        secondaryAction={{
+          label: "Thoát",
+          icon: X,
+          onClick: handleCancelMergeMode,
+        }}
+        primaryAction={{
+          label: "Xuất file",
+          icon: FileStack,
+          onClick: onOpenMergeExport,
+          disabled: selectedOrderIds.size < 2,
+        }}
+      />
     </div>
   );
 };
