@@ -188,27 +188,28 @@ const useDashboardLogic = ({ products, orders, rangeMode = "dashboard" }) => {
     });
   }, [paidOrders, rangeStart, rangeEnd]);
 
-  const totalRevenue = useMemo(
-    () => filteredPaidOrders.reduce((sum, order) => sum + order.total, 0),
-    [filteredPaidOrders],
-  );
+  // Gộp vòng lặp tính totalRevenue và totalProfit thành một pass duy nhất (O(N))
+  const { totalRevenue, totalProfit } = useMemo(() => {
+    let revenue = 0;
+    let profit = 0;
 
-  const totalProfit = useMemo(
-    () =>
-      filteredPaidOrders.reduce((sum, order) => {
-        // Ưu tiên dùng giá vốn trong đơn để không bị lệch khi giá vốn thay đổi
-        const orderProfit = order.items.reduce((itemSum, item) => {
-          const cost = Number.isFinite(item.cost)
-            ? item.cost
-            : costMap.get(item.productId) || 0;
-          return itemSum + (item.price - cost) * item.quantity;
-        }, 0);
-        // Trừ phí gửi vì đây là chi phí phát sinh của đơn
-        const shippingFee = order.shippingFee || 0;
-        return sum + orderProfit - shippingFee;
-      }, 0),
-    [filteredPaidOrders, costMap],
-  );
+    for (const order of filteredPaidOrders) {
+      revenue += order.total || 0;
+
+      let orderProfit = 0;
+      for (const item of order.items) {
+        const cost = Number.isFinite(item.cost)
+          ? item.cost
+          : costMap.get(item.productId) || 0;
+        orderProfit += (item.price - cost) * item.quantity;
+      }
+
+      const shippingFee = order.shippingFee || 0;
+      profit += orderProfit - shippingFee;
+    }
+
+    return { totalRevenue: revenue, totalProfit: profit };
+  }, [filteredPaidOrders, costMap]);
 
   const productStats = useMemo(() => {
     const stats = new Map();
