@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import SheetModal from "../../components/modals/SheetModal";
 import PaidStamp from "../common/PaidStamp";
 import { formatNumber } from "../../utils/formatters/formatUtils";
@@ -19,6 +19,28 @@ const OrderDetailModal = ({ order, products, onClose, getOrderStatusInfo }) => {
   // Giữ lại dữ liệu cũ để animation đóng vẫn hiển thị nội dung
   const cachedOrder = useModalCache(order, Boolean(order));
 
+  // Tối ưu hoá: Tạo lookup map O(1) thay vì O(N*M) .find()
+  // Phải đặt trước return null để tuân thủ hooks rule
+  const productMap = useMemo(() => {
+    if (!products) return new Map();
+    const map = new Map();
+    for (let i = 0; i < products.length; i++) {
+      map.set(products[i].id, products[i]);
+    }
+    return map;
+  }, [products]);
+
+  // Tối ưu hoá: Tính lợi nhuận ước tính bằng for...of để tránh callback allocation
+  const estimatedProfit = useMemo(() => {
+    if (!cachedOrder?.items) return 0;
+    let sum = 0;
+    for (const item of cachedOrder.items) {
+      const cost = item.cost || 0;
+      sum += (item.price - cost) * item.quantity;
+    }
+    return sum - (cachedOrder.shippingFee || 0);
+  }, [cachedOrder]);
+
   if (!cachedOrder) return null;
 
   const orderLabel = cachedOrder.orderNumber
@@ -30,13 +52,6 @@ const OrderDetailModal = ({ order, products, onClose, getOrderStatusInfo }) => {
   const warehouseLabel = getWarehouseLabel(
     resolveWarehouseKey(cachedOrder.warehouse) || getDefaultWarehouse().key,
   );
-
-  // Tính lợi nhuận ước tính (giống logic ở OrderListView)
-  const estimatedProfit =
-    cachedOrder.items.reduce((sum, item) => {
-      const cost = item.cost || 0;
-      return sum + (item.price - cost) * item.quantity;
-    }, 0) - (cachedOrder.shippingFee || 0);
 
   const handleExport = async () => {
     setIsExporting(true);
@@ -117,9 +132,8 @@ const OrderDetailModal = ({ order, products, onClose, getOrderStatusInfo }) => {
         {/* Danh sách sản phẩm */}
         <div className="space-y-3">
           {cachedOrder.items.map((item, index) => {
-            const product = products?.find(
-              (p) => p.id === item.productId || p.id === item.id,
-            );
+            const productId = item.productId || item.id;
+            const product = productMap.get(productId);
             const displayName = product ? product.name : item.name;
 
             return (
