@@ -233,18 +233,19 @@ export const analyzeInventory = (products = [], orders = []) => {
     }
   }
 
-  // Tìm sản phẩm sắp hết (<= 5) VÀ có bán được
-  const urgentProducts = products.filter((p) => {
-    const soldQty = salesMap[p.name] || 0;
-    return p.stock <= 5 && soldQty > 0;
-  });
-
-  // Trả về danh sách kèm thông tin bán hàng để contextBuilder format
-  const result = urgentProducts.map((p) => ({
-    name: p.name,
-    stock: p.stock,
-    soldLastMonth: salesMap[p.name] || 0,
-  }));
+  // Tối ưu hóa: Thay thế filter/map bằng một vòng lặp for...of duy nhất để giảm allocations mảng trung gian
+  const result = [];
+  for (const p of products) {
+    const soldLastMonth = salesMap[p.name] || 0;
+    // Tìm sản phẩm sắp hết (<= 5) VÀ có bán được
+    if (p.stock <= 5 && soldLastMonth > 0) {
+      result.push({
+        name: p.name,
+        stock: p.stock,
+        soldLastMonth,
+      });
+    }
+  }
 
   // Cập nhật cache
   if (canCache) {
