@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState } from "react";
 import SheetModal from "../../components/modals/SheetModal";
 import PaidStamp from "../common/PaidStamp";
 import { formatNumber } from "../../utils/formatters/formatUtils";
@@ -10,30 +10,14 @@ import {
 import { getOrderDisplayName } from "../../utils/orders/orderUtils";
 import useModalCache from "../../hooks/ui/useModalCache";
 import Button from "../../components/button/Button";
-import {
-  exportOrderToHTML,
-  exportOrdersToImages,
-} from "../../utils/file/fileUtils";
+import { exportOrderToHTML } from "../../utils/file/fileUtils";
 import LoadingOverlay from "../../components/common/LoadingOverlay";
-import { FileDown, Image as ImageIcon, Printer } from "lucide-react";
 
 // OrderDetailModal: Xem chi tiết đơn hàng (Chỉ xem) -> showCloseIcon={false}
 const OrderDetailModal = ({ order, products, onClose, getOrderStatusInfo }) => {
   const [isExporting, setIsExporting] = useState(false);
-  const [showExportMenu, setShowExportMenu] = useState(false);
-
   // Giữ lại dữ liệu cũ để animation đóng vẫn hiển thị nội dung
   const cachedOrder = useModalCache(order, Boolean(order));
-
-  // Tối ưu hoá: Xây dựng Map tra cứu sản phẩm O(1) để tránh find lồng nhau trong map
-  const productMap = useMemo(() => {
-    const map = new Map();
-    if (!products) return map;
-    for (const product of products) {
-      map.set(product.id, product);
-    }
-    return map;
-  }, [products]);
 
   if (!cachedOrder) return null;
 
@@ -47,105 +31,46 @@ const OrderDetailModal = ({ order, products, onClose, getOrderStatusInfo }) => {
     resolveWarehouseKey(cachedOrder.warehouse) || getDefaultWarehouse().key,
   );
 
-  // Tối ưu hoá: Tính lợi nhuận ước tính và tổng số lượng trong 1 vòng lặp for...of duy nhất
-  // Tránh việc lặp lại qua mảng items (O(N)) nhiều lần và giảm thiểu chi phí phân bổ callback của reduce()
+  // Tính lợi nhuận ước tính (giống logic ở OrderListView)
   let estimatedProfit = -(cachedOrder.shippingFee || 0);
-  let totalQuantity = 0;
-  for (const item of cachedOrder.items) {
-    const cost = item.cost || 0;
-    estimatedProfit += (item.price - cost) * item.quantity;
-    totalQuantity += item.quantity;
+  if (cachedOrder.items) {
+    for (const item of cachedOrder.items) {
+      const cost = item.cost || 0;
+      estimatedProfit += (item.price - cost) * item.quantity;
+    }
   }
 
-  const handleExport = async (format = "receipt") => {
+  const handleExport = async () => {
     setIsExporting(true);
     // Timeout nhỏ để đảm bảo UI loading kịp render trước khi hàm export nặng chạy
     await new Promise((resolve) => setTimeout(resolve, 300));
     try {
-      await exportOrderToHTML(cachedOrder, products, format);
+      await exportOrderToHTML(cachedOrder, products);
     } catch (error) {
-      console.error("Lỗi xuất file:", error);
+      console.error("Export error:", error);
       alert("Có lỗi khi xuất file");
     } finally {
       setIsExporting(false);
-      setShowExportMenu(false);
     }
   };
 
-  const handleExportImage = async () => {
-    setIsExporting(true);
-    await new Promise((resolve) => setTimeout(resolve, 300));
-    try {
-      await exportOrdersToImages([cachedOrder], products);
-    } catch (error) {
-      console.error("Lỗi xuất ảnh:", error);
-      alert("Có lỗi khi xuất ảnh");
-    } finally {
-      setIsExporting(false);
-      setShowExportMenu(false);
-    }
-  };
-
-  const footer = showExportMenu ? (
-    <div className="flex flex-col gap-2">
-      <div className="grid grid-cols-3 gap-2">
-        <Button
-          variant="softDanger" // Sử dụng variant mặc định và override class
-          size="sm"
-          onClick={() => handleExport("receipt")}
-          className="h-auto py-2 hover:bg-rose-100 text-rose-800 border-rose-300"
-        >
-          <div className="flex flex-col items-center gap-1">
-            <Printer size={18} /> <span className="text-[10px]">K80</span>
-          </div>
-        </Button>
-        <Button
-          variant="softDanger"
-          size="sm"
-          onClick={() => handleExport("a4")}
-          className="h-auto py-2 hover:bg-rose-100 text-rose-800 border-rose-300"
-        >
-          <div className="flex flex-col items-center gap-1">
-            <FileDown size={18} /> <span className="text-[10px]">A4</span>
-          </div>
-        </Button>
-        <Button
-          variant="softDanger"
-          size="sm"
-          onClick={handleExportImage}
-          className="h-auto py-2 hover:bg-rose-100 text-rose-800 border-rose-300"
-        >
-          <div className="flex flex-col items-center gap-1">
-            <ImageIcon size={18} /> <span className="text-[10px]">Ảnh</span>
-          </div>
-        </Button>
-      </div>
-      <Button
-        variant="danger"
-        size="sm"
-        onClick={() => setShowExportMenu(false)}
-        className="w-full"
-      >
-        Huỷ
-      </Button>
-    </div>
-  ) : (
-    <div className="grid grid-cols-2 gap-2">
+  const footer = (
+    <div className="flex gap-3">
       <Button
         variant="secondary"
         size="sm"
         onClick={onClose}
-        className="w-full"
+        className="flex-1"
       >
         Đóng
       </Button>
       <Button
         variant="primary"
         size="sm"
-        onClick={() => setShowExportMenu(true)}
-        className="w-full"
+        onClick={handleExport}
+        className="flex-1"
       >
-        Xuất / Chia sẻ
+        Xuất hoá đơn
       </Button>
     </div>
   );
@@ -194,8 +119,9 @@ const OrderDetailModal = ({ order, products, onClose, getOrderStatusInfo }) => {
         {/* Danh sách sản phẩm */}
         <div className="space-y-3">
           {cachedOrder.items.map((item, index) => {
-            const product =
-              productMap.get(item.productId) || productMap.get(item.id);
+            const product = products?.find(
+              (p) => p.id === item.productId || p.id === item.id,
+            );
             const displayName = product ? product.name : item.name;
 
             return (
@@ -257,12 +183,6 @@ const OrderDetailModal = ({ order, products, onClose, getOrderStatusInfo }) => {
             </>
           )}
           <div className="flex justify-between text-sm text-gray-500 mt-2 pt-2 border-t border-rose-200/50">
-            <span className="font-medium text-rose-900">Tổng số lượng</span>
-            <span className="text-lg font-bold text-rose-600">
-              {totalQuantity} sp
-            </span>
-          </div>
-          <div className="flex justify-between text-sm text-gray-500 mt-1">
             <span className="font-medium text-rose-900">Tổng đơn</span>
             <span className="text-lg font-bold text-rose-600">
               {formatNumber(cachedOrder.total)}đ
