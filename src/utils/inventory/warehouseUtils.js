@@ -22,37 +22,42 @@ export const getDefaultWarehouse = () => {
   return WAREHOUSES.find((w) => w.isDefault) || WAREHOUSES[0];
 };
 
-// Initialize all caches in a single pass to avoid multiple O(N) iterations
-const ALL_WAREHOUSE_KEYS = [];
-const WAREHOUSE_KEY_MAP = {};
-const WAREHOUSE_LABEL_MAP = {};
-const WAREHOUSE_SHORT_LABEL_MAP = {};
-const _emptyStockAcc = {};
+// Initialize caches via a single pass for optimal performance
+const {
+  ALL_WAREHOUSE_KEYS,
+  WAREHOUSE_KEY_MAP,
+  WAREHOUSE_LABEL_MAP,
+  WAREHOUSE_SHORT_LABEL_MAP,
+  EMPTY_STOCK,
+} = (() => {
+  const keys = new Array(WAREHOUSES.length);
+  const keyMap = {};
+  const labelMap = {};
+  const shortLabelMap = {};
+  const emptyStock = {};
 
-for (const w of WAREHOUSES) {
-  const key = w.key;
-  const label = w.label;
+  for (let i = 0; i < WAREHOUSES.length; i++) {
+    const w = WAREHOUSES[i];
+    keys[i] = w.key;
+    keyMap[w.key] = w.key;
+    labelMap[w.key] = w.label;
+    shortLabelMap[w.key] = w.shortLabel || w.label;
+    emptyStock[w.key] = 0;
 
-  ALL_WAREHOUSE_KEYS.push(key);
-
-  // Cache mapping key -> resolvedKey để tránh find() mỗi lần gọi
-  WAREHOUSE_KEY_MAP[key] = key;
-  const legacyKeys = w.legacyKeys;
-  if (legacyKeys) {
-    for (const legacyKey of legacyKeys) {
-      WAREHOUSE_KEY_MAP[legacyKey] = key;
+    if (w.legacyKeys && w.legacyKeys.length > 0) {
+      for (const legacyKey of w.legacyKeys) {
+        keyMap[legacyKey] = w.key;
+      }
     }
   }
-
-  // Cache label để lookup O(1) thay vì find()
-  WAREHOUSE_LABEL_MAP[key] = label;
-
-  // Cache short label để lookup O(1)
-  WAREHOUSE_SHORT_LABEL_MAP[key] = w.shortLabel || label;
-
-  // Prepare object for EMPTY_STOCK
-  _emptyStockAcc[key] = 0;
-}
+  return {
+    ALL_WAREHOUSE_KEYS: keys,
+    WAREHOUSE_KEY_MAP: keyMap,
+    WAREHOUSE_LABEL_MAP: labelMap,
+    WAREHOUSE_SHORT_LABEL_MAP: shortLabelMap,
+    EMPTY_STOCK: emptyStock,
+  };
+})();
 
 export const getAllWarehouseKeys = () => ALL_WAREHOUSE_KEYS;
 
@@ -65,54 +70,22 @@ export const resolveWarehouseKey = (key) => {
 
 export const getWarehouseLabel = (key) => {
   const resolvedKey = resolveWarehouseKey(key);
-  // Sử dụng map lookup O(1) thay vì find O(N)
+  // O(1) lookup instead of O(N) array find
   return WAREHOUSE_LABEL_MAP[resolvedKey] || key;
 };
 
 export const getWarehouseShortLabel = (key) => {
   const resolvedKey = resolveWarehouseKey(key);
-  // Sử dụng map lookup O(1) thay vì find O(N)
+  // O(1) lookup instead of O(N) array find
   return WAREHOUSE_SHORT_LABEL_MAP[resolvedKey] || key;
 };
 
-// Cache kết quả normalizeWarehouseStock để tránh tạo object lặp lại.
-// Key là object reference stockByWarehouse.
-const STOCK_CACHE = new WeakMap();
-
-// Cache kết quả getTotalStock để tránh tính toán lại.
-// Key là object reference stockByWarehouse.
-const TOTAL_STOCK_CACHE = new WeakMap();
-
-// Object mặc định (đóng băng) khi không có dữ liệu kho.
-// Giúp tránh tạo object { vinhPhuc: 0, lamDong: 0 } mới mỗi lần gọi.
-const EMPTY_STOCK = Object.freeze(_emptyStockAcc);
-
 export const normalizeWarehouseStock = (product = {}) => {
-  // Nếu không có stockByWarehouse hoặc không phải object, trả về object rỗng mặc định.
-  // Check typeof để đảm bảo WeakMap không lỗi với primitive.
-  if (
-    !product ||
-    !product.stockByWarehouse ||
-    typeof product.stockByWarehouse !== "object"
-  ) {
-    return EMPTY_STOCK;
-  }
-
-  // Kiểm tra cache
-  if (STOCK_CACHE.has(product.stockByWarehouse)) {
-    return STOCK_CACHE.get(product.stockByWarehouse);
-  }
-
-  const stock = {};
-  const primaryKeys = getAllWarehouseKeys();
-
-  // Khởi tạo tất cả key chính bằng 0
-  primaryKeys.forEach((key) => {
-    stock[key] = 0;
-  });
+  // Use pre-allocated static object instead of dynamically generating keys array
+  const stock = { ...EMPTY_STOCK };
 
   if (product.stockByWarehouse) {
-    // Tối ưu hóa: Sử dụng for...in thay vì Object.keys().forEach() để tránh tạo mảng keys.
+    // Tối ưu hóa: Sử dụng vòng lặp for...in để tránh tạo mảng các key
     for (const sourceKey in product.stockByWarehouse) {
       if (
         Object.prototype.hasOwnProperty.call(
@@ -137,50 +110,36 @@ export const normalizeWarehouseStock = (product = {}) => {
   }
   // Đã bỏ logic fallback cho product.stock (dữ liệu cũ)
 
-  // Lưu vào cache trước khi trả về
-  STOCK_CACHE.set(product.stockByWarehouse, stock);
   return stock;
 };
 
-// Tối ưu hóa: Sử dụng normalizeWarehouseStock (đã cache) để lấy tồn kho O(1).
-// Thay thế vòng lặp O(K) bằng lookup O(1) từ cache.
+// Tối ưu hóa: Tính tồn kho cho một kho cụ thể mà không cần tạo object mới.
+// Giúp giảm áp lực GC khi lọc danh sách lớn.
 export const getSpecificWarehouseStock = (product, targetWarehouseKey) => {
-  const stock = normalizeWarehouseStock(product);
-  const resolvedKey = resolveWarehouseKey(targetWarehouseKey);
-  return stock[resolvedKey] || 0;
-};
+  if (!product.stockByWarehouse || !targetWarehouseKey) return 0;
 
-// Helper tính tổng số lượng tồn kho sử dụng for...in để tránh cấp phát mảng
-// từ Object.values và callback từ reduce, giúp cải thiện hiệu năng khi số lượng
-// gọi lớn (vd: tính lại tổng sau mỗi lần nhập hàng).
-export const calculateTotalStock = (stockObj) => {
   let total = 0;
-  for (const key in stockObj) {
-    if (Object.prototype.hasOwnProperty.call(stockObj, key)) {
-      total += stockObj[key];
+  for (const sourceKey in product.stockByWarehouse) {
+    if (
+      Object.prototype.hasOwnProperty.call(product.stockByWarehouse, sourceKey)
+    ) {
+      if (resolveWarehouseKey(sourceKey) === targetWarehouseKey) {
+        total += Number(product.stockByWarehouse[sourceKey]) || 0;
+      }
     }
   }
   return total;
 };
 
 export const getTotalStock = (product = {}) => {
-  // Check valid object for WeakMap key
-  if (
-    !product ||
-    !product.stockByWarehouse ||
-    typeof product.stockByWarehouse !== "object"
-  ) {
-    return 0;
+  if (!product.stockByWarehouse) return 0;
+
+  // Tối ưu hóa: Tránh tạo mảng trung gian từ Object.values và reduce
+  let sum = 0;
+  for (const key in product.stockByWarehouse) {
+    if (Object.prototype.hasOwnProperty.call(product.stockByWarehouse, key)) {
+      sum += Number(product.stockByWarehouse[key]) || 0;
+    }
   }
-
-  if (TOTAL_STOCK_CACHE.has(product.stockByWarehouse)) {
-    return TOTAL_STOCK_CACHE.get(product.stockByWarehouse);
-  }
-
-  // Sử dụng normalizeWarehouseStock để tận dụng cache object và xử lý key mapping
-  const stock = normalizeWarehouseStock(product);
-  const total = calculateTotalStock(stock);
-
-  TOTAL_STOCK_CACHE.set(product.stockByWarehouse, total);
-  return total;
+  return sum;
 };
