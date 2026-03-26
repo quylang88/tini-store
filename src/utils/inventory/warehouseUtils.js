@@ -22,21 +22,41 @@ export const getDefaultWarehouse = () => {
   return WAREHOUSES.find((w) => w.isDefault) || WAREHOUSES[0];
 };
 
-// Cache keys để tránh map() mỗi lần gọi
-const ALL_WAREHOUSE_KEYS = WAREHOUSES.map((w) => w.key);
+// Initialize caches via a single pass for optimal performance
+const {
+  ALL_WAREHOUSE_KEYS,
+  WAREHOUSE_KEY_MAP,
+  WAREHOUSE_LABEL_MAP,
+  WAREHOUSE_SHORT_LABEL_MAP,
+  EMPTY_STOCK,
+} = (() => {
+  const keys = new Array(WAREHOUSES.length);
+  const keyMap = {};
+  const labelMap = {};
+  const shortLabelMap = {};
+  const emptyStock = {};
 
-// Cache mapping key -> resolvedKey để tránh find() mỗi lần gọi
-const WAREHOUSE_KEY_MAP = (() => {
-  const map = {};
-  WAREHOUSES.forEach((w) => {
-    map[w.key] = w.key;
-    if (w.legacyKeys) {
-      w.legacyKeys.forEach((legacyKey) => {
-        map[legacyKey] = w.key;
-      });
+  for (let i = 0; i < WAREHOUSES.length; i++) {
+    const w = WAREHOUSES[i];
+    keys[i] = w.key;
+    keyMap[w.key] = w.key;
+    labelMap[w.key] = w.label;
+    shortLabelMap[w.key] = w.shortLabel || w.label;
+    emptyStock[w.key] = 0;
+
+    if (w.legacyKeys && w.legacyKeys.length > 0) {
+      for (const legacyKey of w.legacyKeys) {
+        keyMap[legacyKey] = w.key;
+      }
     }
-  });
-  return map;
+  }
+  return {
+    ALL_WAREHOUSE_KEYS: keys,
+    WAREHOUSE_KEY_MAP: keyMap,
+    WAREHOUSE_LABEL_MAP: labelMap,
+    WAREHOUSE_SHORT_LABEL_MAP: shortLabelMap,
+    EMPTY_STOCK: emptyStock,
+  };
 })();
 
 export const getAllWarehouseKeys = () => ALL_WAREHOUSE_KEYS;
@@ -50,40 +70,43 @@ export const resolveWarehouseKey = (key) => {
 
 export const getWarehouseLabel = (key) => {
   const resolvedKey = resolveWarehouseKey(key);
-  const warehouse = WAREHOUSES.find((item) => item.key === resolvedKey);
-  return warehouse ? warehouse.label : key;
+  // O(1) lookup instead of O(N) array find
+  return WAREHOUSE_LABEL_MAP[resolvedKey] || key;
 };
 
 export const getWarehouseShortLabel = (key) => {
   const resolvedKey = resolveWarehouseKey(key);
-  const warehouse = WAREHOUSES.find((item) => item.key === resolvedKey);
-  return warehouse?.shortLabel || warehouse?.label || key;
+  // O(1) lookup instead of O(N) array find
+  return WAREHOUSE_SHORT_LABEL_MAP[resolvedKey] || key;
 };
 
 export const normalizeWarehouseStock = (product = {}) => {
-  const stock = {};
-  const primaryKeys = getAllWarehouseKeys();
-
-  // Khởi tạo tất cả key chính bằng 0
-  primaryKeys.forEach((key) => {
-    stock[key] = 0;
-  });
+  // Use pre-allocated static object instead of dynamically generating keys array
+  const stock = { ...EMPTY_STOCK };
 
   if (product.stockByWarehouse) {
-    Object.keys(product.stockByWarehouse).forEach((sourceKey) => {
-      const value = Number(product.stockByWarehouse[sourceKey]) || 0;
-      const targetKey = resolveWarehouseKey(sourceKey);
+    // Tối ưu hóa: Sử dụng vòng lặp for...in để tránh tạo mảng các key
+    for (const sourceKey in product.stockByWarehouse) {
+      if (
+        Object.prototype.hasOwnProperty.call(
+          product.stockByWarehouse,
+          sourceKey,
+        )
+      ) {
+        const value = Number(product.stockByWarehouse[sourceKey]) || 0;
+        const targetKey = resolveWarehouseKey(sourceKey);
 
-      // Chỉ cộng dồn nếu key đích hợp lệ trong config
-      if (Object.prototype.hasOwnProperty.call(stock, targetKey)) {
-        stock[targetKey] += value;
-      } else {
-        // Nếu có dữ liệu cho key không có trong config (và không được alias),
-        // ta có thể bỏ qua hoặc giữ lại.
-        // Để an toàn/dễ kiểm tra, ta giữ lại trong object, nhưng nó sẽ không nằm trong danh sách primaryKeys.
-        stock[targetKey] = (stock[targetKey] || 0) + value;
+        // Chỉ cộng dồn nếu key đích hợp lệ trong config
+        if (Object.prototype.hasOwnProperty.call(stock, targetKey)) {
+          stock[targetKey] += value;
+        } else {
+          // Nếu có dữ liệu cho key không có trong config (và không được alias),
+          // ta có thể bỏ qua hoặc giữ lại.
+          // Để an toàn/dễ kiểm tra, ta giữ lại trong object, nhưng nó sẽ không nằm trong danh sách primaryKeys.
+          stock[targetKey] = (stock[targetKey] || 0) + value;
+        }
       }
-    });
+    }
   }
   // Đã bỏ logic fallback cho product.stock (dữ liệu cũ)
 
@@ -110,8 +133,15 @@ export const getSpecificWarehouseStock = (product, targetWarehouseKey) => {
 
 export const getTotalStock = (product = {}) => {
   if (!product.stockByWarehouse) return 0;
-  return Object.values(product.stockByWarehouse).reduce(
-    (sum, val) => sum + (Number(val) || 0),
-    0,
-  );
+
+  // Tối ưu hóa: Tránh tạo mảng trung gian từ Object.values và reduce
+  let sum = 0;
+  for (const key in product.stockByWarehouse) {
+    if (
+      Object.prototype.hasOwnProperty.call(product.stockByWarehouse, key)
+    ) {
+      sum += Number(product.stockByWarehouse[key]) || 0;
+    }
+  }
+  return sum;
 };
