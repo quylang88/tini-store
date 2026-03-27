@@ -158,6 +158,15 @@ export const buildNextProductFromForm = ({
       (existingStock[resolvedWarehouseKey] || 0) + quantityValue,
   };
 
+  // Tối ưu hóa: Dùng for...in thay vì Object.values().reduce() để tính tổng tồn kho
+  // nhằm giảm thiểu việc cấp phát mảng trung gian.
+  let totalNextStock = 0;
+  for (const key in nextStockByWarehouse) {
+    if (Object.prototype.hasOwnProperty.call(nextStockByWarehouse, key)) {
+      totalNextStock += nextStockByWarehouse[key];
+    }
+  }
+
   let nextProduct = {
     ...baseProduct,
     name: formData.name.trim(),
@@ -167,10 +176,7 @@ export const buildNextProductFromForm = ({
     cost: costValue || getProductStats(baseProduct).cost,
     image: formData.image,
     stockByWarehouse: nextStockByWarehouse,
-    stock: Object.values(nextStockByWarehouse).reduce(
-      (sum, val) => sum + val,
-      0,
-    ),
+    stock: totalNextStock,
   };
 
   // Lưu lại từng lần nhập hàng thành "lô giá nhập" để quản lý tồn kho theo giá.
@@ -220,25 +226,30 @@ export const buildNextProductFromForm = ({
         };
       });
 
-      // Tính toán lại tồn kho theo kho một cách động
-      const adjustedStock = nextLots.reduce(
-        (acc, lot) => {
-          const nextWarehouse =
-            resolveWarehouseKey(lot.warehouse) || defaultWarehouseKey;
-          const lotQty = Number(lot.quantity) || 0;
-          return {
-            ...acc,
-            [nextWarehouse]: (acc[nextWarehouse] || 0) + lotQty,
-          };
-        },
-        { ...initialStock },
-      );
+      // Tối ưu hóa: Thay thế .reduce() với object spreading ({ ...acc })
+      // bằng vòng lặp for...of và gán trực tiếp, giảm đáng kể garbage collection.
+      const adjustedStock = { ...initialStock };
+      for (const lot of nextLots) {
+        const nextWarehouse =
+          resolveWarehouseKey(lot.warehouse) || defaultWarehouseKey;
+        const lotQty = Number(lot.quantity) || 0;
+        adjustedStock[nextWarehouse] = (adjustedStock[nextWarehouse] || 0) + lotQty;
+      }
+
+      // Tối ưu hóa: Dùng vòng lặp for...in trực tiếp để tính tổng tồn kho
+      // giảm thiểu áp lực lên bộ dọn rác (GC) do không tạo ra mảng mới.
+      let totalAdjustedStock = 0;
+      for (const key in adjustedStock) {
+        if (Object.prototype.hasOwnProperty.call(adjustedStock, key)) {
+          totalAdjustedStock += adjustedStock[key];
+        }
+      }
 
       nextProduct = {
         ...nextProduct,
         purchaseLots: nextLots,
         stockByWarehouse: adjustedStock,
-        stock: Object.values(adjustedStock).reduce((sum, val) => sum + val, 0),
+        stock: totalAdjustedStock,
         cost: getProductStats({ ...nextProduct, purchaseLots: nextLots }).cost,
       };
     } else {

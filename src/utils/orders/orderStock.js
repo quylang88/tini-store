@@ -30,10 +30,19 @@ const updateWarehouseStock = (
     if (nextStock[key] === undefined) nextStock[key] = 0;
   });
 
+  // Tối ưu hóa: Thay thế Object.values(nextStock).reduce(...) bằng vòng lặp for...in
+  // để tránh tạo array trung gian và giảm overhead của callback, cải thiện hiệu suất.
+  let totalStock = 0;
+  for (const key in nextStock) {
+    if (Object.prototype.hasOwnProperty.call(nextStock, key)) {
+      totalStock += nextStock[key];
+    }
+  }
+
   const nextProduct = {
     ...product,
     stockByWarehouse: nextStock,
-    stock: Object.values(nextStock).reduce((sum, val) => sum + val, 0),
+    stock: totalStock,
   };
 
   if (delta < 0) {

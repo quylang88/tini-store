@@ -110,8 +110,14 @@ export const getSpecificWarehouseStock = (product, targetWarehouseKey) => {
 
 export const getTotalStock = (product = {}) => {
   if (!product.stockByWarehouse) return 0;
-  return Object.values(product.stockByWarehouse).reduce(
-    (sum, val) => sum + (Number(val) || 0),
-    0,
-  );
+  // Tối ưu hóa: Dùng vòng lặp for...in để tránh tạo mảng với Object.values
+  let total = 0;
+  for (const key in product.stockByWarehouse) {
+    if (
+      Object.prototype.hasOwnProperty.call(product.stockByWarehouse, key)
+    ) {
+      total += Number(product.stockByWarehouse[key]) || 0;
+    }
+  }
+  return total;
 };

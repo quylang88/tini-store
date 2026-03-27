@@ -1,0 +1,4 @@
+
+## $(date +%Y-%m-%d) - [Optimize Object.values(...).reduce(...) and object spreading .reduce()]
+**Learning:** In V8, using `Object.values(obj).reduce(...)` to calculate sums over large object arrays (like `stockByWarehouse`) incurs significant overhead due to intermediate array allocation (`Object.values()`) and callback creation. Similarly, using `.reduce()` with object spreading (`{...acc}`) within the reducer for array aggregation creates unnecessary temporary objects during each iteration, placing heavy pressure on the garbage collector.
+**Action:** Default to using `for...in` loops to iterate over and aggregate object properties directly without creating intermediate arrays. For aggregating properties from an array of objects into a new object, prefer a `for...of` loop with direct property mutation on a pre-cloned base object (`const acc = {...initial}; for(const x of arr) { acc[key] = ... }`) instead of object spreading within a `.reduce()` accumulator.
