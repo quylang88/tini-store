@@ -1,5 +1,5 @@
 const DB_NAME = "tiny_shop_db";
-const DB_VERSION = 3; // Tăng version để trigger upgrade (added auth_creds support)
+const DB_VERSION = 4; // Tăng version để trigger upgrade (added purchase lists support)
 
 const STORES = {
   PRODUCTS: "products",
@@ -7,6 +7,7 @@ const STORES = {
   SETTINGS: "settings",
   CUSTOMERS: "customers",
   CHAT_MEMORY: "chat_memory",
+  PURCHASE_LISTS: "purchase_lists",
 };
 
 class StorageService {
@@ -42,6 +43,9 @@ class StorageService {
           // Chat memory lưu chuỗi tóm tắt và buffer
           db.createObjectStore(STORES.CHAT_MEMORY, { keyPath: "key" });
         }
+        if (!db.objectStoreNames.contains(STORES.PURCHASE_LISTS)) {
+          db.createObjectStore(STORES.PURCHASE_LISTS, { keyPath: "id" });
+        }
       };
 
       request.onsuccess = (event) => {
@@ -64,13 +68,20 @@ class StorageService {
     // Thử di chuyển dữ liệu cũ nếu DB đang trống (hoặc migration mới)
     await this.migrateFromLocalStorageIfNeeded();
 
-    const [products, orders, settingsResult, customers, chatMemoryResult] =
-      await Promise.all([
+    const [
+      products,
+      orders,
+      settingsResult,
+      customers,
+      chatMemoryResult,
+      purchaseLists,
+    ] = await Promise.all([
         this.getAll(STORES.PRODUCTS),
         this.getAll(STORES.ORDERS),
         this.getAll(STORES.SETTINGS),
         this.getAll(STORES.CUSTOMERS),
         this.getAll(STORES.CHAT_MEMORY),
+        this.getAll(STORES.PURCHASE_LISTS),
       ]);
 
     // Chuẩn hóa cài đặt (do lưu dạng key-value object)
@@ -100,6 +111,7 @@ class StorageService {
       customers: customers || [],
       chatSummary: chatSummary || "",
       pendingBuffer: pendingBuffer || [],
+      purchaseLists: purchaseLists || [],
     };
   }
 
@@ -404,6 +416,10 @@ class StorageService {
     return this.saveAll(STORES.CUSTOMERS, customers);
   }
 
+  async saveAllPurchaseLists(purchaseLists) {
+    return this.saveAll(STORES.PURCHASE_LISTS, purchaseLists);
+  }
+
   async getSettings() {
     return new Promise((resolve, reject) => {
       const transaction = this.db.transaction([STORES.SETTINGS], "readonly");
@@ -537,6 +553,10 @@ class StorageService {
 
   async saveCustomersBatch(changes) {
     return this.saveBatch(STORES.CUSTOMERS, changes);
+  }
+
+  async savePurchaseListsBatch(changes) {
+    return this.saveBatch(STORES.PURCHASE_LISTS, changes);
   }
 
   saveAll(storeName, items) {

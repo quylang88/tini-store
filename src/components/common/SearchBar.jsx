@@ -13,6 +13,7 @@ const SearchBar = memo(
     wrapperClassName = "",
     onToggleSelect,
     isSelectionMode,
+    actionButton,
   }) => {
     return (
       <div className={`bg-rose-50/90 backdrop-blur ${wrapperClassName}`}>
@@ -27,6 +28,18 @@ const SearchBar = memo(
                 inputClassName="w-full bg-rose-100 pl-9 pr-9 py-2.5 rounded-xl text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-rose-300 transition-all border border-rose-300"
               />
             </div>
+            {actionButton ? (
+              <button
+                type="button"
+                onClick={actionButton.onClick}
+                className="flex items-center gap-2 px-3 h-[42px] rounded-xl border border-amber-200 bg-white text-amber-800 font-semibold text-xs shadow-sm whitespace-nowrap active:scale-95 active:bg-amber-50"
+              >
+                {actionButton.icon ? (
+                  <actionButton.icon size={16} strokeWidth={2.2} />
+                ) : null}
+                <span>{actionButton.label}</span>
+              </button>
+            ) : null}
             {onToggleSelect && (
               <ToggleButton
                 isActive={isSelectionMode}

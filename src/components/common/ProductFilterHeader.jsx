@@ -55,6 +55,7 @@ const ProductFilterHeader = memo(
     // Chế độ chọn (Mới)
     onToggleSelect,
     isSelectionMode,
+    actionButton,
   }) => {
     // Cấu hình kho mặc định (nếu không được cung cấp)
     // Tối ưu hóa: Trả về mảng tĩnh để tránh tái cấp phát bộ nhớ.
@@ -94,6 +95,7 @@ const ProductFilterHeader = memo(
           placeholder={placeholder}
           onToggleSelect={onToggleSelect}
           isSelectionMode={isSelectionMode}
+          actionButton={actionButton}
         />
 
         {/* Khu vực bộ lọc mở rộng (Kho + Danh mục) */}

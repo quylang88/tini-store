@@ -57,6 +57,8 @@ const App = () => {
     setChatSummary,
     pendingBuffer,
     setPendingBuffer,
+    purchaseLists,
+    setPurchaseLists,
     resetData,
   } = useAppData(isAuthenticated);
 
@@ -80,6 +82,7 @@ const App = () => {
       setSettings,
       customers,
       chatSummary,
+      purchaseLists,
     });
 
   // --- 5. UI STATE (ASSISTANT & OTHERS) ---
@@ -182,6 +185,8 @@ const App = () => {
                 orders={orders}
                 setOrders={setOrders}
                 settings={settings}
+                purchaseLists={purchaseLists}
+                setPurchaseLists={setPurchaseLists}
                 setTabBarVisible={setIsTabBarVisible}
                 updateFab={updateFab}
                 isActive={activeTab === "products"}
@@ -267,6 +272,8 @@ const App = () => {
                 setCustomers={setCustomers}
                 chatSummary={chatSummary}
                 setChatSummary={setChatSummary}
+                purchaseLists={purchaseLists}
+                setPurchaseLists={setPurchaseLists}
                 onLogout={handleLogout}
                 updateFab={updateFab}
                 isActive={activeTab === "settings"}
