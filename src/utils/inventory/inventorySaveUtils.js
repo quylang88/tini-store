@@ -4,7 +4,6 @@ import {
   getAllWarehouseKeys,
   getDefaultWarehouse,
   resolveWarehouseKey,
-  calculateTotalStock,
 } from "./warehouseUtils.js";
 import {
   addPurchaseLot,
@@ -55,28 +54,19 @@ export const getInventoryValidationError = ({
     };
   }
 
-  // Kiểm tra mã sản phẩm bắt buộc
-  if (!formData.productCode) {
-    return {
-      title: "Thiếu mã sản phẩm",
-      message: "Vui lòng nhập Mã sản phẩm (duy nhất).",
-      missingFields: ["productCode"],
-    };
-  }
-
-  // Kiểm tra trùng Mã sản phẩm
-  const duplicateCode = products.find(
-    (p) =>
-      p.productCode === formData.productCode &&
-      p.id !== (editingProduct ? editingProduct.id : null),
-  );
-
-  if (duplicateCode) {
-    return {
-      title: "Mã sản phẩm đã tồn tại",
-      message: `Mã sản phẩm này đã được dùng cho "${duplicateCode.name}". Vui lòng kiểm tra lại.`,
-      missingFields: ["productCode"],
-    };
+  // Kiểm tra trùng Barcode
+  if (formData.barcode) {
+    const duplicateBarcode = products.find(
+      (p) =>
+        p.barcode === formData.barcode &&
+        p.id !== (editingProduct ? editingProduct.id : null),
+    );
+    if (duplicateBarcode) {
+      return {
+        title: "Mã vạch bị trùng",
+        message: `Mã vạch này đã được dùng cho "${duplicateBarcode.name}". Vui lòng kiểm tra lại.`,
+      };
+    }
   }
 
   const quantityValue = Number(formData.quantity) || 0;
@@ -168,16 +158,25 @@ export const buildNextProductFromForm = ({
       (existingStock[resolvedWarehouseKey] || 0) + quantityValue,
   };
 
+  // Tối ưu hóa: Dùng for...in thay vì Object.values().reduce() để tính tổng tồn kho
+  // nhằm giảm thiểu việc cấp phát mảng trung gian.
+  let totalNextStock = 0;
+  for (const key in nextStockByWarehouse) {
+    if (Object.prototype.hasOwnProperty.call(nextStockByWarehouse, key)) {
+      totalNextStock += nextStockByWarehouse[key];
+    }
+  }
+
   let nextProduct = {
     ...baseProduct,
     name: formData.name.trim(),
-    productCode: formData.productCode ? formData.productCode.trim() : "",
+    barcode: formData.barcode ? formData.barcode.trim() : "",
     category: formData.category,
     price: Number(formData.price),
     cost: costValue || getProductStats(baseProduct).cost,
     image: formData.image,
     stockByWarehouse: nextStockByWarehouse,
-    stock: calculateTotalStock(nextStockByWarehouse),
+    stock: totalNextStock,
   };
 
   // Lưu lại từng lần nhập hàng thành "lô giá nhập" để quản lý tồn kho theo giá.
@@ -227,25 +226,31 @@ export const buildNextProductFromForm = ({
         };
       });
 
-      // Tính toán lại tồn kho theo kho một cách động
-      const adjustedStock = nextLots.reduce(
-        (acc, lot) => {
-          const nextWarehouse =
-            resolveWarehouseKey(lot.warehouse) || defaultWarehouseKey;
-          const lotQty = Number(lot.quantity) || 0;
-          return {
-            ...acc,
-            [nextWarehouse]: (acc[nextWarehouse] || 0) + lotQty,
-          };
-        },
-        { ...initialStock },
-      );
+      // Tối ưu hóa: Thay thế .reduce() với object spreading ({ ...acc })
+      // bằng vòng lặp for...of và gán trực tiếp, giảm đáng kể garbage collection.
+      const adjustedStock = { ...initialStock };
+      for (const lot of nextLots) {
+        const nextWarehouse =
+          resolveWarehouseKey(lot.warehouse) || defaultWarehouseKey;
+        const lotQty = Number(lot.quantity) || 0;
+        adjustedStock[nextWarehouse] =
+          (adjustedStock[nextWarehouse] || 0) + lotQty;
+      }
+
+      // Tối ưu hóa: Dùng vòng lặp for...in trực tiếp để tính tổng tồn kho
+      // giảm thiểu áp lực lên bộ dọn rác (GC) do không tạo ra mảng mới.
+      let totalAdjustedStock = 0;
+      for (const key in adjustedStock) {
+        if (Object.prototype.hasOwnProperty.call(adjustedStock, key)) {
+          totalAdjustedStock += adjustedStock[key];
+        }
+      }
 
       nextProduct = {
         ...nextProduct,
         purchaseLots: nextLots,
         stockByWarehouse: adjustedStock,
-        stock: calculateTotalStock(adjustedStock),
+        stock: totalAdjustedStock,
         cost: getProductStats({ ...nextProduct, purchaseLots: nextLots }).cost,
       };
     } else {
