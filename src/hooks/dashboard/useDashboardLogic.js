@@ -188,53 +188,54 @@ const useDashboardLogic = ({ products, orders, rangeMode = "dashboard" }) => {
     });
   }, [paidOrders, rangeStart, rangeEnd]);
 
-  // Gộp vòng lặp tính totalRevenue và totalProfit thành một pass duy nhất (O(N))
-  const { totalRevenue, totalProfit } = useMemo(() => {
-    let revenue = 0;
-    let profit = 0;
+  // Tối ưu hóa: Gom tính toán totalRevenue, totalProfit và productStats vào một vòng lặp (O(N) thay vì O(3N)).
+  // Việc gộp này tránh được chi phí khởi tạo callback của 3 vòng lặp reduce/forEach riêng biệt
+  // và giảm overhead về cấp phát bộ nhớ trung gian khi lặp qua danh sách đơn hàng lớn.
+  const { totalRevenue, totalProfit, productStats } = useMemo(() => {
+    let revenueSum = 0;
+    let profitSum = 0;
+    const stats = new Map();
 
     for (const order of filteredPaidOrders) {
-      revenue += order.total || 0;
+      revenueSum += order.total;
 
       let orderProfit = 0;
-      for (const item of order.items) {
-        const cost = Number.isFinite(item.cost)
-          ? item.cost
-          : costMap.get(item.productId) || 0;
-        orderProfit += (item.price - cost) * item.quantity;
+      if (order.items && order.items.length > 0) {
+        for (const item of order.items) {
+          const cost = Number.isFinite(item.cost)
+            ? item.cost
+            : costMap.get(item.productId) || 0;
+
+          const itemProfit = (item.price - cost) * item.quantity;
+          orderProfit += itemProfit;
+
+          const product = productMeta.get(item.productId);
+          const key = item.productId || item.name;
+
+          if (!stats.has(key)) {
+            stats.set(key, {
+              id: item.productId,
+              name: product?.name || item.name || "Sản phẩm khác",
+              image: product?.image || "",
+              quantity: 0,
+              profit: 0,
+            });
+          }
+          const entry = stats.get(key);
+          entry.quantity += item.quantity;
+          entry.profit += itemProfit;
+        }
       }
 
       const shippingFee = order.shippingFee || 0;
-      profit += orderProfit - shippingFee;
+      profitSum += orderProfit - shippingFee;
     }
 
-    return { totalRevenue: revenue, totalProfit: profit };
-  }, [filteredPaidOrders, costMap]);
-
-  const productStats = useMemo(() => {
-    const stats = new Map();
-    filteredPaidOrders.forEach((order) => {
-      order.items.forEach((item) => {
-        const product = productMeta.get(item.productId);
-        const key = item.productId || item.name;
-        if (!stats.has(key)) {
-          stats.set(key, {
-            id: item.productId,
-            name: product?.name || item.name || "Sản phẩm khác",
-            image: product?.image || "",
-            quantity: 0,
-            profit: 0,
-          });
-        }
-        const entry = stats.get(key);
-        const cost = Number.isFinite(item.cost)
-          ? item.cost
-          : costMap.get(item.productId) || 0;
-        entry.quantity += item.quantity;
-        entry.profit += (item.price - cost) * item.quantity;
-      });
-    });
-    return Array.from(stats.values());
+    return {
+      totalRevenue: revenueSum,
+      totalProfit: profitSum,
+      productStats: Array.from(stats.values()),
+    };
   }, [filteredPaidOrders, productMeta, costMap]);
 
   const topByProfit = useMemo(
