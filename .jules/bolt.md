@@ -1,0 +1,3 @@
+## 2024-05-19 - Avoid Set overhead for simple O(N) filtering
+**Learning:** Instantiating a Set and converting it via Array.from() or [...set] to track filtered items in an otherwise simple for...of loop with Array.push() degrades performance significantly in V8 (often ~1.5x - 2x slower) due to unnecessary memory allocations and hashing overhead.
+**Action:** Default to retaining native Array implementations ([] + .push()) when filtering elements in a single pass O(N) loop if array methods are required downstream (like .slice() or .length), rather than prematurely switching to a Set simply to "avoid arrays."
