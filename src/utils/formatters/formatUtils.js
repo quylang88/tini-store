@@ -85,3 +85,89 @@ export const formatDateTime = (dateInput) => {
   if (isNaN(date.getTime())) return "";
   return dateTimeFormatter.format(date);
 };
+
+// --- Vietnamese Number Reading Logic ---
+
+const DIGITS = [
+  "không",
+  "một",
+  "hai",
+  "ba",
+  "bốn",
+  "năm",
+  "sáu",
+  "bảy",
+  "tám",
+  "chín",
+];
+
+export const readMoneyToVietnamese = (amount) => {
+  if (!amount || isNaN(amount) || amount === 0) return "Không đồng";
+
+  let number = Math.abs(Number(amount));
+  let str = "";
+  let i = 0;
+  const suffixes = ["", "nghìn", "triệu", "tỷ", "nghìn tỷ", "triệu tỷ"];
+
+  while (number > 0) {
+    const group = number % 1000;
+    const remaining = Math.floor(number / 1000); // Số phần còn lại phía trước
+
+    if (group > 0) {
+      const u = group % 10;
+      const t = Math.floor((group / 10) % 10);
+      const h = Math.floor(group / 100);
+
+      let groupStr = "";
+
+      // Hàng trăm:
+      // Đọc nếu:
+      // 1. Có số ở hàng trăm (h > 0)
+      // 2. Hoặc là nhóm này không phải nhóm cao nhất (remaining > 0) -> đọc "không trăm"
+      if (h > 0 || remaining > 0) {
+        groupStr += DIGITS[h] + " trăm";
+      }
+
+      // Hàng chục và đơn vị
+      if (t === 0 && u === 0) {
+        // Chẵn trăm -> không làm gì thêm
+      } else {
+        if (t === 0 && (h > 0 || remaining > 0)) {
+          // Có hàng trăm (hoặc 'không trăm') mà hàng chục = 0 -> "lẻ"
+          groupStr += " lẻ";
+        }
+
+        if (t === 1) {
+          groupStr += " mười";
+        } else if (t > 1) {
+          groupStr += " " + DIGITS[t] + " mươi";
+        }
+
+        // Hàng đơn vị
+        if (u > 0) {
+          if (t > 1 && u === 1) {
+            groupStr += " mốt";
+          } else if (t > 0 && u === 5) {
+            groupStr += " lăm";
+          } else {
+            // t=0 (lẻ ...), t=1 (mười ...) -> đọc bình thường
+            groupStr += " " + DIGITS[u];
+          }
+        }
+      }
+
+      str = groupStr.trim() + " " + suffixes[i] + " " + str;
+    }
+
+    number = Math.floor(number / 1000);
+    i++;
+  }
+
+  str = str.trim();
+  // Capitalize first letter
+  if (str.length > 0) {
+    str = str.charAt(0).toUpperCase() + str.slice(1);
+  }
+
+  return str + " đồng";
+};

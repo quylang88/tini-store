@@ -1,12 +1,17 @@
-import React, { useMemo } from "react";
-import { ShoppingCart, Plus } from "lucide-react";
-import { AnimatePresence, motion } from "framer-motion";
-import FloatingActionButton from "../../components/button/FloatingActionButton";
+import React, { useMemo, useEffect, useCallback } from "react";
+import { motion } from "framer-motion";
+import { ShoppingCart, Plus, FileStack, X } from "lucide-react";
 import AppHeader from "../../components/common/AppHeader";
 import useScrollHandling from "../../hooks/ui/useScrollHandling";
 import OrderListItem from "../../components/orders/OrderListItem";
 import usePagination from "../../hooks/ui/usePagination";
 import { isScrollNearBottom } from "../../utils/ui/scrollUtils";
+import SelectionActionBar from "../../components/common/SelectionActionBar";
+import SearchBar from "../../components/common/SearchBar";
+import {
+  orderMatchesSearchTerms,
+  parseOrderSearchTerms,
+} from "../../utils/orders/orderUtils";
 
 // Giao diện danh sách đơn tách riêng để dễ quản lý và thêm nút huỷ đơn
 const OrderListView = ({
@@ -18,12 +23,79 @@ const OrderListView = ({
   handleCancelOrder,
   onSelectOrder,
   setTabBarVisible,
+  updateFab,
+  isActive,
+  isMergeMode,
+  selectedOrderIds,
+  toggleMergeMode,
+  toggleOrderSelection,
+  getOrderMergeEligibility,
+  clearMergeSelection,
+  onOpenMergeExport,
+  searchTerm,
+  setSearchTerm,
+  debouncedSearchTerm,
 }) => {
   // Logic scroll ẩn/hiện UI sử dụng hook mới
-  const { isAddButtonVisible, isScrolled, handleScroll } = useScrollHandling({
-    mode: "simple",
+  const { isSearchVisible, isAddButtonVisible, isScrolled, handleScroll } =
+    useScrollHandling({
+      mode: "staged",
+      setTabBarVisible,
+      searchHideThreshold: 140,
+      showTabBarOnlyAtTop: true,
+      lockTabBarHidden: isMergeMode,
+    });
+
+  const handleToggleMergeMode = () => {
+    const nextIsMergeMode = !isMergeMode;
+    toggleMergeMode();
+
+    if (!nextIsMergeMode) {
+      setTabBarVisible(true);
+    }
+  };
+
+  const handleCancelMergeMode = () => {
+    clearMergeSelection();
+    toggleMergeMode();
+    setTabBarVisible(true);
+  };
+
+  useEffect(() => {
+    if (isActive) {
+      if (isMergeMode) {
+        updateFab({ isVisible: false });
+        setTabBarVisible(false);
+        return;
+      }
+
+      updateFab({
+        isVisible: isAddButtonVisible,
+        onClick: onCreateOrder,
+        icon: Plus,
+        label: "Tạo đơn mới",
+        color: "rose",
+      });
+    }
+  }, [
+    isActive,
+    isAddButtonVisible,
+    isMergeMode,
+    onCreateOrder,
     setTabBarVisible,
-  });
+    updateFab,
+  ]);
+
+  useEffect(() => {
+    if (isActive && isMergeMode) {
+      setTabBarVisible(false);
+    }
+  }, [isActive, isMergeMode, setTabBarVisible]);
+
+  const orderSearchTerms = useMemo(
+    () => parseOrderSearchTerms(debouncedSearchTerm),
+    [debouncedSearchTerm],
+  );
 
   // Memoize danh sách đơn hàng đã sắp xếp để tránh sắp xếp lại mỗi lần render
   const sortedOrders = useMemo(() => {
@@ -42,69 +114,125 @@ const OrderListView = ({
     });
   }, [orders]);
 
+  const filteredOrders = useMemo(
+    () =>
+      sortedOrders.filter((order) =>
+        orderMatchesSearchTerms(order, orderSearchTerms),
+      ),
+    [orderSearchTerms, sortedOrders],
+  );
+
   const {
     visibleData: visibleOrders,
     loadMore,
     hasMore,
-  } = usePagination(sortedOrders, {
+  } = usePagination(filteredOrders, {
     pageSize: 20,
     // Danh sách đơn hàng giữ nguyên vị trí cuộn ngay cả khi cập nhật, trừ khi chúng ta quyết định khác
-    resetDeps: [],
+    resetDeps: [debouncedSearchTerm],
   });
 
+  const handleSearchChange = useCallback(
+    (event) => setSearchTerm(event.target.value),
+    [setSearchTerm],
+  );
+
+  const handleClearSearch = useCallback(
+    () => setSearchTerm(""),
+    [setSearchTerm],
+  );
+
   return (
-    <div className="relative h-full bg-transparent">
-      <AppHeader isScrolled={isScrolled} />
+    <div className="relative h-full bg-transparent flex flex-col">
+      <AppHeader className="z-20" isScrolled={isScrolled} />
 
-      {/* Nút tạo đơn mới nổi để tái sử dụng layout và tránh lặp code. */}
-      <AnimatePresence>
-        {isAddButtonVisible && (
-          <motion.div
-            layout
-            layoutId="floating-action-button"
-            initial={{ scale: 0, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0, opacity: 0 }}
-            className="fixed right-5 bottom-[calc(env(safe-area-inset-bottom)+90px)] z-30"
-          >
-            <FloatingActionButton
-              onClick={onCreateOrder}
-              ariaLabel="Tạo đơn mới"
-              icon={Plus}
-              color="rose"
-              className="!static"
-            />
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      <div
-        className="h-full overflow-y-auto p-3 pt-[calc(80px+env(safe-area-inset-top))] pb-24 space-y-3 min-h-0 overscroll-y-contain"
-        onScroll={(e) => {
-          handleScroll(e);
-          if (isScrollNearBottom(e.target) && hasMore) {
-            loadMore();
-          }
-        }}
-      >
-        {visibleOrders.map((order) => (
-          <OrderListItem
-            key={order.id}
-            order={order}
-            getOrderStatusInfo={getOrderStatusInfo}
-            handleTogglePaid={handleTogglePaid}
-            handleEditOrder={handleEditOrder}
-            handleCancelOrder={handleCancelOrder}
-            onSelectOrder={onSelectOrder}
+      <div className="flex flex-col h-full pt-[calc(72px+env(safe-area-inset-top))] relative">
+        <motion.div
+          className="absolute top-[calc(72px+env(safe-area-inset-top))] left-0 right-0 z-10 bg-amber-50"
+          initial={{ y: 0 }}
+          animate={{ y: isSearchVisible ? 0 : -80 }}
+          transition={{ duration: 0.3 }}
+        >
+          <SearchBar
+            searchTerm={searchTerm}
+            onSearchChange={handleSearchChange}
+            onClearSearch={handleClearSearch}
+            placeholder="Tìm tên kh, sp... ngăn cách bằng dấu phẩy"
+            onToggleSelect={handleToggleMergeMode}
+            isSelectionMode={isMergeMode}
           />
-        ))}
-        {orders.length === 0 && (
-          <div className="flex flex-col items-center justify-center mt-20 text-gray-500">
-            <ShoppingCart size={48} className="mb-2 opacity-20" />
-            <p>Chưa có đơn hàng nào</p>
+        </motion.div>
+
+        <div
+          className={`flex-1 overflow-y-auto min-h-0 pt-[56px] overscroll-y-contain px-3 ${
+            isMergeMode ? "pb-[11rem]" : "pb-24"
+          }`}
+          onScroll={(e) => {
+            handleScroll(e);
+            if (isScrollNearBottom(e.target) && hasMore) {
+              loadMore();
+            }
+          }}
+        >
+          <div className="space-y-3 pb-3">
+            {visibleOrders.map((order) => (
+              <OrderListItem
+                key={order.id}
+                order={order}
+                getOrderStatusInfo={getOrderStatusInfo}
+                handleTogglePaid={handleTogglePaid}
+                handleEditOrder={handleEditOrder}
+                handleCancelOrder={handleCancelOrder}
+                onSelectOrder={onSelectOrder}
+                isMergeMode={isMergeMode}
+                isSelected={selectedOrderIds.has(order.id)}
+                mergeEligibility={getOrderMergeEligibility(order)}
+                onToggleOrderSelection={toggleOrderSelection}
+              />
+            ))}
+
+            {orders.length === 0 && (
+              <div className="flex flex-col items-center justify-center mt-20 text-gray-500">
+                <ShoppingCart size={48} className="mb-2 opacity-20" />
+                <p>Chưa có đơn hàng nào</p>
+              </div>
+            )}
+
+            {orders.length > 0 && filteredOrders.length === 0 && (
+              <div className="flex flex-col items-center justify-center mt-20 text-gray-500">
+                <ShoppingCart size={48} className="mb-2 opacity-20" />
+                <p>Không tìm thấy đơn phù hợp</p>
+              </div>
+            )}
           </div>
-        )}
+        </div>
       </div>
+
+      <SelectionActionBar
+        visible={isMergeMode}
+        count={selectedOrderIds.size}
+        title={
+          selectedOrderIds.size >= 2
+            ? "Sẵn sàng xuất đơn gộp"
+            : "Chọn tối thiểu 2 đơn hợp lệ"
+        }
+        subtitle={
+          selectedOrderIds.size >= 2
+            ? "Xuất K80, A4 hoặc ảnh mà không tạo đơn mới."
+            : "Chỉ chọn các đơn chưa thanh toán, cùng khách hoặc cùng kho."
+        }
+        secondaryAction={{
+          label: "Thoát",
+          icon: X,
+          onClick: handleCancelMergeMode,
+        }}
+        primaryAction={{
+          label: "Xuất file",
+          icon: FileStack,
+          onClick: onOpenMergeExport,
+          disabled: selectedOrderIds.size < 2,
+        }}
+      />
     </div>
   );
 };

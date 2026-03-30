@@ -1,6 +1,7 @@
 import { useState, useCallback } from "react";
 import useOrderListLogic from "./useOrderListLogic";
 import useOrderCreateLogic from "./useOrderCreateLogic";
+import useDebounce from "../core/useDebounce";
 
 const useOrdersLogic = ({
   products,
@@ -12,6 +13,8 @@ const useOrdersLogic = ({
   setCustomers,
 }) => {
   const [view, setView] = useState("list");
+  const [orderListSearchTerm, setOrderListSearchTerm] = useState("");
+  const debouncedOrderListSearchTerm = useDebounce(orderListSearchTerm, 200);
 
   // Các modal dùng chung (global level cho màn hình Orders)
   const [confirmModal, setConfirmModal] = useState(null);
@@ -79,14 +82,22 @@ const useOrdersLogic = ({
     // List Logic Exposure
     selectedOrder: listLogic.selectedOrder,
     setSelectedOrder: listLogic.setSelectedOrder,
+    orderListSearchTerm,
+    setOrderListSearchTerm,
+    debouncedOrderListSearchTerm,
+    isMergeMode: listLogic.isMergeMode,
+    selectedOrderIds: listLogic.selectedOrderIds,
+    mergeAnchorOrder: listLogic.mergeAnchorOrder,
+    toggleMergeMode: listLogic.toggleMergeMode,
+    toggleOrderSelection: listLogic.toggleOrderSelection,
+    getOrderMergeEligibility: listLogic.getOrderMergeEligibility,
+    clearMergeSelection: listLogic.clearMergeSelection,
     handleTogglePaid: listLogic.handleTogglePaid,
     handleCancelOrder: listLogic.handleCancelOrder,
     getOrderStatusInfo: listLogic.getOrderStatusInfo,
 
     // Create Logic Exposure
     cart: createLogic.cart,
-    showScanner: createLogic.showScanner,
-    setShowScanner: createLogic.setShowScanner,
     isReviewOpen: createLogic.isReviewOpen,
     setIsReviewOpen: createLogic.setIsReviewOpen,
     orderComment: createLogic.orderComment,
@@ -108,9 +119,9 @@ const useOrdersLogic = ({
     totalAmount: createLogic.totalAmount,
     reviewItems: createLogic.reviewItems,
     filteredProducts: createLogic.filteredProducts,
+    getAvailableStock: createLogic.getAvailableStock,
     handleQuantityChange: createLogic.handleQuantityChange,
     adjustQuantity: createLogic.adjustQuantity,
-    handleScanForSale: createLogic.handleScanForSale,
     handleCreateOrder: createLogic.handleCreateOrder,
     handleUpdateOrder: createLogic.handleUpdateOrder,
     handleExitCreate: createLogic.handleExitCreate,

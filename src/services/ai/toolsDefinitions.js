@@ -26,8 +26,8 @@ export const INVENTORY_TOOLS = [
               "Tên sản phẩm. AI cần tìm tên gần đúng nhất trong danh sách sản phẩm.",
           },
           quantity: {
-            type: "number",
-            description: "Số lượng sản phẩm.",
+            type: "string",
+            description: "Số lượng sản phẩm (VD: '5', '10').",
           },
           warehouse_key: {
             type: "string",
@@ -35,7 +35,7 @@ export const INVENTORY_TOOLS = [
               "Mã kho hàng (nếu có). Ví dụ: 'hcm' (Kho HCM), 'lam_dong' (Kho Lâm Đồng), 'japan' (Kho Nhật).",
           },
           cost_price: {
-            type: "number",
+            type: "string",
             description:
               "(Chỉ Import) Giá vốn/Giá nhập của lô hàng này (nguyên tệ).",
           },
@@ -46,17 +46,17 @@ export const INVENTORY_TOOLS = [
               "(Chỉ Import) Loại tiền tệ của giá nhập. Mặc định là VND.",
           },
           shipping_fee: {
-            type: "number",
+            type: "string",
             description:
               "(Chỉ Import) Phí vận chuyển (VND) phân bổ cho lô hàng này (nếu có).",
           },
           shipping_weight: {
-            type: "number",
+            type: "string",
             description:
               "(Chỉ Import) Cân nặng (kg) của 1 sản phẩm (nếu là hàng Nhật).",
           },
           selling_price: {
-            type: "number",
+            type: "string",
             description:
               "Giá bán ra (với Export) hoặc Giá bán niêm yết mới (với Import). Đơn vị VND.",
           },

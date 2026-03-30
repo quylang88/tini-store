@@ -1,4 +1,5 @@
 // Hook xử lý logic tạo/cập nhật đơn hàng
+import { useMemo } from "react";
 import { syncProductsStock } from "./orderStock";
 import {
   getDefaultWarehouse,
@@ -27,11 +28,20 @@ const useOrderSubmitLogic = ({
   setErrorModal,
   processOrderForCustomer,
 }) => {
+  // Cache the set of used order numbers to avoid O(N) reconstruction on every submit
+  const usedNumbers = useMemo(() => {
+    const set = new Set();
+    for (const order of orders) {
+      const numStr = String(order.orderNumber);
+      if (numStr && numStr !== "undefined" && numStr !== "null") {
+        set.add(numStr);
+      }
+    }
+    return set;
+  }, [orders]);
+
   const getNextOrderNumber = () => {
     // Tạo số đơn 4 chữ số ngẫu nhiên để thay thế STT tuần tự.
-    const usedNumbers = new Set(
-      orders.map((order) => String(order.orderNumber)).filter(Boolean),
-    );
     const generateNumber = () =>
       String(Math.floor(1000 + Math.random() * 9000));
     let nextNumber = generateNumber();

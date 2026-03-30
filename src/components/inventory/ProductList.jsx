@@ -1,5 +1,4 @@
 import React, { memo } from "react";
-import { AnimatePresence } from "framer-motion";
 import { Package } from "lucide-react";
 import ProductListItem from "./ProductListItem";
 
@@ -15,6 +14,9 @@ const ProductList = memo(
     activeCategory,
     activeWarehouse,
     onEditBasicInfo,
+    isSelectionMode,
+    selectedProductIds,
+    onToggleProduct,
   }) => {
     return (
       <div className="flex-1 overflow-y-auto p-3 flex flex-col gap-3 pb-24">
@@ -23,19 +25,21 @@ const ProductList = memo(
          Điều này đảm bảo rằng chỉ những item thực sự thay đổi mới bị render lại,
          giúp scroll mượt mà hơn trên các thiết bị yếu.
       */}
-        <AnimatePresence mode="popLayout">
-          {products.map((product) => (
-            <ProductListItem
-              key={product.id}
-              product={product}
-              onDelete={onDelete}
-              onOpenDetail={onOpenDetail}
-              activeCategory={activeCategory}
-              activeWarehouse={activeWarehouse}
-              onEditBasicInfo={onEditBasicInfo}
-            />
-          ))}
-        </AnimatePresence>
+        {products.map((product) => (
+          <ProductListItem
+            key={product.id}
+            product={product}
+            onDelete={onDelete}
+            onOpenDetail={onOpenDetail}
+            activeCategory={activeCategory}
+            activeWarehouse={activeWarehouse}
+            onEditBasicInfo={onEditBasicInfo}
+            // Selection Props
+            isSelectionMode={isSelectionMode}
+            isSelected={selectedProductIds?.has(product.id)}
+            onToggleProduct={onToggleProduct}
+          />
+        ))}
 
         {/* 
         Trạng thái rỗng hoàn toàn tĩnh BÊN NGOÀI AnimatePresence.

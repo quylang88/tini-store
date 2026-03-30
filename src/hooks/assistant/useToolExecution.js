@@ -43,9 +43,41 @@ export const useToolExecution = ({
         };
       }
 
+      // -- VALIDATION: Check số lượng hợp lệ --
+      const qty = Number(quantity);
+      if (isNaN(qty)) {
+        return {
+          success: false,
+          message: `Misa không hiểu số lượng "${quantity}" là bao nhiêu. Mẹ kiểm tra lại giúp con nhé!`,
+        };
+      }
+
+      // -- VALIDATION: Check các trường số khác (nếu có) --
+      // Chỉ cảnh báo nhẹ hoặc dùng 0, nhưng nếu AI truyền chuỗi rác ("bao nhiêu") vào giá thì nên báo lỗi.
+      const parseNumberOrNull = (val) => {
+        if (val === undefined || val === null || val === "") return null;
+        const n = Number(val);
+        return isNaN(n) ? null : n;
+      };
+
+      const validCost = parseNumberOrNull(cost_price);
+      const validSelling = parseNumberOrNull(selling_price);
+
+      if (cost_price && validCost === null) {
+        return {
+          success: false,
+          message: `Giá nhập "${cost_price}" không phải là số hợp lệ.`,
+        };
+      }
+      if (selling_price && validSelling === null) {
+        return {
+          success: false,
+          message: `Giá bán "${selling_price}" không phải là số hợp lệ.`,
+        };
+      }
+
       const targetWarehouse =
         resolveWarehouseKey(warehouse_key) || getDefaultWarehouse().key;
-      const qty = Number(quantity);
 
       // 1. Tìm sản phẩm
       const normalizedName = product_name.trim().toLowerCase();
@@ -74,30 +106,34 @@ export const useToolExecution = ({
         let isNewProduct = false;
 
         // Xử lý phí vận chuyển và cân nặng
-        let finalShipping = shipping_fee
-          ? { feeVnd: Number(shipping_fee) }
-          : null;
+        let finalShipping = null;
+        const feeInput = parseNumberOrNull(shipping_fee);
+        if (feeInput !== null) {
+          finalShipping = { feeVnd: feeInput };
+        }
 
         // Logic tự động tính cước nếu là hàng Nhật (JPY) và có cân nặng
         if (cost_currency === "JPY" && shipping_weight) {
-          const weight = Number(shipping_weight);
-          const rate = Number(settings?.exchangeRate) || 170; // Fallback 170 nếu chưa config
-          const feeJpy = Math.round(weight * 900); // 900 JPY/kg (Hardcode theo rule shop)
-          const feeVnd = Math.round(feeJpy * rate);
+          const weight = parseNumberOrNull(shipping_weight) || 0;
+          if (weight > 0) {
+            const rate = Number(settings?.exchangeRate) || 170; // Fallback 170 nếu chưa config
+            const feeJpy = Math.round(weight * 900); // 900 JPY/kg (Hardcode theo rule shop)
+            const feeVnd = Math.round(feeJpy * rate);
 
-          finalShipping = {
-            method: "jp",
-            weightKg: weight,
-            feeJpy,
-            feeVnd,
-            exchangeRate: rate,
-          };
+            finalShipping = {
+              method: "jp",
+              weightKg: weight,
+              feeJpy,
+              feeVnd,
+              exchangeRate: rate,
+            };
+          }
         }
 
         const lotData = {
           quantity: qty,
-          cost: Number(cost_price) || 0,
-          costJpy: cost_currency === "JPY" ? Number(cost_price) || 0 : 0,
+          cost: validCost || 0,
+          costJpy: cost_currency === "JPY" ? validCost || 0 : 0,
           warehouse: targetWarehouse,
           shipping: finalShipping,
           createdAt: new Date().toISOString(),
@@ -110,8 +146,8 @@ export const useToolExecution = ({
           const baseProduct = {
             id: newId,
             name: product_name, // Dùng tên user cung cấp
-            price: Number(selling_price) || 0,
-            cost: Number(cost_price) || 0,
+            price: validSelling || 0,
+            cost: validCost || 0,
             stock: 0,
             stockByWarehouse: {},
             purchaseLots: [],
@@ -129,8 +165,8 @@ export const useToolExecution = ({
         } else {
           // RESTOCK SẢN PHẨM CŨ
           updatedProduct = addPurchaseLot(product, lotData);
-          if (selling_price) {
-            updatedProduct.price = Number(selling_price);
+          if (validSelling !== null) {
+            updatedProduct.price = validSelling;
           }
         }
 
@@ -174,7 +210,7 @@ export const useToolExecution = ({
         const item = {
           productId: product.id,
           name: product.name,
-          price: Number(selling_price) || product.price || 0,
+          price: validSelling !== null ? validSelling : product.price || 0,
           quantity: qty,
           // cost sẽ được syncProductsStock tự xử lý hoặc lấy từ snapshot?
           // syncProductsStock tính toán allocations.

@@ -1,9 +1,10 @@
-import React from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { AnimatePresence } from "framer-motion";
 // Tách giao diện tạo đơn/danh sách đơn để file Orders.jsx gọn hơn
 import OrderCreateView from "./orders/OrderCreateView";
 import OrderListView from "./orders/OrderListView";
 import OrderDetailModal from "../components/orders/OrderDetailModal";
+import OrderMergeExportModal from "../components/orders/OrderMergeExportModal";
 import ConfirmModalHost from "../components/modals/ConfirmModalHost";
 import ErrorModal from "../components/modals/ErrorModal";
 import ScreenTransition from "../components/common/ScreenTransition";
@@ -18,13 +19,18 @@ const Orders = ({
   setTabBarVisible,
   customers, // New prop
   setCustomers, // New prop
+  updateFab,
+  isActive,
 }) => {
+  const [isMergeExportOpen, setIsMergeExportOpen] = useState(false);
+
   const {
     cart,
-    showScanner,
-    setShowScanner,
     selectedOrder,
     setSelectedOrder,
+    orderListSearchTerm,
+    setOrderListSearchTerm,
+    debouncedOrderListSearchTerm,
     isReviewOpen,
     setIsReviewOpen,
     orderComment,
@@ -50,11 +56,11 @@ const Orders = ({
     totalAmount,
     reviewItems,
     filteredProducts,
+    getAvailableStock,
     selectedWarehouse,
     setSelectedWarehouse,
     handleQuantityChange,
     adjustQuantity,
-    handleScanForSale,
     handleCreateOrder,
     handleUpdateOrder,
     handleStartCreate,
@@ -65,6 +71,12 @@ const Orders = ({
     handleTogglePaid,
     handleCancelOrder,
     getOrderStatusInfo,
+    isMergeMode,
+    selectedOrderIds,
+    toggleMergeMode,
+    toggleOrderSelection,
+    getOrderMergeEligibility,
+    clearMergeSelection,
     isCreateView,
     sortConfig,
     setSortConfig,
@@ -81,6 +93,27 @@ const Orders = ({
     setCustomers, // Pass down
   });
 
+  useEffect(() => {
+    if (isCreateView) {
+      updateFab({ isVisible: false });
+    }
+  }, [isCreateView, updateFab]);
+
+  const selectedMergeOrders = useMemo(
+    () => orders.filter((order) => selectedOrderIds.has(order.id)),
+    [orders, selectedOrderIds],
+  );
+
+  const handleToggleMergeMode = () => {
+    setIsMergeExportOpen(false);
+    toggleMergeMode();
+  };
+
+  const handleClearMergeSelection = () => {
+    setIsMergeExportOpen(false);
+    clearMergeSelection();
+  };
+
   const renderContent = () => {
     if (isCreateView) {
       return (
@@ -88,8 +121,6 @@ const Orders = ({
           setTabBarVisible={setTabBarVisible} // Pass TabBar control to Create View
           settings={settings}
           cart={cart}
-          showScanner={showScanner}
-          setShowScanner={setShowScanner}
           orderBeingEdited={orderBeingEdited}
           selectedWarehouse={selectedWarehouse}
           setSelectedWarehouse={setSelectedWarehouse}
@@ -107,6 +138,7 @@ const Orders = ({
           setSearchTerm={setSearchTerm}
           debouncedSearchTerm={debouncedSearchTerm}
           filteredProducts={filteredProducts}
+          getAvailableStock={getAvailableStock}
           totalAmount={totalAmount}
           reviewItems={reviewItems}
           isReviewOpen={isReviewOpen}
@@ -115,7 +147,6 @@ const Orders = ({
           setOrderComment={setOrderComment}
           handleExitCreate={handleExitCreate}
           handleCancelDraft={handleCancelDraft}
-          handleScanForSale={handleScanForSale}
           handleQuantityChange={handleQuantityChange}
           adjustQuantity={adjustQuantity}
           handleOpenReview={() => setIsReviewOpen(true)}
@@ -157,6 +188,22 @@ const Orders = ({
           handleCancelOrder={handleCancelOrder}
           onSelectOrder={setSelectedOrder}
           setTabBarVisible={setTabBarVisible}
+          updateFab={updateFab}
+          isActive={isActive}
+          isMergeMode={isMergeMode}
+          selectedOrderIds={selectedOrderIds}
+          toggleMergeMode={handleToggleMergeMode}
+          toggleOrderSelection={toggleOrderSelection}
+          getOrderMergeEligibility={getOrderMergeEligibility}
+          clearMergeSelection={handleClearMergeSelection}
+          searchTerm={orderListSearchTerm}
+          setSearchTerm={setOrderListSearchTerm}
+          debouncedSearchTerm={debouncedOrderListSearchTerm}
+          onOpenMergeExport={() => {
+            if (selectedMergeOrders.length >= 2) {
+              setIsMergeExportOpen(true);
+            }
+          }}
         />
         <OrderDetailModal
           order={selectedOrder}
@@ -195,6 +242,13 @@ const Orders = ({
         title={errorModal?.title}
         message={errorModal?.message}
         onClose={() => setErrorModal(null)}
+      />
+
+      <OrderMergeExportModal
+        open={isMergeExportOpen && selectedMergeOrders.length >= 2}
+        orders={selectedMergeOrders}
+        products={products}
+        onClose={() => setIsMergeExportOpen(false)}
       />
     </>
   );

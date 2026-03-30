@@ -7,7 +7,7 @@ const AppHeader = ({ className = "", isScrolled = false }) => {
         isScrolled ? "shadow-sm" : "shadow-none"
       } ${className}`}
     >
-      <div className="flex items-center justify-center gap-2">
+      <div className="flex items-center justify-center gap-2 min-h-[75px]">
         <img
           src="/tiny-shop-transparent.png"
           alt="Tiny Shop"

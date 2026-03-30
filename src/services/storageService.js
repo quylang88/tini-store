@@ -105,132 +105,264 @@ class StorageService {
 
   async migrateFromLocalStorageIfNeeded() {
     try {
-      // Logic migration: Check từng phần, nếu chưa có trong DB thì lấy từ LocalStorage
-      // Lưu ý: Migration này chạy mỗi lần load để đảm bảo vét sạch dữ liệu cũ nếu user update dần dần
+      // 1. Determine which stores actually need migration
+      const [productCount, orderCount, customerCount] = await Promise.all([
+        this.count(STORES.PRODUCTS),
+        this.count(STORES.ORDERS),
+        this.count(STORES.CUSTOMERS),
+      ]);
 
-      // 1. Products (Chỉ migrate nếu DB trống)
-      const productCount = await this.count(STORES.PRODUCTS);
-      if (productCount === 0) {
-        const rawProducts = localStorage.getItem("shop_products_v2");
-        if (rawProducts) {
-          console.log("Migrating Products...");
-          const products = JSON.parse(rawProducts);
-          if (Array.isArray(products)) {
-            await this.saveAll(STORES.PRODUCTS, products);
-          }
-        }
-      }
+      const needsProductMigration =
+        productCount === 0 ||
+        localStorage.getItem("migration_products_in_progress");
+      const needsOrderMigration =
+        orderCount === 0 ||
+        localStorage.getItem("migration_orders_in_progress");
+      const needsCustomerMigration =
+        customerCount === 0 ||
+        localStorage.getItem("migration_customers_in_progress");
 
-      // 2. Orders (Chỉ migrate nếu DB trống)
-      const orderCount = await this.count(STORES.ORDERS);
-      if (orderCount === 0) {
-        const rawOrders = localStorage.getItem("shop_orders_v2");
-        if (rawOrders) {
-          console.log("Migrating Orders...");
-          const orders = JSON.parse(rawOrders);
-          if (Array.isArray(orders)) {
-            await this.saveAll(STORES.ORDERS, orders);
-          }
-        }
-      }
+      // 2. Fetch raw strings only for stores that need it
+      const rawProducts = needsProductMigration
+        ? localStorage.getItem("shop_products_v2")
+        : null;
+      const rawOrders = needsOrderMigration
+        ? localStorage.getItem("shop_orders_v2")
+        : null;
+      const rawCustomers = needsCustomerMigration
+        ? localStorage.getItem("shop_customers_v1")
+        : null;
 
-      // 3. Settings (Main) + Theme + Greeting Date
-      // Chúng ta sẽ load settings hiện tại từ DB (nếu có) để merge
-      let currentSettings = await this.getSettings();
-      let settingsChanged = false;
+      // 3. Concurrently parse the JSON strings if they exist to avoid blocking
+      const [parsedProducts, parsedOrders, parsedCustomers] = await Promise.all(
+        [
+          rawProducts
+            ? this.parseJSON(rawProducts).catch((e) => {
+                console.error("Product migration parsing failed", e);
+                return null;
+              })
+            : Promise.resolve(null),
+          rawOrders
+            ? this.parseJSON(rawOrders).catch((e) => {
+                console.error("Order migration parsing failed", e);
+                return null;
+              })
+            : Promise.resolve(null),
+          rawCustomers
+            ? this.parseJSON(rawCustomers).catch((e) => {
+                console.error("Customer migration parsing failed", e);
+                return null;
+              })
+            : Promise.resolve(null),
+        ],
+      );
 
-      if (!currentSettings) {
-        const rawSettings = localStorage.getItem("shop_settings");
-        if (rawSettings) {
-          console.log("Migrating Settings...");
-          currentSettings = JSON.parse(rawSettings);
-          settingsChanged = true;
-        } else {
-          currentSettings = {};
-        }
-      }
-
-      // Migrate Theme ID
-      if (!currentSettings.themeId) {
-        const localTheme = localStorage.getItem("ai_theme_id");
-        if (localTheme) {
-          console.log("Migrating Theme ID...");
-          currentSettings.themeId = localTheme;
-          settingsChanged = true;
-        }
-      }
-
-      // Migrate Greeting Date
-      if (!currentSettings.lastGreetingDate) {
-        const localGreeting = localStorage.getItem("last_daily_greeting_date");
-        if (localGreeting) {
-          console.log("Migrating Greeting Date...");
-          currentSettings.lastGreetingDate = localGreeting;
-          settingsChanged = true;
-        }
-      }
-
-      if (settingsChanged) {
-        await this.saveSettings(currentSettings);
-      }
-
-      // 4. Customers
-      const customerCount = await this.count(STORES.CUSTOMERS);
-      if (customerCount === 0) {
-        const rawCustomers = localStorage.getItem("shop_customers_v1");
-        if (rawCustomers) {
-          console.log("Migrating Customers...");
-          const customers = JSON.parse(rawCustomers);
-          if (Array.isArray(customers)) {
-            await this.saveAll(STORES.CUSTOMERS, customers);
-          }
-        }
-      }
-
-      // 5. Chat Summary
-      const chatSummary = await this.getChatSummary();
-      if (!chatSummary) {
-        const rawChatSummary = localStorage.getItem("ai_chat_summary");
-        if (rawChatSummary) {
-          console.log("Migrating Chat Summary...");
-          await this.saveChatSummary(rawChatSummary);
-        }
-      }
-
-      // 6. Pending Buffer (New)
-      const pendingBuffer = await this.getPendingBuffer();
-      if (!pendingBuffer || pendingBuffer.length === 0) {
-        const rawBuffer = localStorage.getItem("ai_pending_buffer");
-        if (rawBuffer) {
-          console.log("Migrating Pending Buffer...");
-          try {
-            const buffer = JSON.parse(rawBuffer);
-            if (Array.isArray(buffer)) {
-              await this.savePendingBuffer(buffer);
-            }
-          } catch (e) {
-            console.warn("Invalid pending buffer in localStorage", e);
-          }
-        }
-      }
-
-      // 7. Auth Credentials (New)
-      const authCreds = await this.getAuthCreds();
-      if (!authCreds) {
-        const rawCreds = localStorage.getItem("tini_saved_creds");
-        if (rawCreds) {
-          console.log("Migrating Auth Credentials...");
-          try {
-            const creds = JSON.parse(rawCreds);
-            await this.saveAuthCreds(creds);
-          } catch (e) {
-            console.warn("Invalid auth creds in localStorage", e);
-          }
-        }
-      }
+      // Parallelize migration tasks
+      await Promise.all([
+        this.migrateProducts(needsProductMigration, parsedProducts),
+        this.migrateOrders(needsOrderMigration, parsedOrders),
+        this.migrateSettings(),
+        this.migrateCustomers(needsCustomerMigration, parsedCustomers),
+        this.migrateChatSummary(),
+        this.migratePendingBuffer(),
+        this.migrateAuthCreds(),
+      ]);
     } catch (e) {
       console.error("Lỗi khi chuyển đổi dữ liệu cũ:", e);
       // Tiếp tục chạy để không chặn ứng dụng
+    }
+  }
+
+  async migrateProducts(needsMigration, parsedProducts) {
+    const migrationKey = "migration_products_in_progress";
+
+    if (needsMigration && parsedProducts) {
+      console.log("Migrating Products...");
+      localStorage.setItem(migrationKey, "true");
+      try {
+        if (Array.isArray(parsedProducts)) {
+          await this.saveAllChunked(STORES.PRODUCTS, parsedProducts);
+          localStorage.removeItem(migrationKey);
+        }
+      } catch (e) {
+        console.error("Product migration failed", e);
+      }
+    }
+  }
+
+  async migrateOrders(needsMigration, parsedOrders) {
+    const migrationKey = "migration_orders_in_progress";
+
+    if (needsMigration && parsedOrders) {
+      console.log("Migrating Orders...");
+      localStorage.setItem(migrationKey, "true");
+      try {
+        if (Array.isArray(parsedOrders)) {
+          await this.saveAllChunked(STORES.ORDERS, parsedOrders);
+          localStorage.removeItem(migrationKey);
+        }
+      } catch (e) {
+        console.error("Order migration failed", e);
+      }
+    }
+  }
+
+  async migrateSettings() {
+    // 3. Settings (Main) + Theme + Greeting Date
+    // Chúng ta sẽ load settings hiện tại từ DB (nếu có) để merge
+    let currentSettings = await this.getSettings();
+    let settingsChanged = false;
+
+    if (!currentSettings) {
+      const rawSettings = localStorage.getItem("shop_settings");
+      if (rawSettings) {
+        console.log("Migrating Settings...");
+        currentSettings = JSON.parse(rawSettings);
+        settingsChanged = true;
+      } else {
+        currentSettings = {};
+      }
+    }
+
+    // Migrate Theme ID
+    if (!currentSettings.themeId) {
+      const localTheme = localStorage.getItem("ai_theme_id");
+      if (localTheme) {
+        console.log("Migrating Theme ID...");
+        currentSettings.themeId = localTheme;
+        settingsChanged = true;
+      }
+    }
+
+    // Migrate Greeting Date
+    if (!currentSettings.lastGreetingDate) {
+      const localGreeting = localStorage.getItem("last_daily_greeting_date");
+      if (localGreeting) {
+        console.log("Migrating Greeting Date...");
+        currentSettings.lastGreetingDate = localGreeting;
+        settingsChanged = true;
+      }
+    }
+
+    if (settingsChanged) {
+      await this.saveSettings(currentSettings);
+    }
+  }
+
+  async migrateCustomers(needsMigration, parsedCustomers) {
+    const migrationKey = "migration_customers_in_progress";
+
+    if (needsMigration && parsedCustomers) {
+      console.log("Migrating Customers...");
+      localStorage.setItem(migrationKey, "true");
+      try {
+        if (Array.isArray(parsedCustomers)) {
+          await this.saveAllChunked(STORES.CUSTOMERS, parsedCustomers);
+          localStorage.removeItem(migrationKey);
+        }
+      } catch (e) {
+        console.error("Customer migration failed", e);
+      }
+    }
+  }
+
+  async migrateChatSummary() {
+    const chatSummary = await this.getChatSummary();
+    if (!chatSummary) {
+      const rawChatSummary = localStorage.getItem("ai_chat_summary");
+      if (rawChatSummary) {
+        console.log("Migrating Chat Summary...");
+        await this.saveChatSummary(rawChatSummary);
+      }
+    }
+  }
+
+  async migratePendingBuffer() {
+    const pendingBuffer = await this.getPendingBuffer();
+    if (!pendingBuffer || pendingBuffer.length === 0) {
+      const rawBuffer = localStorage.getItem("ai_pending_buffer");
+      if (rawBuffer) {
+        console.log("Migrating Pending Buffer...");
+        try {
+          const buffer = JSON.parse(rawBuffer);
+          if (Array.isArray(buffer)) {
+            await this.savePendingBuffer(buffer);
+          }
+        } catch (e) {
+          console.warn("Invalid pending buffer in localStorage", e);
+        }
+      }
+    }
+  }
+
+  async migrateAuthCreds() {
+    const authCreds = await this.getAuthCreds();
+    if (!authCreds) {
+      const rawCreds = localStorage.getItem("tini_saved_creds");
+      if (rawCreds) {
+        console.log("Migrating Auth Credentials...");
+        try {
+          const creds = JSON.parse(rawCreds);
+          await this.saveAuthCreds(creds);
+        } catch (e) {
+          console.warn("Invalid auth creds in localStorage", e);
+        }
+      }
+    }
+  }
+
+  // --- Helper Methods for Performance ---
+
+  /**
+   * Parse JSON asynchronously if possible (using Response)
+   * Fallback to JSON.parse
+   */
+  async parseJSON(jsonString) {
+    try {
+      if (typeof Response !== "undefined") {
+        return await new Response(jsonString).json();
+      }
+      //eslint-disable-next-line
+    } catch (e) {
+      // Fallback if Response fails or is not supported
+    }
+    return JSON.parse(jsonString);
+  }
+
+  /**
+   * Save items in chunks to avoid blocking the main thread
+   */
+  async saveAllChunked(storeName, items, chunkSize = 500) {
+    if (!items || items.length === 0) return;
+
+    // Use standard saveAll for small batches
+    if (items.length <= chunkSize) {
+      return this.saveAll(storeName, items);
+    }
+
+    // 1. Clear Store first (Transaction 1)
+    await new Promise((resolve, reject) => {
+      const transaction = this.db.transaction([storeName], "readwrite");
+      const store = transaction.objectStore(storeName);
+      store.clear();
+      transaction.oncomplete = () => resolve();
+      transaction.onerror = () => reject(transaction.error);
+    });
+
+    // 2. Insert in chunks
+    for (let i = 0; i < items.length; i += chunkSize) {
+      const chunk = items.slice(i, i + chunkSize);
+
+      // Yield to event loop to keep UI responsive
+      await new Promise((resolve) => setTimeout(resolve, 0));
+
+      await new Promise((resolve, reject) => {
+        const transaction = this.db.transaction([storeName], "readwrite");
+        const store = transaction.objectStore(storeName);
+        chunk.forEach((item) => store.put(item));
+        transaction.oncomplete = () => resolve();
+        transaction.onerror = () => reject(transaction.error);
+      });
     }
   }
 
@@ -373,6 +505,38 @@ class StorageService {
       transaction.oncomplete = () => resolve();
       transaction.onerror = () => reject(transaction.error);
     });
+  }
+
+  // --- Batch Savers (Lưu hàng loạt) ---
+
+  async saveBatch(storeName, { added, updated, deleted }) {
+    if (!this.db) await this.init();
+    return new Promise((resolve, reject) => {
+      const transaction = this.db.transaction([storeName], "readwrite");
+      const store = transaction.objectStore(storeName);
+
+      // Thêm mới và cập nhật dùng chung .put()
+      added.forEach((item) => store.put(item));
+      updated.forEach((item) => store.put(item));
+
+      // Xóa items
+      deleted.forEach((id) => store.delete(id));
+
+      transaction.oncomplete = () => resolve();
+      transaction.onerror = () => reject(transaction.error);
+    });
+  }
+
+  async saveProductsBatch(changes) {
+    return this.saveBatch(STORES.PRODUCTS, changes);
+  }
+
+  async saveOrdersBatch(changes) {
+    return this.saveBatch(STORES.ORDERS, changes);
+  }
+
+  async saveCustomersBatch(changes) {
+    return this.saveBatch(STORES.CUSTOMERS, changes);
   }
 
   saveAll(storeName, items) {

@@ -44,8 +44,8 @@ const TabBar = ({ activeTab, setActiveTab, isVisible = true }) => {
               key={tab.id}
               onClick={handleTabClick}
               aria-current={isActive ? "page" : undefined}
-              className={`relative flex flex-col items-center justify-center w-full h-full gap-0.5 transition-all duration-300 ${
-                isActive ? "z-10 scale-110 drop-shadow-sm" : "text-amber-500 z-0"
+              className={`relative flex flex-col items-center justify-center w-full h-full gap-0.5 transition-all duration-300 text-amber-500 ${
+                isActive ? "z-10 scale-110 drop-shadow-sm" : "z-0"
               }`}
             >
               <IconComponent isActive={isActive} size={24} loop={false} />

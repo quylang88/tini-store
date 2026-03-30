@@ -9,7 +9,14 @@ import TopSellingSection from "../../components/stats/TopSellingSection";
 import StatListModal from "../../components/dashboard/StatListModal";
 import DateRangeFilter from "../../components/stats/DateRangeFilter";
 
-const StatsDetail = ({ products, orders, onBack }) => {
+const StatsDetail = ({ products, orders, onBack, updateFab, isActive }) => {
+  // Hide FAB when active
+  React.useEffect(() => {
+    if (isActive && updateFab) {
+      updateFab({ isVisible: false });
+    }
+  }, [isActive, updateFab]);
+
   const {
     topOptions,
     topLimit,
@@ -63,24 +70,36 @@ const StatsDetail = ({ products, orders, onBack }) => {
     previousStart.setHours(0, 0, 0, 0);
 
     const calcStats = (rangeStartDate, rangeEndDate) => {
-      const rangeOrders = paidOrders.filter((order) => {
-        const orderDate = new Date(order.date);
-        return orderDate >= rangeStartDate && orderDate <= rangeEndDate;
-      });
+      let revenue = 0;
+      let profit = 0;
+      let count = 0;
 
-      const revenue = rangeOrders.reduce((sum, order) => sum + order.total, 0);
-      const profit = rangeOrders.reduce((sum, order) => {
-        const orderProfit = order.items.reduce((itemSum, item) => {
-          const cost = Number.isFinite(item.cost)
-            ? item.cost
-            : costMap.get(item.productId) || 0;
-          return itemSum + (item.price - cost) * item.quantity;
-        }, 0);
-        const shippingFee = order.shippingFee || 0;
-        return sum + orderProfit - shippingFee;
-      }, 0);
+      const startTime = rangeStartDate.getTime();
+      const endTime = rangeEndDate.getTime();
 
-      return { revenue, profit, count: rangeOrders.length };
+      // Optimization: Thay thế chuỗi .filter().reduce() bằng một vòng lặp for...of duy nhất.
+      // Sử dụng Date.parse() để so sánh timestamp nhanh hơn thay vì khởi tạo đối tượng Date.
+      for (const order of paidOrders) {
+        const orderTime = Date.parse(order.date);
+
+        if (orderTime >= startTime && orderTime <= endTime) {
+          count++;
+          revenue += order.total;
+
+          let orderProfit = 0;
+          for (const item of order.items) {
+            const cost = Number.isFinite(item.cost)
+              ? item.cost
+              : costMap.get(item.productId) || 0;
+            orderProfit += (item.price - cost) * item.quantity;
+          }
+
+          const shippingFee = order.shippingFee || 0;
+          profit += orderProfit - shippingFee;
+        }
+      }
+
+      return { revenue, profit, count };
     };
 
     return {
@@ -97,7 +116,7 @@ const StatsDetail = ({ products, orders, onBack }) => {
   const modalItems = activeModal === "quantity" ? topByQuantity : topByProfit;
 
   return (
-    <div className="flex flex-col h-full animate-fade-in bg-rose-50">
+    <div className="flex flex-col h-full bg-rose-50">
       <div className="flex-none pt-[env(safe-area-inset-top)] bg-rose-50 z-20 sticky top-0 px-4 py-2 border-b border-rose-100/50 backdrop-blur-sm">
         <div className="text-xl text-rose-700 font-bold whitespace-nowrap">
           Thống kê chi tiết

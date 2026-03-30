@@ -1,7 +1,6 @@
-import React, { useState } from "react";
-import { AnimatePresence, motion } from "framer-motion";
-import { Plus } from "lucide-react";
-import BarcodeScanner from "../components/BarcodeScanner";
+import React, { useState, useEffect, useCallback } from "react";
+import { motion } from "framer-motion";
+import { Plus, X, Image as ImageIcon } from "lucide-react"; // Added Icons
 import ProductFilterHeader from "../components/common/ProductFilterHeader";
 import ProductFilterSection from "../components/common/ProductFilterSection";
 import ProductList from "../components/inventory/ProductList";
@@ -10,12 +9,15 @@ import ProductModal from "../components/inventory/ProductModal";
 import ProductBasicInfoModal from "../components/inventory/ProductBasicInfoModal";
 import ConfirmModalHost from "../components/modals/ConfirmModalHost";
 import ErrorModal from "../components/modals/ErrorModal";
-import FloatingActionButton from "../components/button/FloatingActionButton";
 import useInventoryLogic from "../hooks/inventory/useInventoryLogic";
 import useScrollHandling from "../hooks/ui/useScrollHandling";
 import AppHeader from "../components/common/AppHeader";
 import usePagination from "../hooks/ui/usePagination";
 import { isScrollNearBottom } from "../utils/ui/scrollUtils";
+import { generateProductListImage } from "../utils/file/imageExportUtils"; // Added
+import { shareOrDownloadFile } from "../utils/file/fileUtils"; // Added
+import LoadingOverlay from "../components/common/LoadingOverlay"; // Added
+import SelectionActionBar from "../components/common/SelectionActionBar";
 
 const Inventory = ({
   products,
@@ -24,9 +26,16 @@ const Inventory = ({
   setOrders,
   settings,
   setTabBarVisible,
+  updateFab,
+  isActive,
 }) => {
   const [detailProduct, setDetailProduct] = useState(null);
   const [editingBasicInfoProduct, setEditingBasicInfoProduct] = useState(null);
+
+  // State mới cho Chế độ chọn (Selection Mode)
+  const [isSelectionMode, setIsSelectionMode] = useState(false);
+  const [selectedProductIds, setSelectedProductIds] = useState(new Set());
+  const [isExporting, setIsExporting] = useState(false);
 
   const { isSearchVisible, isAddButtonVisible, isScrolled, handleScroll } =
     useScrollHandling({
@@ -34,12 +43,11 @@ const Inventory = ({
       setTabBarVisible,
       searchHideThreshold: 140,
       showTabBarOnlyAtTop: true,
+      lockTabBarHidden: isSelectionMode,
     });
 
   const {
     isModalOpen,
-    showScanner,
-    setShowScanner,
     editingProduct,
     editingLotId,
     searchTerm,
@@ -57,7 +65,6 @@ const Inventory = ({
     handleDecimalChange,
     handleCurrencyChange,
     handleShippingMethodChange,
-    handleScanSuccess,
     handleImageSelect,
     handleSave,
     openModal,
@@ -74,6 +81,93 @@ const Inventory = ({
     debouncedSearchTerm,
   } = useInventoryLogic({ products, setProducts, orders, setOrders, settings });
 
+  // --- Handlers cho Chế độ Chọn ---
+
+  const toggleSelectionMode = useCallback(() => {
+    setIsSelectionMode((prev) => {
+      if (prev) {
+        setSelectedProductIds(new Set()); // Xoá danh sách chọn khi thoát
+      }
+      return !prev;
+    });
+  }, []);
+
+  const toggleProductSelection = useCallback((productId) => {
+    setSelectedProductIds((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(productId)) {
+        newSet.delete(productId);
+      } else {
+        newSet.add(productId);
+      }
+      return newSet;
+    });
+  }, []);
+
+  const handleExportImage = async () => {
+    if (selectedProductIds.size === 0) return;
+    setIsExporting(true);
+    // Chờ UI cập nhật
+    await new Promise((resolve) => setTimeout(resolve, 100));
+    try {
+      const selectedProducts = products.filter((p) =>
+        selectedProductIds.has(p.id),
+      );
+      const blob = await generateProductListImage(selectedProducts, {
+        showTotal: true,
+        title: "BÁO GIÁ SẢN PHẨM",
+      });
+      await shareOrDownloadFile(
+        blob,
+        `Bao_gia_${new Date().toISOString().slice(0, 10)}.png`,
+        "image/png",
+      );
+      // Giữ nguyên chế độ chọn để có thể thao tác tiếp nếu cần
+    } catch (err) {
+      console.error(err);
+      setErrorModal({
+        title: "Lỗi xuất file",
+        message: "Không thể tạo ảnh báo giá. Vui lòng thử lại.",
+      });
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  useEffect(() => {
+    if (isActive) {
+      if (isSelectionMode) {
+        updateFab({ isVisible: false }); // Ẩn FAB
+        setTabBarVisible(false); // Ẩn TabBar để nhường chỗ cho thanh action
+      } else {
+        updateFab({
+          isVisible: isAddButtonVisible,
+          onClick: () => openModal(),
+          icon: Plus,
+          label: "Thêm hàng mới",
+          color: "rose",
+        });
+
+        // Khôi phục hiển thị TabBar nếu không ở chế độ chọn
+        setTabBarVisible(true);
+      }
+    }
+  }, [
+    isActive,
+    isAddButtonVisible,
+    openModal,
+    updateFab,
+    isSelectionMode,
+    setTabBarVisible,
+  ]);
+
+  // Bắt buộc ẩn tab bar bất cứ khi nào chế độ chọn đang bật (chống lại sự kiện cuộn)
+  useEffect(() => {
+    if (isActive && isSelectionMode) {
+      setTabBarVisible(false);
+    }
+  }, [isActive, isSelectionMode, isScrolled, setTabBarVisible]);
+
   const {
     visibleData: visibleProducts,
     loadMore,
@@ -88,20 +182,21 @@ const Inventory = ({
     ],
   });
 
+  const handleSearchChange = useCallback(
+    (e) => setSearchTerm(e.target.value),
+    [setSearchTerm],
+  );
+
+  const handleClearSearch = useCallback(
+    () => setSearchTerm(""),
+    [setSearchTerm],
+  );
+
   return (
     <div className="relative h-full bg-transparent flex flex-col">
       <AppHeader className="z-20" isScrolled={isScrolled} />
 
-      {showScanner && (
-        <BarcodeScanner
-          onScanSuccess={handleScanSuccess}
-          onClose={() => setShowScanner(false)}
-        />
-      )}
-
-      {/* Container cho nội dung chính, bắt đầu từ dưới AppHeader */}
       <div className="flex flex-col h-full pt-[calc(72px+env(safe-area-inset-top))] relative">
-        {/* InventoryHeader cố định phía trên danh sách (Chỉ Search) */}
         <motion.div
           className="absolute top-[calc(72px+env(safe-area-inset-top))] left-0 right-0 z-10 bg-amber-50"
           initial={{ y: 0 }}
@@ -110,30 +205,33 @@ const Inventory = ({
         >
           <ProductFilterHeader
             searchTerm={searchTerm}
-            onSearchChange={(e) => setSearchTerm(e.target.value)}
-            onClearSearch={() => setSearchTerm("")}
-            onShowScanner={() => setShowScanner(true)}
-            enableFilters={false} // Tắt filter trong header cố định
+            onSearchChange={handleSearchChange}
+            onClearSearch={handleClearSearch}
+            enableFilters={false}
             activeCategory={activeCategory}
             setActiveCategory={setActiveCategory}
             warehouseFilter={warehouseFilter}
             onWarehouseChange={setWarehouseFilter}
             categories={settings.categories}
             namespace="inventory"
+            // Props mới
+            onToggleSelect={toggleSelectionMode}
+            isSelectionMode={isSelectionMode}
           />
         </motion.div>
 
-        {/* Product List cuộn bên dưới InventoryHeader */}
         <div
-          className="flex-1 overflow-y-auto min-h-0 pt-[56px] overscroll-y-contain"
+          className={`flex-1 overflow-y-auto min-h-0 pt-[56px] overscroll-y-contain ${
+            isSelectionMode ? "pb-[11rem]" : "pb-[80px]"
+          }`}
           onScroll={(e) => {
+            // handleScroll vẫn quản lý shadow header
             handleScroll(e);
             if (isScrollNearBottom(e.target) && hasMore) {
               loadMore();
             }
           }}
         >
-          {/* Filter Section nằm trong luồng scroll */}
           <ProductFilterSection
             warehouseFilter={warehouseFilter}
             onWarehouseChange={setWarehouseFilter}
@@ -151,52 +249,72 @@ const Inventory = ({
             activeCategory={activeCategory}
             activeWarehouse={warehouseFilter}
             onEditBasicInfo={setEditingBasicInfoProduct}
+            // Props mới
+            isSelectionMode={isSelectionMode}
+            selectedProductIds={selectedProductIds}
+            onToggleProduct={toggleProductSelection}
           />
         </div>
       </div>
 
-      {/* Nút thêm hàng mới nổi theo cùng vị trí với màn tạo đơn để đồng bộ UX. */}
-      <AnimatePresence>
-        {isAddButtonVisible && (
-          <motion.div
-            layout
-            layoutId="floating-action-button"
-            initial={{ scale: 0, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0, opacity: 0 }}
-            className="fixed right-5 bottom-[calc(env(safe-area-inset-bottom)+90px)] z-30"
-          >
-            <FloatingActionButton
-              onClick={() => openModal()}
-              ariaLabel="Thêm hàng mới"
-              icon={Plus}
-              color="rose"
-              className="!static" // Override absolute positioning if needed by wrapper
-            />
-          </motion.div>
-        )}
-      </AnimatePresence>
+      <SelectionActionBar
+        visible={isSelectionMode}
+        count={selectedProductIds.size}
+        title={
+          selectedProductIds.size > 0
+            ? "Sẵn sàng tạo ảnh báo giá"
+            : "Chọn sản phẩm để xuất ảnh"
+        }
+        subtitle={
+          selectedProductIds.size > 0
+            ? "Giữ nguyên lựa chọn sau khi xuất để thao tác tiếp."
+            : "Bạn có thể chọn một hoặc nhiều sản phẩm trong cùng danh sách."
+        }
+        secondaryAction={{
+          label: "Thoát",
+          icon: X,
+          onClick: toggleSelectionMode,
+        }}
+        primaryAction={{
+          label: "Xuất ảnh",
+          icon: ImageIcon,
+          onClick: handleExportImage,
+          disabled: selectedProductIds.size === 0,
+        }}
+      />
 
-      {/* Tách form modal và bổ sung nút chụp ảnh từ camera */}
-      {/* Modal sửa thông tin cơ bản */}
+      {/* Loading Overlay */}
+      {isExporting && <LoadingOverlay text="Đang tạo ảnh báo giá..." />}
+
       <ProductBasicInfoModal
         isOpen={Boolean(editingBasicInfoProduct)}
         product={editingBasicInfoProduct}
         categories={settings.categories}
         onClose={() => setEditingBasicInfoProduct(null)}
-        onShowScanner={() => setShowScanner(true)}
         onError={setErrorModal}
         onSave={(updatedProduct) => {
+          const duplicateCode = products.find(
+            (p) =>
+              p.productCode === updatedProduct.productCode &&
+              p.id !== updatedProduct.id,
+          );
+
+          if (duplicateCode) {
+            setErrorModal({
+              title: "Mã sản phẩm trùng",
+              message: `Mã sản phẩm "${updatedProduct.productCode}" đã được sử dụng bởi "${duplicateCode.name}".`,
+            });
+            return;
+          }
+
           const newProducts = products.map((p) =>
             p.id === updatedProduct.id ? updatedProduct : p,
           );
           setProducts(newProducts);
-          // Cập nhật lại list đã filter nếu cần thiết (handle bởi useInventoryLogic qua prop products)
           setEditingBasicInfoProduct(null);
         }}
       />
 
-      {/* Tách form modal và bổ sung nút chụp ảnh từ camera */}
       <ProductModal
         isOpen={isModalOpen}
         editingProduct={editingProduct}
@@ -213,7 +331,6 @@ const Inventory = ({
             setDetailProduct(null);
           }
         }}
-        onShowScanner={() => setShowScanner(true)}
         onImageSelect={handleImageSelect}
         onMoneyChange={handleMoneyChange}
         onDecimalChange={handleDecimalChange}
@@ -222,7 +339,6 @@ const Inventory = ({
         highlightOps={highlightOps}
       />
 
-      {/* Modal chi tiết sản phẩm khi chạm vào item */}
       <ProductDetailModal
         product={detailProduct}
         onClose={() => setDetailProduct(null)}
@@ -231,13 +347,11 @@ const Inventory = ({
         }}
       />
 
-      {/* Modal xác nhận xoá để thay thế popup mặc định */}
       <ConfirmModalHost
         modal={confirmModal}
         onClose={() => setConfirmModal(null)}
       />
 
-      {/* Modal báo lỗi riêng cho form tạo/sửa sản phẩm */}
       <ErrorModal
         open={Boolean(errorModal)}
         title={errorModal?.title}

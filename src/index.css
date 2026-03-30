@@ -15,14 +15,15 @@ html, body, #root {
 }
 
 html {
-  /* Match the lightest color of the app gradient to hide overscroll gap */
-  background-color: #FFF7ED; /* amber-50 */
+  background-color: #fff1f2;
   overscroll-behavior-y: none;
+  overflow: hidden; /* Force viewport to be non-scrollable */
 }
 
 body {
   /* Prevent pull-to-refresh on mobile */
   overscroll-behavior-y: none;
+  overflow: hidden; /* Force viewport to be non-scrollable */
   /* Disable text selection */
   user-select: none;
   -webkit-user-select: none;
@@ -30,17 +31,22 @@ body {
   -webkit-tap-highlight-color: transparent;
   /* Optimized scrolling */
   -webkit-overflow-scrolling: touch;
+  /* Prevent context menu (Save Image / Copy Link) */
+  -webkit-touch-callout: none;
+  /* Native font rendering */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 /* Allow text selection in inputs */
 input, textarea, [contenteditable] {
   user-select: text;
   -webkit-user-select: text;
+  -webkit-touch-callout: default;
 }
 
 /* Utilities */
 .pb-safe-area { padding-bottom: env(safe-area-inset-bottom); }
-
 .no-scrollbar::-webkit-scrollbar { display: none; }
 .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 

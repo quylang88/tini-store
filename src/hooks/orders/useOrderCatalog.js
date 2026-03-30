@@ -41,17 +41,43 @@ const useOrderCatalog = ({
     return map;
   }, [orderBeingEdited]);
 
+  // Pre-calculate stock for the *currently selected warehouse* into a Map.
+  // This reduces checkAvailability complexity from O(N*M) to O(1) during filtering/search.
+  const stockMap = useMemo(() => {
+    const map = new Map();
+    // Resolve key once for the entire loop
+    const resolvedKey = resolveWarehouseKey(selectedWarehouse);
+    const isAll = selectedWarehouse === "all";
+
+    for (const product of products) {
+      let stock = 0;
+      if (isAll) {
+        stock = getTotalStock(product);
+      } else {
+        stock = getSpecificWarehouseStock(product, resolvedKey);
+      }
+      map.set(product.id, stock);
+    }
+    return map;
+  }, [products, selectedWarehouse]);
+
   const getAvailableStock = useCallback(
     (product, warehouseKey) => {
       let baseStock = 0;
-      // Resolve warehouse key
+      // Resolve warehouse key needed for both calculation and edit check
       const resolvedKey = resolveWarehouseKey(warehouseKey);
 
-      if (warehouseKey === "all") {
-        baseStock = getTotalStock(product);
+      // OPTIMIZATION: Use pre-calculated stock map if querying currently selected warehouse
+      if (warehouseKey === selectedWarehouse) {
+        baseStock = stockMap.get(product.id) || 0;
       } else {
-        // Tối ưu hóa: Tính trực tiếp tồn kho của kho cụ thể mà không cần chuẩn hóa toàn bộ object
-        baseStock = getSpecificWarehouseStock(product, resolvedKey);
+        // Fallback for other warehouses or if map is not applicable
+        if (warehouseKey === "all") {
+          baseStock = getTotalStock(product);
+        } else {
+          // Tối ưu hóa: Tính trực tiếp tồn kho của kho cụ thể mà không cần chuẩn hóa toàn bộ object
+          baseStock = getSpecificWarehouseStock(product, resolvedKey);
+        }
       }
 
       if (!orderBeingEdited) return baseStock;
@@ -65,7 +91,7 @@ const useOrderCatalog = ({
       const previousQty = orderItemsQuantityMap.get(product.id) || 0;
       return baseStock + previousQty;
     },
-    [orderBeingEdited, orderItemsQuantityMap],
+    [orderBeingEdited, orderItemsQuantityMap, selectedWarehouse, stockMap],
   );
 
   // Định nghĩa bộ lọc tùy chỉnh cho tính khả dụng
@@ -85,32 +111,38 @@ const useOrderCatalog = ({
     customFilterFn: checkAvailability,
   });
 
-  const reviewItems = useMemo(
-    () =>
-      Object.entries(cart)
-        .map(([productId, quantity]) => {
-          const product = productMap.get(productId);
-          if (!product) return null;
+  const reviewItems = useMemo(() => {
+    // Tối ưu hóa: Thay thế .map().filter() bằng một vòng lặp duy nhất
+    // Việc này tránh tạo ra mảng trung gian và các đối tượng null không cần thiết
+    const items = [];
+    for (const productId in cart) {
+      if (!Object.prototype.hasOwnProperty.call(cart, productId)) continue;
 
-          const overriddenPrice = priceOverrides[productId];
+      const quantity = cart[productId];
+      // Lọc bỏ số lượng <= 0 (bao gồm cả chuỗi rỗng) ngay từ đầu
+      if (!quantity || quantity <= 0) continue;
 
-          return {
-            id: product.id,
-            productId: product.id,
-            name: product.name,
-            price:
-              overriddenPrice !== undefined
-                ? Number(overriddenPrice)
-                : product.price,
-            originalPrice: product.price,
-            quantity,
-            // Giá vốn dùng cho đơn hàng cần gồm cả phí gửi/đơn vị.
-            cost: getProductStats(product).unitCost,
-          };
-        })
-        .filter((item) => item && item.quantity > 0), // Lọc bỏ item null hoặc số lượng <= 0 (bao gồm cả chuỗi rỗng)
-    [cart, productMap, priceOverrides],
-  );
+      const product = productMap.get(productId);
+      if (!product) continue;
+
+      const overriddenPrice = priceOverrides[productId];
+
+      items.push({
+        id: product.id,
+        productId: product.id,
+        name: product.name,
+        price:
+          overriddenPrice !== undefined
+            ? Number(overriddenPrice)
+            : product.price,
+        originalPrice: product.price,
+        quantity,
+        // Giá vốn dùng cho đơn hàng cần gồm cả phí gửi/đơn vị.
+        cost: getProductStats(product).unitCost,
+      });
+    }
+    return items;
+  }, [cart, productMap, priceOverrides]);
 
   const totalAmount = useMemo(
     () =>

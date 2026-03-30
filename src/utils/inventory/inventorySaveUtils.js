@@ -4,6 +4,7 @@ import {
   getAllWarehouseKeys,
   getDefaultWarehouse,
   resolveWarehouseKey,
+  calculateTotalStock,
 } from "./warehouseUtils.js";
 import {
   addPurchaseLot,
@@ -54,19 +55,28 @@ export const getInventoryValidationError = ({
     };
   }
 
-  // Kiểm tra trùng Barcode
-  if (formData.barcode) {
-    const duplicateBarcode = products.find(
-      (p) =>
-        p.barcode === formData.barcode &&
-        p.id !== (editingProduct ? editingProduct.id : null),
-    );
-    if (duplicateBarcode) {
-      return {
-        title: "Mã vạch bị trùng",
-        message: `Mã vạch này đã được dùng cho "${duplicateBarcode.name}". Vui lòng kiểm tra lại.`,
-      };
-    }
+  // Kiểm tra mã sản phẩm bắt buộc
+  if (!formData.productCode) {
+    return {
+      title: "Thiếu mã sản phẩm",
+      message: "Vui lòng nhập Mã sản phẩm (duy nhất).",
+      missingFields: ["productCode"],
+    };
+  }
+
+  // Kiểm tra trùng Mã sản phẩm
+  const duplicateCode = products.find(
+    (p) =>
+      p.productCode === formData.productCode &&
+      p.id !== (editingProduct ? editingProduct.id : null),
+  );
+
+  if (duplicateCode) {
+    return {
+      title: "Mã sản phẩm đã tồn tại",
+      message: `Mã sản phẩm này đã được dùng cho "${duplicateCode.name}". Vui lòng kiểm tra lại.`,
+      missingFields: ["productCode"],
+    };
   }
 
   const quantityValue = Number(formData.quantity) || 0;
@@ -161,16 +171,13 @@ export const buildNextProductFromForm = ({
   let nextProduct = {
     ...baseProduct,
     name: formData.name.trim(),
-    barcode: formData.barcode ? formData.barcode.trim() : "",
+    productCode: formData.productCode ? formData.productCode.trim() : "",
     category: formData.category,
     price: Number(formData.price),
     cost: costValue || getProductStats(baseProduct).cost,
     image: formData.image,
     stockByWarehouse: nextStockByWarehouse,
-    stock: Object.values(nextStockByWarehouse).reduce(
-      (sum, val) => sum + val,
-      0,
-    ),
+    stock: calculateTotalStock(nextStockByWarehouse),
   };
 
   // Lưu lại từng lần nhập hàng thành "lô giá nhập" để quản lý tồn kho theo giá.
@@ -238,7 +245,7 @@ export const buildNextProductFromForm = ({
         ...nextProduct,
         purchaseLots: nextLots,
         stockByWarehouse: adjustedStock,
-        stock: Object.values(adjustedStock).reduce((sum, val) => sum + val, 0),
+        stock: calculateTotalStock(adjustedStock),
         cost: getProductStats({ ...nextProduct, purchaseLots: nextLots }).cost,
       };
     } else {

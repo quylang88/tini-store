@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { Trophy } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import AnimatedFilterTabs from "../common/AnimatedFilterTabs";
@@ -14,11 +14,15 @@ const TopSellingSection = ({
   layoutIdPrefix = "top-selling-tabs",
 }) => {
   // Chuyển đổi topOptions sang định dạng yêu cầu của AnimatedFilterTabs (key, label)
-  // Giả sử topOptions có { id, label }
-  const tabs = topOptions.map((opt) => ({
-    key: opt.id,
-    label: opt.label,
-  }));
+  // Sử dụng useMemo để tránh tạo mảng mới mỗi lần render nếu topOptions không đổi
+  const tabs = useMemo(
+    () =>
+      topOptions.map((opt) => ({
+        key: opt.id,
+        label: opt.label,
+      })),
+    [topOptions],
+  );
 
   return (
     <div className="bg-amber-50 rounded-2xl shadow-sm border border-amber-100 p-4 space-y-4">
@@ -117,4 +121,4 @@ const TopSellingSection = ({
   );
 };
 
-export default TopSellingSection;
+export default React.memo(TopSellingSection);
