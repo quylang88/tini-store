@@ -61,17 +61,32 @@ class StorageService {
   async loadAllData() {
     await this.init();
 
-    // Thử di chuyển dữ liệu cũ nếu DB đang trống (hoặc migration mới)
-    await this.migrateFromLocalStorageIfNeeded();
+    const [
+      productsResult,
+      ordersResult,
+      settingsResultRaw,
+      customersResult,
+      chatMemoryResultRaw,
+      migrationData
+    ] = await Promise.all([
+      this.getAll(STORES.PRODUCTS),
+      this.getAll(STORES.ORDERS),
+      this.getAll(STORES.SETTINGS),
+      this.getAll(STORES.CUSTOMERS),
+      this.getAll(STORES.CHAT_MEMORY),
+      this.migrateFromLocalStorageIfNeeded() // Run migration concurrently
+    ]);
 
-    const [products, orders, settingsResult, customers, chatMemoryResult] =
-      await Promise.all([
-        this.getAll(STORES.PRODUCTS),
-        this.getAll(STORES.ORDERS),
-        this.getAll(STORES.SETTINGS),
-        this.getAll(STORES.CUSTOMERS),
-        this.getAll(STORES.CHAT_MEMORY),
-      ]);
+    // Merge migration data with the result from getAll to prevent race condition yielding empty data
+    const products = migrationData?.products || productsResult;
+    const orders = migrationData?.orders || ordersResult;
+    const settingsResult = migrationData?.settingsResult || settingsResultRaw;
+    const customers = migrationData?.customers || customersResult;
+
+    // For chatMemoryResult, combine the specific items that might have been migrated
+    const chatMemoryResult = [...(chatMemoryResultRaw || [])];
+    if (migrationData?.chatSummaryResult) chatMemoryResult.push(...migrationData.chatSummaryResult);
+    if (migrationData?.pendingBufferResult) chatMemoryResult.push(...migrationData.pendingBufferResult);
 
     // Chuẩn hóa cài đặt (do lưu dạng key-value object)
     let settings = null;
@@ -84,12 +99,12 @@ class StorageService {
     let chatSummary = "";
     let pendingBuffer = [];
     if (chatMemoryResult && chatMemoryResult.length > 0) {
-      const summaryFound = chatMemoryResult.find((s) => s.key === "summary");
+      // Find the last occurrence since we pushed migration data to the end
+      // Use [...arr].reverse().find() for safe browser compatibility instead of .findLast()
+      const summaryFound = [...chatMemoryResult].reverse().find((s) => s.key === "summary");
       if (summaryFound) chatSummary = summaryFound.value;
 
-      const bufferFound = chatMemoryResult.find(
-        (s) => s.key === "pending_buffer",
-      );
+      const bufferFound = [...chatMemoryResult].reverse().find((s) => s.key === "pending_buffer");
       if (bufferFound) pendingBuffer = bufferFound.value;
     }
 
@@ -104,6 +119,7 @@ class StorageService {
   }
 
   async migrateFromLocalStorageIfNeeded() {
+    let migrationData = {};
     try {
       // Logic migration: Check từng phần, nếu chưa có trong DB thì lấy từ LocalStorage
       // Lưu ý: Migration này chạy mỗi lần load để đảm bảo vét sạch dữ liệu cũ nếu user update dần dần
@@ -117,6 +133,7 @@ class StorageService {
           const products = JSON.parse(rawProducts);
           if (Array.isArray(products)) {
             await this.saveAll(STORES.PRODUCTS, products);
+            migrationData.products = products;
           }
         }
       }
@@ -130,6 +147,7 @@ class StorageService {
           const orders = JSON.parse(rawOrders);
           if (Array.isArray(orders)) {
             await this.saveAll(STORES.ORDERS, orders);
+            migrationData.orders = orders;
           }
         }
       }
@@ -172,6 +190,7 @@ class StorageService {
 
       if (settingsChanged) {
         await this.saveSettings(currentSettings);
+        migrationData.settingsResult = [{ key: "main", value: currentSettings }];
       }
 
       // 4. Customers
@@ -183,6 +202,7 @@ class StorageService {
           const customers = JSON.parse(rawCustomers);
           if (Array.isArray(customers)) {
             await this.saveAll(STORES.CUSTOMERS, customers);
+            migrationData.customers = customers;
           }
         }
       }
@@ -194,6 +214,7 @@ class StorageService {
         if (rawChatSummary) {
           console.log("Migrating Chat Summary...");
           await this.saveChatSummary(rawChatSummary);
+          migrationData.chatSummaryResult = [{ key: "summary", value: rawChatSummary }];
         }
       }
 
@@ -207,6 +228,7 @@ class StorageService {
             const buffer = JSON.parse(rawBuffer);
             if (Array.isArray(buffer)) {
               await this.savePendingBuffer(buffer);
+              migrationData.pendingBufferResult = [{ key: "pending_buffer", value: buffer }];
             }
           } catch (e) {
             console.warn("Invalid pending buffer in localStorage", e);
@@ -223,6 +245,7 @@ class StorageService {
           try {
             const creds = JSON.parse(rawCreds);
             await this.saveAuthCreds(creds);
+            migrationData.authCreds = creds;
           } catch (e) {
             console.warn("Invalid auth creds in localStorage", e);
           }
@@ -232,6 +255,7 @@ class StorageService {
       console.error("Lỗi khi chuyển đổi dữ liệu cũ:", e);
       // Tiếp tục chạy để không chặn ứng dụng
     }
+    return migrationData;
   }
 
   // --- Generic CRUD ---
