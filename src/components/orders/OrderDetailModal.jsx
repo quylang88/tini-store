@@ -32,11 +32,13 @@ const OrderDetailModal = ({ order, products, onClose, getOrderStatusInfo }) => {
   );
 
   // Tính lợi nhuận ước tính (giống logic ở OrderListView)
-  const estimatedProfit =
-    cachedOrder.items.reduce((sum, item) => {
-      const cost = item.cost || 0;
-      return sum + (item.price - cost) * item.quantity;
-    }, 0) - (cachedOrder.shippingFee || 0);
+  // Tối ưu hóa: Thay thế reduce bằng vòng lặp for...of để tăng tốc độ tính toán
+  // và tránh overhead khởi tạo hàm callback liên tục.
+  let estimatedProfit = -(cachedOrder.shippingFee || 0);
+  for (const item of cachedOrder.items) {
+    const cost = item.cost || 0;
+    estimatedProfit += (item.price - cost) * item.quantity;
+  }
 
   const handleExport = async () => {
     setIsExporting(true);

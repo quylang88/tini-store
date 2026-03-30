@@ -63,24 +63,32 @@ const StatsDetail = ({ products, orders, onBack }) => {
     previousStart.setHours(0, 0, 0, 0);
 
     const calcStats = (rangeStartDate, rangeEndDate) => {
-      const rangeOrders = paidOrders.filter((order) => {
-        const orderDate = new Date(order.date);
-        return orderDate >= rangeStartDate && orderDate <= rangeEndDate;
-      });
+      // Tối ưu hóa: Kết hợp filter và multiple reduce vào một vòng lặp for...of duy nhất.
+      // Dùng Date.parse() cho timestamp để tránh overhead khởi tạo object Date.
+      let revenue = 0;
+      let profit = 0;
+      let count = 0;
+      const startTs = rangeStartDate.getTime();
+      const endTs = rangeEndDate.getTime();
 
-      const revenue = rangeOrders.reduce((sum, order) => sum + order.total, 0);
-      const profit = rangeOrders.reduce((sum, order) => {
-        const orderProfit = order.items.reduce((itemSum, item) => {
-          const cost = Number.isFinite(item.cost)
-            ? item.cost
-            : costMap.get(item.productId) || 0;
-          return itemSum + (item.price - cost) * item.quantity;
-        }, 0);
-        const shippingFee = order.shippingFee || 0;
-        return sum + orderProfit - shippingFee;
-      }, 0);
+      for (const order of paidOrders) {
+        const orderTs = Date.parse(order.date);
+        if (orderTs >= startTs && orderTs <= endTs) {
+          count++;
+          revenue += order.total;
 
-      return { revenue, profit, count: rangeOrders.length };
+          let orderProfit = 0;
+          for (const item of order.items) {
+            const cost = Number.isFinite(item.cost)
+              ? item.cost
+              : costMap.get(item.productId) || 0;
+            orderProfit += (item.price - cost) * item.quantity;
+          }
+          profit += orderProfit - (order.shippingFee || 0);
+        }
+      }
+
+      return { revenue, profit, count };
     };
 
     return {

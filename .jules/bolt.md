@@ -1,0 +1,3 @@
+## 2024-03-30 - Optimize object iteration using for...of instead of map/reduce
+**Learning:** Default to using `for...of` loops instead of `.reduce()` when calculating sums or aggregates over large object arrays in hot paths or `useMemo` hooks, to maximize raw iteration performance. Chained `.filter().reduce()` can be combined into a single `for...of` loop with `Date.parse()` for timestamps, avoiding intermediate array allocations and object instantiation overhead.
+**Action:** Use single-pass `for...of` loops to replace chained functional iterations (`filter`, `reduce`) and prefer `Date.parse()` over `new Date()` when comparing dates.
