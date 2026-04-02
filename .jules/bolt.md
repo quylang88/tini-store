@@ -1,0 +1,3 @@
+## 2024-05-18 - [Combine Reducers to single loop]
+**Learning:** Chained `.reduce()` and `.forEach()` methods create excessive callback function allocations and force multiple O(n) loops over the same array.
+**Action:** Replace multiple separate `.reduce()` computations within the same context (e.g., inside a single `useMemo`) with a unified `for...of` loop that calculates all aggregates in a single pass. This prevents callback overhead and scales significantly better.
