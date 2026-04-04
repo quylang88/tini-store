@@ -188,9 +188,9 @@ const useDashboardLogic = ({ products, orders, rangeMode = "dashboard" }) => {
     });
   }, [paidOrders, rangeStart, rangeEnd]);
 
-  // Tối ưu hóa: Gom tính toán totalRevenue, totalProfit và productStats vào một vòng lặp (O(N) thay vì O(3N)).
-  // Việc gộp này tránh được chi phí khởi tạo callback của 3 vòng lặp reduce/forEach riêng biệt
-  // và giảm overhead về cấp phát bộ nhớ trung gian khi lặp qua danh sách đơn hàng lớn.
+  // Kết hợp tính toán totalRevenue, totalProfit và productStats vào một vòng lặp for...of duy nhất
+  // Việc này giúp giảm overhead từ việc cấp phát hàm callback trong .reduce()/.forEach() và tăng tốc độ duyệt
+  // khi xử lý số lượng đơn hàng lớn.
   const { totalRevenue, totalProfit, productStats } = useMemo(() => {
     let revenueSum = 0;
     let profitSum = 0;
@@ -200,33 +200,32 @@ const useDashboardLogic = ({ products, orders, rangeMode = "dashboard" }) => {
       revenueSum += order.total;
 
       let orderProfit = 0;
-      if (order.items && order.items.length > 0) {
-        for (const item of order.items) {
-          const cost = Number.isFinite(item.cost)
-            ? item.cost
-            : costMap.get(item.productId) || 0;
+      for (const item of order.items) {
+        const cost = Number.isFinite(item.cost)
+          ? item.cost
+          : costMap.get(item.productId) || 0;
 
-          const itemProfit = (item.price - cost) * item.quantity;
-          orderProfit += itemProfit;
+        const itemProfit = (item.price - cost) * item.quantity;
+        orderProfit += itemProfit;
 
-          const product = productMeta.get(item.productId);
-          const key = item.productId || item.name;
+        const product = productMeta.get(item.productId);
+        const key = item.productId || item.name;
 
-          if (!stats.has(key)) {
-            stats.set(key, {
-              id: item.productId,
-              name: product?.name || item.name || "Sản phẩm khác",
-              image: product?.image || "",
-              quantity: 0,
-              profit: 0,
-            });
-          }
-          const entry = stats.get(key);
-          entry.quantity += item.quantity;
-          entry.profit += itemProfit;
+        if (!stats.has(key)) {
+          stats.set(key, {
+            id: item.productId,
+            name: product?.name || item.name || "Sản phẩm khác",
+            image: product?.image || "",
+            quantity: 0,
+            profit: 0,
+          });
         }
+        const entry = stats.get(key);
+        entry.quantity += item.quantity;
+        entry.profit += itemProfit;
       }
 
+      // Trừ phí gửi vì đây là chi phí phát sinh của đơn
       const shippingFee = order.shippingFee || 0;
       profitSum += orderProfit - shippingFee;
     }
@@ -236,7 +235,7 @@ const useDashboardLogic = ({ products, orders, rangeMode = "dashboard" }) => {
       totalProfit: profitSum,
       productStats: Array.from(stats.values()),
     };
-  }, [filteredPaidOrders, productMeta, costMap]);
+  }, [filteredPaidOrders, costMap, productMeta]);
 
   const topByProfit = useMemo(
     () =>
