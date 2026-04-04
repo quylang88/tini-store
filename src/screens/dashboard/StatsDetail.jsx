@@ -9,6 +9,11 @@ import TopSellingSection from "../../components/stats/TopSellingSection";
 import StatListModal from "../../components/dashboard/StatListModal";
 import DateRangeFilter from "../../components/stats/DateRangeFilter";
 
+// Optimization: Khởi tạo WeakMap ở cấp độ module để cache kết quả parse ngày tháng
+// của các đơn hàng. Điều này giúp tránh việc gọi lại Date.parse() nhiều lần
+// cho cùng một đơn hàng khi thay đổi khoảng thời gian.
+const orderDateCache = new WeakMap();
+
 const StatsDetail = ({ products, orders, onBack }) => {
   const {
     topOptions,
@@ -62,35 +67,56 @@ const StatsDetail = ({ products, orders, onBack }) => {
     previousStart.setDate(previousStart.getDate() - compareDays);
     previousStart.setHours(0, 0, 0, 0);
 
-    const calcStats = (rangeStartDate, rangeEndDate) => {
-      let revenue = 0;
-      let profit = 0;
-      let count = 0;
+    // Chuyển đối tượng Date thành timestamp để so sánh số nguyên nhanh hơn.
+    const currentStartMs = currentStart.getTime();
+    const currentEndMs = currentEnd.getTime();
+    const previousStartMs = previousStart.getTime();
+    const previousEndMs = previousEnd.getTime();
 
-      for (const order of paidOrders) {
-        const orderDate = new Date(order.date);
-        if (orderDate >= rangeStartDate && orderDate <= rangeEndDate) {
-          count++;
-          revenue += order.total || 0;
+    // Optimization: Kết hợp việc tính toán số liệu của cả hai kỳ (hiện tại và trước đó)
+    // vào một vòng lặp for...of duy nhất trên danh sách paidOrders. Tránh việc
+    // lặp qua mảng nhiều lần với các hàm filter() và reduce() lồng nhau.
+    const currentStats = { revenue: 0, profit: 0, count: 0 };
+    const previousStats = { revenue: 0, profit: 0, count: 0 };
 
-          let orderProfit = 0;
-          for (const item of order.items) {
-            const cost = Number.isFinite(item.cost)
-              ? item.cost
-              : costMap.get(item.productId) || 0;
-            orderProfit += (item.price - cost) * item.quantity;
-          }
-          const shippingFee = order.shippingFee || 0;
-          profit += orderProfit - shippingFee;
-        }
+    for (const order of paidOrders) {
+      let orderTime = orderDateCache.get(order);
+      if (orderTime === undefined) {
+        // Date.parse() xử lý chuỗi ISO nhanh hơn so với new Date(order.date).getTime()
+        orderTime = Date.parse(order.date);
+        orderDateCache.set(order, orderTime);
       }
 
-      return { revenue, profit, count };
-    };
+      const isCurrent =
+        orderTime >= currentStartMs && orderTime <= currentEndMs;
+      const isPrevious =
+        orderTime >= previousStartMs && orderTime <= previousEndMs;
+
+      if (!isCurrent && !isPrevious) continue;
+
+      let orderProfit = 0;
+      for (const item of order.items) {
+        const cost = Number.isFinite(item.cost)
+          ? item.cost
+          : costMap.get(item.productId) || 0;
+        orderProfit += (item.price - cost) * item.quantity;
+      }
+      const profit = orderProfit - (order.shippingFee || 0);
+
+      if (isCurrent) {
+        currentStats.count++;
+        currentStats.revenue += order.total;
+        currentStats.profit += profit;
+      } else if (isPrevious) {
+        previousStats.count++;
+        previousStats.revenue += order.total;
+        previousStats.profit += profit;
+      }
+    }
 
     return {
-      current: calcStats(currentStart, currentEnd),
-      previous: calcStats(previousStart, previousEnd),
+      current: currentStats,
+      previous: previousStats,
     };
   }, [paidOrders, rangeDays, rangeStart, rangeEnd, costMap]);
 

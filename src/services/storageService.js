@@ -76,13 +76,13 @@ class StorageService {
       chatMemoryResult,
       purchaseLists,
     ] = await Promise.all([
-        this.getAll(STORES.PRODUCTS),
-        this.getAll(STORES.ORDERS),
-        this.getAll(STORES.SETTINGS),
-        this.getAll(STORES.CUSTOMERS),
-        this.getAll(STORES.CHAT_MEMORY),
-        this.getAll(STORES.PURCHASE_LISTS),
-      ]);
+      this.getAll(STORES.PRODUCTS),
+      this.getAll(STORES.ORDERS),
+      this.getAll(STORES.SETTINGS),
+      this.getAll(STORES.CUSTOMERS),
+      this.getAll(STORES.CHAT_MEMORY),
+      this.getAll(STORES.PURCHASE_LISTS),
+    ]);
 
     // Chuẩn hóa cài đặt (do lưu dạng key-value object)
     let settings = null;
