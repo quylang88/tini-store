@@ -112,11 +112,14 @@ const useOrderCatalog = ({
     [cart, productMap, priceOverrides],
   );
 
-  const totalAmount = useMemo(
-    () =>
-      reviewItems.reduce((sum, item) => sum + item.price * item.quantity, 0),
-    [reviewItems],
-  );
+  const totalAmount = useMemo(() => {
+    // Tối ưu hóa: Thay thế .reduce() bằng vòng lặp for...of để tránh chi phí cấp phát callback và tăng tốc độ tính toán
+    let sum = 0;
+    for (const item of reviewItems) {
+      sum += item.price * item.quantity;
+    }
+    return sum;
+  }, [reviewItems]);
 
   return {
     productMap,
