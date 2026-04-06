@@ -1,0 +1,3 @@
+## 2025-02-12 - [Combine Aggregations via single-pass loop]
+**Learning:** In `src/hooks/dashboard/useDashboardLogic.js`, computing `totalRevenue`, `totalProfit`, and `productStats` using separate `.reduce()` and `.forEach()` iterations incurred multiple unnecessary O(N) traversals and array/object allocations. By combining them into a single `useMemo` block utilizing a `for...of` loop over `filteredPaidOrders`, iteration performance is maximized by limiting overhead.
+**Action:** Default to using `for...of` loops instead of multiple `.reduce()` chains when calculating several sums or aggregates over large object arrays in hot paths or `useMemo` hooks to maximize raw iteration performance and limit garbage collection overhead.
