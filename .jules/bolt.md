@@ -1,0 +1,3 @@
+## 2025-02-14 - Optimize multiple loops to a single `for...of` loop
+**Learning:** Chaining multiple `.reduce()`, `.forEach()`, or `.map()` calls can significantly slow down execution speed by adding O(N) allocation and callback overhead.
+**Action:** When aggregating or iterating large datasets or arrays in React components/hooks (e.g., `useDashboardLogic`), prefer using single-pass `for...of` loops rather than multiple iterations with `.reduce()` or `.forEach()` chains.
