@@ -188,18 +188,18 @@ const useDashboardLogic = ({ products, orders, rangeMode = "dashboard" }) => {
     });
   }, [paidOrders, rangeStart, rangeEnd]);
 
-  // Kết hợp tính toán totalRevenue, totalProfit và productStats vào một vòng lặp for...of duy nhất
-  // Việc này giúp giảm overhead từ việc cấp phát hàm callback trong .reduce()/.forEach() và tăng tốc độ duyệt
-  // khi xử lý số lượng đơn hàng lớn.
+  // Gộp tính toán doanh thu, lợi nhuận và thống kê sản phẩm vào một vòng lặp for...of duy nhất để tối ưu hiệu suất, tránh duyệt qua mảng nhiều lần.
   const { totalRevenue, totalProfit, productStats } = useMemo(() => {
-    let revenueSum = 0;
-    let profitSum = 0;
+    let revenue = 0;
+    let profit = 0;
     const stats = new Map();
 
     for (const order of filteredPaidOrders) {
-      revenueSum += order.total;
+      revenue += order.total;
 
       let orderProfit = 0;
+      const shippingFee = order.shippingFee || 0;
+
       for (const item of order.items) {
         const cost = Number.isFinite(item.cost)
           ? item.cost
@@ -225,14 +225,12 @@ const useDashboardLogic = ({ products, orders, rangeMode = "dashboard" }) => {
         entry.profit += itemProfit;
       }
 
-      // Trừ phí gửi vì đây là chi phí phát sinh của đơn
-      const shippingFee = order.shippingFee || 0;
-      profitSum += orderProfit - shippingFee;
+      profit += orderProfit - shippingFee;
     }
 
     return {
-      totalRevenue: revenueSum,
-      totalProfit: profitSum,
+      totalRevenue: revenue,
+      totalProfit: profit,
       productStats: Array.from(stats.values()),
     };
   }, [filteredPaidOrders, costMap, productMeta]);
