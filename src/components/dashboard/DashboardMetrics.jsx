@@ -6,6 +6,7 @@ import {
   AlertTriangle,
   ShoppingCart,
   ArchiveX,
+  ClipboardList,
 } from "lucide-react";
 import { formatNumber } from "../../utils/formatters/formatUtils";
 import MetricCard from "../stats/MetricCard";
@@ -17,9 +18,11 @@ const DashboardMetrics = ({
   totalCapital,
   outOfStockProducts,
   slowMovingProducts,
+  pendingPurchaseQuantity,
   isCalculating,
   onShowOutOfStock,
   onShowSlowMoving,
+  onOpenPurchaseLists,
 }) => {
   return (
     <div
@@ -57,6 +60,14 @@ const DashboardMetrics = ({
           isCalculating ? "Đang tính..." : `${formatNumber(totalCapital)}đ`
         }
         className="bg-blue-400 shadow-blue-200"
+      />
+
+      <MetricCard
+        icon={ClipboardList}
+        label="Cần mua"
+        value={isCalculating ? "..." : pendingPurchaseQuantity}
+        className="bg-cyan-500 shadow-cyan-200"
+        onClick={onOpenPurchaseLists}
       />
 
       {outOfStockProducts.length >= 1 && (

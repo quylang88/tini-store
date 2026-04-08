@@ -11,6 +11,7 @@ const useBackupLogic = ({
   setSettings,
   customers,
   chatSummary,
+  purchaseLists,
 }) => {
   const [backupReminderOpen, setBackupReminderOpen] = useState(false);
 
@@ -19,9 +20,24 @@ const useBackupLogic = ({
     const newSettings = { ...settings, lastBackupDate: now };
     setSettings(newSettings);
     // Pass extra data (customers, chatSummary) to backup function
-    exportDataToJSON(products, orders, newSettings, customers, chatSummary);
+    exportDataToJSON(
+      products,
+      orders,
+      newSettings,
+      customers,
+      chatSummary,
+      purchaseLists,
+    );
     setBackupReminderOpen(false);
-  }, [settings, products, orders, customers, chatSummary, setSettings]);
+  }, [
+    settings,
+    products,
+    orders,
+    customers,
+    chatSummary,
+    purchaseLists,
+    setSettings,
+  ]);
 
   useEffect(() => {
     if (!isAuthenticated || !isDataLoaded) return;

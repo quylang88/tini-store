@@ -5,8 +5,17 @@ import TopSellingSection from "../components/stats/TopSellingSection";
 import StatListModal from "../components/dashboard/StatListModal";
 import AppHeader from "../components/common/AppHeader";
 import DashboardMetrics from "../components/dashboard/DashboardMetrics";
+import { getTotalPendingPurchaseQuantity } from "../utils/inventory/purchaseListUtils";
 
-const Dashboard = ({ products, orders, onOpenDetail, updateFab, isActive }) => {
+const Dashboard = ({
+  products,
+  orders,
+  purchaseLists,
+  onOpenDetail,
+  onOpenPurchaseLists,
+  updateFab,
+  isActive,
+}) => {
   useEffect(() => {
     if (isActive) {
       updateFab({
@@ -59,6 +68,10 @@ const Dashboard = ({ products, orders, onOpenDetail, updateFab, isActive }) => {
 
   // Tính số lượng đơn hàng
   const orderCount = filteredPaidOrders.length;
+  const pendingPurchaseQuantity = useMemo(
+    () => getTotalPendingPurchaseQuantity(purchaseLists),
+    [purchaseLists],
+  );
 
   // Tạo nhãn tháng hiện tại sử dụng ngày tập trung hoặc rangeStart (ngày bắt đầu thực tế của view)
   const currentMonthLabel = useMemo(() => {
@@ -134,9 +147,11 @@ const Dashboard = ({ products, orders, onOpenDetail, updateFab, isActive }) => {
           totalCapital={totalCapital}
           outOfStockProducts={outOfStockProducts}
           slowMovingProducts={slowMovingProducts}
+          pendingPurchaseQuantity={pendingPurchaseQuantity}
           isCalculating={isCalculating}
           onShowOutOfStock={handleShowOutOfStock}
           onShowSlowMoving={handleShowSlowMoving}
+          onOpenPurchaseLists={onOpenPurchaseLists}
         />
 
         {/* Phần Top Bán Chạy (Tái sử dụng) */}

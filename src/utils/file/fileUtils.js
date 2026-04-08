@@ -81,6 +81,7 @@ export const exportDataToJSON = async (
   settings,
   customers = [],
   aiChatSummary = "",
+  purchaseLists = [],
 ) => {
   // Không còn đọc từ localStorage nữa, nhận trực tiếp từ props
 
@@ -90,6 +91,7 @@ export const exportDataToJSON = async (
     settings,
     aiChatSummary,
     customers,
+    purchaseLists,
   });
 
   const fileName = `tiny_shop_${new Date().toISOString().slice(0, 10)}.json`;

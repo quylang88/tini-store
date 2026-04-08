@@ -16,6 +16,7 @@ const useAppData = (isAuthenticated) => {
   const [customers, setCustomers] = useState([]);
   const [chatSummary, setChatSummary] = useState("");
   const [pendingBuffer, setPendingBuffer] = useState([]);
+  const [purchaseLists, setPurchaseLists] = useState([]);
 
   // --- Tải dữ liệu ---
   useEffect(() => {
@@ -32,6 +33,7 @@ const useAppData = (isAuthenticated) => {
         setCustomers(data.customers);
         setChatSummary(data.chatSummary);
         setPendingBuffer(data.pendingBuffer);
+        setPurchaseLists(data.purchaseLists || []);
         setIsDataLoaded(true);
       });
     }
@@ -52,11 +54,16 @@ const useAppData = (isAuthenticated) => {
     (changes) => storageService.saveCustomersBatch(changes),
     [],
   );
+  const handleSavePurchaseLists = useCallback(
+    (changes) => storageService.savePurchaseListsBatch(changes),
+    [],
+  );
 
   // Hooks Persistance (Lưu trữ)
   useDataPersistence(products, handleSaveProducts, isDataLoaded);
   useDataPersistence(orders, handleSaveOrders, isDataLoaded);
   useDataPersistence(customers, handleSaveCustomers, isDataLoaded);
+  useDataPersistence(purchaseLists, handleSavePurchaseLists, isDataLoaded);
 
   // Các Effect đơn giản
   useEffect(() => {
@@ -84,6 +91,7 @@ const useAppData = (isAuthenticated) => {
     setCustomers([]);
     setChatSummary("");
     setPendingBuffer([]);
+    setPurchaseLists([]);
     setIsDataLoaded(false);
     // Lưu ý: Logic cũ không reset settings khi logout, nên ở đây cũng giữ nguyên hành vi đó.
   }, []);
@@ -103,6 +111,8 @@ const useAppData = (isAuthenticated) => {
     setChatSummary,
     pendingBuffer,
     setPendingBuffer,
+    purchaseLists,
+    setPurchaseLists,
     resetData,
   };
 };

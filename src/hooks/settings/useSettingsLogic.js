@@ -18,6 +18,8 @@ const useSettingsLogic = ({
   setCustomers,
   chatSummary,
   setChatSummary,
+  purchaseLists,
+  setPurchaseLists,
 }) => {
   const [newCategory, setNewCategory] = useState("");
   const [isFetchingRate, setIsFetchingRate] = useState(false);
@@ -166,7 +168,14 @@ const useSettingsLogic = ({
 
     // Xuất dữ liệu (dùng newSettings để file backup có thời gian cập nhật mới nhất)
     // Pass customers và chatSummary trực tiếp, ko đọc từ localStorage nữa
-    exportDataToJSON(products, orders, newSettings, customers, chatSummary);
+    exportDataToJSON(
+      products,
+      orders,
+      newSettings,
+      customers,
+      chatSummary,
+      purchaseLists,
+    );
   };
 
   // Khôi phục dữ liệu (Restore)
@@ -198,6 +207,12 @@ const useSettingsLogic = ({
           // Khôi phục bộ nhớ AI (nếu có trong file backup)
           if (typeof data.aiChatSummary === "string" && setChatSummary) {
             setChatSummary(data.aiChatSummary);
+          }
+
+          if (setPurchaseLists) {
+            setPurchaseLists(
+              Array.isArray(data.purchaseLists) ? data.purchaseLists : [],
+            );
           }
 
           // Thông báo sau khi khôi phục thành công.

@@ -32,6 +32,8 @@ const Settings = ({
   setCustomers,
   chatSummary,
   setChatSummary,
+  purchaseLists,
+  setPurchaseLists,
   onLogout,
   updateFab,
   isActive,
@@ -71,6 +73,8 @@ const Settings = ({
     setCustomers,
     chatSummary,
     setChatSummary,
+    purchaseLists,
+    setPurchaseLists,
   });
 
   const isAutoBackupOn = settings.autoBackupInterval > 0;

@@ -9,6 +9,7 @@ import Inventory from "./screens/Inventory";
 import Orders from "./screens/Orders";
 import Assistant from "./screens/Assistant";
 import Settings from "./screens/Settings";
+import PurchaseLists from "./screens/PurchaseLists";
 import StatsDetail from "./screens/dashboard/StatsDetail";
 
 // --- IMPORT COMPONENT CHUNG ---
@@ -57,6 +58,8 @@ const App = () => {
     setChatSummary,
     pendingBuffer,
     setPendingBuffer,
+    purchaseLists,
+    setPurchaseLists,
     resetData,
   } = useAppData(isAuthenticated);
 
@@ -80,6 +83,7 @@ const App = () => {
       setSettings,
       customers,
       chatSummary,
+      purchaseLists,
     });
 
   // --- 5. UI STATE (ASSISTANT & OTHERS) ---
@@ -145,7 +149,9 @@ const App = () => {
               <Dashboard
                 products={products}
                 orders={orders}
+                purchaseLists={purchaseLists}
                 onOpenDetail={() => onTabChange("stats-detail")}
+                onOpenPurchaseLists={() => onTabChange("purchase-lists")}
                 settings={settings}
                 updateFab={updateFab}
                 isActive={activeTab === "dashboard"}
@@ -185,6 +191,25 @@ const App = () => {
                 setTabBarVisible={setIsTabBarVisible}
                 updateFab={updateFab}
                 isActive={activeTab === "products"}
+              />
+            </ScreenTransition>
+          )}
+
+          {activeTab === "purchase-lists" && (
+            <ScreenTransition
+              key="purchase-lists"
+              custom={direction}
+              className="h-full"
+            >
+              <PurchaseLists
+                products={products}
+                setProducts={setProducts}
+                purchaseLists={purchaseLists}
+                setPurchaseLists={setPurchaseLists}
+                settings={settings}
+                updateFab={updateFab}
+                isActive={activeTab === "purchase-lists"}
+                onBack={() => onTabChange("dashboard")}
               />
             </ScreenTransition>
           )}
@@ -267,6 +292,8 @@ const App = () => {
                 setCustomers={setCustomers}
                 chatSummary={chatSummary}
                 setChatSummary={setChatSummary}
+                purchaseLists={purchaseLists}
+                setPurchaseLists={setPurchaseLists}
                 onLogout={handleLogout}
                 updateFab={updateFab}
                 isActive={activeTab === "settings"}
