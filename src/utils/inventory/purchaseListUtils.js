@@ -191,6 +191,21 @@ export const getPurchaseListStats = (list) => {
   }
 }
 
+export const getTotalPendingPurchaseQuantity = (purchaseLists = []) => {
+  let total = 0
+
+  for (const list of purchaseLists) {
+    const items = list?.items || []
+    for (const item of items) {
+      if (item?.status !== "completed") {
+        total += Number(item.quantity) || 0
+      }
+    }
+  }
+
+  return total
+}
+
 export const getPurchaseListLastUpdatedLabel = (timestamp) => {
   if (!timestamp) return ""
   const date = new Date(timestamp)

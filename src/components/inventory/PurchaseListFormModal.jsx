@@ -57,7 +57,7 @@ const PurchaseListFormModal = ({ open, list, onClose, onSave }) => {
     <SheetModal
       open={open}
       onClose={onClose}
-      title={list ? "Sửa danh sách mua" : "Tạo danh sách mua"}
+      title={list ? "Sửa list" : "Tạo list"}
       footer={footer}
     >
       <div className="space-y-5">
@@ -89,10 +89,6 @@ const PurchaseListFormModal = ({ open, list, onClose, onSave }) => {
             layoutIdPrefix="purchase-list-form-warehouse"
             className="w-full"
           />
-          <p className="text-xs text-rose-600 mt-2">
-            Mỗi list chỉ gắn với một kho. Mọi item hoàn tất sẽ được cộng vào kho
-            này.
-          </p>
         </div>
 
         <div>

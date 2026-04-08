@@ -61,7 +61,7 @@ const PurchaseListDetailView = ({
   return (
     <div className="h-full bg-rose-50 flex flex-col">
       <InventorySubscreenHeader
-        title={list?.title || "Danh sách mua"}
+        title={list?.title || "List mua"}
         subtitle={`Kho nhận: ${getWarehouseLabel(list?.warehouse)} • Cập nhật ${getPurchaseListLastUpdatedLabel(list?.updatedAt)}`}
         onBack={onBack}
         actions={[
@@ -121,7 +121,7 @@ const PurchaseListDetailView = ({
         />
       </div>
 
-      <div className="flex-1 overflow-y-auto px-4 pt-4 pb-24">
+      <div className="flex-1 overflow-y-auto px-4 pt-4 pb-36">
         {visibleItems.length === 0 ? (
           <div className="rounded-[24px] border border-dashed border-rose-300 bg-white/80 px-6 py-10 text-center">
             <div className="text-lg font-bold text-rose-900">
@@ -159,7 +159,7 @@ const PurchaseListDetailView = ({
                       : "bg-white border-amber-100"
                   }`}
                 >
-                  <div className="flex items-start gap-3">
+                  <div className="flex items-center gap-3">
                     {isCompleted ? (
                       <div className="w-10 h-10 rounded-full bg-emerald-500 text-white flex items-center justify-center shadow-sm">
                         <Check size={18} strokeWidth={3} />

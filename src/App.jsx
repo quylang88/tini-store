@@ -9,6 +9,7 @@ import Inventory from "./screens/Inventory";
 import Orders from "./screens/Orders";
 import Assistant from "./screens/Assistant";
 import Settings from "./screens/Settings";
+import PurchaseLists from "./screens/PurchaseLists";
 import StatsDetail from "./screens/dashboard/StatsDetail";
 
 // --- IMPORT COMPONENT CHUNG ---
@@ -148,7 +149,9 @@ const App = () => {
               <Dashboard
                 products={products}
                 orders={orders}
+                purchaseLists={purchaseLists}
                 onOpenDetail={() => onTabChange("stats-detail")}
+                onOpenPurchaseLists={() => onTabChange("purchase-lists")}
                 settings={settings}
                 updateFab={updateFab}
                 isActive={activeTab === "dashboard"}
@@ -185,11 +188,28 @@ const App = () => {
                 orders={orders}
                 setOrders={setOrders}
                 settings={settings}
-                purchaseLists={purchaseLists}
-                setPurchaseLists={setPurchaseLists}
                 setTabBarVisible={setIsTabBarVisible}
                 updateFab={updateFab}
                 isActive={activeTab === "products"}
+              />
+            </ScreenTransition>
+          )}
+
+          {activeTab === "purchase-lists" && (
+            <ScreenTransition
+              key="purchase-lists"
+              custom={direction}
+              className="h-full"
+            >
+              <PurchaseLists
+                products={products}
+                setProducts={setProducts}
+                purchaseLists={purchaseLists}
+                setPurchaseLists={setPurchaseLists}
+                settings={settings}
+                updateFab={updateFab}
+                isActive={activeTab === "purchase-lists"}
+                onBack={() => onTabChange("dashboard")}
               />
             </ScreenTransition>
           )}

@@ -8,7 +8,10 @@ const TAB_ORDER = {
   orders: 3,
   settings: 4,
   "stats-detail": 10, // Coi như màn hình con của dashboard
+  "purchase-lists": 11, // Màn con xuất phát từ dashboard
 };
+
+const CHILD_SCREENS = new Set(["stats-detail", "purchase-lists"]);
 
 const useAppNavigation = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
@@ -27,9 +30,9 @@ const useAppNavigation = () => {
       const newOrder = TAB_ORDER[newTab] ?? 0;
 
       let newDirection = 0;
-      if (newTab === "stats-detail") {
+      if (CHILD_SCREENS.has(newTab)) {
         newDirection = 1; // Push
-      } else if (activeTab === "stats-detail") {
+      } else if (CHILD_SCREENS.has(activeTab)) {
         newDirection = -1; // Pop
       } else {
         newDirection = newOrder > currentOrder ? 1 : -1;
@@ -40,7 +43,7 @@ const useAppNavigation = () => {
       setActiveTab(newTab);
 
       // Cập nhật trạng thái hiển thị của TabBar
-      if (newTab === "stats-detail") {
+      if (CHILD_SCREENS.has(newTab)) {
         setIsTabBarVisible(false);
       } else {
         setIsTabBarVisible(true);

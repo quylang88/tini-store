@@ -1,35 +1,23 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { AnimatePresence, motion } from "framer-motion";
-import {
-  ClipboardList,
-  Image as ImageIcon,
-  Plus,
-  X,
-} from "lucide-react";
+import React, { useState, useEffect, useCallback } from "react";
+import { motion } from "framer-motion";
+import { Plus, X, Image as ImageIcon } from "lucide-react";
 import ProductFilterHeader from "../components/common/ProductFilterHeader";
 import ProductFilterSection from "../components/common/ProductFilterSection";
-import ScreenTransition from "../components/common/ScreenTransition";
-import AppHeader from "../components/common/AppHeader";
 import ProductList from "../components/inventory/ProductList";
 import ProductDetailModal from "../components/inventory/ProductDetailModal";
 import ProductModal from "../components/inventory/ProductModal";
 import ProductBasicInfoModal from "../components/inventory/ProductBasicInfoModal";
-import PurchaseListCompleteModal from "../components/inventory/PurchaseListCompleteModal";
-import PurchaseListFormModal from "../components/inventory/PurchaseListFormModal";
-import PurchaseListItemFormModal from "../components/inventory/PurchaseListItemFormModal";
 import ConfirmModalHost from "../components/modals/ConfirmModalHost";
 import ErrorModal from "../components/modals/ErrorModal";
-import LoadingOverlay from "../components/common/LoadingOverlay";
-import SelectionActionBar from "../components/common/SelectionActionBar";
 import useInventoryLogic from "../hooks/inventory/useInventoryLogic";
-import usePurchaseListLogic from "../hooks/inventory/usePurchaseListLogic";
 import useScrollHandling from "../hooks/ui/useScrollHandling";
+import AppHeader from "../components/common/AppHeader";
 import usePagination from "../hooks/ui/usePagination";
 import { isScrollNearBottom } from "../utils/ui/scrollUtils";
 import { generateProductListImage } from "../utils/file/imageExportUtils";
 import { shareOrDownloadFile } from "../utils/file/fileUtils";
-import PurchaseListsView from "./inventory/PurchaseListsView";
-import PurchaseListDetailView from "./inventory/PurchaseListDetailView";
+import LoadingOverlay from "../components/common/LoadingOverlay";
+import SelectionActionBar from "../components/common/SelectionActionBar";
 
 const Inventory = ({
   products,
@@ -37,8 +25,6 @@ const Inventory = ({
   orders,
   setOrders,
   settings,
-  purchaseLists,
-  setPurchaseLists,
   setTabBarVisible,
   updateFab,
   isActive,
@@ -48,8 +34,6 @@ const Inventory = ({
   const [isSelectionMode, setIsSelectionMode] = useState(false);
   const [selectedProductIds, setSelectedProductIds] = useState(new Set());
   const [isExporting, setIsExporting] = useState(false);
-  const [inventoryView, setInventoryView] = useState("inventory");
-  const [viewDirection, setViewDirection] = useState(0);
 
   const { isSearchVisible, isAddButtonVisible, isScrolled, handleScroll } =
     useScrollHandling({
@@ -57,7 +41,7 @@ const Inventory = ({
       setTabBarVisible,
       searchHideThreshold: 140,
       showTabBarOnlyAtTop: true,
-      lockTabBarHidden: isSelectionMode || inventoryView !== "inventory",
+      lockTabBarHidden: isSelectionMode,
     });
 
   const {
@@ -94,58 +78,6 @@ const Inventory = ({
     highlightOps,
     debouncedSearchTerm,
   } = useInventoryLogic({ products, setProducts, orders, setOrders, settings });
-
-  const {
-    sortedPurchaseLists,
-    selectedListId,
-    setSelectedListId,
-    selectedList,
-    listFormState,
-    openCreateListForm,
-    openEditListForm,
-    closeListForm,
-    saveList,
-    deleteList,
-    itemFormState,
-    openCreateItemForm,
-    openEditItemForm,
-    closeItemForm,
-    saveItem,
-    deleteItem,
-    completionState,
-    closeCompletionModal,
-    finalizeItemCompletion,
-    requestCompleteItem,
-    confirmModal: purchaseListConfirmModal,
-    setConfirmModal: setPurchaseListConfirmModal,
-    errorModal: purchaseListErrorModal,
-    setErrorModal: setPurchaseListErrorModal,
-    completingItemId,
-  } = usePurchaseListLogic({
-    purchaseLists,
-    setPurchaseLists,
-    products,
-    setProducts,
-  });
-
-  const itemFormList = useMemo(
-    () =>
-      purchaseLists.find((list) => list.id === itemFormState.listId) || null,
-    [itemFormState.listId, purchaseLists],
-  );
-
-  const completionList = useMemo(
-    () =>
-      purchaseLists.find((list) => list.id === completionState.listId) || null,
-    [completionState.listId, purchaseLists],
-  );
-
-  const completionItem = useMemo(
-    () =>
-      completionList?.items?.find((item) => item.id === completionState.itemId) ||
-      null,
-    [completionList, completionState.itemId],
-  );
 
   const toggleSelectionMode = useCallback(() => {
     setIsSelectionMode((prev) => {
@@ -196,6 +128,38 @@ const Inventory = ({
     }
   };
 
+  useEffect(() => {
+    if (!isActive) return;
+
+    if (isSelectionMode) {
+      updateFab({ isVisible: false });
+      setTabBarVisible(false);
+      return;
+    }
+
+    updateFab({
+      isVisible: isAddButtonVisible,
+      onClick: () => openModal(),
+      icon: Plus,
+      label: "Thêm hàng mới",
+      color: "rose",
+    });
+    setTabBarVisible(true);
+  }, [
+    isActive,
+    isAddButtonVisible,
+    isSelectionMode,
+    openModal,
+    setTabBarVisible,
+    updateFab,
+  ]);
+
+  useEffect(() => {
+    if (isActive && isSelectionMode) {
+      setTabBarVisible(false);
+    }
+  }, [isActive, isSelectionMode, isScrolled, setTabBarVisible]);
+
   const {
     visibleData: visibleProducts,
     loadMore,
@@ -215,103 +179,12 @@ const Inventory = ({
     [setSearchTerm],
   );
 
-  const handleClearSearch = useCallback(() => setSearchTerm(""), [setSearchTerm]);
-
-  const openPurchaseLists = useCallback(() => {
-    setViewDirection(1);
-    setInventoryView("purchase-lists");
-  }, []);
-
-  const closePurchaseLists = useCallback(() => {
-    setViewDirection(-1);
-    setInventoryView("inventory");
-    setSelectedListId(null);
-  }, [setSelectedListId]);
-
-  const openPurchaseListDetail = useCallback(
-    (listId) => {
-      setSelectedListId(listId);
-      setViewDirection(1);
-      setInventoryView("purchase-list-detail");
-    },
-    [setSelectedListId],
+  const handleClearSearch = useCallback(
+    () => setSearchTerm(""),
+    [setSearchTerm],
   );
 
-  const closePurchaseListDetail = useCallback(() => {
-    setViewDirection(-1);
-    setInventoryView("purchase-lists");
-  }, []);
-
-  useEffect(() => {
-    if (
-      inventoryView === "purchase-list-detail" &&
-      selectedListId &&
-      !selectedList
-    ) {
-      setViewDirection(-1);
-      setInventoryView("purchase-lists");
-    }
-  }, [inventoryView, selectedList, selectedListId]);
-
-  useEffect(() => {
-    if (!isActive) return;
-
-    if (inventoryView === "purchase-lists") {
-      updateFab({
-        isVisible: true,
-        onClick: openCreateListForm,
-        icon: Plus,
-        label: "Tạo danh sách mua",
-        color: "rose",
-      });
-      setTabBarVisible(false);
-      return;
-    }
-
-    if (inventoryView === "purchase-list-detail") {
-      updateFab({
-        isVisible: Boolean(selectedList),
-        onClick: () => {
-          if (selectedList) {
-            openCreateItemForm(selectedList.id);
-          }
-        },
-        icon: Plus,
-        label: "Thêm mặt hàng cần mua",
-        color: "rose",
-      });
-      setTabBarVisible(false);
-      return;
-    }
-
-    if (isSelectionMode) {
-      updateFab({ isVisible: false });
-      setTabBarVisible(false);
-      return;
-    }
-
-    updateFab({
-      isVisible: isAddButtonVisible,
-      onClick: () => openModal(),
-      icon: Plus,
-      label: "Thêm hàng mới",
-      color: "rose",
-    });
-    setTabBarVisible(true);
-  }, [
-    inventoryView,
-    isActive,
-    isAddButtonVisible,
-    isSelectionMode,
-    openCreateItemForm,
-    openCreateListForm,
-    openModal,
-    selectedList,
-    setTabBarVisible,
-    updateFab,
-  ]);
-
-  const renderInventoryHome = () => (
+  return (
     <div className="relative h-full bg-transparent flex flex-col">
       <AppHeader className="z-20" isScrolled={isScrolled} />
 
@@ -333,15 +206,6 @@ const Inventory = ({
             onWarehouseChange={setWarehouseFilter}
             categories={settings.categories}
             namespace="inventory"
-            actionButton={
-              isSelectionMode
-                ? null
-                : {
-                    label: "Danh sách mua",
-                    icon: ClipboardList,
-                    onClick: openPurchaseLists,
-                  }
-            }
             onToggleSelect={toggleSelectionMode}
             isSelectionMode={isSelectionMode}
           />
@@ -407,65 +271,6 @@ const Inventory = ({
           disabled: selectedProductIds.size === 0,
         }}
       />
-    </div>
-  );
-
-  return (
-    <div className="relative h-full bg-transparent flex flex-col">
-      <AnimatePresence mode="popLayout" initial={false} custom={viewDirection}>
-        {inventoryView === "inventory" && (
-          <ScreenTransition
-            key="inventory-home"
-            custom={viewDirection}
-            className="h-full"
-          >
-            {renderInventoryHome()}
-          </ScreenTransition>
-        )}
-
-        {inventoryView === "purchase-lists" && (
-          <ScreenTransition
-            key="purchase-lists"
-            custom={viewDirection}
-            className="h-full"
-            onSwipeBack={closePurchaseLists}
-          >
-            <PurchaseListsView
-              purchaseLists={sortedPurchaseLists}
-              onBack={closePurchaseLists}
-              onOpenList={openPurchaseListDetail}
-              onCreateList={openCreateListForm}
-              onEditList={openEditListForm}
-              onDeleteList={(list) => deleteList(list)}
-            />
-          </ScreenTransition>
-        )}
-
-        {inventoryView === "purchase-list-detail" && selectedList && (
-          <ScreenTransition
-            key={`purchase-list-detail-${selectedList.id}`}
-            custom={viewDirection}
-            className="h-full"
-            onSwipeBack={closePurchaseListDetail}
-          >
-            <PurchaseListDetailView
-              list={selectedList}
-              products={products}
-              onBack={closePurchaseListDetail}
-              onEditList={openEditListForm}
-              onDeleteList={(list) =>
-                deleteList(list, { onDeleted: closePurchaseListDetail })
-              }
-              onEditItem={openEditItemForm}
-              onDeleteItem={deleteItem}
-              onCompleteItem={(listId, item) =>
-                requestCompleteItem({ listId, item })
-              }
-              completingItemId={completingItemId}
-            />
-          </ScreenTransition>
-        )}
-      </AnimatePresence>
 
       {isExporting && <LoadingOverlay text="Đang tạo ảnh báo giá..." />}
 
@@ -530,46 +335,9 @@ const Inventory = ({
         }}
       />
 
-      <PurchaseListFormModal
-        open={listFormState.open}
-        list={listFormState.list}
-        onClose={closeListForm}
-        onSave={saveList}
-      />
-
-      <PurchaseListItemFormModal
-        open={itemFormState.open}
-        list={itemFormList}
-        item={itemFormState.item}
-        products={products}
-        onClose={closeItemForm}
-        onSave={saveItem}
-      />
-
-      <PurchaseListCompleteModal
-        open={completionState.open}
-        mode={completionState.mode}
-        list={completionList}
-        item={completionItem}
-        categories={settings.categories}
-        initialValues={completionState.initialValues}
-        onClose={closeCompletionModal}
-        onSubmit={(completionData) =>
-          finalizeItemCompletion({
-            listId: completionState.listId,
-            itemId: completionState.itemId,
-            completionData,
-          })
-        }
-      />
-
       <ConfirmModalHost
         modal={confirmModal}
         onClose={() => setConfirmModal(null)}
-      />
-      <ConfirmModalHost
-        modal={purchaseListConfirmModal}
-        onClose={() => setPurchaseListConfirmModal(null)}
       />
 
       <ErrorModal
@@ -577,12 +345,6 @@ const Inventory = ({
         title={errorModal?.title}
         message={errorModal?.message}
         onClose={() => setErrorModal(null)}
-      />
-      <ErrorModal
-        open={Boolean(purchaseListErrorModal)}
-        title={purchaseListErrorModal?.title}
-        message={purchaseListErrorModal?.message}
-        onClose={() => setPurchaseListErrorModal(null)}
       />
     </div>
   );
