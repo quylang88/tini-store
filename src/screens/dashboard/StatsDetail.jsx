@@ -9,6 +9,11 @@ import TopSellingSection from "../../components/stats/TopSellingSection";
 import StatListModal from "../../components/dashboard/StatListModal";
 import DateRangeFilter from "../../components/stats/DateRangeFilter";
 
+// Tối ưu hóa: Sử dụng WeakMap ở cấp độ module để cache timestamp của order.date.
+// Cache này giúp tránh việc gọi lại new Date(order.date).getTime() cho các đơn hàng
+// trong các lần render lại, giảm thiểu garbage collection và tăng tốc vòng lặp.
+const orderDateCache = new WeakMap();
+
 const StatsDetail = ({ products, orders, onBack }) => {
   const {
     topOptions,
@@ -63,24 +68,38 @@ const StatsDetail = ({ products, orders, onBack }) => {
     previousStart.setHours(0, 0, 0, 0);
 
     const calcStats = (rangeStartDate, rangeEndDate) => {
-      const rangeOrders = paidOrders.filter((order) => {
-        const orderDate = new Date(order.date);
-        return orderDate >= rangeStartDate && orderDate <= rangeEndDate;
-      });
+      // Tối ưu hóa: Thay thế chuỗi .filter() và nhiều vòng .reduce() bằng một vòng lặp for...of duy nhất.
+      // Tránh việc tạo mảng trung gian và lặp lại mảng nhiều lần (O(N) thay vì O(3N)).
+      let revenue = 0;
+      let profit = 0;
+      let count = 0;
+      const startMs = rangeStartDate.getTime();
+      const endMs = rangeEndDate.getTime();
 
-      const revenue = rangeOrders.reduce((sum, order) => sum + order.total, 0);
-      const profit = rangeOrders.reduce((sum, order) => {
-        const orderProfit = order.items.reduce((itemSum, item) => {
-          const cost = Number.isFinite(item.cost)
-            ? item.cost
-            : costMap.get(item.productId) || 0;
-          return itemSum + (item.price - cost) * item.quantity;
-        }, 0);
-        const shippingFee = order.shippingFee || 0;
-        return sum + orderProfit - shippingFee;
-      }, 0);
+      for (const order of paidOrders) {
+        let orderTime = orderDateCache.get(order);
+        if (orderTime === undefined) {
+          orderTime = new Date(order.date).getTime();
+          orderDateCache.set(order, orderTime);
+        }
 
-      return { revenue, profit, count: rangeOrders.length };
+        if (orderTime >= startMs && orderTime <= endMs) {
+          count++;
+          revenue += order.total;
+
+          let orderProfit = 0;
+          for (const item of order.items) {
+            const cost = Number.isFinite(item.cost)
+              ? item.cost
+              : costMap.get(item.productId) || 0;
+            orderProfit += (item.price - cost) * item.quantity;
+          }
+          const shippingFee = order.shippingFee || 0;
+          profit += orderProfit - shippingFee;
+        }
+      }
+
+      return { revenue, profit, count };
     };
 
     return {
