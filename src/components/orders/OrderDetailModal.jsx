@@ -16,8 +16,31 @@ import LoadingOverlay from "../../components/common/LoadingOverlay";
 // OrderDetailModal: Xem chi tiết đơn hàng (Chỉ xem) -> showCloseIcon={false}
 const OrderDetailModal = ({ order, products, onClose, getOrderStatusInfo }) => {
   const [isExporting, setIsExporting] = useState(false);
+
+  // Tối ưu hóa: Tạo cache từ điển cho lookup sản phẩm để đạt độ phức tạp O(1)
+  const productMap = React.useMemo(() => {
+    const map = new Map();
+    if (products) {
+      for (const p of products) {
+        map.set(p.id, p);
+      }
+    }
+    return map;
+  }, [products]);
+
   // Giữ lại dữ liệu cũ để animation đóng vẫn hiển thị nội dung
   const cachedOrder = useModalCache(order, Boolean(order));
+
+  // Tối ưu hóa: Tránh sử dụng reduce tạo hàm phụ cho tính toán
+  const estimatedProfit = React.useMemo(() => {
+    if (!cachedOrder) return 0;
+    let sum = 0;
+    for (const item of cachedOrder.items) {
+      const cost = item.cost || 0;
+      sum += (item.price - cost) * item.quantity;
+    }
+    return sum - (cachedOrder.shippingFee || 0);
+  }, [cachedOrder]);
 
   if (!cachedOrder) return null;
 
@@ -30,15 +53,6 @@ const OrderDetailModal = ({ order, products, onClose, getOrderStatusInfo }) => {
   const warehouseLabel = getWarehouseLabel(
     resolveWarehouseKey(cachedOrder.warehouse) || getDefaultWarehouse().key,
   );
-
-  // Tính lợi nhuận ước tính (giống logic ở OrderListView)
-  let estimatedProfit = -(cachedOrder.shippingFee || 0);
-  if (cachedOrder.items) {
-    for (const item of cachedOrder.items) {
-      const cost = item.cost || 0;
-      estimatedProfit += (item.price - cost) * item.quantity;
-    }
-  }
 
   const handleExport = async () => {
     setIsExporting(true);
@@ -119,9 +133,8 @@ const OrderDetailModal = ({ order, products, onClose, getOrderStatusInfo }) => {
         {/* Danh sách sản phẩm */}
         <div className="space-y-3">
           {cachedOrder.items.map((item, index) => {
-            const product = products?.find(
-              (p) => p.id === item.productId || p.id === item.id,
-            );
+            const product =
+              productMap.get(item.productId) || productMap.get(item.id);
             const displayName = product ? product.name : item.name;
 
             return (
