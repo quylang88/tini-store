@@ -10,6 +10,7 @@ import {
 import { getOrderDisplayName } from "../../utils/orders/orderUtils";
 import useModalCache from "../../hooks/ui/useModalCache";
 import Button from "../../components/button/Button";
+import { useMemo } from "react";
 import { exportOrderToHTML } from "../../utils/file/fileUtils";
 import LoadingOverlay from "../../components/common/LoadingOverlay";
 
@@ -32,11 +33,23 @@ const OrderDetailModal = ({ order, products, onClose, getOrderStatusInfo }) => {
   );
 
   // Tính lợi nhuận ước tính (giống logic ở OrderListView)
-  const estimatedProfit =
-    cachedOrder.items.reduce((sum, item) => {
-      const cost = item.cost || 0;
-      return sum + (item.price - cost) * item.quantity;
-    }, 0) - (cachedOrder.shippingFee || 0);
+  // Tối ưu hoá: Sử dụng vòng lặp for...of thay vì .reduce để tránh overhead của việc tạo hàm callback
+  let estimatedProfit = -(cachedOrder.shippingFee || 0);
+  for (const item of cachedOrder.items) {
+    const cost = item.cost || 0;
+    estimatedProfit += (item.price - cost) * item.quantity;
+  }
+
+  // Tối ưu hoá: Cache sản phẩm dưới dạng Map để tra cứu O(1) thay vì O(N) với .find()
+  const productMap = useMemo(() => {
+    const map = new Map();
+    if (products) {
+      for (const p of products) {
+        map.set(p.id, p);
+      }
+    }
+    return map;
+  }, [products]);
 
   const handleExport = async () => {
     setIsExporting(true);
@@ -117,9 +130,7 @@ const OrderDetailModal = ({ order, products, onClose, getOrderStatusInfo }) => {
         {/* Danh sách sản phẩm */}
         <div className="space-y-3">
           {cachedOrder.items.map((item, index) => {
-            const product = products?.find(
-              (p) => p.id === item.productId || p.id === item.id,
-            );
+            const product = productMap.get(item.productId || item.id);
             const displayName = product ? product.name : item.name;
 
             return (
