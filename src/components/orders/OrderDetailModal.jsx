@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import SheetModal from "../../components/modals/SheetModal";
 import PaidStamp from "../common/PaidStamp";
 import { formatNumber } from "../../utils/formatters/formatUtils";
@@ -19,6 +19,16 @@ const OrderDetailModal = ({ order, products, onClose, getOrderStatusInfo }) => {
   // Giữ lại dữ liệu cũ để animation đóng vẫn hiển thị nội dung
   const cachedOrder = useModalCache(order, Boolean(order));
 
+  // Tối ưu hóa: Tạo productMap với useMemo để biến lookup O(N*M) thành O(1)
+  const productMap = useMemo(() => {
+    const map = new Map();
+    if (!products) return map;
+    for (const product of products) {
+      map.set(product.id, product);
+    }
+    return map;
+  }, [products]);
+
   if (!cachedOrder) return null;
 
   const orderLabel = cachedOrder.orderNumber
@@ -31,12 +41,14 @@ const OrderDetailModal = ({ order, products, onClose, getOrderStatusInfo }) => {
     resolveWarehouseKey(cachedOrder.warehouse) || getDefaultWarehouse().key,
   );
 
+  // Tối ưu hóa: Sử dụng vòng lặp for...of thay vì .reduce() để tránh phân bổ trung gian mảng/hàm
   // Tính lợi nhuận ước tính (giống logic ở OrderListView)
-  const estimatedProfit =
-    cachedOrder.items.reduce((sum, item) => {
-      const cost = item.cost || 0;
-      return sum + (item.price - cost) * item.quantity;
-    }, 0) - (cachedOrder.shippingFee || 0);
+  let estimatedProfit = 0;
+  for (const item of cachedOrder.items) {
+    const cost = item.cost || 0;
+    estimatedProfit += (item.price - cost) * item.quantity;
+  }
+  estimatedProfit -= cachedOrder.shippingFee || 0;
 
   const handleExport = async () => {
     setIsExporting(true);
@@ -117,9 +129,9 @@ const OrderDetailModal = ({ order, products, onClose, getOrderStatusInfo }) => {
         {/* Danh sách sản phẩm */}
         <div className="space-y-3">
           {cachedOrder.items.map((item, index) => {
-            const product = products?.find(
-              (p) => p.id === item.productId || p.id === item.id,
-            );
+            // Tối ưu hóa: Thay thế O(N) .find() lookup bằng O(1) .get() lookup để tăng hiệu năng khi có nhiều sản phẩm
+            const product =
+              productMap.get(item.productId) || productMap.get(item.id);
             const displayName = product ? product.name : item.name;
 
             return (
