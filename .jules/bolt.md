@@ -1,0 +1,3 @@
+## 2024-05-24 - [Optimize Order Detail & List Rendering with Map lookups & for...of]
+**Learning:** Using `Array.prototype.find()` inside a `.map()` or loop creates an O(N*M) time complexity bottleneck, especially when rendering lists or processing large arrays like order items and products. Additionally, using `.reduce()` creates intermediate function allocations.
+**Action:** Always pre-compute a dictionary/Map using `useMemo` before mapping over items to achieve O(1) lookups, yielding significant performance gains (e.g., ~126x faster). Combine aggregations and use `for...of` loops instead of `.reduce()`.
