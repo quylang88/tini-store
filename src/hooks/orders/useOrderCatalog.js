@@ -85,38 +85,44 @@ const useOrderCatalog = ({
     customFilterFn: checkAvailability,
   });
 
-  const reviewItems = useMemo(
-    () =>
-      Object.entries(cart)
-        .map(([productId, quantity]) => {
+  const reviewItems = useMemo(() => {
+    // Tối ưu hóa: Sử dụng vòng lặp for...in để tránh tạo mảng trung gian từ Object.entries() và .map().filter()
+    const items = [];
+    for (const productId in cart) {
+      if (Object.prototype.hasOwnProperty.call(cart, productId)) {
+        const quantity = cart[productId];
+        if (quantity > 0) {
           const product = productMap.get(productId);
-          if (!product) return null;
+          if (product) {
+            const overriddenPrice = priceOverrides[productId];
+            items.push({
+              id: product.id,
+              productId: product.id,
+              name: product.name,
+              price:
+                overriddenPrice !== undefined
+                  ? Number(overriddenPrice)
+                  : product.price,
+              originalPrice: product.price,
+              quantity,
+              // Giá vốn dùng cho đơn hàng cần gồm cả phí gửi/đơn vị.
+              cost: getProductStats(product).unitCost,
+            });
+          }
+        }
+      }
+    }
+    return items;
+  }, [cart, productMap, priceOverrides]);
 
-          const overriddenPrice = priceOverrides[productId];
-
-          return {
-            id: product.id,
-            productId: product.id,
-            name: product.name,
-            price:
-              overriddenPrice !== undefined
-                ? Number(overriddenPrice)
-                : product.price,
-            originalPrice: product.price,
-            quantity,
-            // Giá vốn dùng cho đơn hàng cần gồm cả phí gửi/đơn vị.
-            cost: getProductStats(product).unitCost,
-          };
-        })
-        .filter((item) => item && item.quantity > 0), // Lọc bỏ item null hoặc số lượng <= 0 (bao gồm cả chuỗi rỗng)
-    [cart, productMap, priceOverrides],
-  );
-
-  const totalAmount = useMemo(
-    () =>
-      reviewItems.reduce((sum, item) => sum + item.price * item.quantity, 0),
-    [reviewItems],
-  );
+  const totalAmount = useMemo(() => {
+    // Tối ưu hóa: Sử dụng vòng lặp for...of thay cho .reduce() để tránh cấp phát hàm callback và tăng tốc duyệt mảng
+    let sum = 0;
+    for (const item of reviewItems) {
+      sum += item.price * item.quantity;
+    }
+    return sum;
+  }, [reviewItems]);
 
   return {
     productMap,
