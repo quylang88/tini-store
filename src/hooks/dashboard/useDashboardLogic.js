@@ -188,71 +188,76 @@ const useDashboardLogic = ({ products, orders, rangeMode = "dashboard" }) => {
     });
   }, [paidOrders, rangeStart, rangeEnd]);
 
-  const totalRevenue = useMemo(
-    () => filteredPaidOrders.reduce((sum, order) => sum + order.total, 0),
-    [filteredPaidOrders],
-  );
-
-  const totalProfit = useMemo(
-    () =>
-      filteredPaidOrders.reduce((sum, order) => {
-        // Ưu tiên dùng giá vốn trong đơn để không bị lệch khi giá vốn thay đổi
-        const orderProfit = order.items.reduce((itemSum, item) => {
-          const cost = Number.isFinite(item.cost)
-            ? item.cost
-            : costMap.get(item.productId) || 0;
-          return itemSum + (item.price - cost) * item.quantity;
-        }, 0);
-        // Trừ phí gửi vì đây là chi phí phát sinh của đơn
-        const shippingFee = order.shippingFee || 0;
-        return sum + orderProfit - shippingFee;
-      }, 0),
-    [filteredPaidOrders, costMap],
-  );
-
-  const productStats = useMemo(() => {
+  // Hợp nhất tính toán doanh thu, lợi nhuận và thống kê sản phẩm trong một single-pass for...of loop
+  // Tối ưu hoá đáng kể so với việc chạy qua filteredPaidOrders nhiều lần
+  const { totalRevenue, totalProfit, productStats } = useMemo(() => {
+    let revenue = 0;
+    let profit = 0;
     const stats = new Map();
-    filteredPaidOrders.forEach((order) => {
-      order.items.forEach((item) => {
+
+    for (const order of filteredPaidOrders) {
+      revenue += order.total;
+
+      let orderProfit = 0;
+      for (const item of order.items) {
+        const cost = Number.isFinite(item.cost)
+          ? item.cost
+          : costMap.get(item.productId) || 0;
+        const itemProfit = (item.price - cost) * item.quantity;
+        orderProfit += itemProfit;
+
         const product = productMeta.get(item.productId);
         const key = item.productId || item.name;
-        if (!stats.has(key)) {
-          stats.set(key, {
+
+        let entry = stats.get(key);
+        if (!entry) {
+          entry = {
             id: item.productId,
             name: product?.name || item.name || "Sản phẩm khác",
             image: product?.image || "",
             quantity: 0,
             profit: 0,
-          });
+          };
+          stats.set(key, entry);
         }
-        const entry = stats.get(key);
-        const cost = Number.isFinite(item.cost)
-          ? item.cost
-          : costMap.get(item.productId) || 0;
+
         entry.quantity += item.quantity;
-        entry.profit += (item.price - cost) * item.quantity;
-      });
-    });
-    return Array.from(stats.values());
+        entry.profit += itemProfit;
+      }
+
+      const shippingFee = order.shippingFee || 0;
+      profit += orderProfit - shippingFee;
+    }
+
+    return {
+      totalRevenue: revenue,
+      totalProfit: profit,
+      productStats: Array.from(stats.values())
+    };
   }, [filteredPaidOrders, productMeta, costMap]);
 
-  const topByProfit = useMemo(
-    () =>
-      [...productStats]
-        .filter((item) => item.profit > 0 || item.quantity > 0)
-        .sort((a, b) => b.profit - a.profit)
-        .slice(0, topLimit),
-    [productStats, topLimit],
-  );
+  // Tối ưu việc lọc và sắp xếp top products bằng for...of để tránh tạo mảng trung gian qua .filter()
+  const topByProfit = useMemo(() => {
+    const arr = [];
+    for (const item of productStats) {
+      if (item.profit > 0 || item.quantity > 0) {
+        arr.push(item);
+      }
+    }
+    arr.sort((a, b) => b.profit - a.profit);
+    return arr.slice(0, topLimit);
+  }, [productStats, topLimit]);
 
-  const topByQuantity = useMemo(
-    () =>
-      [...productStats]
-        .filter((item) => item.quantity > 0)
-        .sort((a, b) => b.quantity - a.quantity)
-        .slice(0, topLimit),
-    [productStats, topLimit],
-  );
+  const topByQuantity = useMemo(() => {
+    const arr = [];
+    for (const item of productStats) {
+      if (item.quantity > 0) {
+        arr.push(item);
+      }
+    }
+    arr.sort((a, b) => b.quantity - a.quantity);
+    return arr.slice(0, topLimit);
+  }, [productStats, topLimit]);
 
   return {
     currentDate, // Trả về giá trị này để các component tiêu thụ có thể sử dụng cùng một tham chiếu
