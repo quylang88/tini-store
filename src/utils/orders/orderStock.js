@@ -30,10 +30,19 @@ const updateWarehouseStock = (
     if (nextStock[key] === undefined) nextStock[key] = 0;
   });
 
+  // Tối ưu hóa: Thay thế Object.values(nextStock).reduce bằng vòng lặp for...in để tránh cấp phát mảng trung gian,
+  // giảm bớt áp lực thu gom rác (garbage collection) và tăng tốc độ tính toán.
+  let calculatedStock = 0;
+  for (const key in nextStock) {
+    if (Object.prototype.hasOwnProperty.call(nextStock, key)) {
+      calculatedStock += nextStock[key] || 0;
+    }
+  }
+
   const nextProduct = {
     ...product,
     stockByWarehouse: nextStock,
-    stock: Object.values(nextStock).reduce((sum, val) => sum + val, 0),
+    stock: calculatedStock,
   };
 
   if (delta < 0) {
