@@ -114,22 +114,37 @@ const OrderListView = ({
     });
   }, [orders]);
 
-  const filteredOrders = useMemo(
-    () =>
-      sortedOrders.filter((order) =>
-        orderMatchesSearchTerms(order, orderSearchTerms),
-      ),
-    [orderSearchTerms, sortedOrders],
-  );
+  const filteredOrders = useMemo(() => {
+    const next = [];
+    for (const order of sortedOrders) {
+      if (orderMatchesSearchTerms(order, orderSearchTerms)) {
+        next.push(order);
+      }
+    }
+    return next;
+  }, [orderSearchTerms, sortedOrders]);
+
+  // Lọc các đơn hàng đủ điều kiện gộp khi ở chế độ chọn nhiều
+  const displayOrders = useMemo(() => {
+    if (!isMergeMode) return filteredOrders;
+    const next = [];
+    for (const order of filteredOrders) {
+      const eligibility = getOrderMergeEligibility(order);
+      if (eligibility.canSelect) {
+        next.push(order);
+      }
+    }
+    return next;
+  }, [filteredOrders, isMergeMode, getOrderMergeEligibility]);
 
   const {
     visibleData: visibleOrders,
     loadMore,
     hasMore,
-  } = usePagination(filteredOrders, {
+  } = usePagination(displayOrders, {
     pageSize: 20,
     // Danh sách đơn hàng giữ nguyên vị trí cuộn ngay cả khi cập nhật, trừ khi chúng ta quyết định khác
-    resetDeps: [debouncedSearchTerm],
+    resetDeps: [debouncedSearchTerm, isMergeMode],
   });
 
   const handleSearchChange = useCallback(
@@ -164,7 +179,7 @@ const OrderListView = ({
         </motion.div>
 
         <div
-          className={`flex-1 overflow-y-auto min-h-0 pt-[56px] overscroll-y-contain px-3 ${
+          className={`flex-1 overflow-y-auto min-h-0 pt-20 overscroll-y-contain px-3 ${
             isMergeMode ? "pb-[11rem]" : "pb-24"
           }`}
           onScroll={(e) => {
