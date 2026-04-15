@@ -20,6 +20,9 @@ const OrderListItem = memo(
     handleEditOrder,
     handleCancelOrder,
     onSelectOrder,
+    isMergeMode,
+    isSelected,
+    onToggleOrderSelection,
   }) => {
     const statusInfo = getOrderStatusInfo(order);
     const isPaid = order.status === "paid";
@@ -46,13 +49,23 @@ const OrderListItem = memo(
       <motion.div
         whileTap={{ scale: 0.96 }}
         className={`p-4 rounded-xl shadow-sm border cursor-pointer hover:shadow-md transition-shadow relative overflow-hidden ${
-          isPaid ? "bg-gray-50 border-gray-200" : "bg-amber-50 border-amber-100"
+          isMergeMode && isSelected
+            ? "bg-amber-100 border-amber-300 ring-2 ring-amber-400"
+            : isPaid
+              ? "bg-gray-50 border-gray-200"
+              : "bg-amber-50 border-amber-100"
         }`}
-        onClick={() => onSelectOrder?.(order)}
+        onClick={() => {
+          if (isMergeMode) {
+            // Không làm gì khi nhấn vào card trong chế độ gộp, chỉ nhấn vào checkbox
+            return;
+          }
+          onSelectOrder?.(order);
+        }}
       >
-        <PaidStamp isPaid={isPaid} variant="list" />
+        {!isMergeMode && <PaidStamp isPaid={isPaid} variant="list" />}
         <div
-          className={`transition-all duration-300 ${isPaid ? "grayscale opacity-75" : ""}`}
+          className={`transition-all duration-300 ${isPaid && !isMergeMode ? "grayscale opacity-75" : ""}`}
         >
           <div className="flex justify-between mb-2 gap-2">
             <div className="min-w-0">
@@ -117,54 +130,93 @@ const OrderListItem = memo(
           </div>
           <div className="mt-3 flex flex-wrap justify-end gap-2 h-8 items-center">
             <AnimatePresence mode="popLayout" initial={false}>
-              {/* Nút Thanh Toán / Huỷ Thanh Toán */}
-              <motion.button
-                layout
-                key={isPaid ? "btn-unpay" : "btn-pay"}
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.8 }}
-                onClick={(event) => {
-                  event.stopPropagation();
-                  handleTogglePaid(order);
-                }}
-                className={`text-xs font-semibold px-3 py-1.5 rounded-full border transition active:scale-95 relative z-20 whitespace-nowrap ${
-                  isPaid
-                    ? "text-red-600 bg-red-50 border-red-300"
-                    : "text-emerald-600 bg-emerald-50 border-emerald-300"
-                }`}
-              >
-                {isPaid ? "Huỷ thanh toán" : "Thanh toán"}
-              </motion.button>
-
-              {/* Các nút hành động khác (Sửa/Huỷ đơn) - Chỉ hiện khi chưa thanh toán */}
-              {!isPaid && (
+              {isMergeMode ? (
                 <motion.div
-                  key="action-buttons"
-                  initial={{ opacity: 0, scale: 0.8, width: 0 }}
-                  animate={{ opacity: 1, scale: 1, width: "auto" }}
-                  exit={{ opacity: 0, scale: 0.8, width: 0 }}
-                  className="flex gap-2 overflow-hidden"
+                  key="merge-checkbox"
+                  initial={{ opacity: 0, scale: 0.5 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.5 }}
+                  className="pr-2"
                 >
-                  <button
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      handleEditOrder(order);
+                  <div
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onToggleOrderSelection?.(order);
                     }}
-                    className="text-xs font-semibold text-orange-600 bg-orange-50 border border-orange-300 px-3 py-1.5 rounded-full active:scale-95 transition whitespace-nowrap"
+                    className={`w-7 h-7 rounded-full border-2 flex items-center justify-center transition-all ${
+                      isSelected
+                        ? "bg-amber-500 border-amber-500 text-white"
+                        : "border-gray-300 bg-white"
+                    }`}
                   >
-                    Sửa đơn
-                  </button>
-                  <button
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      handleCancelOrder(order);
-                    }}
-                    className="text-xs font-semibold text-red-600 bg-red-50 border border-red-300 px-3 py-1.5 rounded-full active:scale-95 transition whitespace-nowrap"
-                  >
-                    Huỷ đơn
-                  </button>
+                    {isSelected && (
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-5 w-5"
+                        viewBox="0 0 20 20"
+                        fill="currentColor"
+                      >
+                        <path
+                          fillRule="evenodd"
+                          d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                          clipRule="evenodd"
+                        />
+                      </svg>
+                    )}
+                  </div>
                 </motion.div>
+              ) : (
+                <>
+                  {/* Nút Thanh Toán / Huỷ Thanh Toán */}
+                  <motion.button
+                    layout
+                    key={isPaid ? "btn-unpay" : "btn-pay"}
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.8 }}
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      handleTogglePaid(order);
+                    }}
+                    className={`text-xs font-semibold px-3 py-1.5 rounded-full border transition active:scale-95 relative z-20 whitespace-nowrap ${
+                      isPaid
+                        ? "text-red-600 bg-red-50 border-red-300"
+                        : "text-emerald-600 bg-emerald-50 border-emerald-300"
+                    }`}
+                  >
+                    {isPaid ? "Huỷ thanh toán" : "Thanh toán"}
+                  </motion.button>
+
+                  {/* Các nút hành động khác (Sửa/Huỷ đơn) - Chỉ hiện khi chưa thanh toán */}
+                  {!isPaid && (
+                    <motion.div
+                      key="action-buttons"
+                      initial={{ opacity: 0, scale: 0.8, width: 0 }}
+                      animate={{ opacity: 1, scale: 1, width: "auto" }}
+                      exit={{ opacity: 0, scale: 0.8, width: 0 }}
+                      className="flex gap-2 overflow-hidden"
+                    >
+                      <button
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          handleEditOrder(order);
+                        }}
+                        className="text-xs font-semibold text-orange-600 bg-orange-50 border border-orange-300 px-3 py-1.5 rounded-full active:scale-95 transition whitespace-nowrap"
+                      >
+                        Sửa đơn
+                      </button>
+                      <button
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          handleCancelOrder(order);
+                        }}
+                        className="text-xs font-semibold text-red-600 bg-red-50 border border-red-300 px-3 py-1.5 rounded-full active:scale-95 transition whitespace-nowrap"
+                      >
+                        Huỷ đơn
+                      </button>
+                    </motion.div>
+                  )}
+                </>
               )}
             </AnimatePresence>
           </div>
