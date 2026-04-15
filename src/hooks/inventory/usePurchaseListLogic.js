@@ -49,6 +49,22 @@ const usePurchaseListLogic = ({
     [purchaseLists],
   )
 
+  const productMap = useMemo(() => {
+    const map = new Map()
+    for (const p of products) {
+      map.set(p.id, p)
+    }
+    return map
+  }, [products])
+
+  const productNameMap = useMemo(() => {
+    const map = new Map()
+    for (const p of products) {
+      map.set(normalizeString(p.name), p)
+    }
+    return map
+  }, [products])
+
   const selectedList = useMemo(
     () => purchaseLists.find((list) => list.id === selectedListId) || null,
     [purchaseLists, selectedListId],
@@ -291,6 +307,8 @@ const usePurchaseListLogic = ({
           listId,
           itemId,
           completionData,
+          productMap,
+          productNameMap,
         })
         setProducts(result.products)
         setPurchaseLists(result.purchaseLists)
@@ -315,6 +333,8 @@ const usePurchaseListLogic = ({
       purchaseLists,
       setProducts,
       setPurchaseLists,
+      productMap,
+      productNameMap,
     ],
   )
 
@@ -324,9 +344,7 @@ const usePurchaseListLogic = ({
         return
       }
 
-      const product = item.productId
-        ? products.find((entry) => entry.id === item.productId)
-        : null
+      const product = item.productId ? productMap.get(item.productId) : null
       const requirement = getItemCompletionRequirement({ item, product })
 
       if (requirement.mode === "missing-product") {
@@ -362,7 +380,7 @@ const usePurchaseListLogic = ({
               },
       })
     },
-    [completingItemId, finalizeItemCompletion, products],
+    [completingItemId, finalizeItemCompletion, productMap],
   )
 
   return {
