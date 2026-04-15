@@ -248,13 +248,29 @@ export const completePurchaseListItem = ({
   listId,
   itemId,
   completionData = {},
+  productMap = null,
+  productNameMap = null,
 }) => {
-  const list = purchaseLists.find((entry) => entry.id === listId)
+  let list = null
+  for (const entry of purchaseLists) {
+    if (entry.id === listId) {
+      list = entry
+      break
+    }
+  }
+
   if (!list) {
     throw new Error("Không tìm thấy danh sách mua hàng.")
   }
 
-  const item = list.items.find((entry) => entry.id === itemId)
+  let item = null
+  for (const entry of list.items) {
+    if (entry.id === itemId) {
+      item = entry
+      break
+    }
+  }
+
   if (!item) {
     throw new Error("Không tìm thấy mặt hàng trong danh sách.")
   }
@@ -271,7 +287,18 @@ export const completePurchaseListItem = ({
   }
 
   if (item.kind === "existing") {
-    const product = products.find((entry) => entry.id === item.productId)
+    let product = null
+    if (productMap) {
+      product = productMap.get(item.productId)
+    } else {
+      for (const entry of products) {
+        if (entry.id === item.productId) {
+          product = entry
+          break
+        }
+      }
+    }
+
     if (!product) {
       throw new Error("Sản phẩm này không còn tồn tại trong kho.")
     }
@@ -289,18 +316,32 @@ export const completePurchaseListItem = ({
       priceAtPurchase: product.price,
     })
 
-    nextProducts = products.map((entry) =>
-      entry.id === product.id ? nextProduct : entry,
-    )
+    // Tối ưu: Dùng vòng lặp for thay cho .map() để tránh overhead callback
+    const productLen = products.length
+    nextProducts = new Array(productLen)
+    for (let i = 0; i < productLen; i++) {
+      const entry = products[i]
+      nextProducts[i] = entry.id === product.id ? nextProduct : entry
+    }
+
     nextCompletedItem = {
       ...nextCompletedItem,
       createdProductId: product.id,
     }
   } else {
     const normalizedItemName = normalizeString(item.name)
-    const duplicateProduct = products.find(
-      (entry) => normalizeString(entry.name) === normalizedItemName,
-    )
+    let duplicateProduct = null
+
+    if (productNameMap) {
+      duplicateProduct = productNameMap.get(normalizedItemName)
+    } else {
+      for (const entry of products) {
+        if (normalizeString(entry.name) === normalizedItemName) {
+          duplicateProduct = entry
+          break
+        }
+      }
+    }
 
     if (duplicateProduct) {
       throw new Error(
@@ -331,15 +372,23 @@ export const completePurchaseListItem = ({
     }
   }
 
-  const nextLists = purchaseLists.map((entry) => {
-    if (entry.id !== list.id) return entry
-
-    const nextItems = entry.items.map((currentItem) =>
-      currentItem.id === item.id ? nextCompletedItem : currentItem,
-    )
-
-    return updatePurchaseListItems(entry, nextItems)
-  })
+  // Tối ưu: Dùng vòng lặp for để cập nhật danh sách, tránh .map() lồng nhau
+  const listLen = purchaseLists.length
+  const nextLists = new Array(listLen)
+  for (let i = 0; i < listLen; i++) {
+    const entry = purchaseLists[i]
+    if (entry.id !== list.id) {
+      nextLists[i] = entry
+    } else {
+      const itemLen = entry.items.length
+      const nextItems = new Array(itemLen)
+      for (let j = 0; j < itemLen; j++) {
+        const currentItem = entry.items[j]
+        nextItems[j] = currentItem.id === item.id ? nextCompletedItem : currentItem
+      }
+      nextLists[i] = updatePurchaseListItems(entry, nextItems)
+    }
+  }
 
   return { purchaseLists: nextLists, products: nextProducts }
 }
