@@ -158,6 +158,14 @@ export const buildNextProductFromForm = ({
       (existingStock[resolvedWarehouseKey] || 0) + quantityValue,
   };
 
+  // Tối ưu hóa: Dùng vòng lặp for...in trực tiếp để tính tổng, tránh phân bổ mảng qua Object.values và giảm áp lực thu gom rác (GC).
+  let calculatedStock = 0;
+  for (const key in nextStockByWarehouse) {
+    if (Object.prototype.hasOwnProperty.call(nextStockByWarehouse, key)) {
+      calculatedStock += nextStockByWarehouse[key] || 0;
+    }
+  }
+
   let nextProduct = {
     ...baseProduct,
     name: formData.name.trim(),
@@ -167,10 +175,7 @@ export const buildNextProductFromForm = ({
     cost: costValue || getProductStats(baseProduct).cost,
     image: formData.image,
     stockByWarehouse: nextStockByWarehouse,
-    stock: Object.values(nextStockByWarehouse).reduce(
-      (sum, val) => sum + val,
-      0,
-    ),
+    stock: calculatedStock,
   };
 
   // Lưu lại từng lần nhập hàng thành "lô giá nhập" để quản lý tồn kho theo giá.
@@ -221,24 +226,30 @@ export const buildNextProductFromForm = ({
       });
 
       // Tính toán lại tồn kho theo kho một cách động
-      const adjustedStock = nextLots.reduce(
-        (acc, lot) => {
-          const nextWarehouse =
-            resolveWarehouseKey(lot.warehouse) || defaultWarehouseKey;
-          const lotQty = Number(lot.quantity) || 0;
-          return {
-            ...acc,
-            [nextWarehouse]: (acc[nextWarehouse] || 0) + lotQty,
-          };
-        },
-        { ...initialStock },
-      );
+      // Tối ưu hóa: Thay thế .reduce() bằng vòng lặp for...of và mutate đối tượng để tránh
+      // việc cấp phát mới object ở mỗi vòng lặp, giúp giảm đáng kể chi phí GC.
+      const adjustedStock = { ...initialStock };
+      for (const lot of nextLots) {
+        const nextWarehouse =
+          resolveWarehouseKey(lot.warehouse) || defaultWarehouseKey;
+        const lotQty = Number(lot.quantity) || 0;
+        adjustedStock[nextWarehouse] =
+          (adjustedStock[nextWarehouse] || 0) + lotQty;
+      }
+
+      // Tối ưu hóa: Thay thế Object.values(adjustedStock).reduce bằng vòng lặp for...in để tránh cấp phát mảng.
+      let adjustedCalculatedStock = 0;
+      for (const key in adjustedStock) {
+        if (Object.prototype.hasOwnProperty.call(adjustedStock, key)) {
+          adjustedCalculatedStock += adjustedStock[key] || 0;
+        }
+      }
 
       nextProduct = {
         ...nextProduct,
         purchaseLots: nextLots,
         stockByWarehouse: adjustedStock,
-        stock: Object.values(adjustedStock).reduce((sum, val) => sum + val, 0),
+        stock: adjustedCalculatedStock,
         cost: getProductStats({ ...nextProduct, purchaseLots: nextLots }).cost,
       };
     } else {

@@ -69,12 +69,20 @@ export const getLatestLot = (product = {}) => {
   // Find lot with latest createdAt using string comparison (ISO format).
   // Note: We must scan the array (O(N)) because lots are not guaranteed to be sorted by date.
   // Using string comparison is faster than new Date() parsing.
-  return lots.reduce((latest, current) => {
-    if (!latest) return current;
+  // Tối ưu hóa: Thay thế .reduce() bằng vòng lặp for...of để tránh chi phí cấp phát hàm callback.
+  let latest = lots[0];
+  for (const current of lots) {
+    if (!latest) {
+      latest = current;
+      continue;
+    }
     const latestDate = latest.createdAt || "";
     const currentDate = current.createdAt || "";
-    return currentDate > latestDate ? current : latest;
-  }, lots[0]);
+    if (currentDate > latestDate) {
+      latest = current;
+    }
+  }
+  return latest;
 };
 
 // Returns all stats in one pass to avoid multiple array scans

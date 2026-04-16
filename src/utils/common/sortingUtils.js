@@ -9,12 +9,17 @@ export const getProductDate = (product) => {
     // but let's sort to be safe or use reduce.
 
     // Optimization: Compare ISO strings directly to avoid creating Date objects in the loop
-    const latestLot = product.purchaseLots.reduce((latest, current) => {
-      const latestDate = latest.createdAt || "";
+    // Tối ưu hóa: Thay thế .reduce() bằng vòng lặp for...of để tránh chi phí cấp phát hàm,
+    // nâng cao hiệu suất so sánh mảng lớn.
+    let latestLot = product.purchaseLots[0];
+    for (const current of product.purchaseLots) {
+      const latestDate = latestLot.createdAt || "";
       const currentDate = current.createdAt || "";
       // ISO strings are lexicographically comparable
-      return currentDate > latestDate ? current : latest;
-    }, product.purchaseLots[0]);
+      if (currentDate > latestDate) {
+        latestLot = current;
+      }
+    }
 
     if (latestLot && latestLot.createdAt) {
       return latestLot.createdAt;
