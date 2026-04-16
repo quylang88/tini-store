@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect, useCallback } from "react";
-import { ArrowUpRight, ArrowLeft, RotateCcw } from "lucide-react";
+import { ArrowUpRight, ArrowLeft, ArrowRight, RotateCcw } from "lucide-react";
 import useDashboardLogic from "../hooks/dashboard/useDashboardLogic";
 import TopSellingSection from "../components/stats/TopSellingSection";
 import StatListModal from "../components/dashboard/StatListModal";
@@ -41,8 +41,13 @@ const Dashboard = ({
     outOfStockProducts, // Danh sách hết hàng
     topByProfit,
     topByQuantity,
-    isPreviousPeriod,
-    setPreviousPeriod,
+    viewDate,
+    setViewDate,
+    goToPreviousMonth,
+    goToNextMonth,
+    isCurrentMonth,
+    totalDebt,
+    unpaidOrders,
     rangeStart,
     isCalculating,
   } = useDashboardLogic({ products, orders, rangeMode: "dashboard" });
@@ -51,6 +56,7 @@ const Dashboard = ({
   const [showOutOfStockModal, setShowOutOfStockModal] = useState(false);
   const [showInventoryWarningModal, setShowInventoryWarningModal] =
     useState(false);
+  const [showDebtModal, setShowDebtModal] = useState(false);
 
   // Memoize handlers to prevent unnecessary re-renders of DashboardMetrics
   const handleShowOutOfStock = useCallback(
@@ -61,6 +67,7 @@ const Dashboard = ({
     () => setShowInventoryWarningModal(true),
     [],
   );
+  const handleShowDebt = useCallback(() => setShowDebtModal(true), []);
   const openTopModal = useCallback((type) => setActiveModal(type), []);
   const closeTopModal = useCallback(() => setActiveModal(null), []);
 
@@ -73,16 +80,15 @@ const Dashboard = ({
     [purchaseLists],
   );
 
-  // Tạo nhãn tháng hiện tại sử dụng ngày tập trung hoặc rangeStart (ngày bắt đầu thực tế của view)
+  // Tạo nhãn tháng hiện tại sử dụng ngày tập trung hoặc viewDate
   const currentMonthLabel = useMemo(() => {
-    // Ưu tiên rangeStart nếu có (đã tính toán theo tháng trước/hiện tại)
-    const targetDate = rangeStart || currentDate;
+    const targetDate = viewDate || currentDate;
     if (!targetDate) return "Đang tải...";
     return `Tháng ${String(targetDate.getMonth() + 1).padStart(
       2,
       "0",
     )}/${targetDate.getFullYear()}`;
-  }, [currentDate, rangeStart]);
+  }, [currentDate, viewDate]);
 
   const [isScrolled, setIsScrolled] = useState(false);
 
@@ -100,43 +106,45 @@ const Dashboard = ({
         className="h-full overflow-y-auto min-h-0 p-4 pt-[calc(80px+env(safe-area-inset-top))] space-y-4 pb-24 overscroll-contain"
         onScroll={handleScroll}
       >
-        {/* Nhãn tiêu đề */}
-        <div className="flex items-center justify-between min-h-[40px]">
-          <div className="overflow-hidden">
+        {/* Nhãn tiêu đề & Điều hướng tháng */}
+        <div className="flex items-center justify-between min-h-[44px] gap-2">
+          <div className="flex items-center bg-white border border-rose-100 rounded-full px-1 py-1 shadow-sm">
+            <button
+              onClick={goToPreviousMonth}
+              className="p-1.5 rounded-full text-rose-600 active:bg-rose-50 transition-colors"
+              title="Tháng trước"
+            >
+              <ArrowLeft size={18} />
+            </button>
             <h2
               key={currentMonthLabel}
-              className="text-xl font-bold text-rose-700 filter-transition"
+              className="text-sm font-bold text-rose-700 px-2 min-w-[100px] text-center"
             >
               {currentMonthLabel}
             </h2>
+            <button
+              onClick={goToNextMonth}
+              disabled={isCurrentMonth}
+              className={`p-1.5 rounded-full transition-colors ${
+                isCurrentMonth
+                  ? "text-gray-300 cursor-not-allowed"
+                  : "text-rose-600 active:bg-rose-50"
+              }`}
+              title="Tháng sau"
+            >
+              <ArrowRight size={18} />
+            </button>
           </div>
 
-          <button
-            onClick={() => setPreviousPeriod(!isPreviousPeriod)}
-            className={`relative flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold shadow-sm transition-all duration-300 min-w-[110px] ${
-              isPreviousPeriod
-                ? "bg-rose-100 text-rose-700 hover:bg-rose-200"
-                : "bg-white border border-rose-200 text-rose-600 hover:bg-rose-50"
-            }`}
-          >
-            {isPreviousPeriod ? (
-              <span
-                key="this"
-                className="flex items-center gap-1.5 filter-transition"
-              >
-                <RotateCcw size={14} />
-                Tháng này
-              </span>
-            ) : (
-              <span
-                key="prev"
-                className="flex items-center gap-1.5 filter-transition"
-              >
-                <ArrowLeft size={14} />
-                Tháng trước
-              </span>
-            )}
-          </button>
+          {!isCurrentMonth && (
+            <button
+              onClick={() => setViewDate(new Date())}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-full text-[10px] uppercase tracking-wider font-bold bg-rose-100 text-rose-700 active:bg-rose-200 transition-all shadow-sm"
+            >
+              <RotateCcw size={12} />
+              Hiện tại
+            </button>
+          )}
         </div>
 
         {/* Lưới chỉ số (Metrics Grid) - Đã tách thành component memoized */}
@@ -145,12 +153,14 @@ const Dashboard = ({
           totalProfit={totalProfit}
           orderCount={orderCount}
           totalCapital={totalCapital}
+          totalDebt={totalDebt}
           outOfStockProducts={outOfStockProducts}
           slowMovingProducts={slowMovingProducts}
           pendingPurchaseQuantity={pendingPurchaseQuantity}
           isCalculating={isCalculating}
           onShowOutOfStock={handleShowOutOfStock}
           onShowSlowMoving={handleShowSlowMoving}
+          onShowDebt={handleShowDebt}
           onOpenPurchaseLists={onOpenPurchaseLists}
         />
 
@@ -185,6 +195,13 @@ const Dashboard = ({
           onClose={() => setShowInventoryWarningModal(false)}
           items={slowMovingProducts}
           type="warning"
+        />
+
+        <StatListModal
+          open={showDebtModal}
+          onClose={() => setShowDebtModal(false)}
+          items={unpaidOrders}
+          type="debt"
         />
       </div>
     </div>
