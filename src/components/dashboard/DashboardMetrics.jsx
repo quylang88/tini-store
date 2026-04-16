@@ -16,12 +16,14 @@ const DashboardMetrics = ({
   totalProfit,
   orderCount,
   totalCapital,
+  totalDebt,
   outOfStockProducts,
   slowMovingProducts,
   pendingPurchaseQuantity,
   isCalculating,
   onShowOutOfStock,
   onShowSlowMoving,
+  onShowDebt,
   onOpenPurchaseLists,
 }) => {
   return (
@@ -60,6 +62,14 @@ const DashboardMetrics = ({
           isCalculating ? "Đang tính..." : `${formatNumber(totalCapital)}đ`
         }
         className="bg-blue-400 shadow-blue-200"
+      />
+
+      <MetricCard
+        icon={ClipboardList}
+        label="Khách nợ"
+        value={isCalculating ? "Đang tính..." : `${formatNumber(totalDebt)}đ`}
+        className="bg-orange-400 shadow-orange-200"
+        onClick={onShowDebt}
       />
 
       <MetricCard
