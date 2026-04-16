@@ -28,6 +28,8 @@ const useDashboardLogic = ({ products, orders, rangeMode = "dashboard" }) => {
   // Trạng thái ngày tập trung. Sử dụng khởi tạo lười (lazy initialization) để đặt "now" khi mount.
   // Mặc dù new Date() về kỹ thuật là không tinh khiết (impure), nhưng nó ổn định sau lần render đầu tiên.
   const [currentDate] = useState(() => new Date());
+  // viewDate dùng để theo dõi tháng đang xem trên dashboard (hỗ trợ chuyển nhiều tháng)
+  const [viewDate, setViewDate] = useState(() => new Date());
 
   const [activeRange, setActiveRange] = useState(
     rangeMode === "detail" ? "custom" : "month",
@@ -39,6 +41,39 @@ const useDashboardLogic = ({ products, orders, rangeMode = "dashboard" }) => {
     () => buildRangeOptions(rangeMode, currentDate),
     [rangeMode, currentDate],
   );
+
+  // Hàm lùi về tháng trước
+  const goToPreviousMonth = useCallback(() => {
+    setViewDate((prev) => {
+      const newDate = new Date(prev);
+      newDate.setMonth(newDate.getMonth() - 1);
+      return newDate;
+    });
+  }, []);
+
+  // Hàm tiến tới tháng sau (không vượt quá tháng hiện tại)
+  const goToNextMonth = useCallback(() => {
+    setViewDate((prev) => {
+      const today = new Date();
+      if (
+        prev.getMonth() === today.getMonth() &&
+        prev.getFullYear() === today.getFullYear()
+      ) {
+        return prev;
+      }
+      const newDate = new Date(prev);
+      newDate.setMonth(newDate.getMonth() + 1);
+      return newDate;
+    });
+  }, []);
+
+  const isCurrentMonth = useMemo(() => {
+    const today = new Date();
+    return (
+      viewDate.getMonth() === today.getMonth() &&
+      viewDate.getFullYear() === today.getFullYear()
+    );
+  }, [viewDate]);
 
   // Unified Inventory Stats Calculation
   // Consolidates multiple iterations over `products` into a single pass (O(N)).
@@ -144,6 +179,24 @@ const useDashboardLogic = ({ products, orders, rangeMode = "dashboard" }) => {
     [orders],
   );
 
+  // Tính toán tiền nợ (tất cả đơn "pending" từ trước tới nay theo yêu cầu)
+  const { totalDebt, unpaidOrders } = useMemo(() => {
+    let debt = 0;
+    const unpaid = [];
+
+    for (const order of orders) {
+      if (order.status === "pending") {
+        debt += order.total || 0;
+        unpaid.push(order);
+      }
+    }
+
+    // Sắp xếp đơn nợ mới nhất lên đầu để dễ theo dõi
+    unpaid.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+    return { totalDebt: debt, unpaidOrders: unpaid };
+  }, [orders]);
+
   const activeOption = useMemo(
     () =>
       rangeOptions.find((option) => option.id === activeRange) ||
@@ -158,12 +211,17 @@ const useDashboardLogic = ({ products, orders, rangeMode = "dashboard" }) => {
       start.setHours(0, 0, 0, 0);
       return start;
     }
+    if (activeRange === "month") {
+      const start = new Date(viewDate.getFullYear(), viewDate.getMonth(), 1);
+      start.setHours(0, 0, 0, 0);
+      return start;
+    }
     if (!activeOption.days || !currentDate) return null;
     const start = new Date(currentDate);
     start.setHours(0, 0, 0, 0);
     start.setDate(start.getDate() - activeOption.days + 1);
     return start;
-  }, [activeOption, activeRange, customRange.start, currentDate]);
+  }, [activeOption, activeRange, customRange.start, currentDate, viewDate]);
 
   const rangeEnd = useMemo(() => {
     if (activeRange === "custom") {
@@ -172,11 +230,23 @@ const useDashboardLogic = ({ products, orders, rangeMode = "dashboard" }) => {
       end.setHours(23, 59, 59, 999);
       return end;
     }
+    if (activeRange === "month") {
+      const end = new Date(
+        viewDate.getFullYear(),
+        viewDate.getMonth() + 1,
+        0,
+        23,
+        59,
+        59,
+        999,
+      );
+      return end;
+    }
     if (!activeOption.days || !currentDate) return null;
     const end = new Date(currentDate);
     end.setHours(23, 59, 59, 999);
     return end;
-  }, [activeOption, activeRange, customRange.end, currentDate]);
+  }, [activeOption, activeRange, customRange.end, currentDate, viewDate]);
 
   const filteredPaidOrders = useMemo(() => {
     if (!rangeStart && !rangeEnd) return paidOrders;
@@ -284,6 +354,13 @@ const useDashboardLogic = ({ products, orders, rangeMode = "dashboard" }) => {
     outOfStockProducts, // Đã export: Danh sách hết hàng
     topByProfit,
     topByQuantity,
+    viewDate,
+    setViewDate,
+    goToPreviousMonth,
+    goToNextMonth,
+    isCurrentMonth,
+    totalDebt,
+    unpaidOrders,
   };
 };
 

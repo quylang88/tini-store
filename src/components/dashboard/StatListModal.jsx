@@ -1,5 +1,12 @@
 import React, { useMemo } from "react";
-import { Package, ArchiveX, Image as ImageIcon } from "lucide-react";
+import {
+  Package,
+  ArchiveX,
+  Image as ImageIcon,
+  User,
+  Calendar,
+  Hash,
+} from "lucide-react";
 import SheetModal from "../../components/modals/SheetModal";
 import Button from "../../components/button/Button";
 import { formatNumber } from "../../utils/formatters/formatUtils";
@@ -31,6 +38,12 @@ const themeMap = {
     value: "text-slate-600",
     border: "border-slate-100",
   },
+  debt: {
+    title: "text-orange-700",
+    badge: "bg-orange-50 text-orange-600 border-orange-100",
+    value: "text-orange-600",
+    border: "border-orange-100",
+  },
 };
 
 const defaultTitles = {
@@ -38,6 +51,7 @@ const defaultTitles = {
   quantity: "Top số lượng",
   warning: "Hàng tồn",
   out_of_stock: "Sản phẩm hết hàng",
+  debt: "Đơn nợ",
 };
 
 const StatListModal = ({
@@ -76,6 +90,9 @@ const StatListModal = ({
   } else if (cachedType === "out_of_stock") {
     footerButtonClass =
       "!bg-slate-100 !border-slate-300 !text-slate-900 active:!bg-slate-200";
+  } else if (cachedType === "debt") {
+    footerButtonClass =
+      "!bg-orange-100 !border-orange-300 !text-orange-900 active:!bg-orange-200";
   }
 
   const footer = (
@@ -117,6 +134,43 @@ const StatListModal = ({
                 {cachedType === "quantity"
                   ? `Số lượng: ${item.quantity}`
                   : `Lợi nhuận: ${formatNumber(item.profit)}đ`}
+              </div>
+            </div>
+          </>
+        );
+      case "debt":
+        return (
+          <>
+            <div className="w-10 h-10 rounded-lg bg-orange-50 overflow-hidden flex-shrink-0 border border-orange-100 flex items-center justify-center text-orange-400">
+              <User size={20} />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center justify-between gap-2">
+                <div className="text-sm font-bold text-gray-800 truncate">
+                  {item.customerName || "Khách lẻ"}
+                </div>
+                <div className="text-sm font-black text-rose-600">
+                  {formatNumber(item.total)}đ
+                </div>
+              </div>
+              <div className="flex items-center gap-3 mt-1 text-[11px] text-gray-500 font-medium">
+                <div className="flex items-center gap-1">
+                  <Hash size={10} className="text-gray-400" />
+                  <span>
+                    {item.orderNumber
+                      ? `#${item.orderNumber}`
+                      : `#${item.id.slice(-4)}`}
+                  </span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <Calendar size={10} className="text-gray-400" />
+                  <span>
+                    {new Date(item.date).toLocaleDateString("vi-VN", {
+                      day: "2-digit",
+                      month: "2-digit",
+                    })}
+                  </span>
+                </div>
               </div>
             </div>
           </>
@@ -195,6 +249,7 @@ const StatListModal = ({
   const getEmptyMessage = () => {
     if (cachedType === "warning") return "Không có sản phẩm cảnh báo";
     if (cachedType === "out_of_stock") return "Không có sản phẩm nào hết hàng";
+    if (cachedType === "debt") return "Không có đơn hàng nào nợ";
     return "Chưa có dữ liệu";
   };
 
@@ -214,7 +269,8 @@ const StatListModal = ({
             <span
               className={`text-[11px] font-semibold border rounded-full px-2 py-0.5 ${theme.badge}`}
             >
-              {cachedItems.length} sản phẩm
+              {cachedItems.length}{" "}
+              {cachedType === "debt" ? "đơn hàng" : "sản phẩm"}
             </span>
           </div>
         </div>
