@@ -10,8 +10,9 @@ import {
 import { getOrderDisplayName } from "../../utils/orders/orderUtils";
 import useModalCache from "../../hooks/ui/useModalCache";
 import Button from "../../components/button/Button";
-import { exportOrderToHTML } from "../../utils/file/fileUtils";
+import { exportOrderToHTML, exportOrdersToImages } from "../../utils/file/fileUtils";
 import LoadingOverlay from "../../components/common/LoadingOverlay";
+import { FileDown, Image as ImageIcon, Printer } from "lucide-react";
 
 // OrderDetailModal: Xem chi tiết đơn hàng (Chỉ xem) -> showCloseIcon={false}
 const OrderDetailModal = ({ order, products, onClose, getOrderStatusInfo }) => {
@@ -54,12 +55,16 @@ const OrderDetailModal = ({ order, products, onClose, getOrderStatusInfo }) => {
     resolveWarehouseKey(cachedOrder.warehouse) || getDefaultWarehouse().key,
   );
 
-  const handleExport = async () => {
+  const handleExport = async (format) => {
     setIsExporting(true);
     // Timeout nhỏ để đảm bảo UI loading kịp render trước khi hàm export nặng chạy
     await new Promise((resolve) => setTimeout(resolve, 300));
     try {
-      await exportOrderToHTML(cachedOrder, products);
+      if (format === "image") {
+        await exportOrdersToImages([cachedOrder], products);
+      } else {
+        await exportOrderToHTML(cachedOrder, products, format);
+      }
     } catch (error) {
       console.error("Export error:", error);
       alert("Có lỗi khi xuất file");
@@ -69,22 +74,41 @@ const OrderDetailModal = ({ order, products, onClose, getOrderStatusInfo }) => {
   };
 
   const footer = (
-    <div className="flex gap-3">
-      <Button
-        variant="secondary"
-        size="sm"
-        onClick={onClose}
-        className="flex-1"
-      >
+    <div className="flex flex-col gap-2">
+      <div className="grid grid-cols-3 gap-2">
+        <Button
+          variant="softDanger"
+          size="sm"
+          onClick={() => handleExport("receipt")}
+          className="h-auto py-2 hover:bg-rose-100 text-rose-800 border-rose-300"
+        >
+          <div className="flex flex-col items-center gap-1">
+            <Printer size={18} /> <span className="text-[10px]">K80</span>
+          </div>
+        </Button>
+        <Button
+          variant="softDanger"
+          size="sm"
+          onClick={() => handleExport("a4")}
+          className="h-auto py-2 hover:bg-rose-100 text-rose-800 border-rose-300"
+        >
+          <div className="flex flex-col items-center gap-1">
+            <FileDown size={18} /> <span className="text-[10px]">A4</span>
+          </div>
+        </Button>
+        <Button
+          variant="softDanger"
+          size="sm"
+          onClick={() => handleExport("image")}
+          className="h-auto py-2 hover:bg-rose-100 text-rose-800 border-rose-300"
+        >
+          <div className="flex flex-col items-center gap-1">
+            <ImageIcon size={18} /> <span className="text-[10px]">Ảnh</span>
+          </div>
+        </Button>
+      </div>
+      <Button variant="danger" size="sm" onClick={onClose} className="w-full">
         Đóng
-      </Button>
-      <Button
-        variant="primary"
-        size="sm"
-        onClick={handleExport}
-        className="flex-1"
-      >
-        Xuất hoá đơn
       </Button>
     </div>
   );

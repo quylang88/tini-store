@@ -13,7 +13,7 @@ const SelectionActionButton = ({
       ? disabled
         ? "bg-rose-200 text-rose-400 border-transparent"
         : "bg-rose-500 text-white border-rose-400 shadow-lg shadow-rose-200"
-      : "bg-white/85 text-slate-700 border-white/80";
+      : "bg-white/85 text-slate-700 border-rose-200";
 
   return (
     <button
