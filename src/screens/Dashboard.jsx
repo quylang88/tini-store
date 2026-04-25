@@ -48,7 +48,6 @@ const Dashboard = ({
     isCurrentMonth,
     totalDebt,
     unpaidOrders,
-    rangeStart,
     isCalculating,
   } = useDashboardLogic({ products, orders, rangeMode: "dashboard" });
 

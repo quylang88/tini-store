@@ -32,19 +32,37 @@ export const createFormDataForNewProduct = ({ settings, activeCategory }) => ({
 export const createFormDataForProduct = ({ product, settings }) => {
   const { latestLot, isJpy, cost: currentCost } = getProductStats(product);
 
+  const inferredShippingMethod = (() => {
+    if (latestLot?.shipping?.method) {
+      return latestLot.shipping.method;
+    }
+    const weightKg = Number(latestLot?.shipping?.weightKg || 0);
+    const feeJpy = Number(latestLot?.shipping?.feeJpy || 0);
+    if (weightKg > 0 || feeJpy > 0) {
+      return "jp";
+    }
+    return isJpy ? "jp" : "vn";
+  })();
+
+  const exchangeRateValue =
+    Number(latestLot?.shipping?.exchangeRate || settings.exchangeRate) || 0;
+
   return {
     ...buildBaseFormData(settings),
     name: product.name,
     productCode: product.productCode || "",
     category: product.category || "Chung",
     costCurrency: isJpy ? "JPY" : "VND",
-    costJPY: isJpy ? String(latestLot.costJpy) : "",
+    costJPY: isJpy ? String(latestLot?.costJpy || "") : "",
+    exchangeRate: String(exchangeRateValue || settings.exchangeRate),
     cost: currentCost,
     costVNDInput: isJpy ? "" : currentCost,
     price: product.price,
-    shippingMethod: "vn",
-    shippingFeeVnd: "",
-    shippingFeeVndInput: "",
+    shippingMethod: inferredShippingMethod,
+    shippingWeightKg: latestLot?.shipping?.weightKg || "",
+    shippingFeeVnd: latestLot?.shipping?.feeVnd || "",
+    shippingFeeVndInput:
+      inferredShippingMethod === "vn" ? latestLot?.shipping?.feeVnd || "" : "",
     image: product.image || "",
     expiryDate: product.expiryDate || "",
   };
