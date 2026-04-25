@@ -37,10 +37,15 @@ const useDashboardLogic = ({ products, orders, rangeMode = "dashboard" }) => {
   const [topLimit, setTopLimit] = useState(3);
   const [customRange, setCustomRange] = useState({ start: null, end: null });
 
-  const rangeOptions = useMemo(
-    () => buildRangeOptions(rangeMode, currentDate),
-    [rangeMode, currentDate],
-  );
+  const { rangeOptions, rangeMap } = useMemo(() => {
+    const options = buildRangeOptions(rangeMode, currentDate);
+    // Optimization: Create an O(1) lookup map for range options
+    const map = {};
+    for (const opt of options) {
+      map[opt.id] = opt;
+    }
+    return { rangeOptions: options, rangeMap: map };
+  }, [rangeMode, currentDate]);
 
   // Hàm lùi về tháng trước
   const goToPreviousMonth = useCallback(() => {
@@ -198,10 +203,8 @@ const useDashboardLogic = ({ products, orders, rangeMode = "dashboard" }) => {
   }, [orders]);
 
   const activeOption = useMemo(
-    () =>
-      rangeOptions.find((option) => option.id === activeRange) ||
-      rangeOptions[0] || { days: null },
-    [activeRange, rangeOptions],
+    () => rangeMap[activeRange] || rangeOptions[0] || { days: null },
+    [activeRange, rangeMap, rangeOptions],
   );
 
   const rangeStart = useMemo(() => {
