@@ -72,10 +72,14 @@ const CustomCalendar = ({
     const startOffset = (firstDay.getDay() + 6) % 7; // Bắt đầu từ Thứ Hai
     const daysInMonth = new Date(year, month + 1, 0).getDate();
 
-    const days = [];
-    for (let i = 0; i < startOffset; i++) days.push(null);
+    const totalDays = startOffset + daysInMonth;
+    const days = new Array(totalDays);
+    // Sử dụng vòng lặp for với mảng đã cấp phát trước để tối ưu hiệu suất (tránh push liên tục)
+    for (let i = 0; i < startOffset; i++) {
+      days[i] = null;
+    }
     for (let i = 1; i <= daysInMonth; i++) {
-      days.push(new Date(year, month, i));
+      days[startOffset + i - 1] = new Date(year, month, i);
     }
     return days;
   }, [viewDate]);
