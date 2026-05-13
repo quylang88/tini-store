@@ -22,21 +22,42 @@ export const getDefaultWarehouse = () => {
   return WAREHOUSES.find((w) => w.isDefault) || WAREHOUSES[0];
 };
 
-// Cache keys để tránh map() mỗi lần gọi
-const ALL_WAREHOUSE_KEYS = WAREHOUSES.map((w) => w.key);
+// Tối ưu hóa: Khởi tạo tất cả cache trong một lần duyệt duy nhất
+const {
+  ALL_WAREHOUSE_KEYS,
+  WAREHOUSE_KEY_MAP,
+  WAREHOUSE_LABEL_MAP,
+  WAREHOUSE_SHORT_LABEL_MAP,
+  EMPTY_STOCK,
+} = (() => {
+  const keys = [];
+  const keyMap = {};
+  const labelMap = {};
+  const shortLabelMap = {};
+  const emptyStock = {};
 
-// Cache mapping key -> resolvedKey để tránh find() mỗi lần gọi
-const WAREHOUSE_KEY_MAP = (() => {
-  const map = {};
-  WAREHOUSES.forEach((w) => {
-    map[w.key] = w.key;
+  for (let i = 0; i < WAREHOUSES.length; i++) {
+    const w = WAREHOUSES[i];
+    keys.push(w.key);
+    keyMap[w.key] = w.key;
+    labelMap[w.key] = w.label;
+    shortLabelMap[w.key] = w.shortLabel || w.label;
+    emptyStock[w.key] = 0;
+
     if (w.legacyKeys) {
-      w.legacyKeys.forEach((legacyKey) => {
-        map[legacyKey] = w.key;
-      });
+      for (let j = 0; j < w.legacyKeys.length; j++) {
+        keyMap[w.legacyKeys[j]] = w.key;
+      }
     }
-  });
-  return map;
+  }
+
+  return {
+    ALL_WAREHOUSE_KEYS: keys,
+    WAREHOUSE_KEY_MAP: keyMap,
+    WAREHOUSE_LABEL_MAP: labelMap,
+    WAREHOUSE_SHORT_LABEL_MAP: shortLabelMap,
+    EMPTY_STOCK: emptyStock,
+  };
 })();
 
 export const getAllWarehouseKeys = () => ALL_WAREHOUSE_KEYS;
@@ -50,24 +71,19 @@ export const resolveWarehouseKey = (key) => {
 
 export const getWarehouseLabel = (key) => {
   const resolvedKey = resolveWarehouseKey(key);
-  const warehouse = WAREHOUSES.find((item) => item.key === resolvedKey);
-  return warehouse ? warehouse.label : key;
+  // Sử dụng map lookup O(1)
+  return WAREHOUSE_LABEL_MAP[resolvedKey] || key;
 };
 
 export const getWarehouseShortLabel = (key) => {
   const resolvedKey = resolveWarehouseKey(key);
-  const warehouse = WAREHOUSES.find((item) => item.key === resolvedKey);
-  return warehouse?.shortLabel || warehouse?.label || key;
+  // Sử dụng map lookup O(1)
+  return WAREHOUSE_SHORT_LABEL_MAP[resolvedKey] || key;
 };
 
 export const normalizeWarehouseStock = (product = {}) => {
-  const stock = {};
-  const primaryKeys = getAllWarehouseKeys();
-
-  // Khởi tạo tất cả key chính bằng 0
-  primaryKeys.forEach((key) => {
-    stock[key] = 0;
-  });
+  // Tối ưu hóa: Sử dụng object spread với EMPTY_STOCK đã được tính toán trước
+  const stock = { ...EMPTY_STOCK };
 
   if (product.stockByWarehouse) {
     Object.keys(product.stockByWarehouse).forEach((sourceKey) => {
