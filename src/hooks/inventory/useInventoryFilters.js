@@ -43,9 +43,17 @@ const useInventoryFilters = ({
     if (editingProduct) return [];
     const keyword = normalizeString(formDataName);
     if (!keyword) return [];
-    return products
-      .filter((product) => normalizeString(product.name).includes(keyword))
-      .slice(0, 5);
+
+    // Tối ưu hóa: Dùng vòng lặp for...of và break sớm khi đủ 5 gợi ý,
+    // tránh việc .filter() qua toàn bộ mảng và tạo mảng trung gian không cần thiết.
+    const suggestions = [];
+    for (const product of products) {
+      if (normalizeString(product.name).includes(keyword)) {
+        suggestions.push(product);
+        if (suggestions.length >= 5) break;
+      }
+    }
+    return suggestions;
   }, [products, formDataName, editingProduct]);
 
   return { filteredProducts, nameSuggestions };

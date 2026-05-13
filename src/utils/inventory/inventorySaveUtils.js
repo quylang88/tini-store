@@ -30,11 +30,19 @@ export const getInventoryValidationError = ({
   }
 
   // Kiểm tra trùng tên sản phẩm (không tính sản phẩm đang sửa)
-  const duplicateName = products.find(
-    (product) =>
-      normalizeString(product.name) === normalizeString(formData.name) &&
-      (!editingProduct || product.id !== editingProduct.id),
-  );
+  // Tối ưu hóa: Hoist normalizeString ra ngoài và dùng vòng lặp for...of để break sớm,
+  // giảm đáng kể thời gian xử lý so với .find() khi danh sách sản phẩm lớn.
+  const normalizedFormDataName = normalizeString(formData.name);
+  const editingProductId = editingProduct?.id;
+  let duplicateName = null;
+
+  for (const product of products) {
+    if (editingProductId && product.id === editingProductId) continue;
+    if (normalizeString(product.name) === normalizedFormDataName) {
+      duplicateName = product;
+      break;
+    }
+  }
 
   if (duplicateName) {
     return {
@@ -55,12 +63,17 @@ export const getInventoryValidationError = ({
   }
 
   // Kiểm tra trùng Barcode
+  // Tối ưu hóa: Dùng vòng lặp for...of để break sớm ngay khi tìm thấy barcode trùng.
   if (formData.barcode) {
-    const duplicateBarcode = products.find(
-      (p) =>
-        p.barcode === formData.barcode &&
-        p.id !== (editingProduct ? editingProduct.id : null),
-    );
+    let duplicateBarcode = null;
+    for (const p of products) {
+      if (editingProductId && p.id === editingProductId) continue;
+      if (p.barcode === formData.barcode) {
+        duplicateBarcode = p;
+        break;
+      }
+    }
+
     if (duplicateBarcode) {
       return {
         title: "Mã vạch bị trùng",
