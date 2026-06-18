@@ -15,7 +15,7 @@ const useLoginLogic = ({ onLogin }) => {
         const creds = await storageService.getAuthCreds();
         if (creds) {
           setUsername(creds.user || "");
-          setPassword(creds.pass || "");
+          setPassword(""); // Do not load password for security reasons
           setRemember(true);
         }
       } catch (err) {
@@ -42,8 +42,8 @@ const useLoginLogic = ({ onLogin }) => {
     ) {
       // Xử lý Ghi nhớ Tài khoản/Mật khẩu
       if (remember) {
-        // Nếu chọn Ghi nhớ: Lưu vào IndexedDB
-        await storageService.saveAuthCreds({ user: username, pass: password });
+        // Nếu chọn Ghi nhớ: Chỉ lưu username vào IndexedDB để bảo mật
+        await storageService.saveAuthCreds({ user: username });
       } else {
         // Nếu không chọn: Xóa khỏi IndexedDB
         await storageService.clearAuthCreds();
