@@ -193,7 +193,6 @@ export const generateProductListImage = async (items, options = {}) => {
     const maxTextWidth = CANVAS_WIDTH - textX - PADDING;
     const words = (item.name || "").split(" ");
     let line = "";
-    // let lineCount = 0; // Removed unused variable
 
     for (let n = 0; n < words.length; n++) {
       const testLine = line + words[n] + " ";
@@ -203,7 +202,6 @@ export const generateProductListImage = async (items, options = {}) => {
         ctx.fillText(line, textX, textY);
         line = words[n] + " ";
         textY += 50; // Line height
-        // lineCount++;
       } else {
         line = testLine;
       }
