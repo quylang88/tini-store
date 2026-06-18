@@ -17,9 +17,9 @@ const MessageList = ({
   return (
     <div
       data-testid="message-list"
-      // FIX: Tăng padding-bottom (pb-44) để đảm bảo tin nhắn cuối không bị che bởi spacer hoặc bàn phím
+      // FIX: Tăng padding-bottom (pb-64) để đảm bảo tin nhắn cuối không bị che bởi spacer hoặc bàn phím
       // touch-pan-y: Cho phép scroll dọc tự nhiên, nhưng JS xử lý scroll ngang (swipe)
-      className="flex-1 overflow-y-auto overflow-x-hidden px-4 pt-4 pb-44 bg-transparent relative scroll-smooth overscroll-contain touch-pan-y"
+      className="flex-1 overflow-y-auto overflow-x-hidden px-4 pt-4 pb-64 bg-transparent relative scroll-smooth overscroll-contain touch-pan-y"
       {...handlers}
     >
       {messages.length === 0 ? (
