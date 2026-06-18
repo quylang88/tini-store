@@ -97,16 +97,8 @@ const useScrollHandling = ({
             setSearchVisible(true);
 
             // Xử lý logic hiện TabBar
-            if (setTabBarVisible) {
-              if (showTabBarOnlyAtTop) {
-                // Chỉ hiện TabBar khi gần sát đỉnh trang (scrollTop < 20)
-                if (currentScrollTop < 20) {
-                  setTabBarVisible(true);
-                }
-              } else {
-                // Mặc định: hiện ngay khi cuộn lên
-                setTabBarVisible(true);
-              }
+            if (setTabBarVisible && (!showTabBarOnlyAtTop || currentScrollTop < 20)) {
+              setTabBarVisible(true);
             }
           }
         }
