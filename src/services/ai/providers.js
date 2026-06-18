@@ -19,7 +19,7 @@ export const callGeminiAPI = async (
   temperature = 0.7,
 ) => {
   const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
-  if (!apiKey) throw new Error("Chưa cấu hình VITE_GEMINI_API_KEY");
+  if (!apiKey || typeof apiKey !== "string" || !apiKey.trim()) throw new Error("Chưa cấu hình VITE_GEMINI_API_KEY");
 
   const genAI = new GoogleGenerativeAI(apiKey);
   const model = genAI.getGenerativeModel({
@@ -36,15 +36,20 @@ export const callGeminiAPI = async (
     parts: [{ text: msg.content }],
   }));
 
-  // Gọi generateContent với toàn bộ lịch sử hội thoại
-  const result = await model.generateContent({ contents });
-  const response = await result.response;
+  try {
+    // Gọi generateContent với toàn bộ lịch sử hội thoại
+    const result = await model.generateContent({ contents });
+    const response = await result.response;
 
-  // Chuẩn hóa output object
-  return {
-    content: response.text(),
-    tool_calls: null, // Hiện tại Gemini Flash chưa implement tool call trong code này
-  };
+    // Chuẩn hóa output object
+    return {
+      content: response.text(),
+      tool_calls: null, // Hiện tại Gemini Flash chưa implement tool call trong code này
+    };
+  } catch (error) {
+    console.error("Lỗi gọi Gemini API:", error);
+    throw new Error("Lỗi gọi Gemini API");
+  }
 };
 
 /**
@@ -59,7 +64,7 @@ export const callGroqAPI = async (
   tools = null, // Thêm tham số tools
 ) => {
   const apiKey = import.meta.env.VITE_GROQ_API_KEY;
-  if (!apiKey) throw new Error("Chưa cấu hình VITE_GROQ_API_KEY");
+  if (!apiKey || typeof apiKey !== "string" || !apiKey.trim()) throw new Error("Chưa cấu hình VITE_GROQ_API_KEY");
 
   const messages = [
     {
@@ -103,33 +108,44 @@ export const callGroqAPI = async (
     payload.tool_choice = "auto";
   }
 
-  const response = await fetch(
-    "https://api.groq.com/openai/v1/chat/completions",
-    {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        "Content-Type": "application/json",
+  try {
+    const response = await fetch(
+      "https://api.groq.com/openai/v1/chat/completions",
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
       },
-      body: JSON.stringify(payload),
-    },
-  );
-
-  if (!response.ok) {
-    const errorData = await response.json();
-    throw new Error(
-      `Groq API Error: ${errorData?.error?.message || response.statusText}`,
     );
+
+    if (!response.ok) {
+      let errorMessage = response.statusText;
+      try {
+        const errorData = await response.json();
+        if (errorData?.error?.message) {
+          errorMessage = errorData.error.message;
+        }
+      } catch {
+        // Fallback to status text if response is not JSON
+      }
+      throw new Error(`Groq API Error: ${errorMessage}`);
+    }
+
+    const data = await response.json();
+    const message = data.choices[0]?.message;
+
+    // Trả về object đầy đủ để service xử lý
+    return {
+      content: message.content || "", // Có thể null nếu AI chỉ gọi tool
+      tool_calls: message.tool_calls || null,
+    };
+  } catch (error) {
+    console.error("Lỗi gọi Groq API:", error);
+    throw new Error("Lỗi gọi Groq API");
   }
-
-  const data = await response.json();
-  const message = data.choices[0]?.message;
-
-  // Trả về object đầy đủ để service xử lý
-  return {
-    content: message.content || "", // Có thể null nếu AI chỉ gọi tool
-    tool_calls: message.tool_calls || null,
-  };
 };
 
 /**
@@ -142,7 +158,7 @@ export const searchWeb = async (
   maxResults = 3,
 ) => {
   const tavilyKey = import.meta.env.VITE_TAVILY_API_KEY;
-  if (!tavilyKey) {
+  if (!tavilyKey || typeof tavilyKey !== "string" || !tavilyKey.trim()) {
     console.warn("Chưa cấu hình VITE_TAVILY_API_KEY");
     return null;
   }
@@ -160,6 +176,10 @@ export const searchWeb = async (
         max_results: maxResults,
       }),
     });
+
+    if (!response.ok) {
+      throw new Error(`Tavily API responded with status: ${response.status}`);
+    }
 
     const data = await response.json();
     if (!data.results) return null;
