@@ -37,12 +37,19 @@ export const parseOrderSearchTerms = (query) => parseSearchTerms(query);
 export const orderMatchesSearchTerms = (order, searchTerms = []) => {
   if (!searchTerms.length) return true;
 
-  const searchableFields = [
-    normalizeString(order?.customerName),
-    ...((order?.items || order?.products || []).map((item) =>
-      normalizeString(item?.name),
-    ) || []),
-  ].filter(Boolean);
+  const searchableFields = [];
+  const customerName = normalizeString(order?.customerName);
+  if (customerName) {
+    searchableFields.push(customerName);
+  }
+
+  const items = order?.items || order?.products || [];
+  for (let i = 0; i < items.length; i++) {
+    const itemName = normalizeString(items[i]?.name);
+    if (itemName) {
+      searchableFields.push(itemName);
+    }
+  }
 
   return matchesAllSearchTerms(searchableFields, searchTerms);
 };
