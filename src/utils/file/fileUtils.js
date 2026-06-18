@@ -9,6 +9,16 @@ import {
 } from "./orderExportUtils";
 
 /**
+ * Sanitizes a file name by removing or replacing restricted path characters.
+ * @param {string} name - The original file name.
+ * @returns {string} The sanitized file name.
+ */
+export const sanitizeFileName = (name) => {
+  // eslint-disable-next-line no-control-regex
+  return name.replace(/[<>:"/\\|?*\x00-\x1F]/g, "_");
+};
+
+/**
  * Handles file export by prioritizing Web Share API (for Mobile/PWA)
  * and falling back to direct download (for Desktop).
  *
@@ -94,7 +104,7 @@ export const exportDataToJSON = async (
     purchaseLists,
   });
 
-  const fileName = `tiny_shop_${new Date().toISOString().slice(0, 10)}.json`;
+  const fileName = sanitizeFileName(`tiny_shop_${new Date().toISOString().slice(0, 10)}.json`);
 
   return await shareOrDownloadFile(data, fileName, "application/json");
 };
@@ -156,10 +166,10 @@ export const exportOrdersToHTML = async (
 
   if (format === "a4") {
     htmlContent = await generateA4InvoiceHTMLContent(exportData);
-    fileName = `${buildOrdersExportBaseName(exportData, "Don_hang", "Don_gop")}.html`;
+    fileName = sanitizeFileName(`${buildOrdersExportBaseName(exportData, "Don_hang", "Don_gop")}.html`);
   } else {
     htmlContent = await generateReceiptHTMLContent(exportData);
-    fileName = `${buildOrdersExportBaseName(exportData, "Bill", "Bill_gop")}.html`;
+    fileName = sanitizeFileName(`${buildOrdersExportBaseName(exportData, "Bill", "Bill_gop")}.html`);
   }
 
   await shareOrDownloadFile(htmlContent, fileName, "text/html");
@@ -178,10 +188,11 @@ export const exportOrdersToImages = async (orders, products = []) => {
 
   const files = imageBlobs.map((blob, index) => ({
     content: blob,
-    fileName:
+    fileName: sanitizeFileName(
       imageBlobs.length === 1
         ? `${baseName}.png`
         : `${baseName}_trang_${index + 1}.png`,
+    ),
     mimeType: "image/png",
   }));
 
