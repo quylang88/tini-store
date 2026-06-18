@@ -12,15 +12,32 @@ import { getExportContacts } from "./exportContactInfo";
  */
 const loadImage = (src) => {
   return new Promise((resolve) => {
-    const img = new Image();
-    img.crossOrigin = "Anonymous"; // Attempt to handle CORS if applicable
-    img.onload = () => resolve(img);
-    img.onerror = (err) => {
-      console.warn("Failed to load image:", src, err);
-      // Thay vì reject, resolve null để quy trình tiếp tục với các ảnh khác
+    try {
+      const url = new URL(src, window.location.href);
+      if (!["http:", "https:", "data:", "blob:"].includes(url.protocol)) {
+        console.warn("Rejected unsafe image URL scheme:", src);
+        return resolve(null);
+      }
+
+      const img = new Image();
+      if (
+        (url.protocol === "http:" || url.protocol === "https:") &&
+        url.origin !== window.location.origin
+      ) {
+        img.crossOrigin = "Anonymous"; // Attempt to handle CORS for external resources
+      }
+
+      img.onload = () => resolve(img);
+      img.onerror = (err) => {
+        console.warn("Failed to load image:", src, err);
+        // Thay vì reject, resolve null để quy trình tiếp tục với các ảnh khác
+        resolve(null);
+      };
+      img.src = src;
+    } catch (err) {
+      console.warn("Invalid image URL:", src, err);
       resolve(null);
-    };
-    img.src = src;
+    }
   });
 };
 
