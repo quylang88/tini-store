@@ -113,16 +113,19 @@ export const processQuery = async (
     );
   }
 
-  const cleanHistory = history
-    .filter(
-      (msg) =>
-        (msg.sender === "user" || msg.sender === "assistant") &&
-        msg.type !== "error",
-    )
-    .map((msg) => ({
-      role: msg.sender === "user" ? "user" : "assistant",
-      content: msg.content,
-    }));
+  const cleanHistory = [];
+  for (let i = 0; i < history.length; i++) {
+    const msg = history[i];
+    if (
+      (msg.sender === "user" || msg.sender === "assistant") &&
+      msg.type !== "error"
+    ) {
+      cleanHistory.push({
+        role: msg.sender === "user" ? "user" : "assistant",
+        content: msg.content,
+      });
+    }
+  }
 
   const recentHistory = cleanHistory.slice(-SLIDING_WINDOW_SIZE);
 
