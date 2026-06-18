@@ -523,6 +523,29 @@ class StorageService {
     });
   }
 
+  async getCryptoKey() {
+    await this.init();
+    return new Promise((resolve, reject) => {
+      const transaction = this.db.transaction([STORES.SETTINGS], "readonly");
+      const store = transaction.objectStore(STORES.SETTINGS);
+      const request = store.get("crypto_key");
+      request.onsuccess = () =>
+        resolve(request.result ? request.result.value : null);
+      request.onerror = () => reject(request.error);
+    });
+  }
+
+  async saveCryptoKey(key) {
+    await this.init();
+    return new Promise((resolve, reject) => {
+      const transaction = this.db.transaction([STORES.SETTINGS], "readwrite");
+      const store = transaction.objectStore(STORES.SETTINGS);
+      store.put({ key: "crypto_key", value: key });
+      transaction.oncomplete = () => resolve();
+      transaction.onerror = () => reject(transaction.error);
+    });
+  }
+
   // --- Batch Savers (Lưu hàng loạt) ---
 
   async saveBatch(storeName, { added, updated, deleted }) {

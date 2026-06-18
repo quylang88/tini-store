@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import storageService from "../../services/storageService";
+import { encryptPassword, decryptPassword } from "../../utils/crypto";
 
 const useLoginLogic = ({ onLogin }) => {
   const [username, setUsername] = useState("");
@@ -15,7 +16,10 @@ const useLoginLogic = ({ onLogin }) => {
         const creds = await storageService.getAuthCreds();
         if (creds) {
           setUsername(creds.user || "");
-          setPassword(creds.pass || "");
+          if (creds.pass) {
+            const decryptedPass = await decryptPassword(creds.pass);
+            setPassword(decryptedPass || "");
+          }
           setRemember(true);
         }
       } catch (err) {
@@ -42,8 +46,9 @@ const useLoginLogic = ({ onLogin }) => {
     ) {
       // Xử lý Ghi nhớ Tài khoản/Mật khẩu
       if (remember) {
-        // Nếu chọn Ghi nhớ: Lưu vào IndexedDB
-        await storageService.saveAuthCreds({ user: username, pass: password });
+        // Mã hóa password trước khi lưu
+        const encryptedPass = await encryptPassword(password);
+        await storageService.saveAuthCreds({ user: username, pass: encryptedPass });
       } else {
         // Nếu không chọn: Xóa khỏi IndexedDB
         await storageService.clearAuthCreds();
