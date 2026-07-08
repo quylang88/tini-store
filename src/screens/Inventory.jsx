@@ -281,11 +281,16 @@ const Inventory = ({
         onClose={() => setEditingBasicInfoProduct(null)}
         onError={setErrorModal}
         onSave={(updatedProduct) => {
-          const duplicateCode = products.find(
-            (product) =>
+          let duplicateCode;
+          for (const product of products) {
+            if (
               product.productCode === updatedProduct.productCode &&
-              product.id !== updatedProduct.id,
-          );
+              product.id !== updatedProduct.id
+            ) {
+              duplicateCode = product;
+              break;
+            }
+          }
 
           if (duplicateCode) {
             setErrorModal({
