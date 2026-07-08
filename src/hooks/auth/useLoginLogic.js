@@ -31,18 +31,27 @@ const useLoginLogic = ({ onLogin }) => {
     loadCreds();
   }, []);
 
+  const hashInputPassword = async (pwd) => {
+    const encoder = new TextEncoder();
+    const data = encoder.encode(pwd);
+    const hashBuffer = await window.crypto.subtle.digest("SHA-256", data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Kiểm tra tài khoản (Environment Variables)
-    const validUser = import.meta.env.VITE_APP_USERNAME;
-    const validPass = import.meta.env.VITE_APP_PASSWORD;
+    // Kiểm tra tài khoản
+    const validUser = __APP_USERNAME__;
+    const validPassHash = __APP_PASSWORD_HASH__;
+    const inputHash = await hashInputPassword(password);
 
     if (
       validUser &&
-      validPass &&
+      validPassHash &&
       username === validUser &&
-      password === validPass
+      inputHash === validPassHash
     ) {
       // Xử lý Ghi nhớ Tài khoản/Mật khẩu
       if (remember) {
