@@ -57,8 +57,8 @@ const OrderDetailModal = ({ order, products, onClose, getOrderStatusInfo }) => {
 
   const handleExport = async (format) => {
     setIsExporting(true);
-    // Timeout nhỏ để đảm bảo UI loading kịp render trước khi hàm export nặng chạy
-    await new Promise((resolve) => setTimeout(resolve, 300));
+    // Cho phép UI render frame tiếp theo trước khi thực hiện logic nặng
+    await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
     try {
       if (format === "image") {
         await exportOrdersToImages([cachedOrder], products);
