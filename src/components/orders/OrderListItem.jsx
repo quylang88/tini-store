@@ -1,4 +1,4 @@
-import React, { memo } from "react";
+import React, { memo, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import PaidStamp from "../common/PaidStamp";
 import {
@@ -36,14 +36,18 @@ const OrderListItem = memo(
     );
     // Với đơn gửi khách, cần hiển thị kho xuất ở hàng trạng thái bên phải.
     const shouldShowWarehouseOnStatus = order.orderType !== "warehouse";
+
     // Lợi nhuận = (giá bán - giá vốn) - phí gửi để xem nhanh hiệu quả đơn hàng.
-    let estimatedProfit = -(order.shippingFee || 0);
-    if (order.items) {
-      for (const item of order.items) {
-        const cost = item.cost || 0;
-        estimatedProfit += (item.price - cost) * item.quantity;
+    const estimatedProfit = useMemo(() => {
+      let profit = -(order.shippingFee || 0);
+      if (order.items) {
+        for (const item of order.items) {
+          const cost = item.cost || 0;
+          profit += (item.price - cost) * item.quantity;
+        }
       }
-    }
+      return profit;
+    }, [order.shippingFee, order.items]);
 
     return (
       <motion.div
