@@ -216,10 +216,15 @@ export const processToolResult = async (
   // 3. Assistant Message (chứa tool_calls)
   // 4. Tool Message (chứa kết quả tool)
 
-  const cleanHistory = history.map((m) => ({
-    role: m.sender === "user" ? "user" : "assistant",
-    content: m.content,
-  }));
+  const len = history.length;
+  const cleanHistory = new Array(len);
+  for (let i = 0; i < len; i++) {
+    const m = history[i];
+    cleanHistory[i] = {
+      role: m.sender === "user" ? "user" : "assistant",
+      content: m.content,
+    };
+  }
 
   const conversation = [
     ...cleanHistory,
