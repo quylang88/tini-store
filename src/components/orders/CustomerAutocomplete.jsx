@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import { User, MapPin, ShoppingBag } from "lucide-react";
 import { normalizeString } from "../../utils/formatters/formatUtils";
 import {
@@ -18,6 +18,17 @@ const CustomerAutocomplete = ({
   const [showSuggestions, setShowSuggestions] = useState(false);
   const wrapperRef = useRef(null);
 
+  // Tiền xử lý (chuẩn hóa chuỗi) danh sách khách hàng khi danh sách thay đổi (không phải mỗi lần gõ phím)
+  const normalizedCustomers = useMemo(() => {
+    return customers.map((c) => ({
+      original: c,
+      normalizedFields: [
+        normalizeString(c.name),
+        ...(c.addresses || []).map((address) => normalizeString(address)),
+      ],
+    }));
+  }, [customers]);
+
   // Lọc danh sách khách hàng dựa trên input
   // Chỉ hiển thị nếu giá trị nhập vào > 0 ký tự
   // Tối ưu hóa: Thay vì dùng .filter().slice(0, 3) duyệt qua toàn bộ mảng và tạo mảng trung gian (O(N)),
@@ -25,14 +36,9 @@ const CustomerAutocomplete = ({
   let suggestions = [];
   if (value && value.trim().length > 0) {
     const searchTerms = parseSearchTerms(value);
-    for (const c of customers) {
-      const normalizedFields = [
-        normalizeString(c.name),
-        ...(c.addresses || []).map((address) => normalizeString(address)),
-      ];
-
-      if (matchesAnySearchTerms(normalizedFields, searchTerms)) {
-        suggestions.push(c);
+    for (const c of normalizedCustomers) {
+      if (matchesAnySearchTerms(c.normalizedFields, searchTerms)) {
+        suggestions.push(c.original);
         if (suggestions.length === 3) break;
       }
     }
