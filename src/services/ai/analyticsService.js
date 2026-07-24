@@ -19,6 +19,9 @@ const salesCache = new WeakMap();
 const inventoryCache = new WeakMap();
 const INVENTORY_CACHE_TTL = 5 * 60 * 1000; // 5 phút
 
+// Cache cho từng đơn hàng (individual order) để tránh lặp O(N*M) tính giá gốc/lợi nhuận nhiều lần
+const individualOrderStatsCache = new WeakMap();
+
 // Helper: Tính toán thống kê vốn từ danh sách sản phẩm
 const calculateProductStats = (products) => {
   if (!products || typeof products !== "object") {
@@ -91,18 +94,25 @@ const calculateOrderStats = (orders) => {
       let orderProfit = 0;
 
       if (Array.isArray(order.items)) {
-        let itemsProfitSum = 0;
-        // Tối ưu hóa: Sử dụng for...of thay vì reduce để tránh tạo mảng trung gian và callback
-        for (const item of order.items) {
-          const itemQty = Number(item.quantity) || 0;
-          const itemPrice = Number(item.price) || 0;
-          const itemCost = Number(item.cost) || 0;
+        if (individualOrderStatsCache.has(order)) {
+          const cached = individualOrderStatsCache.get(order);
+          orderCost = cached.orderCost;
+          orderProfit = cached.orderProfit;
+        } else {
+          let itemsProfitSum = 0;
+          // Tối ưu hóa: Sử dụng for...of thay vì reduce để tránh tạo mảng trung gian và callback
+          for (const item of order.items) {
+            const itemQty = Number(item.quantity) || 0;
+            const itemPrice = Number(item.price) || 0;
+            const itemCost = Number(item.cost) || 0;
 
-          orderCost += itemCost * itemQty;
-          itemsProfitSum += (itemPrice - itemCost) * itemQty;
+            orderCost += itemCost * itemQty;
+            itemsProfitSum += (itemPrice - itemCost) * itemQty;
+          }
+
+          orderProfit = itemsProfitSum - (Number(order.shippingFee) || 0);
+          individualOrderStatsCache.set(order, { orderCost, orderProfit });
         }
-
-        orderProfit = itemsProfitSum - (Number(order.shippingFee) || 0);
       }
 
       totalUnpaidCapital += orderCost;
