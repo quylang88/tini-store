@@ -29,12 +29,14 @@ const {
   WAREHOUSE_LABEL_MAP,
   WAREHOUSE_SHORT_LABEL_MAP,
   EMPTY_STOCK,
+  WAREHOUSE_CONFIG_MAP,
 } = (() => {
   const keys = [];
   const keyMap = {};
   const labelMap = {};
   const shortLabelMap = {};
   const emptyStock = {};
+  const configMap = {};
 
   for (let i = 0; i < WAREHOUSES.length; i++) {
     const w = WAREHOUSES[i];
@@ -43,10 +45,12 @@ const {
     labelMap[w.key] = w.label;
     shortLabelMap[w.key] = w.shortLabel || w.label;
     emptyStock[w.key] = 0;
+    configMap[w.key] = w;
 
     if (w.legacyKeys) {
       for (let j = 0; j < w.legacyKeys.length; j++) {
         keyMap[w.legacyKeys[j]] = w.key;
+        configMap[w.legacyKeys[j]] = w;
       }
     }
   }
@@ -57,10 +61,15 @@ const {
     WAREHOUSE_LABEL_MAP: labelMap,
     WAREHOUSE_SHORT_LABEL_MAP: shortLabelMap,
     EMPTY_STOCK: emptyStock,
+    WAREHOUSE_CONFIG_MAP: configMap,
   };
 })();
 
 export const getAllWarehouseKeys = () => ALL_WAREHOUSE_KEYS;
+
+export const getWarehouseConfig = (key) => {
+  return WAREHOUSE_CONFIG_MAP[key] || null;
+};
 
 // Helper để map bất kỳ key nào (hiện tại hoặc cũ) sang key chính hiện tại
 export const resolveWarehouseKey = (key) => {

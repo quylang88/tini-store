@@ -4,7 +4,7 @@ import { syncProductsStock } from "../../utils/orders/orderStock";
 import {
   getDefaultWarehouse,
   resolveWarehouseKey,
-  getWarehouses,
+  getWarehouseConfig,
 } from "../../utils/inventory/warehouseUtils";
 
 export const useToolExecution = ({
@@ -233,9 +233,7 @@ export const useToolExecution = ({
         let finalCustomerAddress = customer_address;
 
         if (!finalCustomerName) {
-          const warehouseConfig = getWarehouses().find(
-            (w) => w.key === targetWarehouse,
-          );
+          const warehouseConfig = getWarehouseConfig(targetWarehouse);
           finalCustomerName = warehouseConfig?.defaultCustomerName || null;
         }
 
