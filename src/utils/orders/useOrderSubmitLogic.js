@@ -3,7 +3,7 @@ import { useMemo } from "react";
 import { syncProductsStock } from "./orderStock";
 import {
   getDefaultWarehouse,
-  getWarehouses,
+  getWarehouseConfig,
   resolveWarehouseKey,
 } from "../inventory/warehouseUtils";
 
@@ -116,9 +116,7 @@ const useOrderSubmitLogic = ({
 
     // Logic tên khách mặc định cho đơn bán tại kho nếu bỏ trống
     if (payload.orderType === "warehouse" && !payload.customerName) {
-      const warehouseConfig = getWarehouses().find(
-        (w) => w.key === payload.warehouse,
-      );
+      const warehouseConfig = getWarehouseConfig(payload.warehouse);
       if (warehouseConfig && warehouseConfig.defaultCustomerName) {
         payload.customerName = warehouseConfig.defaultCustomerName;
       }
