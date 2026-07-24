@@ -71,38 +71,20 @@ class StorageService {
     const [
       products,
       orders,
-      settingsResult,
+      settings,
       customers,
-      chatMemoryResult,
+      chatSummary,
+      pendingBuffer,
       purchaseLists,
     ] = await Promise.all([
       this.getAll(STORES.PRODUCTS),
       this.getAll(STORES.ORDERS),
-      this.getAll(STORES.SETTINGS),
+      this.getSettings(),
       this.getAll(STORES.CUSTOMERS),
-      this.getAll(STORES.CHAT_MEMORY),
+      this.getChatSummary(),
+      this.getPendingBuffer(),
       this.getAll(STORES.PURCHASE_LISTS),
     ]);
-
-    // Chuẩn hóa cài đặt (do lưu dạng key-value object)
-    let settings = null;
-    if (settingsResult && settingsResult.length > 0) {
-      const found = settingsResult.find((s) => s.key === "main");
-      if (found) settings = found.value;
-    }
-
-    // Chuẩn hóa bộ nhớ chat
-    let chatSummary = "";
-    let pendingBuffer = [];
-    if (chatMemoryResult && chatMemoryResult.length > 0) {
-      const summaryFound = chatMemoryResult.find((s) => s.key === "summary");
-      if (summaryFound) chatSummary = summaryFound.value;
-
-      const bufferFound = chatMemoryResult.find(
-        (s) => s.key === "pending_buffer",
-      );
-      if (bufferFound) pendingBuffer = bufferFound.value;
-    }
 
     return {
       products: products || [],
