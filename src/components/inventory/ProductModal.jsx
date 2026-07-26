@@ -76,6 +76,7 @@ const ProductModal = ({
           productCode={formData.productCode}
           category={formData.category}
           name={formData.name}
+          usageInstructions={formData.usageInstructions}
           // Handlers
           onImageChange={onImageSelect} // ProductModal nhận file object, ProductIdentityForm truyền file object
           onProductCodeChange={(val) =>
@@ -85,6 +86,7 @@ const ProductModal = ({
             setFormData({ ...formData, category: val })
           }
           onNameChange={(val) => setFormData({ ...formData, name: val })}
+          onUsageInstructionsChange={(val) => setFormData({ ...formData, usageInstructions: val })}
           // Cấu hình
           categories={categories}
           disabled={Boolean(editingProduct)} // Vô hiệu hóa các trường định danh nếu đang sửa sản phẩm có sẵn

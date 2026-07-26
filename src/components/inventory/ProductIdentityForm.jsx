@@ -8,12 +8,14 @@ const ProductIdentityForm = ({
   productCode,
   category,
   name,
+  usageInstructions,
 
   // Xử lý sự kiện
   onImageChange, // callback(file)
   onProductCodeChange,
   onCategoryChange,
   onNameChange,
+  onUsageInstructionsChange,
 
   // Cấu hình/Tiện ích
   categories = [],
@@ -163,6 +165,27 @@ const ProductIdentityForm = ({
           </div>
         )}
       </div>
+
+      {/* Hướng dẫn sử dụng (trong ProductModal chính) */}
+      {onUsageInstructionsChange !== undefined && (
+      <div>
+        <label className="text-xs font-bold text-rose-700 uppercase">
+          Hướng dẫn sử dụng (Tự động bởi AI)
+        </label>
+        <textarea
+          className="w-full border-b border-gray-200 py-2 focus:border-rose-400 outline-none font-medium disabled:text-gray-500 text-sm resize-none"
+          value={usageInstructions || ""}
+          onChange={(e) => onUsageInstructionsChange(e.target.value)}
+          placeholder={disabled ? "---" : "Hướng dẫn sử dụng..."}
+          disabled={disabled}
+          style={{ minHeight: "40px" }}
+          onInput={(e) => {
+            e.target.style.height = "auto";
+            e.target.style.height = `${e.target.scrollHeight}px`;
+          }}
+        />
+      </div>
+      )}
     </div>
   );
 };

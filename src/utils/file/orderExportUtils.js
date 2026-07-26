@@ -175,6 +175,7 @@ export const buildOrdersExportData = (ordersInput, products = []) => {
           barcode: normalizeText(product?.barcode) || "-",
           name: displayName,
           image: product?.image || null,
+          usageInstructions: product?.usageInstructions || null,
           price: unitPrice,
           quantity: 0,
         });

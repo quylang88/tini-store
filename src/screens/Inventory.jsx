@@ -7,6 +7,7 @@ import ProductList from "../components/inventory/ProductList";
 import ProductDetailModal from "../components/inventory/ProductDetailModal";
 import ProductModal from "../components/inventory/ProductModal";
 import ProductBasicInfoModal from "../components/inventory/ProductBasicInfoModal";
+import { generateUsageInstructions } from "../services/aiAssistantService";
 import ConfirmModalHost from "../components/modals/ConfirmModalHost";
 import ErrorModal from "../components/modals/ErrorModal";
 import useInventoryLogic from "../hooks/inventory/useInventoryLogic";
@@ -238,7 +239,18 @@ const Inventory = ({
             onOpenDetail={setDetailProduct}
             activeCategory={activeCategory}
             activeWarehouse={warehouseFilter}
-            onEditBasicInfo={setEditingBasicInfoProduct}
+            onEditBasicInfo={(product) => {
+
+              setEditingBasicInfoProduct(product);
+              if (!product.usageInstructions && product.name) {
+                generateUsageInstructions(product.name, product.category).then(instructions => {
+                  if (instructions) {
+                    setEditingBasicInfoProduct(prev => ({ ...prev, usageInstructions: instructions }));
+                  }
+                });
+              }
+
+            }}
             isSelectionMode={isSelectionMode}
             selectedProductIds={selectedProductIds}
             onToggleProduct={toggleProductSelection}

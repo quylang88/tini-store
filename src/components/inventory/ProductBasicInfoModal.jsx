@@ -14,6 +14,7 @@ const getInitialFormData = (product, categories) => ({
   price: product?.price || "",
   image: product?.image || null,
   note: product?.note || "",
+  usageInstructions: product?.usageInstructions || "",
 });
 
 const ProductBasicInfoModal = ({
@@ -84,7 +85,8 @@ const ProductBasicInfoModal = ({
       initial.productCode !== current.productCode ||
       String(initial.price) !== String(current.price) ||
       initial.image !== current.image ||
-      initial.note !== current.note
+      initial.note !== current.note ||
+      initial.usageInstructions !== current.usageInstructions
     );
   };
 
@@ -193,6 +195,25 @@ const ProductBasicInfoModal = ({
             onChange={handleMoneyChange}
             placeholder="0"
             {...highlightOps.getHighlightProps("price", formData.price)}
+          />
+        </div>
+
+
+        {/* Hướng dẫn sử dụng */}
+        <div>
+          <label className="text-xs font-bold text-rose-700 uppercase">
+            Hướng dẫn sử dụng (Tự động bởi AI)
+          </label>
+          <textarea
+            className="w-full border border-gray-200 rounded-lg p-3 outline-none focus:border-rose-400 text-gray-900 text-sm mt-1 resize-none overflow-y-auto"
+            style={{ maxHeight: "160px", minHeight: "80px" }}
+            value={formData.usageInstructions || ""}
+            onChange={(e) => {
+              setFormData((prev) => ({ ...prev, usageInstructions: e.target.value }));
+              e.target.style.height = "auto";
+              e.target.style.height = `${e.target.scrollHeight}px`;
+            }}
+            placeholder="Hướng dẫn sử dụng..."
           />
         </div>
 
