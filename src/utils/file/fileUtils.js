@@ -7,6 +7,8 @@ import {
   buildOrdersExportBaseName,
   buildOrdersExportData,
 } from "./orderExportUtils";
+import { buildUsageInstructionsExportData } from "./usageInstructionsExport";
+import { generateUsageInstructionsPdf } from "./usageInstructionsPdf";
 
 /**
  * Sanitizes a file name by removing or replacing restricted path characters.
@@ -197,4 +199,21 @@ export const exportOrdersToImages = async (orders, products = []) => {
   }));
 
   await shareOrDownloadFiles(files);
+};
+
+
+export const exportUsageInstructionsToPdf = async (
+  order,
+  products = [],
+) => {
+  const exportData = buildUsageInstructionsExportData(order, products);
+  if (!exportData) return false;
+
+  const pdfBlob = await generateUsageInstructionsPdf(exportData);
+  await shareOrDownloadFile(
+    pdfBlob,
+    sanitizeFileName(exportData.fileName),
+    "application/pdf",
+  );
+  return true;
 };

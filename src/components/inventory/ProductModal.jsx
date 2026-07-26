@@ -8,7 +8,9 @@ import ProductShippingSection from "./ProductShippingSection";
 import ProductStockSection from "./ProductStockSection";
 import ProductPricingSection from "./ProductPricingSection";
 import ProductHistorySection from "./ProductHistorySection";
+import ProductUsageInstructionsField from "./ProductUsageInstructionsField";
 import { useProductFormMath } from "../../hooks/inventory/useProductFormMath";
+import LoadingOverlay from "../common/LoadingOverlay";
 
 const ProductModal = ({
   isOpen,
@@ -28,6 +30,7 @@ const ProductModal = ({
   onShippingMethodChange,
   categories,
   highlightOps,
+  isGeneratingUsageInstructions = false,
 }) => {
   // Sử dụng logic tính toán đã tách
   const { shippingFeeJpy, shippingFeeVnd, finalProfit, hasProfitData } =
@@ -51,10 +54,20 @@ const ProductModal = ({
   // Footer chứa 2 nút hành động (Hủy / Lưu) theo yêu cầu modal dạng Action
   const footer = (
     <div className="grid grid-cols-2 gap-3">
-      <Button variant="secondary" onClick={onClose}>
+      <Button
+        variant="secondary"
+        onClick={onClose}
+        disabled={isGeneratingUsageInstructions}
+        className="disabled:cursor-not-allowed disabled:opacity-50"
+      >
         Huỷ
       </Button>
-      <Button variant="primary" onClick={onSave}>
+      <Button
+        variant="primary"
+        onClick={onSave}
+        disabled={isGeneratingUsageInstructions}
+        className="disabled:cursor-not-allowed disabled:opacity-50"
+      >
         Lưu
       </Button>
     </div>
@@ -94,6 +107,20 @@ const ProductModal = ({
           inputColorClass="text-gray-900"
           highlightOps={highlightOps}
         />
+
+        {!editingProduct && (
+          <ProductUsageInstructionsField
+            value={formData.usageInstructions}
+            onChange={(usageInstructions) =>
+              setFormData((previous) => ({
+                ...previous,
+                usageInstructions,
+              }))
+            }
+            readOnly={isGeneratingUsageInstructions}
+            isGenerating={isGeneratingUsageInstructions}
+          />
+        )}
 
         {/* Khu vực giá nhập */}
         <ProductCostSection
@@ -138,6 +165,9 @@ const ProductModal = ({
           isEditingLot={isEditingLot}
         />
       </div>
+      {isGeneratingUsageInstructions && (
+        <LoadingOverlay text="AI đang tra cứu hướng dẫn sử dụng..." />
+      )}
     </SheetModal>
   );
 };

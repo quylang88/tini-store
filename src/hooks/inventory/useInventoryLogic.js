@@ -1,4 +1,5 @@
 import { useRef, useState, useCallback } from "react";
+import { resolveProductUsageInstructions } from "../../services/productUsageInstructionsService";
 import {
   createFormDataForLot,
   createFormDataForNewProduct,
@@ -12,12 +13,20 @@ import {
   getInventoryValidationError,
 } from "../../utils/inventory/inventorySaveUtils";
 import useHighlightFields from "../ui/useHighlightFields";
+import {
+  hasUsageInstructions,
+  normalizeUsageInstructions,
+} from "../../utils/inventory/usageInstructions";
 
 const useInventoryLogic = ({ products, setProducts, settings }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
   const [editingLotId, setEditingLotId] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [
+    isGeneratingUsageInstructions,
+    setIsGeneratingUsageInstructions,
+  ] = useState(false);
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
 
   // Modal xác nhận xoá sản phẩm để giao diện đồng bộ
@@ -50,7 +59,7 @@ const useInventoryLogic = ({ products, setProducts, settings }) => {
 
   const highlightOps = useHighlightFields();
 
-  const handleSave = () => {
+  const handleSave = async () => {
     const validationError = getInventoryValidationError({
       formData,
       products,
@@ -65,22 +74,47 @@ const useInventoryLogic = ({ products, setProducts, settings }) => {
       return false;
     }
 
-    const nextProduct = buildNextProductFromForm({
-      formData,
-      editingProduct,
-      editingLotId,
-      settings,
-    });
+    const shouldGenerate =
+      !editingProduct &&
+      !hasUsageInstructions(formData.usageInstructions);
 
-    if (editingProduct) {
-      setProducts(
-        products.map((p) => (p.id === editingProduct.id ? nextProduct : p)),
-      );
-    } else {
-      setProducts([...products, nextProduct]);
+    try {
+      if (shouldGenerate) {
+        setIsGeneratingUsageInstructions(true);
+      }
+
+      const usageInstructions = editingProduct
+        ? normalizeUsageInstructions(formData.usageInstructions)
+        : await resolveProductUsageInstructions({
+            name: formData.name,
+            category: formData.category,
+            usageInstructions: formData.usageInstructions,
+          });
+      const nextProduct = buildNextProductFromForm({
+        formData: {
+          ...formData,
+          usageInstructions,
+        },
+        editingProduct,
+        editingLotId,
+        settings,
+      });
+
+      setProducts((currentProducts) => {
+        if (editingProduct) {
+          return currentProducts.map((product) =>
+            product.id === editingProduct.id ? nextProduct : product,
+          );
+        }
+        return [...currentProducts, nextProduct];
+      });
+      closeModal();
+      return true;
+    } finally {
+      if (shouldGenerate) {
+        setIsGeneratingUsageInstructions(false);
+      }
     }
-    closeModal();
-    return true;
   };
 
   const buildComparableFormData = (data) => {
@@ -119,6 +153,7 @@ const useInventoryLogic = ({ products, setProducts, settings }) => {
         const nextFormData = createFormDataForProduct({ product, settings });
         setFormData(nextFormData);
         initialFormDataRef.current = nextFormData;
+        setIsModalOpen(true);
       } else {
         setEditingProduct(null);
         setEditingLotId(null);
@@ -128,8 +163,8 @@ const useInventoryLogic = ({ products, setProducts, settings }) => {
         });
         setFormData(nextFormData);
         initialFormDataRef.current = nextFormData;
+        setIsModalOpen(true);
       }
-      setIsModalOpen(true);
     },
     [settings, activeCategory, setFormData],
   );
@@ -215,6 +250,7 @@ const useInventoryLogic = ({ products, setProducts, settings }) => {
     isModalOpen,
     editingProduct,
     editingLotId,
+    isGeneratingUsageInstructions,
     searchTerm,
     setSearchTerm,
     debouncedSearchTerm,

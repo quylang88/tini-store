@@ -1,4 +1,5 @@
 import { getProductStats } from "./purchaseUtils.js";
+import { normalizeUsageInstructions } from "./usageInstructions.js";
 import { getDefaultWarehouse } from "./warehouseUtils.js";
 
 const buildBaseFormData = (settings) => ({
@@ -21,6 +22,7 @@ const buildBaseFormData = (settings) => ({
   shippingFeeVndInput: "",
   image: "",
   expiryDate: "",
+  usageInstructions: null,
 });
 
 export const createFormDataForNewProduct = ({ settings, activeCategory }) => ({
@@ -65,6 +67,7 @@ export const createFormDataForProduct = ({ product, settings }) => {
       inferredShippingMethod === "vn" ? latestLot?.shipping?.feeVnd || "" : "",
     image: product.image || "",
     expiryDate: product.expiryDate || "",
+    usageInstructions: normalizeUsageInstructions(product.usageInstructions),
   };
 };
 
@@ -105,5 +108,6 @@ export const createFormDataForLot = ({ product, lot, settings }) => {
       inferredShippingMethod === "vn" ? lot.shipping?.feeVnd || "" : "", // Điền input phí gửi
     image: product.image || "",
     expiryDate: lot.expiryDate || "",
+    usageInstructions: normalizeUsageInstructions(product.usageInstructions),
   };
 };

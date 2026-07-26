@@ -10,13 +10,21 @@ import {
 import { getOrderDisplayName } from "../../utils/orders/orderUtils";
 import useModalCache from "../../hooks/ui/useModalCache";
 import Button from "../../components/button/Button";
-import { exportOrderToHTML, exportOrdersToImages } from "../../utils/file/fileUtils";
+import {
+  exportOrderToHTML,
+  exportOrdersToImages,
+  exportUsageInstructionsToPdf,
+} from "../../utils/file/fileUtils";
 import LoadingOverlay from "../../components/common/LoadingOverlay";
-import { FileDown, Image as ImageIcon, Printer } from "lucide-react";
+import { FileDown, Image as ImageIcon, Printer, FileText } from "lucide-react";
+import { getOrderUsageInstructionItems } from "../../utils/file/usageInstructionsExport";
+import ErrorModal from "../modals/ErrorModal";
 
 // OrderDetailModal: Xem chi tiết đơn hàng (Chỉ xem) -> showCloseIcon={false}
 const OrderDetailModal = ({ order, products, onClose, getOrderStatusInfo }) => {
-  const [isExporting, setIsExporting] = useState(false);
+  const [exportingFormat, setExportingFormat] = useState(null);
+  const [exportError, setExportError] = useState(null);
+  const isExporting = Boolean(exportingFormat);
 
   // Tối ưu hóa: Tạo cache từ điển cho lookup sản phẩm để đạt độ phức tạp O(1)
   const productMap = React.useMemo(() => {
@@ -31,6 +39,13 @@ const OrderDetailModal = ({ order, products, onClose, getOrderStatusInfo }) => {
 
   // Giữ lại dữ liệu cũ để animation đóng vẫn hiển thị nội dung
   const cachedOrder = useModalCache(order, Boolean(order));
+  const usageInstructionItemCount = React.useMemo(
+    () =>
+      cachedOrder
+        ? getOrderUsageInstructionItems(cachedOrder, products).length
+        : 0,
+    [cachedOrder, products],
+  );
 
   // Tối ưu hóa: Tránh sử dụng reduce tạo hàm phụ cho tính toán
   const estimatedProfit = React.useMemo(() => {
@@ -56,20 +71,27 @@ const OrderDetailModal = ({ order, products, onClose, getOrderStatusInfo }) => {
   );
 
   const handleExport = async (format) => {
-    setIsExporting(true);
+    setExportingFormat(format);
     // Cho phép UI render frame tiếp theo trước khi thực hiện logic nặng
-    await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+    await new Promise((resolve) =>
+      requestAnimationFrame(() => requestAnimationFrame(resolve)),
+    );
     try {
       if (format === "image") {
         await exportOrdersToImages([cachedOrder], products);
+      } else if (format === "hdsd") {
+        await exportUsageInstructionsToPdf(cachedOrder, products);
       } else {
         await exportOrderToHTML(cachedOrder, products, format);
       }
     } catch (error) {
       console.error("Export error:", error);
-      alert("Có lỗi khi xuất file");
+      setExportError({
+        title: "Không thể xuất file",
+        message: "Đã xảy ra lỗi khi tạo file. Vui lòng thử lại.",
+      });
     } finally {
-      setIsExporting(false);
+      setExportingFormat(null);
     }
   };
 
@@ -107,6 +129,20 @@ const OrderDetailModal = ({ order, products, onClose, getOrderStatusInfo }) => {
           </div>
         </Button>
       </div>
+      {usageInstructionItemCount > 0 && (
+        <Button
+          variant="softDanger"
+          size="sm"
+          onClick={() => handleExport("hdsd")}
+          disabled={isExporting}
+          className="border-rose-300 text-rose-800 hover:bg-rose-100 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          <span className="flex items-center justify-center gap-2">
+            <FileText size={18} />
+            Xuất phiếu HDSD ({usageInstructionItemCount} SP)
+          </span>
+        </Button>
+      )}
       <Button variant="danger" size="sm" onClick={onClose} className="w-full">
         Đóng
       </Button>
@@ -114,15 +150,16 @@ const OrderDetailModal = ({ order, products, onClose, getOrderStatusInfo }) => {
   );
 
   return (
-    <SheetModal
-      open={Boolean(order)} // Điều khiển đóng mở bằng prop order
-      onClose={onClose}
-      title={`Chi tiết đơn hàng ${orderLabel}`}
-      footer={footer}
-      showCloseIcon={false} // Chỉ xem
-    >
-      <div className="space-y-4 relative">
-        <PaidStamp isPaid={isPaid} variant="detail" />
+    <>
+      <SheetModal
+        open={Boolean(order)} // Điều khiển đóng mở bằng prop order
+        onClose={onClose}
+        title={`Chi tiết đơn hàng ${orderLabel}`}
+        footer={footer}
+        showCloseIcon={false} // Chỉ xem
+      >
+        <div className="space-y-4 relative">
+          <PaidStamp isPaid={isPaid} variant="detail" />
 
         {/* Thông tin Header */}
         <div className="border-b border-rose-100 pb-4">
@@ -152,7 +189,15 @@ const OrderDetailModal = ({ order, products, onClose, getOrderStatusInfo }) => {
         </div>
 
         {/* Loading Overlay */}
-        {isExporting && <LoadingOverlay text="Đang tạo hoá đơn..." />}
+        {isExporting && (
+          <LoadingOverlay
+            text={
+              exportingFormat === "hdsd"
+                ? "Đang tạo phiếu hướng dẫn sử dụng..."
+                : "Đang tạo hoá đơn..."
+            }
+          />
+        )}
 
         {/* Danh sách sản phẩm */}
         <div className="space-y-3">
@@ -230,8 +275,15 @@ const OrderDetailModal = ({ order, products, onClose, getOrderStatusInfo }) => {
             <span className="font-bold">{formatNumber(estimatedProfit)}đ</span>
           </div>
         </div>
-      </div>
-    </SheetModal>
+        </div>
+      </SheetModal>
+      <ErrorModal
+        open={Boolean(exportError)}
+        title={exportError?.title}
+        message={exportError?.message}
+        onClose={() => setExportError(null)}
+      />
+    </>
   );
 };
 
