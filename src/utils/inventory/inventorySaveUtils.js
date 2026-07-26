@@ -188,6 +188,7 @@ export const buildNextProductFromForm = ({
     price: Number(formData.price),
     cost: costValue || getProductStats(baseProduct).cost,
     image: formData.image,
+    usageInstructions: formData.usageInstructions || "",
     stockByWarehouse: nextStockByWarehouse,
     stock: totalNextStock,
   };

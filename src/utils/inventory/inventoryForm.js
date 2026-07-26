@@ -21,6 +21,7 @@ const buildBaseFormData = (settings) => ({
   shippingFeeVndInput: "",
   image: "",
   expiryDate: "",
+  usageInstructions: "",
 });
 
 export const createFormDataForNewProduct = ({ settings, activeCategory }) => ({
@@ -65,6 +66,7 @@ export const createFormDataForProduct = ({ product, settings }) => {
       inferredShippingMethod === "vn" ? latestLot?.shipping?.feeVnd || "" : "",
     image: product.image || "",
     expiryDate: product.expiryDate || "",
+    usageInstructions: product.usageInstructions || "",
   };
 };
 

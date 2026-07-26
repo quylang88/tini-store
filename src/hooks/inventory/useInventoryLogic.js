@@ -1,4 +1,5 @@
 import { useRef, useState, useCallback } from "react";
+import { generateUsageInstructions } from "../../services/aiAssistantService";
 import {
   createFormDataForLot,
   createFormDataForNewProduct,
@@ -111,6 +112,7 @@ const useInventoryLogic = ({ products, setProducts, settings }) => {
 
   // Tối ưu hóa: Sử dụng useCallback để giữ hàm ổn định, tránh render lại không cần thiết
   // cho các component con (như ProductDetailModal hoặc FAB) khi state cha thay đổi.
+
   const openModal = useCallback(
     (product = null) => {
       if (product) {
@@ -119,6 +121,16 @@ const useInventoryLogic = ({ products, setProducts, settings }) => {
         const nextFormData = createFormDataForProduct({ product, settings });
         setFormData(nextFormData);
         initialFormDataRef.current = nextFormData;
+        setIsModalOpen(true);
+
+        // Tự động fetch hướng dẫn sử dụng nếu thiếu
+        if (!nextFormData.usageInstructions && nextFormData.name) {
+          generateUsageInstructions(nextFormData.name, nextFormData.category).then(instructions => {
+            if (instructions) {
+              setFormData(prev => ({ ...prev, usageInstructions: instructions }));
+            }
+          });
+        }
       } else {
         setEditingProduct(null);
         setEditingLotId(null);
@@ -128,11 +140,12 @@ const useInventoryLogic = ({ products, setProducts, settings }) => {
         });
         setFormData(nextFormData);
         initialFormDataRef.current = nextFormData;
+        setIsModalOpen(true);
       }
-      setIsModalOpen(true);
     },
     [settings, activeCategory, setFormData],
   );
+
 
   // Tối ưu hóa: Giữ reference ổn định để tránh re-render ProductDetailModal khi inventory re-render.
   const openEditLot = useCallback(

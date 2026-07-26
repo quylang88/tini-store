@@ -1,6 +1,7 @@
 import {
   generateReceiptHTMLContent,
   generateA4InvoiceHTMLContent,
+  generateUsageInstructionsHTMLContent,
 } from "./invoiceTemplates";
 import { generateOrderImages } from "./imageExportUtils";
 import {
@@ -197,4 +198,19 @@ export const exportOrdersToImages = async (orders, products = []) => {
   }));
 
   await shareOrDownloadFiles(files);
+};
+
+
+export const exportUsageInstructionsToHTML = async (
+  order,
+  products = [],
+) => {
+  const exportData = buildOrdersExportData([order], products);
+  if (!exportData) return;
+
+  const htmlContent = await generateUsageInstructionsHTMLContent(exportData[0]);
+  if (!htmlContent) return; // Không có sản phẩm nào có HDSD
+
+  const fileName = sanitizeFileName(`HDSD_${order.orderNumber || order.id.slice(-4)}.html`);
+  await shareOrDownloadFile(htmlContent, fileName, "text/html");
 };
