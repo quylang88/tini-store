@@ -53,6 +53,16 @@ const ProductDetailModal = ({ product, onClose, onEditLot }) => {
       }}
     >
       <div className="space-y-4">
+        {cachedProduct.usageInstructions && (
+          <div className="border-b border-rose-100 pb-4">
+            <h3 className="text-xs font-bold text-rose-700 uppercase mb-2">
+              Hướng dẫn sử dụng
+            </h3>
+            <p className="text-sm text-gray-700 whitespace-pre-wrap">
+              {cachedProduct.usageInstructions}
+            </p>
+          </div>
+        )}
         <div className="flex flex-col border-b border-rose-100 pb-4">
           <div className="text-sm font-semibold text-amber-600">
             Giá bán: {formatNumber(cachedProduct.price)}đ

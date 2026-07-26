@@ -4,6 +4,7 @@ import {
   getDefaultWarehouse,
   resolveWarehouseKey,
 } from "./warehouseUtils.js";
+import { normalizeProductUsageInstructions } from "./usageInstructions.js";
 
 const generateLotId = () =>
   `${Date.now()}-${Math.random().toString(16).slice(2, 8)}`;
@@ -134,9 +135,14 @@ export const normalizePurchaseLots = (product = {}) => {
     }
 
     // If nothing changed (no normalize changes AND already sorted), return original product
-    if (normalizedLots === lots) return product;
+    if (normalizedLots === lots) {
+      return normalizeProductUsageInstructions(product);
+    }
 
-    return { ...product, purchaseLots: normalizedLots };
+    return normalizeProductUsageInstructions({
+      ...product,
+      purchaseLots: normalizedLots,
+    });
   }
 
   const warehouseStock = normalizeWarehouseStock(product);
@@ -162,10 +168,10 @@ export const normalizePurchaseLots = (product = {}) => {
 
   // Lots generated here have same createdAt, so they are sorted by default.
 
-  return {
+  return normalizeProductUsageInstructions({
     ...product,
     purchaseLots: lots,
-  };
+  });
 };
 
 export const getLatestLot = (product = {}) => {

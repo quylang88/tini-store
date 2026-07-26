@@ -10,6 +10,7 @@ import {
   getProductStats,
   normalizePurchaseLots,
 } from "./purchaseUtils.js";
+import { normalizeUsageInstructions } from "./usageInstructions.js";
 
 // Gom validation vào 1 chỗ để dễ test và dễ review.
 export const getInventoryValidationError = ({
@@ -188,6 +189,7 @@ export const buildNextProductFromForm = ({
     price: Number(formData.price),
     cost: costValue || getProductStats(baseProduct).cost,
     image: formData.image,
+    usageInstructions: normalizeUsageInstructions(formData.usageInstructions),
     stockByWarehouse: nextStockByWarehouse,
     stock: totalNextStock,
   };

@@ -1,5 +1,7 @@
+import { normalizeProductUsageInstructions } from "../utils/inventory/usageInstructions.js";
+
 const DB_NAME = "tiny_shop_db";
-const DB_VERSION = 4; // Tăng version để trigger upgrade (added purchase lists support)
+const DB_VERSION = 5;
 
 const STORES = {
   PRODUCTS: "products",
@@ -9,6 +11,13 @@ const STORES = {
   CHAT_MEMORY: "chat_memory",
   PURCHASE_LISTS: "purchase_lists",
 };
+
+export const normalizeMigratedProducts = (products) =>
+  Array.isArray(products)
+    ? products.map((product) =>
+        normalizeProductUsageInstructions(product),
+      )
+    : products;
 
 class StorageService {
   constructor() {
@@ -45,6 +54,20 @@ class StorageService {
         }
         if (!db.objectStoreNames.contains(STORES.PURCHASE_LISTS)) {
           db.createObjectStore(STORES.PURCHASE_LISTS, { keyPath: "id" });
+        }
+
+        if (event.oldVersion < 5) {
+          const productsStore = event.target.transaction.objectStore(
+            STORES.PRODUCTS,
+          );
+          const cursorRequest = productsStore.openCursor();
+          cursorRequest.onsuccess = (cursorEvent) => {
+            const cursor = cursorEvent.target.result;
+            if (!cursor) return;
+
+            cursor.update(normalizeProductUsageInstructions(cursor.value));
+            cursor.continue();
+          };
         }
       };
 
@@ -175,7 +198,10 @@ class StorageService {
       localStorage.setItem(migrationKey, "true");
       try {
         if (Array.isArray(parsedProducts)) {
-          await this.saveAllChunked(STORES.PRODUCTS, parsedProducts);
+          await this.saveAllChunked(
+            STORES.PRODUCTS,
+            normalizeMigratedProducts(parsedProducts),
+          );
           localStorage.removeItem(migrationKey);
         }
       } catch (e) {

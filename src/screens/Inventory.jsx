@@ -18,6 +18,7 @@ import { generateProductListImage } from "../utils/file/imageExportUtils";
 import { shareOrDownloadFile } from "../utils/file/fileUtils";
 import LoadingOverlay from "../components/common/LoadingOverlay";
 import SelectionActionBar from "../components/common/SelectionActionBar";
+import { applyGeneratedUsageInstructions } from "../utils/inventory/usageInstructions";
 
 const Inventory = ({
   products,
@@ -48,6 +49,7 @@ const Inventory = ({
     isModalOpen,
     editingProduct,
     editingLotId,
+    isGeneratingUsageInstructions,
     searchTerm,
     setSearchTerm,
     confirmModal,
@@ -184,6 +186,17 @@ const Inventory = ({
     [setSearchTerm],
   );
 
+  const handleUsageInstructionsGenerated = useCallback(
+    (generatedUpdate) => {
+      setProducts((currentProducts) =>
+        currentProducts.map((product) =>
+          applyGeneratedUsageInstructions(product, generatedUpdate),
+        ),
+      );
+    },
+    [setProducts],
+  );
+
   return (
     <div className="relative h-full bg-transparent flex flex-col">
       <AppHeader className="z-20" isScrolled={isScrolled} />
@@ -280,6 +293,7 @@ const Inventory = ({
         categories={settings.categories}
         onClose={() => setEditingBasicInfoProduct(null)}
         onError={setErrorModal}
+        onUsageInstructionsGenerated={handleUsageInstructionsGenerated}
         onSave={(updatedProduct) => {
           let duplicateCode;
           for (const product of products) {
@@ -319,8 +333,8 @@ const Inventory = ({
         onSelectExistingProduct={handleSelectExistingProduct}
         categories={settings.categories}
         onClose={handleCancelModal}
-        onSave={() => {
-          if (handleSave()) {
+        onSave={async () => {
+          if (await handleSave()) {
             setDetailProduct(null);
           }
         }}
@@ -330,6 +344,7 @@ const Inventory = ({
         onCurrencyChange={handleCurrencyChange}
         onShippingMethodChange={handleShippingMethodChange}
         highlightOps={highlightOps}
+        isGeneratingUsageInstructions={isGeneratingUsageInstructions}
       />
 
       <ProductDetailModal
