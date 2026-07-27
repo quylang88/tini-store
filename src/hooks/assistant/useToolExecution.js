@@ -6,6 +6,26 @@ import {
   resolveWarehouseKey,
   getWarehouseConfig,
 } from "../../utils/inventory/warehouseUtils";
+import { generateProductCode } from "../../utils/inventory/productCode.js";
+
+export const buildAssistantProductIdentity = ({
+  id,
+  name,
+  products = [],
+}) => {
+  const category = "Chung";
+  return {
+    category,
+    productCode: generateProductCode({
+      id,
+      name,
+      category,
+      usedCodes: new Set(
+        products.map((product) => product.productCode).filter(Boolean),
+      ),
+    }),
+  };
+};
 
 export const useToolExecution = ({
   products,
@@ -146,6 +166,11 @@ export const useToolExecution = ({
           const baseProduct = {
             id: newId,
             name: product_name, // Dùng tên user cung cấp
+            ...buildAssistantProductIdentity({
+              id: newId,
+              name: product_name,
+              products,
+            }),
             price: validSelling || 0,
             cost: validCost || 0,
             stock: 0,

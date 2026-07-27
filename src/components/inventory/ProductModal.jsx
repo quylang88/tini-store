@@ -91,9 +91,6 @@ const ProductModal = ({
           name={formData.name}
           // Handlers
           onImageChange={onImageSelect} // ProductModal nhận file object, ProductIdentityForm truyền file object
-          onProductCodeChange={(val) =>
-            setFormData({ ...formData, productCode: val })
-          }
           onCategoryChange={(val) =>
             setFormData({ ...formData, category: val })
           }

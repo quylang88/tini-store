@@ -9,6 +9,7 @@ import {
 } from "./orderExportUtils";
 import { buildUsageInstructionsExportData } from "./usageInstructionsExport";
 import { generateUsageInstructionsPdf } from "./usageInstructionsPdf";
+import { buildBackupData } from "./backupUtils.js";
 
 /**
  * Sanitizes a file name by removing or replacing restricted path characters.
@@ -97,14 +98,14 @@ export const exportDataToJSON = async (
 ) => {
   // Không còn đọc từ localStorage nữa, nhận trực tiếp từ props
 
-  const data = JSON.stringify({
+  const data = JSON.stringify(buildBackupData({
     products,
     orders,
     settings,
     aiChatSummary,
     customers,
     purchaseLists,
-  });
+  }));
 
   const fileName = sanitizeFileName(`tiny_shop_${new Date().toISOString().slice(0, 10)}.json`);
 

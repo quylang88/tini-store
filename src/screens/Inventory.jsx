@@ -295,25 +295,6 @@ const Inventory = ({
         onError={setErrorModal}
         onUsageInstructionsGenerated={handleUsageInstructionsGenerated}
         onSave={(updatedProduct) => {
-          let duplicateCode;
-          for (const product of products) {
-            if (
-              product.productCode === updatedProduct.productCode &&
-              product.id !== updatedProduct.id
-            ) {
-              duplicateCode = product;
-              break;
-            }
-          }
-
-          if (duplicateCode) {
-            setErrorModal({
-              title: "Mã sản phẩm trùng",
-              message: `Mã sản phẩm "${updatedProduct.productCode}" đã được sử dụng bởi "${duplicateCode.name}".`,
-            });
-            return;
-          }
-
           const nextProducts = products.map((product) =>
             product.id === updatedProduct.id ? updatedProduct : product,
           );

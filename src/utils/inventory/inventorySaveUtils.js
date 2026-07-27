@@ -11,6 +11,7 @@ import {
   normalizePurchaseLots,
 } from "./purchaseUtils.js";
 import { normalizeUsageInstructions } from "./usageInstructions.js";
+import { generateProductCode } from "./productCode.js";
 
 // Gom validation vào 1 chỗ để dễ test và dễ review.
 export const getInventoryValidationError = ({
@@ -130,6 +131,7 @@ export const buildNextProductFromForm = ({
   editingProduct,
   editingLotId,
   settings,
+  usedProductCodes = new Set(),
 }) => {
   const costValue = Number(formData.cost) || 0;
   const costJpyValue =
@@ -184,6 +186,14 @@ export const buildNextProductFromForm = ({
   let nextProduct = {
     ...baseProduct,
     name: formData.name.trim(),
+    productCode:
+      editingProduct?.productCode ||
+      generateProductCode({
+        id: baseProduct.id,
+        name: formData.name,
+        category: formData.category,
+        usedCodes: usedProductCodes,
+      }),
     barcode: formData.barcode ? formData.barcode.trim() : "",
     category: formData.category,
     price: Number(formData.price),

@@ -98,6 +98,11 @@ const useInventoryLogic = ({ products, setProducts, settings }) => {
         editingProduct,
         editingLotId,
         settings,
+        usedProductCodes: new Set(
+          products
+            .map((product) => product.productCode)
+            .filter(Boolean),
+        ),
       });
 
       setProducts((currentProducts) => {

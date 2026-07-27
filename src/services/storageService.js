@@ -1,7 +1,8 @@
 import { normalizeProductUsageInstructions } from "../utils/inventory/usageInstructions.js";
+import { migrateProductCodes } from "../utils/inventory/productCode.js";
 
 const DB_NAME = "tiny_shop_db";
-const DB_VERSION = 5;
+const DB_VERSION = 6;
 
 const STORES = {
   PRODUCTS: "products",
@@ -12,12 +13,19 @@ const STORES = {
   PURCHASE_LISTS: "purchase_lists",
 };
 
-export const normalizeMigratedProducts = (products) =>
-  Array.isArray(products)
-    ? products.map((product) =>
-        normalizeProductUsageInstructions(product),
-      )
-    : products;
+export const normalizeMigratedProducts = (
+  products,
+  { replaceAllProductCodes = true } = {},
+) => {
+  if (!Array.isArray(products)) return products;
+
+  const normalizedProducts = products.map((product) =>
+    normalizeProductUsageInstructions(product),
+  );
+  return migrateProductCodes(normalizedProducts, {
+    replaceAll: replaceAllProductCodes,
+  });
+};
 
 class StorageService {
   constructor() {
@@ -56,17 +64,23 @@ class StorageService {
           db.createObjectStore(STORES.PURCHASE_LISTS, { keyPath: "id" });
         }
 
-        if (event.oldVersion < 5) {
-          const productsStore = event.target.transaction.objectStore(
-            STORES.PRODUCTS,
-          );
-          const cursorRequest = productsStore.openCursor();
-          cursorRequest.onsuccess = (cursorEvent) => {
-            const cursor = cursorEvent.target.result;
-            if (!cursor) return;
+        if (event.oldVersion < 6) {
+          const upgradeTransaction = event.target.transaction;
+          const productsStore = upgradeTransaction.objectStore(STORES.PRODUCTS);
+          const productsRequest = productsStore.getAll();
 
-            cursor.update(normalizeProductUsageInstructions(cursor.value));
-            cursor.continue();
+          productsRequest.onsuccess = () => {
+            try {
+              const normalizedProducts = normalizeMigratedProducts(
+                productsRequest.result,
+              );
+              normalizedProducts.forEach((product) =>
+                productsStore.put(product),
+              );
+            } catch (error) {
+              console.error("Product migration failed:", error);
+              upgradeTransaction.abort();
+            }
           };
         }
       };

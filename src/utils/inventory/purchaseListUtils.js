@@ -6,6 +6,7 @@ import {
   normalizeWarehouseStock,
   resolveWarehouseKey,
 } from "./warehouseUtils.js"
+import { generateProductCode } from "./productCode.js"
 
 const generateId = (prefix) =>
   `${prefix}_${Date.now()}_${Math.random().toString(16).slice(2, 8)}`
@@ -70,13 +71,20 @@ const buildProductFromNewItem = ({
   price,
   cost,
   category,
+  usedProductCodes,
 }) => {
   const createdAt = nowIso()
+  const id = generateId("product")
   const baseProduct = {
-    id: generateId("product"),
+    id,
     name: item.name,
     barcode: "",
-    productCode: "",
+    productCode: generateProductCode({
+      id,
+      name: item.name,
+      category,
+      usedCodes: usedProductCodes,
+    }),
     category: category || "Chung",
     price: Number(price) || 0,
     cost: Number(cost) || 0,
@@ -363,6 +371,9 @@ export const completePurchaseListItem = ({
       price,
       cost,
       category,
+      usedProductCodes: new Set(
+        products.map((product) => product.productCode).filter(Boolean),
+      ),
     })
 
     nextProducts = [...products, createdProduct]

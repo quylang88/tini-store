@@ -173,7 +173,6 @@ const ProductBasicInfoModal = ({
     return (
       initial.name !== current.name ||
       initial.category !== current.category ||
-      initial.productCode !== current.productCode ||
       String(initial.price) !== String(current.price) ||
       initial.image !== current.image ||
       initial.note !== current.note ||
@@ -202,15 +201,12 @@ const ProductBasicInfoModal = ({
       missing.push("name");
     if (!formData.price || String(formData.price).trim() === "")
       missing.push("price");
-    if (!formData.productCode || String(formData.productCode).trim() === "")
-      missing.push("productCode");
-
     if (missing.length > 0) {
       highlightOps.triggerHighlights(missing);
       if (onError) {
         onError({
           title: "Thiếu thông tin",
-          message: "Vui lòng nhập đầy đủ Tên sản phẩm, Mã sản phẩm và Giá bán.",
+          message: "Vui lòng nhập đầy đủ Tên sản phẩm và Giá bán.",
         });
       }
       return;
@@ -219,6 +215,7 @@ const ProductBasicInfoModal = ({
     onSave({
       ...product, // Giữ nguyên ID và các trường khác
       ...formData,
+      productCode: product.productCode,
       price: Number(formData.price),
       usageInstructions: normalizeUsageInstructions(
         formData.usageInstructions,
@@ -255,9 +252,6 @@ const ProductBasicInfoModal = ({
           name={formData.name}
           // Xử lý sự kiện
           onImageChange={handleImageFileChange}
-          onProductCodeChange={(val) =>
-            setFormData((prev) => ({ ...prev, productCode: val }))
-          }
           onCategoryChange={(val) =>
             setFormData((prev) => {
               if (prev.category !== val) {

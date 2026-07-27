@@ -11,7 +11,6 @@ const ProductIdentityForm = ({
 
   // Xử lý sự kiện
   onImageChange, // callback(file)
-  onProductCodeChange,
   onCategoryChange,
   onNameChange,
 
@@ -92,17 +91,11 @@ const ProductIdentityForm = ({
             Mã sản phẩm
           </label>
           <input
-            enterKeyHint="next"
-            className={`w-full border-b border-gray-200 py-2 focus:border-rose-400 outline-none font-mono text-sm ${inputColorClass} ${
-              isHighlighted("productCode") ? highlightClass : ""
-            }`}
+            className={`w-full border-b border-gray-200 bg-gray-50 py-2 outline-none font-mono text-sm text-gray-500 cursor-default`}
             value={productCode || ""}
-            onChange={(e) =>
-              onProductCodeChange && onProductCodeChange(e.target.value)
-            }
-            placeholder={disabled ? "---" : "Nhập mã..."}
-            disabled={disabled}
-            {...getHighlightProps("productCode", productCode)}
+            placeholder="Tự động khi lưu"
+            readOnly
+            aria-readonly="true"
           />
         </div>
         <div className="flex flex-col gap-1">

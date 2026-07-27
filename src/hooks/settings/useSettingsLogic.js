@@ -5,6 +5,7 @@ import {
 } from "../../utils/formatters/formatUtils";
 import { normalizePurchaseLots } from "../../utils/inventory/purchaseUtils";
 import { exportDataToJSON, parseBackupFile } from "../../utils/file/fileUtils";
+import { normalizeBackupProducts } from "../../utils/file/backupUtils";
 import { requestNotificationPermission } from "../../utils/common/notificationUtils";
 
 const useSettingsLogic = ({
@@ -192,7 +193,9 @@ const useSettingsLogic = ({
         tone: "danger",
         onConfirm: () => {
           setProducts(
-            data.products.map((product) => normalizePurchaseLots(product)),
+            normalizeBackupProducts(data).map((product) =>
+              normalizePurchaseLots(product),
+            ),
           );
           setOrders(data.orders);
           if (data.settings) {
