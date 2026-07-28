@@ -27,6 +27,7 @@ const useInventoryLogic = ({ products, setProducts, settings }) => {
     isGeneratingUsageInstructions,
     setIsGeneratingUsageInstructions,
   ] = useState(false);
+  const [usageInstructionsError, setUsageInstructionsError] = useState("");
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
 
   // Modal xác nhận xoá sản phẩm để giao diện đồng bộ
@@ -57,6 +58,17 @@ const useInventoryLogic = ({ products, setProducts, settings }) => {
     handleImageSelect,
   } = useInventoryFormState({ settings, activeCategory });
 
+  const handleUsageInstructionsChange = useCallback(
+    (usageInstructions) => {
+      setUsageInstructionsError("");
+      setFormData((previous) => ({
+        ...previous,
+        usageInstructions,
+      }));
+    },
+    [setFormData],
+  );
+
   const highlightOps = useHighlightFields();
 
   const handleSave = async () => {
@@ -81,15 +93,43 @@ const useInventoryLogic = ({ products, setProducts, settings }) => {
     try {
       if (shouldGenerate) {
         setIsGeneratingUsageInstructions(true);
+        setUsageInstructionsError("");
       }
 
-      const usageInstructions = editingProduct
-        ? normalizeUsageInstructions(formData.usageInstructions)
-        : await resolveProductUsageInstructions({
-            name: formData.name,
-            category: formData.category,
-            usageInstructions: formData.usageInstructions,
-          });
+      const res = editingProduct
+        ? {
+            instructions: normalizeUsageInstructions(
+              formData.usageInstructions,
+            ),
+            error: null,
+          }
+        : shouldGenerate
+          ? await resolveProductUsageInstructions({
+              name: formData.name,
+              category: formData.category,
+              image: formData.image,
+              usageInstructions: formData.usageInstructions,
+            })
+          : {
+              instructions: normalizeUsageInstructions(
+                formData.usageInstructions,
+              ),
+              error: null,
+            };
+
+      const usageInstructions =
+        typeof res === "string" ? res : res?.instructions;
+      const error = typeof res === "object" ? res?.error : null;
+
+      if (shouldGenerate && error && !usageInstructions) {
+        setUsageInstructionsError(error);
+        setErrorModal({
+          title: "Không thể tạo HDSD tự động",
+          message: error,
+        });
+        return false;
+      }
+
       const nextProduct = buildNextProductFromForm({
         formData: {
           ...formData,
@@ -115,6 +155,16 @@ const useInventoryLogic = ({ products, setProducts, settings }) => {
       });
       closeModal();
       return true;
+    } catch (error) {
+      console.error("Không thể tự tạo HDSD khi lưu sản phẩm:", error);
+      const message =
+        "Đã xảy ra lỗi ngoài dự kiến khi tạo HDSD. Vui lòng thử lại hoặc nhập thủ công.";
+      setUsageInstructionsError(message);
+      setErrorModal({
+        title: "Không thể tạo HDSD tự động",
+        message,
+      });
+      return false;
     } finally {
       if (shouldGenerate) {
         setIsGeneratingUsageInstructions(false);
@@ -152,6 +202,7 @@ const useInventoryLogic = ({ products, setProducts, settings }) => {
   // cho các component con (như ProductDetailModal hoặc FAB) khi state cha thay đổi.
   const openModal = useCallback(
     (product = null) => {
+      setUsageInstructionsError("");
       if (product) {
         setEditingProduct(product);
         setEditingLotId(null);
@@ -178,6 +229,7 @@ const useInventoryLogic = ({ products, setProducts, settings }) => {
   const openEditLot = useCallback(
     (product, lot) => {
       if (!product || !lot) return;
+      setUsageInstructionsError("");
       setEditingProduct(product);
       setEditingLotId(lot.id);
       const nextFormData = createFormDataForLot({ product, lot, settings });
@@ -192,6 +244,7 @@ const useInventoryLogic = ({ products, setProducts, settings }) => {
     setIsModalOpen(false);
     setEditingProduct(null);
     setEditingLotId(null);
+    setUsageInstructionsError("");
     initialFormDataRef.current = null;
   }, []);
 
@@ -244,6 +297,7 @@ const useInventoryLogic = ({ products, setProducts, settings }) => {
   // Tối ưu hóa: Memoize handler để tránh re-render ProductModal khi không cần thiết.
   const handleSelectExistingProduct = useCallback(
     (product) => {
+      setUsageInstructionsError("");
       setEditingProduct(product);
       setEditingLotId(null);
       setFormData(createFormDataForProduct({ product, settings }));
@@ -256,6 +310,7 @@ const useInventoryLogic = ({ products, setProducts, settings }) => {
     editingProduct,
     editingLotId,
     isGeneratingUsageInstructions,
+    usageInstructionsError,
     searchTerm,
     setSearchTerm,
     debouncedSearchTerm,
@@ -271,6 +326,7 @@ const useInventoryLogic = ({ products, setProducts, settings }) => {
     handleShippingMethodChange,
     formData,
     setFormData,
+    handleUsageInstructionsChange,
     handleMoneyChange,
     handleDecimalChange,
     handleImageSelect,

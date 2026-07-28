@@ -18,6 +18,7 @@ const ProductModal = ({
   editingLotId,
   formData,
   setFormData,
+  onUsageInstructionsChange,
   settings,
   nameSuggestions,
   onSelectExistingProduct,
@@ -31,6 +32,7 @@ const ProductModal = ({
   categories,
   highlightOps,
   isGeneratingUsageInstructions = false,
+  usageInstructionsError = "",
 }) => {
   // Sử dụng logic tính toán đã tách
   const { shippingFeeJpy, shippingFeeVnd, finalProfit, hasProfitData } =
@@ -108,14 +110,10 @@ const ProductModal = ({
         {!editingProduct && (
           <ProductUsageInstructionsField
             value={formData.usageInstructions}
-            onChange={(usageInstructions) =>
-              setFormData((previous) => ({
-                ...previous,
-                usageInstructions,
-              }))
-            }
+            onChange={onUsageInstructionsChange}
             readOnly={isGeneratingUsageInstructions}
             isGenerating={isGeneratingUsageInstructions}
+            errorText={usageInstructionsError}
           />
         )}
 

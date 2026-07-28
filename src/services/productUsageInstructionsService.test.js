@@ -88,7 +88,10 @@ describe("product usage instruction orchestration", () => {
       },
     );
 
-    expect(result).toBe("Nội dung thủ công");
+    expect(result).toEqual({
+      instructions: "Nội dung thủ công",
+      error: null,
+    });
     expect(calls).toEqual([]);
   });
 
@@ -113,7 +116,8 @@ describe("product usage instruction orchestration", () => {
       },
     );
 
-    expect(result).toBeNull();
+    expect(result.instructions).toBeNull();
+    expect(result.error).toBeNull();
     expect(calls).toEqual(["classify"]);
   });
 
@@ -148,11 +152,124 @@ describe("product usage instruction orchestration", () => {
     );
 
     expect(calls).toEqual(["gemini", "search", "gemini"]);
-    expect(result).toContain("• Liều mỗi lần: 1 viên");
+    expect(result.instructions).toContain("• Liều mỗi lần: 1 viên");
+    expect(result.error).toBeNull();
   });
 
-  it("leaves the field null when web evidence is unavailable", async () => {
-    const calls = [];
+  it("tries Japanese search after Vietnamese evidence is unavailable", async () => {
+    const searchQueries = [];
+    const responses = [
+      { content: '{"isMedicineOrSupplement":true}' },
+      {
+        content:
+          '{"timing":"Sau bữa sáng","dose":"2 viên","frequency":"1 lần mỗi ngày","note":"Dịch từ hướng dẫn trên nhãn Nhật"}',
+      },
+    ];
+    const result = await resolveProductUsageInstructions(
+      {
+        name: "アリナミンEXプラス",
+        category: "Thực phẩm",
+        usageInstructions: null,
+      },
+      {
+        callGemini: async () => {
+          return responses.shift();
+        },
+        search: async (query) => {
+          searchQueries.push(query);
+          return searchQueries.length === 1
+            ? null
+            : "[日本語の公式情報] 1日1回、食後に2錠";
+        },
+        modelNames: ["gemini-test"],
+      },
+    );
+
+    expect(searchQueries).toHaveLength(2);
+    expect(searchQueries[0]).toContain("hướng dẫn sử dụng");
+    expect(searchQueries[1]).toContain("使用方法");
+    expect(searchQueries[1]).toContain("アリナミンEXプラス");
+    expect(result.instructions).toContain(
+      "• Thời điểm dùng: Sau bữa sáng",
+    );
+    expect(result.sourceLanguage).toBe("ja");
+    expect(result.error).toBeNull();
+  });
+
+  it("tries Japanese search when Vietnamese evidence cannot produce complete dosage", async () => {
+    const prompts = [];
+    const searchQueries = [];
+    const result = await resolveProductUsageInstructions(
+      {
+        name: "Vitamin C Nhật Bản",
+        category: "Thực phẩm",
+        usageInstructions: null,
+      },
+      {
+        callGemini: async (_modelName, history) => {
+          const prompt = history[0].content;
+          prompts.push(prompt);
+          if (prompt.startsWith("Phân loại sản phẩm")) {
+            return { content: '{"isMedicineOrSupplement":true}' };
+          }
+          if (prompt.includes("Ngôn ngữ nguồn: Tiếng Việt")) {
+            return {
+              content:
+                '{"timing":"Sau ăn","dose":null,"frequency":"1 lần mỗi ngày"}',
+            };
+          }
+          return {
+            content:
+              '{"timing":"Sau ăn","dose":"1 viên","frequency":"1 lần mỗi ngày","note":"Bản dịch tiếng Việt từ nguồn Nhật"}',
+          };
+        },
+        search: async (query) => {
+          searchQueries.push(query);
+          return searchQueries.length === 1
+            ? "[Nguồn Việt] Không nêu liều mỗi lần"
+            : "[日本語の公式情報] 1日1回、食後に1錠";
+        },
+        modelNames: ["gemini-test"],
+      },
+    );
+
+    expect(searchQueries).toHaveLength(2);
+    expect(prompts.some((prompt) => prompt.includes("Ngôn ngữ nguồn: Tiếng Nhật"))).toBe(
+      true,
+    );
+    expect(result.instructions).toContain("• Liều mỗi lần: 1 viên");
+    expect(result.sourceLanguage).toBe("ja");
+    expect(result.error).toBeNull();
+  });
+
+  it("returns a clear error only after Vietnamese and Japanese searches both fail", async () => {
+    const searchQueries = [];
+    const result = await resolveProductUsageInstructions(
+      {
+        name: "Vitamin C không rõ hãng",
+        category: "Thực phẩm",
+        usageInstructions: null,
+      },
+      {
+        callGemini: async () => ({
+          content: '{"isMedicineOrSupplement":true}',
+        }),
+        search: async (query) => {
+          searchQueries.push(query);
+          return null;
+        },
+        modelNames: ["gemini-test"],
+      },
+    );
+
+    expect(searchQueries).toHaveLength(2);
+    expect(result.instructions).toBeNull();
+    expect(result.error).toContain("tiếng Việt và tiếng Nhật");
+    expect(result.error).toContain("Vitamin C không rõ hãng");
+    expect(result.error).toContain("ảnh");
+  });
+
+  it("reports a Gemini classification failure instead of silently returning null", async () => {
     const result = await resolveProductUsageInstructions(
       {
         name: "Vitamin C",
@@ -161,19 +278,42 @@ describe("product usage instruction orchestration", () => {
       },
       {
         callGemini: async () => {
-          calls.push("gemini");
-          return { content: '{"isMedicineOrSupplement":true}' };
+          throw new Error("Gemini unavailable");
         },
-        search: async () => {
-          calls.push("search");
-          return null;
+        search: async () => "unused",
+        modelNames: ["gemini-a", "gemini-b"],
+      },
+    );
+
+    expect(result.instructions).toBeNull();
+    expect(result.error).toContain("Gemini");
+    expect(result.error).toContain("Vui lòng thử lại");
+  });
+
+  it("reports a web-search failure after both language attempts error", async () => {
+    const queries = [];
+    const result = await resolveProductUsageInstructions(
+      {
+        name: "Vitamin C",
+        category: "Thực phẩm",
+        usageInstructions: null,
+      },
+      {
+        callGemini: async () => ({
+          content: '{"isMedicineOrSupplement":true}',
+        }),
+        search: async (query) => {
+          queries.push(query);
+          throw new Error("Search unavailable");
         },
         modelNames: ["gemini-test"],
       },
     );
 
-    expect(result).toBeNull();
-    expect(calls).toEqual(["gemini", "search"]);
+    expect(queries).toHaveLength(2);
+    expect(result.instructions).toBeNull();
+    expect(result.error).toContain("dịch vụ tìm kiếm web");
+    expect(result.error).toContain("tiếng Việt và tiếng Nhật");
   });
 
   it("falls through configured Gemini models", async () => {
@@ -197,7 +337,8 @@ describe("product usage instruction orchestration", () => {
       },
     );
 
-    expect(result).toBeNull();
+    expect(result.instructions).toBeNull();
+    expect(result.error).toBeNull();
     expect(attemptedModels).toEqual(["gemini-broken", "gemini-working"]);
   });
 
@@ -222,7 +363,8 @@ describe("product usage instruction orchestration", () => {
       },
     );
 
-    expect(result).toBeNull();
+    expect(result.instructions).toBeNull();
+    expect(result.error).toBeNull();
     expect(attemptedModels).toEqual([
       "gemini-malformed",
       "gemini-working",
@@ -264,7 +406,39 @@ describe("product usage instruction orchestration", () => {
       "gemini-incomplete",
       "gemini-working",
     ]);
-    expect(result).toContain("• Liều mỗi lần: 1 viên");
+    expect(result.instructions).toContain("• Liều mỗi lần: 1 viên");
+    expect(result.error).toBeNull();
+  });
+
+  it("passes the product image to Gemini classification and synthesis", async () => {
+    const image =
+      "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAAB";
+    const receivedImages = [];
+
+    const result = await resolveProductUsageInstructions(
+      {
+        name: "Vitamin C 1000mg",
+        category: "Thực phẩm",
+        image,
+        usageInstructions: null,
+      },
+      {
+        callGemini: async (_modelName, history) => {
+          receivedImages.push(history[0].image);
+          return receivedImages.length === 1
+            ? { content: '{"isMedicineOrSupplement":true}' }
+            : {
+                content:
+                  '{"timing":"Sau ăn","dose":"1 viên","frequency":"1 lần mỗi ngày","note":"Theo nhãn"}',
+              };
+        },
+        search: async () => "[Nguồn: nhãn sản phẩm]",
+        modelNames: ["gemini-test"],
+      },
+    );
+
+    expect(result.error).toBeNull();
+    expect(receivedImages).toEqual([image, image]);
   });
 
   it("deduplicates concurrent requests for the same product identity", async () => {

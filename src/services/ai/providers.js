@@ -8,6 +8,32 @@ import { TAVILY_API_URL, geminiSafetySettings } from "./config";
 
 // --- CÁC HÀM GỌI API ---
 
+const parseInlineImage = (image) => {
+  if (typeof image !== "string") return null;
+
+  const match = image.match(/^data:([^;,]+);base64,(.+)$/su);
+  if (!match) return null;
+
+  return {
+    mimeType: match[1],
+    data: match[2],
+  };
+};
+
+export const buildGeminiContents = (history = []) =>
+  history.map((msg) => {
+    const parts = [{ text: msg.content || "" }];
+    const inlineData = parseInlineImage(msg.image);
+    if (inlineData) {
+      parts.push({ inlineData });
+    }
+
+    return {
+      role: msg.role === "user" ? "user" : "model",
+      parts,
+    };
+  });
+
 /**
  * Gọi API Google Gemini
  * Return format chuẩn: { content: string, tool_calls: null }
@@ -31,10 +57,7 @@ export const callGeminiAPI = async (
     },
   });
 
-  const contents = history.map((msg) => ({
-    role: msg.role === "user" ? "user" : "model",
-    parts: [{ text: msg.content }],
-  }));
+  const contents = buildGeminiContents(history);
 
   try {
     // Gọi generateContent với toàn bộ lịch sử hội thoại
@@ -156,10 +179,13 @@ export const searchWeb = async (
   location = null,
   searchDepth = "basic",
   maxResults = 3,
+  options = {},
 ) => {
   const tavilyKey = import.meta.env.VITE_TAVILY_API_KEY;
   if (!tavilyKey || typeof tavilyKey !== "string" || !tavilyKey.trim()) {
-    console.warn("Chưa cấu hình VITE_TAVILY_API_KEY");
+    const error = new Error("Chưa cấu hình VITE_TAVILY_API_KEY");
+    if (options.throwOnError) throw error;
+    console.warn(error.message);
     return null;
   }
 
@@ -192,6 +218,7 @@ export const searchWeb = async (
       .join("\n\n");
   } catch (error) {
     console.error("Lỗi Tavily:", error);
+    if (options.throwOnError) throw error;
     return null;
   }
 };

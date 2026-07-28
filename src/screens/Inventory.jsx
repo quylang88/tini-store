@@ -50,6 +50,7 @@ const Inventory = ({
     editingProduct,
     editingLotId,
     isGeneratingUsageInstructions,
+    usageInstructionsError,
     searchTerm,
     setSearchTerm,
     confirmModal,
@@ -61,6 +62,7 @@ const Inventory = ({
     warehouseFilter,
     formData,
     setFormData,
+    handleUsageInstructionsChange,
     handleMoneyChange,
     handleDecimalChange,
     handleCurrencyChange,
@@ -309,6 +311,7 @@ const Inventory = ({
         editingLotId={editingLotId}
         formData={formData}
         setFormData={setFormData}
+        onUsageInstructionsChange={handleUsageInstructionsChange}
         settings={settings}
         nameSuggestions={nameSuggestions}
         onSelectExistingProduct={handleSelectExistingProduct}
@@ -326,6 +329,7 @@ const Inventory = ({
         onShippingMethodChange={handleShippingMethodChange}
         highlightOps={highlightOps}
         isGeneratingUsageInstructions={isGeneratingUsageInstructions}
+        usageInstructionsError={usageInstructionsError}
       />
 
       <ProductDetailModal
