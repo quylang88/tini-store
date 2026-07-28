@@ -117,7 +117,7 @@ describe("product usage instruction orchestration", () => {
     );
 
     expect(result.instructions).toBeNull();
-    expect(result.error).toBeNull();
+    expect(result.error).toContain("không thuộc nhóm Thuốc hoặc Thực phẩm bổ sung");
     expect(calls).toEqual(["classify"]);
   });
 
@@ -338,7 +338,7 @@ describe("product usage instruction orchestration", () => {
     );
 
     expect(result.instructions).toBeNull();
-    expect(result.error).toBeNull();
+    expect(result.error).toContain("không thuộc nhóm Thuốc hoặc Thực phẩm bổ sung");
     expect(attemptedModels).toEqual(["gemini-broken", "gemini-working"]);
   });
 
@@ -364,7 +364,7 @@ describe("product usage instruction orchestration", () => {
     );
 
     expect(result.instructions).toBeNull();
-    expect(result.error).toBeNull();
+    expect(result.error).toContain("không thuộc nhóm Thuốc hoặc Thực phẩm bổ sung");
     expect(attemptedModels).toEqual([
       "gemini-malformed",
       "gemini-working",

@@ -107,10 +107,6 @@ const ProductBasicInfoModal = ({
 
         if (error) {
           setUsageInstructionsError(error);
-          onError?.({
-            title: "Không thể tạo HDSD tự động",
-            message: error,
-          });
           return;
         }
 

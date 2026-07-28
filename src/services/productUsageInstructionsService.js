@@ -209,7 +209,7 @@ const generateProductUsageInstructions = async ({
   if (classificationResult.isMedicineOrSupplement !== true) {
     return {
       instructions: null,
-      error: null,
+      error: `AI xác định “${name}” không thuộc nhóm Thuốc hoặc Thực phẩm bổ sung cần tạo HDSD tự động. Vui lòng nhập thủ công.`,
     };
   }
 
@@ -318,7 +318,7 @@ export const resolveProductUsageInstructions = (
   if (!name) {
     return Promise.resolve({
       instructions: null,
-      error: null,
+      error: "Vui lòng nhập tên sản phẩm để AI tra cứu HDSD.",
     });
   }
 

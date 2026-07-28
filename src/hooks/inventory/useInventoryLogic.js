@@ -123,10 +123,6 @@ const useInventoryLogic = ({ products, setProducts, settings }) => {
 
       if (shouldGenerate && error && !usageInstructions) {
         setUsageInstructionsError(error);
-        setErrorModal({
-          title: "Không thể tạo HDSD tự động",
-          message: error,
-        });
         return false;
       }
 
@@ -160,10 +156,6 @@ const useInventoryLogic = ({ products, setProducts, settings }) => {
       const message =
         "Đã xảy ra lỗi ngoài dự kiến khi tạo HDSD. Vui lòng thử lại hoặc nhập thủ công.";
       setUsageInstructionsError(message);
-      setErrorModal({
-        title: "Không thể tạo HDSD tự động",
-        message,
-      });
       return false;
     } finally {
       if (shouldGenerate) {
