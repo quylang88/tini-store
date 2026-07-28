@@ -100,9 +100,9 @@ const PurchaseListFormModal = ({ open, list, onClose, onSave }) => {
             onChange={(event) =>
               setFormData((prev) => ({ ...prev, note: event.target.value }))
             }
-            rows={4}
+            rows={3}
             placeholder="Gợi ý: nhóm hàng, lịch đi mua, lưu ý riêng..."
-            className="w-full rounded-xl border border-rose-200 bg-white px-4 py-3 text-sm text-gray-900 outline-none focus:border-rose-400 focus:ring-2 focus:ring-rose-100 resize-none"
+            className="w-full rounded-xl border border-rose-200 bg-white px-4 py-3 text-sm text-gray-900 outline-none focus:border-rose-400 focus:ring-2 focus:ring-rose-100 resize-y min-h-20 max-h-60"
           />
         </div>
       </div>

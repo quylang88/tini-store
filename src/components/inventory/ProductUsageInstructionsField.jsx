@@ -23,18 +23,13 @@ const ProductUsageInstructionsField = ({
       )}
     </div>
     <textarea
-      className={`mt-1 min-h-24 max-h-44 w-full resize-none overflow-y-auto rounded-lg border p-3 text-sm text-gray-900 outline-none read-only:bg-gray-50 read-only:text-gray-500 disabled:bg-gray-100 disabled:text-gray-400 ${
+      className={`mt-1 min-h-24 max-h-80 w-full resize-y overflow-y-auto rounded-lg border p-3 text-sm text-gray-900 outline-none read-only:bg-gray-50 read-only:text-gray-500 disabled:bg-gray-100 disabled:text-gray-400 ${
         errorText && !isGenerating
           ? "border-red-400 focus:border-red-500"
           : "border-gray-200 focus:border-rose-400"
       }`}
       value={value ?? ""}
       onChange={(event) => onChange?.(event.target.value)}
-      onInput={(event) => {
-        event.currentTarget.style.height = "auto";
-        event.currentTarget.style.height =
-          `${event.currentTarget.scrollHeight}px`;
-      }}
       placeholder="Nhập hướng dẫn hoặc để AI tự tạo khi lưu..."
       readOnly={readOnly}
       disabled={disabled}

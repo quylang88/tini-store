@@ -286,7 +286,7 @@ const PurchaseListItemFormModal = ({
               setFormState((prev) => ({ ...prev, note: event.target.value }))
             }
             placeholder="Ví dụ: mua đúng size, đổi màu bao bì, ưu tiên shop quen..."
-            className="w-full rounded-xl border border-rose-200 bg-white px-4 py-3 text-sm text-gray-900 outline-none focus:border-rose-400 focus:ring-2 focus:ring-rose-100 resize-none"
+            className="w-full rounded-xl border border-rose-200 bg-white px-4 py-3 text-sm text-gray-900 outline-none focus:border-rose-400 focus:ring-2 focus:ring-rose-100 resize-y min-h-20 max-h-60"
           />
         </div>
       </div>
