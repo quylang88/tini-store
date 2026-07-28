@@ -6,7 +6,6 @@ const ProductUsageInstructionsField = ({
   readOnly = false,
   disabled = false,
   isGenerating = false,
-  helperText = "",
   errorText = "",
 }) => (
   <div>
@@ -14,18 +13,14 @@ const ProductUsageInstructionsField = ({
       <label className="text-xs font-bold text-rose-700 uppercase">
         Hướng dẫn sử dụng
       </label>
-      {isGenerating ? (
+      {isGenerating && (
         <span
           className="text-[11px] font-medium text-amber-600"
           role="status"
         >
           AI đang tra cứu…
         </span>
-      ) : errorText ? (
-        <span className="text-[11px] font-medium text-red-500">
-          AI chưa tạo được
-        </span>
-      ) : null}
+      )}
     </div>
     <textarea
       className={`mt-1 min-h-24 max-h-44 w-full resize-none overflow-y-auto rounded-lg border p-3 text-sm text-gray-900 outline-none read-only:bg-gray-50 read-only:text-gray-500 disabled:bg-gray-100 disabled:text-gray-400 ${
@@ -45,18 +40,12 @@ const ProductUsageInstructionsField = ({
       disabled={disabled}
       aria-invalid={Boolean(errorText)}
     />
-    {(errorText || isGenerating || helperText) && (
+    {errorText && !isGenerating && (
       <p
-        className={`mt-1 text-[11px] ${
-          errorText && !isGenerating
-            ? "text-red-500 font-medium"
-            : "text-gray-500"
-        }`}
-        role={errorText && !isGenerating ? "alert" : undefined}
+        className="mt-1 text-[11px] text-red-500 font-medium"
+        role="alert"
       >
-        {isGenerating
-          ? "AI đang tìm nguồn tiếng Việt; nếu thiếu dữ liệu sẽ tự tìm bằng tiếng Nhật."
-          : errorText || helperText}
+        {errorText}
       </p>
     )}
   </div>

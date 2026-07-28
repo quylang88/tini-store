@@ -13,7 +13,6 @@ describe("ProductUsageInstructionsField", () => {
       />,
     );
 
-    expect(html).toContain("AI chưa tạo được");
     expect(html).toContain(
       "AI đã thử tìm bằng tiếng Việt và tiếng Nhật nhưng chưa đủ dữ liệu.",
     );
