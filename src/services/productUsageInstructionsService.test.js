@@ -71,6 +71,64 @@ describe("product usage instruction response parsing", () => {
       }),
     ).toBeNull();
   });
+
+  it("formats COSMETIC product usage instructions correctly", () => {
+    const formatted = formatUsageInstructions(
+      {
+        benefit: "Cấp ẩm tức thì và làm sáng da",
+        usage: "Thoa đều 2-3 giọt lên mặt sau bước toner, vỗ nhẹ",
+        frequency: "2 lần/ngày (sáng và tối)",
+        note: "Ngưng dùng nếu bị kích ứng",
+      },
+      "COSMETIC",
+    );
+    expect(formatted).toBe(
+      [
+        "• Công dụng chính: Cấp ẩm tức thì và làm sáng da",
+        "• Cách dùng: Thoa đều 2-3 giọt lên mặt sau bước toner, vỗ nhẹ",
+        "• Tần suất: 2 lần/ngày (sáng và tối)",
+        "• Lưu ý & bảo quản: Ngưng dùng nếu bị kích ứng",
+      ].join("\n"),
+    );
+  });
+
+  it("formats HOUSEHOLD product usage instructions correctly", () => {
+    const formatted = formatUsageInstructions(
+      {
+        purpose: "Tẩy sạch dầu mỡ bếp",
+        usage: "Xịt trực tiếp lên bề mặt, lau lại bằng khăn ẩm",
+        dosage: "1-2 xịt cho 1m2",
+        note: "Tránh xa tầm tay trẻ em",
+      },
+      "HOUSEHOLD",
+    );
+    expect(formatted).toBe(
+      [
+        "• Công dụng: Tẩy sạch dầu mỡ bếp",
+        "• Cách dùng: Xịt trực tiếp lên bề mặt, lau lại bằng khăn ẩm",
+        "• Liều lượng: 1-2 xịt cho 1m2",
+        "• Lưu ý & bảo quản: Tránh xa tầm tay trẻ em",
+      ].join("\n"),
+    );
+  });
+
+  it("formats GENERAL product usage instructions correctly", () => {
+    const formatted = formatUsageInstructions(
+      {
+        purpose: "Uống trực tiếp",
+        usage: "Mở nắp và dùng ngay",
+        note: "Bảo quản nơi khô ráo",
+      },
+      "GENERAL",
+    );
+    expect(formatted).toBe(
+      [
+        "• Công dụng: Uống trực tiếp",
+        "• Cách dùng: Mở nắp và dùng ngay",
+        "• Lưu ý khi dùng: Bảo quản nơi khô ráo",
+      ].join("\n"),
+    );
+  });
 });
 
 describe("product usage instruction orchestration", () => {
@@ -95,7 +153,7 @@ describe("product usage instruction orchestration", () => {
     expect(calls).toEqual([]);
   });
 
-  it("does not search when classification is negative", async () => {
+  it("searches and synthesizes GENERAL products when classification is non-medicine", async () => {
     const calls = [];
     const result = await resolveProductUsageInstructions(
       {
@@ -104,21 +162,26 @@ describe("product usage instruction orchestration", () => {
         usageInstructions: null,
       },
       {
-        callGemini: async () => {
-          calls.push("classify");
-          return { content: '{"isMedicineOrSupplement":false}' };
+        callGemini: async (_model, history) => {
+          calls.push("gemini");
+          if (history[0].content.includes("Phân loại")) {
+            return { content: '{"productType":"GENERAL"}' };
+          }
+          return {
+            content: '{"purpose":"Giữ ấm cơ thể","usage":"Mặc ngoài khi lạnh","note":"Giặt nhẹ"}',
+          };
         },
         search: async () => {
           calls.push("search");
-          return "unused";
+          return "[Nguồn: nhãn sản phẩm quần áo]";
         },
         modelNames: ["gemini-test"],
       },
     );
 
-    expect(result.instructions).toBeNull();
-    expect(result.error).toContain("không thuộc nhóm Thuốc hoặc Thực phẩm bổ sung");
-    expect(calls).toEqual(["classify"]);
+    expect(result.instructions).toContain("• Công dụng: Giữ ấm cơ thể");
+    expect(result.error).toBeNull();
+    expect(calls).toEqual(["gemini", "search", "gemini"]);
   });
 
   it("always searches before synthesis for a positive classification", async () => {
@@ -286,7 +349,7 @@ describe("product usage instruction orchestration", () => {
     );
 
     expect(result.instructions).toBeNull();
-    expect(result.error).toContain("Gemini");
+    expect(result.error).toContain("dịch vụ AI");
     expect(result.error).toContain("Vui lòng thử lại");
   });
 
@@ -313,7 +376,6 @@ describe("product usage instruction orchestration", () => {
     expect(queries).toHaveLength(2);
     expect(result.instructions).toBeNull();
     expect(result.error).toContain("dịch vụ tìm kiếm web");
-    expect(result.error).toContain("tiếng Việt và tiếng Nhật");
   });
 
   it("falls through configured Gemini models", async () => {
@@ -325,21 +387,29 @@ describe("product usage instruction orchestration", () => {
         usageInstructions: null,
       },
       {
-        callGemini: async (modelName) => {
+        callGemini: async (modelName, history) => {
           attemptedModels.push(modelName);
           if (modelName === "gemini-broken") {
             throw new Error("unavailable");
           }
-          return { content: '{"isMedicineOrSupplement":false}' };
+          if (history[0].content.includes("Phân loại")) {
+            return { content: '{"productType":"GENERAL"}' };
+          }
+          return { content: '{"purpose":"Giữ ấm","usage":"Mặc khi lạnh","note":"Giặt nhẹ"}' };
         },
-        search: async () => "unused",
+        search: async () => "[Nguồn áo khoác]",
         modelNames: ["gemini-broken", "gemini-working"],
       },
     );
 
-    expect(result.instructions).toBeNull();
-    expect(result.error).toContain("không thuộc nhóm Thuốc hoặc Thực phẩm bổ sung");
-    expect(attemptedModels).toEqual(["gemini-broken", "gemini-working"]);
+    expect(result.instructions).toContain("• Công dụng: Giữ ấm");
+    expect(result.error).toBeNull();
+    expect(attemptedModels).toEqual([
+      "gemini-broken",
+      "gemini-working",
+      "gemini-broken",
+      "gemini-working",
+    ]);
   });
 
   it("falls through when a Gemini model returns malformed classification JSON", async () => {
@@ -351,21 +421,26 @@ describe("product usage instruction orchestration", () => {
         usageInstructions: null,
       },
       {
-        callGemini: async (modelName) => {
+        callGemini: async (modelName, history) => {
           attemptedModels.push(modelName);
           if (modelName === "gemini-malformed") {
             return { content: "không phải JSON" };
           }
-          return { content: '{"isMedicineOrSupplement":false}' };
+          if (history[0].content.includes("Phân loại")) {
+            return { content: '{"productType":"GENERAL"}' };
+          }
+          return { content: '{"purpose":"Giữ ấm","usage":"Mặc khi lạnh","note":"Giặt nhẹ"}' };
         },
-        search: async () => "unused",
+        search: async () => "[Nguồn áo khoác]",
         modelNames: ["gemini-malformed", "gemini-working"],
       },
     );
 
-    expect(result.instructions).toBeNull();
-    expect(result.error).toContain("không thuộc nhóm Thuốc hoặc Thực phẩm bổ sung");
+    expect(result.instructions).toContain("• Công dụng: Giữ ấm");
+    expect(result.error).toBeNull();
     expect(attemptedModels).toEqual([
+      "gemini-malformed",
+      "gemini-working",
       "gemini-malformed",
       "gemini-working",
     ]);

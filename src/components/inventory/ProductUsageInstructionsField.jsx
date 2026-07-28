@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 
 const ProductUsageInstructionsField = ({
   value,
@@ -9,6 +9,22 @@ const ProductUsageInstructionsField = ({
   errorText = "",
 }) => {
   const textareaRef = useRef(null);
+  const [isOnline, setIsOnline] = useState(
+    typeof navigator !== "undefined" ? navigator.onLine : true,
+  );
+
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
+
+    return () => {
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
+    };
+  }, []);
 
   useEffect(() => {
     if (textareaRef.current) {
@@ -16,6 +32,8 @@ const ProductUsageInstructionsField = ({
       textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
     }
   }, [value]);
+
+  const showOfflineMessage = !isOnline && isGenerating;
 
   return (
     <div>
@@ -25,10 +43,12 @@ const ProductUsageInstructionsField = ({
         </label>
         {isGenerating && (
           <span
-            className="text-[11px] font-medium text-amber-600"
+            className={`text-[11px] font-medium ${
+              !isOnline ? "text-amber-700 font-semibold" : "text-amber-600"
+            }`}
             role="status"
           >
-            AI đang tra cứu…
+            {!isOnline ? "Không có kết nối mạng" : "AI đang tra cứu…"}
           </span>
         )}
       </div>
@@ -46,7 +66,12 @@ const ProductUsageInstructionsField = ({
         disabled={disabled}
         aria-invalid={Boolean(errorText)}
       />
-      {errorText && !isGenerating && (
+      {showOfflineMessage && (
+        <p className="mt-1 text-[11px] text-amber-600 font-medium" role="alert">
+          Không có kết nối Internet để AI tra cứu HDSD. Vui lòng kiểm tra mạng hoặc nhập thủ công.
+        </p>
+      )}
+      {errorText && !isGenerating && !showOfflineMessage && (
         <p
           className="mt-1 text-[11px] text-red-500 font-medium"
           role="alert"

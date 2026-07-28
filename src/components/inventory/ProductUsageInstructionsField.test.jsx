@@ -19,4 +19,28 @@ describe("ProductUsageInstructionsField", () => {
     expect(html).toContain('aria-invalid="true"');
     expect(html).not.toContain("readonly");
   });
+
+  it("renders status label and message when generating offline", () => {
+    const originalOnLine = navigator.onLine;
+    Object.defineProperty(navigator, "onLine", {
+      value: false,
+      configurable: true,
+    });
+
+    const html = renderToStaticMarkup(
+      <ProductUsageInstructionsField
+        value=""
+        onChange={() => {}}
+        isGenerating={true}
+      />,
+    );
+
+    expect(html).toContain("Không có kết nối mạng");
+    expect(html).toContain("Không có kết nối Internet để AI tra cứu HDSD.");
+
+    Object.defineProperty(navigator, "onLine", {
+      value: originalOnLine,
+      configurable: true,
+    });
+  });
 });
