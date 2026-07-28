@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react"
+import React, { useEffect, useMemo, useRef, useState } from "react"
 import AnimatedFilterTabs from "../common/AnimatedFilterTabs"
 import Button from "../button/Button"
 import SheetModal from "../modals/SheetModal"
@@ -11,6 +11,7 @@ const createInitialFormData = ({ list, defaultWarehouse }) => ({
 })
 
 const PurchaseListFormModal = ({ open, list, onClose, onSave }) => {
+  const noteRef = useRef(null)
   const warehouses = useMemo(
     () => getWarehouses().map((warehouse) => ({
       key: warehouse.key,
@@ -31,6 +32,13 @@ const PurchaseListFormModal = ({ open, list, onClose, onSave }) => {
     setPrevFormKey(formKey)
     setFormData(createInitialFormData({ list, defaultWarehouse }))
   }
+
+  useEffect(() => {
+    if (noteRef.current) {
+      noteRef.current.style.height = "auto"
+      noteRef.current.style.height = `${noteRef.current.scrollHeight}px`
+    }
+  }, [formData.note, open])
 
   const footer = (
     <div className="grid grid-cols-2 gap-3">
@@ -96,13 +104,14 @@ const PurchaseListFormModal = ({ open, list, onClose, onSave }) => {
             Ghi chú
           </label>
           <textarea
+            ref={noteRef}
             value={formData.note}
             onChange={(event) =>
               setFormData((prev) => ({ ...prev, note: event.target.value }))
             }
             rows={3}
             placeholder="Gợi ý: nhóm hàng, lịch đi mua, lưu ý riêng..."
-            className="w-full rounded-xl border border-rose-200 bg-white px-4 py-3 text-sm text-gray-900 outline-none focus:border-rose-400 focus:ring-2 focus:ring-rose-100 resize-y min-h-20 max-h-60"
+            className="w-full rounded-xl border border-rose-200 bg-white px-4 py-3 text-sm text-gray-900 outline-none focus:border-rose-400 focus:ring-2 focus:ring-rose-100 resize-none overflow-y-auto min-h-20 max-h-60"
           />
         </div>
       </div>

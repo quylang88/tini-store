@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react"
+import React, { useEffect, useMemo, useRef, useState } from "react"
 import { Package, Search } from "lucide-react"
 import AnimatedFilterTabs from "../common/AnimatedFilterTabs"
 import Button from "../button/Button"
@@ -38,10 +38,11 @@ const PurchaseListItemFormModal = ({
   open,
   list,
   item,
-  products,
+  products = [],
   onClose,
   onSave,
 }) => {
+  const noteRef = useRef(null)
   const [prevFormKey, setPrevFormKey] = useState("closed")
   const [formState, setFormState] = useState(() =>
     createInitialFormState({ item, products }),
@@ -62,6 +63,13 @@ const PurchaseListItemFormModal = ({
     setPrevFormKey(formKey)
     setFormState(createInitialFormState({ item, products }))
   }
+
+  useEffect(() => {
+    if (noteRef.current) {
+      noteRef.current.style.height = "auto"
+      noteRef.current.style.height = `${noteRef.current.scrollHeight}px`
+    }
+  }, [formState.note, open])
 
   const suggestions = useMemo(() => {
     if (formState.kind !== "existing") return []
@@ -280,13 +288,14 @@ const PurchaseListItemFormModal = ({
             Ghi chú
           </label>
           <textarea
+            ref={noteRef}
             rows={3}
             value={formState.note}
             onChange={(event) =>
               setFormState((prev) => ({ ...prev, note: event.target.value }))
             }
             placeholder="Ví dụ: mua đúng size, đổi màu bao bì, ưu tiên shop quen..."
-            className="w-full rounded-xl border border-rose-200 bg-white px-4 py-3 text-sm text-gray-900 outline-none focus:border-rose-400 focus:ring-2 focus:ring-rose-100 resize-y min-h-20 max-h-60"
+            className="w-full rounded-xl border border-rose-200 bg-white px-4 py-3 text-sm text-gray-900 outline-none focus:border-rose-400 focus:ring-2 focus:ring-rose-100 resize-none overflow-y-auto min-h-20 max-h-60"
           />
         </div>
       </div>

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import SheetModal from "../../components/modals/SheetModal";
 import Button from "../../components/button/Button";
 import {
@@ -33,6 +33,14 @@ const OrderCreateReviewModal = ({
   isCustomerNameTaken,
   setPriceOverrides,
 }) => {
+  const noteRef = useRef(null);
+
+  useEffect(() => {
+    if (noteRef.current) {
+      noteRef.current.style.height = "auto";
+      noteRef.current.style.height = `${noteRef.current.scrollHeight}px`;
+    }
+  }, [orderComment, isReviewOpen]);
   const highlightOps = useHighlightFields();
   const [validationError, setValidationError] = useState(null);
 
@@ -301,11 +309,12 @@ const OrderCreateReviewModal = ({
               Ghi chú
             </label>
             <textarea
+              ref={noteRef}
               value={orderComment}
               onChange={(e) => setOrderComment(e.target.value)}
               placeholder="Ví dụ: khách hẹn lấy vào chiều nay..."
               rows={3}
-              className="w-full border border-rose-200 rounded-xl p-3 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-rose-200"
+              className="w-full border border-rose-200 rounded-xl p-3 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-rose-200 resize-none overflow-y-auto min-h-20 max-h-60"
             />
           </div>
         </div>
