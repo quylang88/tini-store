@@ -8,9 +8,7 @@ import ProductShippingSection from "./ProductShippingSection";
 import ProductStockSection from "./ProductStockSection";
 import ProductPricingSection from "./ProductPricingSection";
 import ProductHistorySection from "./ProductHistorySection";
-import ProductUsageInstructionsField from "./ProductUsageInstructionsField";
 import { useProductFormMath } from "../../hooks/inventory/useProductFormMath";
-import LoadingOverlay from "../common/LoadingOverlay";
 
 const ProductModal = ({
   isOpen,
@@ -18,7 +16,6 @@ const ProductModal = ({
   editingLotId,
   formData,
   setFormData,
-  onUsageInstructionsChange,
   settings,
   nameSuggestions,
   onSelectExistingProduct,
@@ -31,8 +28,6 @@ const ProductModal = ({
   onShippingMethodChange,
   categories,
   highlightOps,
-  isGeneratingUsageInstructions = false,
-  usageInstructionsError = "",
 }) => {
   // Sử dụng logic tính toán đã tách
   const { shippingFeeJpy, shippingFeeVnd, finalProfit, hasProfitData } =
@@ -59,16 +54,12 @@ const ProductModal = ({
       <Button
         variant="secondary"
         onClick={onClose}
-        disabled={isGeneratingUsageInstructions}
-        className="disabled:cursor-not-allowed disabled:opacity-50"
       >
         Huỷ
       </Button>
       <Button
         variant="primary"
         onClick={onSave}
-        disabled={isGeneratingUsageInstructions}
-        className="disabled:cursor-not-allowed disabled:opacity-50"
       >
         Lưu
       </Button>
@@ -106,16 +97,6 @@ const ProductModal = ({
           inputColorClass="text-gray-900"
           highlightOps={highlightOps}
         />
-
-        {!editingProduct && (
-          <ProductUsageInstructionsField
-            value={formData.usageInstructions}
-            onChange={onUsageInstructionsChange}
-            readOnly={isGeneratingUsageInstructions}
-            isGenerating={isGeneratingUsageInstructions}
-            errorText={usageInstructionsError}
-          />
-        )}
 
         {/* Khu vực giá nhập */}
         <ProductCostSection
@@ -160,9 +141,6 @@ const ProductModal = ({
           isEditingLot={isEditingLot}
         />
       </div>
-      {isGeneratingUsageInstructions && (
-        <LoadingOverlay text="AI đang tra cứu hướng dẫn sử dụng..." />
-      )}
     </SheetModal>
   );
 };

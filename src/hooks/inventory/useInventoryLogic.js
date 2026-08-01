@@ -1,5 +1,4 @@
 import { useRef, useState, useCallback } from "react";
-import { resolveProductUsageInstructions } from "../../services/productUsageInstructionsService";
 import {
   createFormDataForLot,
   createFormDataForNewProduct,
@@ -13,21 +12,13 @@ import {
   getInventoryValidationError,
 } from "../../utils/inventory/inventorySaveUtils";
 import useHighlightFields from "../ui/useHighlightFields";
-import {
-  hasUsageInstructions,
-  normalizeUsageInstructions,
-} from "../../utils/inventory/usageInstructions";
+import { normalizeUsageInstructions } from "../../utils/inventory/usageInstructions";
 
 const useInventoryLogic = ({ products, setProducts, settings }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
   const [editingLotId, setEditingLotId] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
-  const [
-    isGeneratingUsageInstructions,
-    setIsGeneratingUsageInstructions,
-  ] = useState(false);
-  const [usageInstructionsError, setUsageInstructionsError] = useState("");
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
 
   // Modal xác nhận xoá sản phẩm để giao diện đồng bộ
@@ -53,21 +44,8 @@ const useInventoryLogic = ({ products, setProducts, settings }) => {
     setFormData,
     handleMoneyChange,
     handleCurrencyChange,
-    handleShippingMethodChange,
-    handleDecimalChange,
     handleImageSelect,
   } = useInventoryFormState({ settings, activeCategory });
-
-  const handleUsageInstructionsChange = useCallback(
-    (usageInstructions) => {
-      setUsageInstructionsError("");
-      setFormData((previous) => ({
-        ...previous,
-        usageInstructions,
-      }));
-    },
-    [setFormData],
-  );
 
   const highlightOps = useHighlightFields();
 
@@ -86,82 +64,35 @@ const useInventoryLogic = ({ products, setProducts, settings }) => {
       return false;
     }
 
-    const shouldGenerate =
-      !editingProduct &&
-      !hasUsageInstructions(formData.usageInstructions);
+    const usageInstructions = normalizeUsageInstructions(
+      formData.usageInstructions,
+    );
 
-    try {
-      if (shouldGenerate) {
-        setIsGeneratingUsageInstructions(true);
-        setUsageInstructionsError("");
+    const nextProduct = buildNextProductFromForm({
+      formData: {
+        ...formData,
+        usageInstructions,
+      },
+      editingProduct,
+      editingLotId,
+      settings,
+      usedProductCodes: new Set(
+        products
+          .map((product) => product.productCode)
+          .filter(Boolean),
+      ),
+    });
+
+    setProducts((currentProducts) => {
+      if (editingProduct) {
+        return currentProducts.map((product) =>
+          product.id === editingProduct.id ? nextProduct : product,
+        );
       }
-
-      const res = editingProduct
-        ? {
-            instructions: normalizeUsageInstructions(
-              formData.usageInstructions,
-            ),
-            error: null,
-          }
-        : shouldGenerate
-          ? await resolveProductUsageInstructions({
-              name: formData.name,
-              category: formData.category,
-              image: formData.image,
-              usageInstructions: formData.usageInstructions,
-            })
-          : {
-              instructions: normalizeUsageInstructions(
-                formData.usageInstructions,
-              ),
-              error: null,
-            };
-
-      const usageInstructions =
-        typeof res === "string" ? res : res?.instructions;
-      const error = typeof res === "object" ? res?.error : null;
-
-      if (shouldGenerate && error && !usageInstructions) {
-        setUsageInstructionsError(error);
-        return false;
-      }
-
-      const nextProduct = buildNextProductFromForm({
-        formData: {
-          ...formData,
-          usageInstructions,
-        },
-        editingProduct,
-        editingLotId,
-        settings,
-        usedProductCodes: new Set(
-          products
-            .map((product) => product.productCode)
-            .filter(Boolean),
-        ),
-      });
-
-      setProducts((currentProducts) => {
-        if (editingProduct) {
-          return currentProducts.map((product) =>
-            product.id === editingProduct.id ? nextProduct : product,
-          );
-        }
-        return [...currentProducts, nextProduct];
-      });
-      closeModal();
-      return true;
-    } catch (error) {
-      console.error("Không thể tự tạo HDSD khi lưu sản phẩm:", error);
-      const message =
-        "Đã xảy ra lỗi ngoài dự kiến khi tạo HDSD. Vui lòng thử lại hoặc nhập thủ công.";
-      setUsageInstructionsError(message);
-      return false;
-    } finally {
-      if (shouldGenerate) {
-        setIsGeneratingUsageInstructions(false);
-      }
-    }
+      return [...currentProducts, nextProduct];
+    });
+    closeModal();
+    return true;
   };
 
   const buildComparableFormData = (data) => {
@@ -194,7 +125,6 @@ const useInventoryLogic = ({ products, setProducts, settings }) => {
   // cho các component con (như ProductDetailModal hoặc FAB) khi state cha thay đổi.
   const openModal = useCallback(
     (product = null) => {
-      setUsageInstructionsError("");
       if (product) {
         setEditingProduct(product);
         setEditingLotId(null);
@@ -221,7 +151,6 @@ const useInventoryLogic = ({ products, setProducts, settings }) => {
   const openEditLot = useCallback(
     (product, lot) => {
       if (!product || !lot) return;
-      setUsageInstructionsError("");
       setEditingProduct(product);
       setEditingLotId(lot.id);
       const nextFormData = createFormDataForLot({ product, lot, settings });
@@ -236,7 +165,6 @@ const useInventoryLogic = ({ products, setProducts, settings }) => {
     setIsModalOpen(false);
     setEditingProduct(null);
     setEditingLotId(null);
-    setUsageInstructionsError("");
     initialFormDataRef.current = null;
   }, []);
 
@@ -289,7 +217,6 @@ const useInventoryLogic = ({ products, setProducts, settings }) => {
   // Tối ưu hóa: Memoize handler để tránh re-render ProductModal khi không cần thiết.
   const handleSelectExistingProduct = useCallback(
     (product) => {
-      setUsageInstructionsError("");
       setEditingProduct(product);
       setEditingLotId(null);
       setFormData(createFormDataForProduct({ product, settings }));
@@ -301,8 +228,6 @@ const useInventoryLogic = ({ products, setProducts, settings }) => {
     isModalOpen,
     editingProduct,
     editingLotId,
-    isGeneratingUsageInstructions,
-    usageInstructionsError,
     searchTerm,
     setSearchTerm,
     debouncedSearchTerm,
@@ -318,7 +243,6 @@ const useInventoryLogic = ({ products, setProducts, settings }) => {
     handleShippingMethodChange,
     formData,
     setFormData,
-    handleUsageInstructionsChange,
     handleMoneyChange,
     handleDecimalChange,
     handleImageSelect,
