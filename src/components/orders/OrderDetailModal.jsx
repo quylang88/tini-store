@@ -58,6 +58,58 @@ const OrderDetailModal = ({ order, products, onClose, getOrderStatusInfo }) => {
     return sum - (cachedOrder.shippingFee || 0);
   }, [cachedOrder]);
 
+  // Tính tổng chi phí vận chuyển sản phẩm của các sản phẩm trong đơn hàng quy đổi sang VNĐ
+  const totalProductShippingFee = React.useMemo(() => {
+    if (!cachedOrder || !cachedOrder.items) return 0;
+    let total = 0;
+    for (const item of cachedOrder.items) {
+      const product =
+        productMap.get(item.productId) || productMap.get(item.id);
+      const qty = Number(item.quantity) || 0;
+      let unitShippingVnd = 0;
+
+      if (Number.isFinite(item.shippingFeeVnd)) {
+        unitShippingVnd = Number(item.shippingFeeVnd);
+      } else if (Number.isFinite(item.productShippingFee)) {
+        unitShippingVnd = Number(item.productShippingFee);
+      } else if (product) {
+        if (Number.isFinite(product.shippingFeeVnd)) {
+          unitShippingVnd = Number(product.shippingFeeVnd);
+        } else if (product.shipping) {
+          unitShippingVnd =
+            Number(product.shipping.perUnitVnd) ||
+            Number(product.shipping.feeVnd) ||
+            (product.shipping.method === "jp" && product.shipping.feeJpy
+              ? Math.round(
+                  Number(product.shipping.feeJpy) *
+                    (Number(product.shipping.exchangeRate) || 0),
+                )
+              : 0);
+        } else if (
+          Array.isArray(product.purchaseLots) &&
+          product.purchaseLots.length > 0
+        ) {
+          const latestLot =
+            product.purchaseLots[product.purchaseLots.length - 1];
+          if (latestLot?.shipping) {
+            unitShippingVnd =
+              Number(latestLot.shipping.perUnitVnd) ||
+              Number(latestLot.shipping.feeVnd) ||
+              (latestLot.shipping.method === "jp" && latestLot.shipping.feeJpy
+                ? Math.round(
+                    Number(latestLot.shipping.feeJpy) *
+                      (Number(latestLot.shipping.exchangeRate) || 0),
+                  )
+                : 0);
+          }
+        }
+      }
+
+      total += unitShippingVnd * qty;
+    }
+    return total;
+  }, [cachedOrder, productMap]);
+
   if (!cachedOrder) return null;
 
   const orderLabel = cachedOrder.orderNumber
@@ -268,6 +320,12 @@ const OrderDetailModal = ({ order, products, onClose, getOrderStatusInfo }) => {
             <span className="font-medium text-rose-900">Tổng đơn</span>
             <span className="text-lg font-bold text-rose-600">
               {formatNumber(cachedOrder.total)}đ
+            </span>
+          </div>
+          <div className="flex justify-between text-sm text-gray-500 pt-1">
+            <span className="font-medium text-rose-900">Chi phí vận chuyển</span>
+            <span className="font-semibold text-rose-700">
+              {formatNumber(totalProductShippingFee)}đ
             </span>
           </div>
           <div className="flex justify-between text-sm text-emerald-600 pt-1">
