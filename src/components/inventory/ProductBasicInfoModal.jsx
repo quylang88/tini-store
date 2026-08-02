@@ -7,10 +7,7 @@ import { formatInputNumber } from "../../utils/formatters/formatUtils";
 import useHighlightFields from "../../hooks/ui/useHighlightFields";
 import ProductUsageInstructionsField from "./ProductUsageInstructionsField";
 import { resolveProductUsageInstructions } from "../../services/productUsageInstructionsService";
-import {
-  hasUsageInstructions,
-  normalizeUsageInstructions,
-} from "../../utils/inventory/usageInstructions";
+import { normalizeUsageInstructions } from "../../utils/inventory/usageInstructions";
 
 // Helper để tạo object form chuẩn từ product
 const getInitialFormData = (product, categories) => ({
@@ -68,39 +65,32 @@ const ProductBasicInfoModal = ({
     setFormData(newData);
     setInitialFormData(newData);
     setUsageInstructionsError("");
-    setIsGeneratingUsageInstructions(
-      Boolean(product?.id && !hasUsageInstructions(product.usageInstructions)),
-    );
+    setIsGeneratingUsageInstructions(false);
   }
 
   useEffect(() => {
     formDataRef.current = formData;
   }, [formData]);
 
-  useEffect(() => {
-    if (
-      !isOpen ||
-      !product?.id ||
-      hasUsageInstructions(product.usageInstructions)
-    ) {
-      return undefined;
-    }
+  const handleGenerateUsageInstructions = () => {
+    if (isGeneratingUsageInstructions) return;
 
-    let isActive = true;
-    const requestName = product.name;
-    const requestCategory = product.category || categories?.[0] || "Chung";
-    const requestImage = product.image || null;
-    const requestIdentityRevision = identityRevisionRef.current;
+    setIsGeneratingUsageInstructions(true);
+    setUsageInstructionsError("");
+
+    const requestName = formData.name || product?.name || "";
+    const requestCategory =
+      formData.category || product?.category || categories?.[0] || "Chung";
+    const requestImage = formData.image || product?.image || null;
 
     resolveProductUsageInstructions({
-      id: product.id,
+      id: product?.id,
       name: requestName,
       category: requestCategory,
       image: requestImage,
-      usageInstructions: product.usageInstructions,
+      usageInstructions: formData.usageInstructions,
     })
       .then((res) => {
-        if (!isActive) return;
         const usageInstructions =
           typeof res === "string" ? res : res?.instructions;
         const error = typeof res === "object" ? res?.error : null;
@@ -112,42 +102,22 @@ const ProductBasicInfoModal = ({
 
         if (!usageInstructions) return;
 
-        const currentForm = formDataRef.current;
-        const identityStillMatches =
-          identityRevisionRef.current === requestIdentityRevision &&
-          normalizeUsageInstructions(currentForm.name) ===
-            normalizeUsageInstructions(requestName) &&
-          currentForm.category === requestCategory &&
-          currentForm.image === requestImage;
-        if (
-          !identityStillMatches ||
-          hasUsageInstructions(currentForm.usageInstructions)
-        ) {
-          return;
-        }
-
-        const nextForm = {
-          ...currentForm,
-          usageInstructions,
-        };
-        formDataRef.current = nextForm;
-        setFormData(nextForm);
-        setInitialFormData((previous) => ({
+        setFormData((previous) => ({
           ...previous,
           usageInstructions,
         }));
         setUsageInstructionsError("");
-        onUsageInstructionsGenerated?.({
-          productId: product.id,
-          name: requestName,
-          category: requestCategory,
-          usageInstructions,
-        });
+        if (product?.id) {
+          onUsageInstructionsGenerated?.({
+            productId: product.id,
+            name: requestName,
+            category: requestCategory,
+            usageInstructions,
+          });
+        }
       })
       .catch((error) => {
-        if (!isActive) return;
-
-        console.error("Không thể tự tạo HDSD khi mở sản phẩm:", error);
+        console.error("Không thể tự tạo HDSD khi tra cứu AI:", error);
         const message =
           "Đã xảy ra lỗi ngoài dự kiến khi tạo HDSD. Vui lòng thử lại hoặc nhập thủ công.";
         setUsageInstructionsError(message);
@@ -157,26 +127,9 @@ const ProductBasicInfoModal = ({
         });
       })
       .finally(() => {
-        if (isActive) {
-          setIsGeneratingUsageInstructions(false);
-        }
+        setIsGeneratingUsageInstructions(false);
       });
-
-    return () => {
-      isActive = false;
-      setIsGeneratingUsageInstructions(false);
-    };
-  }, [
-    categories,
-    isOpen,
-    onError,
-    onUsageInstructionsGenerated,
-    product?.image,
-    product?.category,
-    product?.id,
-    product?.name,
-    product?.usageInstructions,
-  ]);
+  };
 
   const handleImageFileChange = (file) => {
     if (file) {
@@ -335,6 +288,7 @@ const ProductBasicInfoModal = ({
               usageInstructions,
             }));
           }}
+          onGenerateAI={handleGenerateUsageInstructions}
           readOnly={isGeneratingUsageInstructions}
           isGenerating={isGeneratingUsageInstructions}
           errorText={usageInstructionsError}

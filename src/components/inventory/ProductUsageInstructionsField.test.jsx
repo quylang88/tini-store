@@ -43,4 +43,16 @@ describe("ProductUsageInstructionsField", () => {
       configurable: true,
     });
   });
+
+  it("renders Tra cứu AI button when onGenerateAI handler is provided", () => {
+    const html = renderToStaticMarkup(
+      <ProductUsageInstructionsField
+        value=""
+        onChange={() => {}}
+        onGenerateAI={() => {}}
+      />,
+    );
+
+    expect(html).toContain("Tra cứu AI");
+  });
 });
