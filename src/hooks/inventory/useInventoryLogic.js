@@ -44,6 +44,8 @@ const useInventoryLogic = ({ products, setProducts, settings }) => {
     setFormData,
     handleMoneyChange,
     handleCurrencyChange,
+    handleShippingMethodChange,
+    handleDecimalChange,
     handleImageSelect,
   } = useInventoryFormState({ settings, activeCategory });
 

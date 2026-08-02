@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { normalizeString } from "../../utils/formatters/formatUtils";
 import { getProductDate } from "../../utils/common/sortingUtils";
 import {
@@ -12,63 +12,34 @@ import {
 const searchableProductCache = new WeakMap();
 
 const useProductFilterSort = ({
-  products,
+  products = [],
   filterConfig = {},
   sortConfig = { key: "date", direction: "desc" },
   customFilterFn,
 }) => {
   const { searchTerm = "", activeCategory = "Tất cả" } = filterConfig;
 
-  const [cache, setCache] = useState({
-    products: [],
-    searchableProducts: [],
-  });
-
   // Tối ưu hóa: Tính toán trước các trường tìm kiếm đã được chuẩn hóa.
-  // Sử dụng state để lưu trữ cache và cập nhật ngay trong render (Derived State pattern).
-  // Pattern này tránh lỗi "access refs during render" và vẫn đảm bảo hiệu năng cao nhờ O(N) diffing.
-  if (products !== cache.products) {
-    const prevProducts = cache.products;
-    const prevSearchable = cache.searchableProducts;
-    const prevLength = prevProducts.length;
-
-    const newSearchable = new Array(products.length);
-
-    for (let i = 0; i < products.length; i++) {
-      const product = products[i];
-
-      // Optimization: Kiểm tra nếu sản phẩm tại index này giống hệt phiên bản trước (reference equality)
-      // thì tái sử dụng wrapper cũ luôn, tránh cả việc lookup WeakMap.
-      if (i < prevLength && product === prevProducts[i]) {
-        newSearchable[i] = prevSearchable[i];
-        continue;
-      }
-
-      // Fallback: Kiểm tra WeakMap cache (trường hợp reorder hoặc insert/delete làm lệch index)
+  // Sử dụng useMemo kết hợp WeakMap cache để tránh tạo object không cần thiết và tránh side-effect khi render.
+  const searchableProducts = useMemo(() => {
+    const list = products || [];
+    return list.map((product) => {
       if (searchableProductCache.has(product)) {
-        newSearchable[i] = searchableProductCache.get(product);
-      } else {
-        const searchable = {
-          original: product,
-          normalizedName: normalizeString(product.name),
-          searchableProductCode: normalizeString(product.productCode),
-          // Pre-calculate sort values (date is expensive O(N) due to lot traversal)
-          sortDate: getProductDate(product),
-          sortPrice: Number(product.price) || 0,
-        };
-
-        searchableProductCache.set(product, searchable);
-        newSearchable[i] = searchable;
+        return searchableProductCache.get(product);
       }
-    }
+      const searchable = {
+        original: product,
+        normalizedName: normalizeString(product?.name || ""),
+        searchableProductCode: normalizeString(product?.productCode || ""),
+        // Pre-calculate sort values (date is expensive O(N) due to lot traversal)
+        sortDate: getProductDate(product),
+        sortPrice: Number(product?.price) || 0,
+      };
 
-    setCache({
-      products: products,
-      searchableProducts: newSearchable,
+      searchableProductCache.set(product, searchable);
+      return searchable;
     });
-  }
-
-  const searchableProducts = cache.searchableProducts;
+  }, [products]);
 
   const searchTerms = useMemo(() => parseSearchTerms(searchTerm), [searchTerm]);
 
