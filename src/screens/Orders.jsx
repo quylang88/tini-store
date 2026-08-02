@@ -208,6 +208,7 @@ const Orders = ({
         <OrderDetailModal
           order={selectedOrder}
           products={products}
+          settings={settings}
           onClose={() => setSelectedOrder(null)}
           getOrderStatusInfo={getOrderStatusInfo}
         />
@@ -248,6 +249,7 @@ const Orders = ({
         open={isMergeExportOpen && selectedMergeOrders.length >= 2}
         orders={selectedMergeOrders}
         products={products}
+        settings={settings}
         onClose={() => setIsMergeExportOpen(false)}
       />
     </>

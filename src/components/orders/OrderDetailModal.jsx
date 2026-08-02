@@ -21,7 +21,13 @@ import { getOrderUsageInstructionItems } from "../../utils/file/usageInstruction
 import ErrorModal from "../modals/ErrorModal";
 
 // OrderDetailModal: Xem chi tiết đơn hàng (Chỉ xem) -> showCloseIcon={false}
-const OrderDetailModal = ({ order, products, onClose, getOrderStatusInfo }) => {
+const OrderDetailModal = ({
+  order,
+  products,
+  settings,
+  onClose,
+  getOrderStatusInfo,
+}) => {
   const [exportingFormat, setExportingFormat] = useState(null);
   const [exportError, setExportError] = useState(null);
   const isExporting = Boolean(exportingFormat);
@@ -130,11 +136,11 @@ const OrderDetailModal = ({ order, products, onClose, getOrderStatusInfo }) => {
     );
     try {
       if (format === "image") {
-        await exportOrdersToImages([cachedOrder], products);
+        await exportOrdersToImages([cachedOrder], products, settings);
       } else if (format === "hdsd") {
         await exportUsageInstructionsToPdf(cachedOrder, products);
       } else {
-        await exportOrderToHTML(cachedOrder, products, format);
+        await exportOrderToHTML(cachedOrder, products, format, settings);
       }
     } catch (error) {
       console.error("Export error:", error);

@@ -516,7 +516,10 @@ const renderOrderImagePage = async ({
   totalPages,
   logoImg,
   itemImageMap,
+  settings = {},
 }) => {
+  const isCheckingSlip = settings?.exportMode === "checking_slip";
+
   const CANVAS_WIDTH = 1125;
   const PADDING = 40;
   const HEADER_HEIGHT = estimateOrderImageHeaderHeight(exportData);
@@ -604,11 +607,14 @@ const renderOrderImagePage = async ({
   ctx.font =
     "bold 38px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
   ctx.fillStyle = COLOR_TEXT_PRICE;
-  ctx.fillText(
-    exportData.isMerged ? "ĐƠN HÀNG GỘP" : "ĐƠN HÀNG",
-    CANVAS_WIDTH / 2,
-    titleY,
-  );
+  const docTitle = isCheckingSlip
+    ? exportData.isMerged
+      ? "PHIẾU KIỂM HÀNG GỘP"
+      : "PHIẾU KIỂM HÀNG"
+    : exportData.isMerged
+    ? "ĐƠN HÀNG GỘP"
+    : "ĐƠN HÀNG";
+  ctx.fillText(docTitle, CANVAS_WIDTH / 2, titleY);
   currentY = titleSectionTop + TITLE_SECTION_HEIGHT;
 
   ctx.textAlign = "left";
@@ -710,18 +716,25 @@ const renderOrderImagePage = async ({
     ctx.fillStyle = COLOR_TEXT_PRIMARY;
     textY = drawWrappedText(ctx, item.name, textX, textY, maxTextWidth, 38) + 8;
 
-    ctx.font =
-      "bold 38px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
-    ctx.fillStyle = COLOR_TEXT_PRICE;
-    ctx.fillText(`${formatNumber(item.price)}đ`, textX, textY);
-    textY += 42;
+    if (isCheckingSlip) {
+      ctx.font =
+        "bold 36px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
+      ctx.fillStyle = COLOR_TEXT_PRIMARY;
+      ctx.fillText(`Số lượng: ${item.quantity}`, textX, textY + 12);
+    } else {
+      ctx.font =
+        "bold 38px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
+      ctx.fillStyle = COLOR_TEXT_PRICE;
+      ctx.fillText(`${formatNumber(item.price)}đ`, textX, textY);
+      textY += 42;
 
-    ctx.font =
-      "26px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
-    ctx.fillStyle = COLOR_TEXT_META;
-    ctx.fillText(`Số lượng: ${item.quantity}`, textX, textY);
-    textY += 34;
-    ctx.fillText(`Thành tiền: ${formatNumber(item.total)}đ`, textX, textY);
+      ctx.font =
+        "26px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
+      ctx.fillStyle = COLOR_TEXT_META;
+      ctx.fillText(`Số lượng: ${item.quantity}`, textX, textY);
+      textY += 34;
+      ctx.fillText(`Thành tiền: ${formatNumber(item.total)}đ`, textX, textY);
+    }
 
     if (index < pageItems.length - 1) {
       const dividerY = itemY + itemHeight;
@@ -750,19 +763,21 @@ const renderOrderImagePage = async ({
     const textY = footerStartY + 56;
     ctx.textAlign = "left";
     ctx.font =
-      "bold 32px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
+      "bold 36px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
     ctx.fillStyle = COLOR_TEXT_PRIMARY;
     ctx.fillText(`TỔNG SL: ${exportData.totalQuantity} sp`, PADDING, textY);
 
-    ctx.textAlign = "right";
-    ctx.font =
-      "bold 48px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
-    ctx.fillStyle = COLOR_TEXT_PRICE;
-    ctx.fillText(
-      `${formatNumber(exportData.totalAmount)}đ`,
-      CANVAS_WIDTH - PADDING,
-      textY + 10,
-    );
+    if (!isCheckingSlip) {
+      ctx.textAlign = "right";
+      ctx.font =
+        "bold 48px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
+      ctx.fillStyle = COLOR_TEXT_PRICE;
+      ctx.fillText(
+        `${formatNumber(exportData.totalAmount)}đ`,
+        CANVAS_WIDTH - PADDING,
+        textY + 10,
+      );
+    }
   } else {
     ctx.textAlign = "center";
     ctx.font =
@@ -778,7 +793,7 @@ const renderOrderImagePage = async ({
   });
 };
 
-export const generateOrderImages = async (exportData) => {
+export const generateOrderImages = async (exportData, settings = {}) => {
   if (!exportData) return [];
 
   const pages = paginateBalancedByCount(exportData.items, 6);
@@ -795,6 +810,7 @@ export const generateOrderImages = async (exportData) => {
         totalPages: pageItemsList.length,
         logoImg,
         itemImageMap,
+        settings,
       }),
     ),
   );

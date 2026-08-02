@@ -152,14 +152,16 @@ export const exportOrderToHTML = async (
   order,
   products = [],
   format = "receipt",
+  settings = {},
 ) => {
-  return exportOrdersToHTML([order], products, format);
+  return exportOrdersToHTML([order], products, format, settings);
 };
 
 export const exportOrdersToHTML = async (
   orders,
   products = [],
   format = "receipt",
+  settings = {},
 ) => {
   const exportData = buildOrdersExportData(orders, products);
   if (!exportData) return;
@@ -168,21 +170,29 @@ export const exportOrdersToHTML = async (
   let fileName = "";
 
   if (format === "a4") {
-    htmlContent = await generateA4InvoiceHTMLContent(exportData);
-    fileName = sanitizeFileName(`${buildOrdersExportBaseName(exportData, "Don_hang", "Don_gop")}.html`);
+    htmlContent = await generateA4InvoiceHTMLContent(exportData, settings);
+    fileName = sanitizeFileName(
+      `${buildOrdersExportBaseName(exportData, "Don_hang", "Don_gop")}.html`,
+    );
   } else {
-    htmlContent = await generateReceiptHTMLContent(exportData);
-    fileName = sanitizeFileName(`${buildOrdersExportBaseName(exportData, "Bill", "Bill_gop")}.html`);
+    htmlContent = await generateReceiptHTMLContent(exportData, settings);
+    fileName = sanitizeFileName(
+      `${buildOrdersExportBaseName(exportData, "Bill", "Bill_gop")}.html`,
+    );
   }
 
   await shareOrDownloadFile(htmlContent, fileName, "text/html");
 };
 
-export const exportOrdersToImages = async (orders, products = []) => {
+export const exportOrdersToImages = async (
+  orders,
+  products = [],
+  settings = {},
+) => {
   const exportData = buildOrdersExportData(orders, products);
   if (!exportData) return;
 
-  const imageBlobs = await generateOrderImages(exportData);
+  const imageBlobs = await generateOrderImages(exportData, settings);
   const baseName = buildOrdersExportBaseName(
     exportData,
     "Don_hang",

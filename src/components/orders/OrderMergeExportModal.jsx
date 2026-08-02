@@ -9,7 +9,7 @@ import {
 } from "../../utils/file/fileUtils";
 import { buildOrdersExportData } from "../../utils/file/orderExportUtils";
 
-const OrderMergeExportModal = ({ open, orders, products, onClose }) => {
+const OrderMergeExportModal = ({ open, orders, products, settings, onClose }) => {
   const [isExporting, setIsExporting] = useState(false);
 
   const exportData = useMemo(
@@ -25,9 +25,9 @@ const OrderMergeExportModal = ({ open, orders, products, onClose }) => {
 
     try {
       if (format === "image") {
-        await exportOrdersToImages(orders, products);
+        await exportOrdersToImages(orders, products, settings);
       } else {
-        await exportOrdersToHTML(orders, products, format);
+        await exportOrdersToHTML(orders, products, format, settings);
       }
       onClose?.();
     } catch (error) {

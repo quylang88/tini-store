@@ -7,6 +7,7 @@ import {
   X,
   LogOut,
   Sparkles,
+  Printer,
 } from "lucide-react";
 import {
   formatInputNumber,
@@ -144,6 +145,36 @@ const Settings = ({
               * Tỷ giá này sẽ được tự động điền khi bạn nhập kho mới. Bạn nên
               nhập tỷ giá thực tế mua vào.
             </p>
+          </div>
+        </SettingsSection>
+
+        {/* Cấu hình In & Xuất phiếu */}
+        <SettingsSection
+          title="Cấu hình In & Xuất phiếu"
+          icon={Printer}
+          iconClassName="text-rose-500"
+        >
+          <div className="space-y-4">
+            <div>
+              <label className="block text-xs font-bold text-rose-700 uppercase mb-2">
+                Chế độ xuất phiếu mặc định
+              </label>
+              <AnimatedFilterTabs
+                tabs={[
+                  { key: "invoice", label: "Hóa đơn bán hàng" },
+                  { key: "checking_slip", label: "Phiếu kiểm hàng" },
+                ]}
+                activeTab={settings.exportMode || "invoice"}
+                onChange={(key) =>
+                  saveSettings({ ...settings, exportMode: key })
+                }
+              />
+              <p className="text-xs text-rose-600 mt-2">
+                {settings.exportMode === "checking_slip"
+                  ? "* Chế độ Phiếu kiểm hàng: ẩn toàn bộ đơn giá, thành tiền và tổng số tiền trên K80, A4 & Ảnh để phục vụ kiểm kê."
+                  : "* Chế độ Hóa đơn bán hàng: xuất đầy đủ thông tin đơn giá, thành tiền và tổng cộng."}
+              </p>
+            </div>
           </div>
         </SettingsSection>
 

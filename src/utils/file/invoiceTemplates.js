@@ -208,22 +208,40 @@ const renderA4CustomerTable = (exportData) => {
   `;
 };
 
-export const generateReceiptHTMLContent = async (exportData) => {
+export const generateReceiptHTMLContent = async (
+  exportData,
+  settings = {},
+) => {
   if (!exportData) return "";
+
+  const isCheckingSlip = settings?.exportMode === "checking_slip";
 
   const logoBase64 = await fetchLogoBase64();
   const logoHtml = logoBase64
     ? `<img src="${logoBase64}" alt="Tiny Shop Logo" style="height: 100px; margin-bottom: 5px;">`
     : `<h1 class="shop-name">Tiny Shop</h1>`;
 
-  const titleText = exportData.isMerged ? "HÓA ĐƠN GỘP" : "Hóa đơn";
+  const titleText = isCheckingSlip
+    ? (exportData.isMerged ? "PHIẾU KIỂM HÀNG GỘP" : "PHIẾU KIỂM HÀNG")
+    : (exportData.isMerged ? "HÓA ĐƠN GỘP" : "Hóa đơn");
+
   const metaText = exportData.isMerged
     ? `Ngày xuất: ${escapeHtml(exportData.exportedAtDisplay)}`
     : `${escapeHtml(exportData.primaryOrderReference)} - ${escapeHtml(exportData.primaryOrderDateDisplay)}`;
 
   const itemsRows = exportData.items
-    .map(
-      (item, index) => `
+    .map((item, index) =>
+      isCheckingSlip
+        ? `
+      <tr>
+        <td style="width: 10%; color: #999;">${index + 1}</td>
+        <td>
+          <div style="font-weight: 500;">${escapeHtml(item.name)}</div>
+        </td>
+        <td class="center" style="width: 20%; font-weight: 600;">${item.quantity}</td>
+      </tr>
+    `
+        : `
       <tr>
         <td style="width: 5%; color: #999;">${index + 1}</td>
         <td>
@@ -236,6 +254,50 @@ export const generateReceiptHTMLContent = async (exportData) => {
     `,
     )
     .join("");
+
+  const tableHeaders = isCheckingSlip
+    ? `
+      <tr>
+        <th style="width: 10%;">#</th>
+        <th>Sản phẩm</th>
+        <th class="center" style="width: 20%;">SL</th>
+      </tr>
+    `
+    : `
+      <tr>
+        <th>#</th>
+        <th>Sản phẩm</th>
+        <th class="right">Đơn giá</th>
+        <th class="center">SL</th>
+        <th class="right">Thành tiền</th>
+      </tr>
+    `;
+
+  const totalSection = isCheckingSlip
+    ? `
+  <div class="total-section">
+    <div class="row" style="font-size: 16px; font-weight: bold; color: #e11d48;">
+      <span>Tổng số lượng:</span>
+      <span>${exportData.totalQuantity} sp</span>
+    </div>
+  </div>
+    `
+    : `
+  <div class="total-section">
+    <div class="row">
+      <span>Tổng số lượng:</span>
+      <span>${exportData.totalQuantity} sp</span>
+    </div>
+    <div class="row final-total">
+      <span>Tổng cộng:</span>
+      <span>${formatNumber(exportData.totalAmount)}đ</span>
+    </div>
+  </div>
+    `;
+
+  const footerText = isCheckingSlip
+    ? "Phiếu dùng cho mục đích kiểm kê / giao nhận hàng hóa."
+    : "Cảm ơn quý khách đã mua hàng!";
 
   const style = `
     <style>
@@ -284,40 +346,30 @@ export const generateReceiptHTMLContent = async (exportData) => {
 
   <table>
     <thead>
-      <tr>
-        <th>#</th>
-        <th>Sản phẩm</th>
-        <th class="right">Đơn giá</th>
-        <th class="center">SL</th>
-        <th class="right">Thành tiền</th>
-      </tr>
+      ${tableHeaders}
     </thead>
     <tbody>
       ${itemsRows}
     </tbody>
   </table>
 
-  <div class="total-section">
-    <div class="row">
-      <span>Tổng số lượng:</span>
-      <span>${exportData.totalQuantity} sp</span>
-    </div>
-    <div class="row final-total">
-      <span>Tổng cộng:</span>
-      <span>${formatNumber(exportData.totalAmount)}đ</span>
-    </div>
-  </div>
+  ${totalSection}
 
   <div class="footer">
-    Cảm ơn quý khách đã mua hàng!
+    ${escapeHtml(footerText)}
   </div>
 </body>
 </html>
   `;
 };
 
-export const generateA4InvoiceHTMLContent = async (exportData) => {
+export const generateA4InvoiceHTMLContent = async (
+  exportData,
+  settings = {},
+) => {
   if (!exportData) return "";
+
+  const isCheckingSlip = settings?.exportMode === "checking_slip";
 
   const totalAmountText = readMoneyToVietnamese(exportData.totalAmount || 0);
   const logoBase64 = await fetchLogoBase64();
@@ -328,13 +380,26 @@ export const generateA4InvoiceHTMLContent = async (exportData) => {
   const pages = paginateA4Items(exportData);
   let runningIndex = 0;
 
+  const docTitleText = isCheckingSlip
+    ? (exportData.isMerged ? "PHIẾU KIỂM HÀNG GỘP" : "PHIẾU KIỂM HÀNG")
+    : (exportData.isMerged ? "ĐƠN HÀNG GỘP" : "ĐƠN HÀNG");
+
   const pageHtml = pages
     .map((pageItems, pageIndex) => {
       const isLastPage = pageIndex === pages.length - 1;
       const rowsHtml = pageItems
         .map((item) => {
           runningIndex += 1;
-          return `
+          return isCheckingSlip
+            ? `
+            <tr>
+              <td class="text-center" style="width: 8%;">${runningIndex}</td>
+              <td class="text-center" style="width: 20%;">${escapeHtml(item.barcode || "-")}</td>
+              <td>${escapeHtml(item.name)}</td>
+              <td class="text-center" style="width: 15%; font-weight: bold;">${item.quantity}</td>
+            </tr>
+          `
+            : `
             <tr>
               <td class="text-center" style="width: 5%;">${runningIndex}</td>
               <td class="text-center" style="width: 15%;">${escapeHtml(item.barcode || "-")}</td>
@@ -346,6 +411,63 @@ export const generateA4InvoiceHTMLContent = async (exportData) => {
           `;
         })
         .join("");
+
+      const tableHeaderHtml = isCheckingSlip
+        ? `
+            <thead>
+              <tr>
+                <th>STT</th>
+                <th>Mã SP</th>
+                <th>Tên hàng hóa, dịch vụ</th>
+                <th>SL</th>
+              </tr>
+            </thead>
+          `
+        : `
+            <thead>
+              <tr>
+                <th>STT</th>
+                <th>Mã SP</th>
+                <th>Tên hàng hóa, dịch vụ</th>
+                <th>Đơn giá</th>
+                <th>SL</th>
+                <th>Thành tiền</th>
+              </tr>
+            </thead>
+          `;
+
+      const lastPageTotalHtml = isCheckingSlip
+        ? `
+                <div class="total-section">
+                  <table style="width: 100%; border-collapse: collapse; border: none;">
+                    <tr>
+                      <td style="text-align: right; padding: 4px; border: none; font-size: 15px;">Tổng số lượng:</td>
+                      <td style="width: 150px; text-align: right; padding: 4px; border: none; font-weight: bold; font-size: 18px;">${exportData.totalQuantity} sp</td>
+                    </tr>
+                  </table>
+                </div>
+              `
+        : `
+                <div class="total-section">
+                  <table style="width: 100%; border-collapse: collapse; border: none;">
+                    <tr>
+                      <td style="text-align: right; padding: 4px; border: none;">Tổng số lượng:</td>
+                      <td style="width: 150px; text-align: right; padding: 4px; border: none; font-weight: bold; font-size: 16px;">${exportData.totalQuantity}</td>
+                    </tr>
+                    <tr>
+                      <td style="text-align: right; padding: 4px; border: none;">Tổng tiền:</td>
+                      <td style="width: 150px; text-align: right; padding: 4px; border: none; font-weight: bold; font-size: 20px;">${formatNumber(exportData.totalAmount)}đ</td>
+                    </tr>
+                  </table>
+                  <div style="text-align: right; font-size: 14px; font-style: italic; font-weight: normal; margin-top: 5px;">
+                    (Bằng chữ: ${totalAmountText})
+                  </div>
+                </div>
+              `;
+
+      const footerMsgText = isCheckingSlip
+        ? "Phiếu dùng cho mục đích kiểm kê / giao nhận hàng hóa."
+        : "Cảm ơn Quý khách và hẹn gặp lại!";
 
       return `
         <section class="a4-page ${isLastPage ? "" : "page-break"}">
@@ -363,7 +485,7 @@ export const generateA4InvoiceHTMLContent = async (exportData) => {
             </div>
           </div>
 
-          <div class="doc-title">${exportData.isMerged ? "ĐƠN HÀNG GỘP" : "ĐƠN HÀNG"}</div>
+          <div class="doc-title">${escapeHtml(docTitleText)}</div>
 
           <div class="customer-section">
             ${renderA4CustomerTable(exportData)}
@@ -373,16 +495,7 @@ export const generateA4InvoiceHTMLContent = async (exportData) => {
           ${renderContactStripHTML(true)}
 
           <table class="data-table">
-            <thead>
-              <tr>
-                <th>STT</th>
-                <th>Mã SP</th>
-                <th>Tên hàng hóa, dịch vụ</th>
-                <th>Đơn giá</th>
-                <th>SL</th>
-                <th>Thành tiền</th>
-              </tr>
-            </thead>
+            ${tableHeaderHtml}
             <tbody>
               ${rowsHtml}
             </tbody>
@@ -390,28 +503,12 @@ export const generateA4InvoiceHTMLContent = async (exportData) => {
 
           ${
             isLastPage
-              ? `
-                <div class="total-section">
-                  <table style="width: 100%; border-collapse: collapse; border: none;">
-                    <tr>
-                      <td style="text-align: right; padding: 4px; border: none;">Tổng số lượng:</td>
-                      <td style="width: 150px; text-align: right; padding: 4px; border: none; font-weight: bold; font-size: 16px;">${exportData.totalQuantity}</td>
-                    </tr>
-                    <tr>
-                      <td style="text-align: right; padding: 4px; border: none;">Tổng tiền:</td>
-                      <td style="width: 150px; text-align: right; padding: 4px; border: none; font-weight: bold; font-size: 20px;">${formatNumber(exportData.totalAmount)}đ</td>
-                    </tr>
-                  </table>
-                  <div style="text-align: right; font-size: 14px; font-style: italic; font-weight: normal; margin-top: 5px;">
-                    (Bằng chữ: ${totalAmountText})
-                  </div>
-                </div>
-              `
+              ? lastPageTotalHtml
               : `<div class="continuation-text">Tiếp trang sau</div>`
           }
 
           <div class="footer-msg">
-            Cảm ơn Quý khách và hẹn gặp lại!
+            ${escapeHtml(footerMsgText)}
           </div>
         </section>
       `;

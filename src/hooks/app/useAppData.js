@@ -12,6 +12,7 @@ const useAppData = (isAuthenticated) => {
     categories: ["Chung", "Mỹ phẩm", "Thực phẩm", "Quần áo"],
     themeId: "rose", // Theme mặc định
     lastGreetingDate: null,
+    exportMode: "invoice", // "invoice" | "checking_slip"
   });
   const [customers, setCustomers] = useState([]);
   const [chatSummary, setChatSummary] = useState("");
@@ -27,8 +28,12 @@ const useAppData = (isAuthenticated) => {
         );
         setOrders(data.orders);
         if (data.settings) {
-          // Merge với settings mặc định để đảm bảo các trường mới như themeId luôn tồn tại
-          setSettings((prev) => ({ ...prev, ...data.settings }));
+          // Merge với settings mặc định để đảm bảo các trường mới luôn tồn tại
+          setSettings((prev) => ({
+            exportMode: "invoice",
+            ...prev,
+            ...data.settings,
+          }));
         }
         setCustomers(data.customers);
         setChatSummary(data.chatSummary);
