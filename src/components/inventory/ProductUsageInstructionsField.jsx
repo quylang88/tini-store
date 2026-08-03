@@ -315,7 +315,7 @@ const sanitizePastedHtml = (htmlInput) => {
         "a",
       ].includes(tagName);
 
-      if (isInlineElement) {
+      if (isInlineElement || isBold || isItalic || isUnderline || isStrike) {
         if (isBold && newTag !== "strong") {
           const strong = document.createElement("strong");
           strong.appendChild(newElement);
@@ -403,7 +403,9 @@ const sanitizePastedHtml = (htmlInput) => {
       }
     });
 
-    return container.innerHTML;
+    let resultHtml = container.innerHTML;
+    resultHtml = processInlineFormatting(resultHtml);
+    return resultHtml;
   } catch {
     return html;
   }
