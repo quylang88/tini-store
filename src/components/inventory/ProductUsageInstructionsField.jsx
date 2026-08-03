@@ -24,6 +24,22 @@ const BULLET_SYMBOL_REGEX =
 const NUMBERED_SYMBOL_REGEX =
   /^(?:\(?\d+[.)]|\(?[a-zA-Z][.)]|\(?[ivxLCDM]+[.)])\s+/iu;
 
+// Detect Mojibake / corrupted Shift-JIS / Latin-1 replacement characters in HTML paste
+const isCorruptedMojibake = (str) => {
+  if (!str || typeof str !== "string") return false;
+  return (
+    /[\u862F\uFA00-\uFAFF\uFF65-\uFF9F\u679C\u96EA\uFFFD]/.test(str) ||
+    /ﾃ|ﾆ|福|蘯|ｺ|ｹ|卜|雪/.test(str)
+  );
+};
+
+// Section Heading Regex (e.g., "1. Công dụng", "2. Thành phần", "3. Hướng dẫn sử dụng", "I. THÀNH PHẦN", "A. CÔNG DỤNG")
+const SECTION_HEADING_REGEX =
+  /^(?:(?:\d+|[IVXLCDM]+|[A-Z])[.)]\s+)?(?:công dụng|thành phần|hướng dẫn sử dụng|liều dùng|cách dùng|đối tượng sử dụng|thông tin sản phẩm|ưu điểm|đặc điểm)\b/iu;
+
+const NUMERIC_SECTION_HEADING_REGEX =
+  /^(?:\d+|[IVXLCDM]+|[A-Za-z])[.)]\s+[A-ZÀÁẢÃẠĂẮẰẲẴẶÂẤẦẨẪẬĐÈÉẺẼẸÊẾỀỂỄỆÌÍỈĨỊÒÓỎÕỌÔỐỒỔỖỘƠỚỜỞỠỢÙÚỦŨỤƯỨỪỬỮỰỲÝỶỸỴa-zà-ỹ]/u;
+
 // Safely normalize Vietnamese Unicode diacritics (NFD -> NFC) & fix MS Word / Mobile smart quotes & spaces
 const decodeAndNormalizeVietnamese = (text) => {
   if (!text || typeof text !== "string") return "";
@@ -500,9 +516,14 @@ const ProductUsageInstructionsField = ({
     const textData = e.clipboardData?.getData("text/plain");
 
     let contentToInsert = "";
-    if (htmlData && htmlData.trim()) {
+
+    // Check if htmlData exists AND is NOT corrupted with Shift-JIS / Latin-1 Mojibake
+    if (htmlData && htmlData.trim() && !isCorruptedMojibake(htmlData)) {
       contentToInsert = sanitizePastedHtml(htmlData);
-    } else if (textData) {
+    }
+
+    // Fall back to pristine textData whenever htmlData is missing or corrupted by Mojibake
+    if (!contentToInsert && textData) {
       const normalizedText = decodeAndNormalizeVietnamese(textData);
       const lines = normalizedText.split(/\r\n|\r|\n/);
       let inUl = false;
@@ -524,7 +545,24 @@ const ProductUsageInstructionsField = ({
           return;
         }
 
-        if (BULLET_SYMBOL_REGEX.test(trimmed)) {
+        // Check if line is a Section Heading (e.g., "1. Công dụng", "2. Thành phần", "3. Hướng dẫn")
+        const isHeading =
+          (SECTION_HEADING_REGEX.test(trimmed) ||
+            NUMERIC_SECTION_HEADING_REGEX.test(trimmed)) &&
+          trimmed.length <= 80 &&
+          !/[;:?!]$/.test(trimmed);
+
+        if (isHeading) {
+          if (inUl) {
+            htmlBuffer.push("</ul>");
+            inUl = false;
+          }
+          if (inOl) {
+            htmlBuffer.push("</ol>");
+            inOl = false;
+          }
+          htmlBuffer.push(`<h2>${trimmed}</h2>`);
+        } else if (BULLET_SYMBOL_REGEX.test(trimmed)) {
           if (inOl) {
             htmlBuffer.push("</ol>");
             inOl = false;
@@ -534,7 +572,16 @@ const ProductUsageInstructionsField = ({
             inUl = true;
           }
           const clean = trimmed.replace(BULLET_SYMBOL_REGEX, "");
-          htmlBuffer.push(`<li>${clean}</li>`);
+
+          // If bullet item has a label with colon (e.g., "Chống lão hóa & đẹp da: Giúp...")
+          if (clean.includes(":") && clean.indexOf(":") < 45) {
+            const colonIndex = clean.indexOf(":");
+            const label = clean.substring(0, colonIndex);
+            const rest = clean.substring(colonIndex + 1);
+            htmlBuffer.push(`<li><strong>${label}:</strong>${rest}</li>`);
+          } else {
+            htmlBuffer.push(`<li>${clean}</li>`);
+          }
         } else if (NUMBERED_SYMBOL_REGEX.test(trimmed)) {
           if (inUl) {
             htmlBuffer.push("</ul>");
@@ -545,7 +592,15 @@ const ProductUsageInstructionsField = ({
             inOl = true;
           }
           const clean = trimmed.replace(NUMBERED_SYMBOL_REGEX, "");
-          htmlBuffer.push(`<li>${clean}</li>`);
+
+          if (clean.includes(":") && clean.indexOf(":") < 45) {
+            const colonIndex = clean.indexOf(":");
+            const label = clean.substring(0, colonIndex);
+            const rest = clean.substring(colonIndex + 1);
+            htmlBuffer.push(`<li><strong>${label}:</strong>${rest}</li>`);
+          } else {
+            htmlBuffer.push(`<li>${clean}</li>`);
+          }
         } else {
           if (inUl) {
             htmlBuffer.push("</ul>");
