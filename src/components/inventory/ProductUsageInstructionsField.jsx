@@ -18,6 +18,12 @@ import {
   Eraser,
 } from "lucide-react";
 
+const BULLET_SYMBOL_REGEX =
+  /^(?:[•⁃–—\-*+>:▪▫■□▲►✦✧★☆❖◆◇⚪⚫➔✓]|🔴|🔵|➡️|✔️|✅|o|v\.)\s+/iu;
+
+const NUMBERED_SYMBOL_REGEX =
+  /^(?:\(?\d+[.)]|\(?[a-zA-Z][.)]|\(?[ivxLCDM]+[.)])\s+/iu;
+
 // Sanitize HTML pasted from external apps (Word, Notes, Web, Messages)
 const sanitizePastedHtml = (html) => {
   if (!html) return "";
@@ -111,12 +117,13 @@ const sanitizePastedHtml = (html) => {
     const container = document.createElement("div");
     container.appendChild(fragment);
 
-    // Convert any standalone bullet paragraphs (e.g. MS Word • bullet text) into real <ul><li>
-    const paragraphs = Array.from(container.querySelectorAll("p, div"));
+    // Convert any standalone bullet or numbered paragraphs into real <ul><li> or <ol><li>
+    const paragraphs = Array.from(container.querySelectorAll("p, div, blockquote"));
     paragraphs.forEach((p) => {
       const text = p.textContent.trim();
-      if (/^[•\-\u2013*]\s+/.test(text)) {
-        const cleanText = text.replace(/^[•\-\u2013*]\s+/, "");
+
+      if (BULLET_SYMBOL_REGEX.test(text)) {
+        const cleanText = text.replace(BULLET_SYMBOL_REGEX, "");
         const li = document.createElement("li");
         li.innerHTML = cleanText;
 
@@ -128,6 +135,20 @@ const sanitizePastedHtml = (html) => {
           const ul = document.createElement("ul");
           ul.appendChild(li);
           p.parentNode.replaceChild(ul, p);
+        }
+      } else if (NUMBERED_SYMBOL_REGEX.test(text)) {
+        const cleanText = text.replace(NUMBERED_SYMBOL_REGEX, "");
+        const li = document.createElement("li");
+        li.innerHTML = cleanText;
+
+        const prev = p.previousElementSibling;
+        if (prev && prev.tagName.toLowerCase() === "ol") {
+          prev.appendChild(li);
+          p.remove();
+        } else {
+          const ol = document.createElement("ol");
+          ol.appendChild(li);
+          p.parentNode.replaceChild(ol, p);
         }
       }
     });
@@ -367,11 +388,65 @@ const ProductUsageInstructionsField = ({
     if (htmlData && htmlData.trim()) {
       contentToInsert = sanitizePastedHtml(htmlData);
     } else if (textData) {
-      contentToInsert = textData
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/\r\n|\r|\n/g, "<br>");
+      const lines = textData.split(/\r\n|\r|\n/);
+      let inUl = false;
+      let inOl = false;
+      const htmlBuffer = [];
+
+      lines.forEach((line) => {
+        const trimmed = line.trim();
+        if (!trimmed) {
+          if (inUl) {
+            htmlBuffer.push("</ul>");
+            inUl = false;
+          }
+          if (inOl) {
+            htmlBuffer.push("</ol>");
+            inOl = false;
+          }
+          htmlBuffer.push("<br>");
+          return;
+        }
+
+        if (BULLET_SYMBOL_REGEX.test(trimmed)) {
+          if (inOl) {
+            htmlBuffer.push("</ol>");
+            inOl = false;
+          }
+          if (!inUl) {
+            htmlBuffer.push("<ul>");
+            inUl = true;
+          }
+          const clean = trimmed.replace(BULLET_SYMBOL_REGEX, "");
+          htmlBuffer.push(`<li>${clean}</li>`);
+        } else if (NUMBERED_SYMBOL_REGEX.test(trimmed)) {
+          if (inUl) {
+            htmlBuffer.push("</ul>");
+            inUl = false;
+          }
+          if (!inOl) {
+            htmlBuffer.push("<ol>");
+            inOl = true;
+          }
+          const clean = trimmed.replace(NUMBERED_SYMBOL_REGEX, "");
+          htmlBuffer.push(`<li>${clean}</li>`);
+        } else {
+          if (inUl) {
+            htmlBuffer.push("</ul>");
+            inUl = false;
+          }
+          if (inOl) {
+            htmlBuffer.push("</ol>");
+            inOl = false;
+          }
+          htmlBuffer.push(`<p>${trimmed}</p>`);
+        }
+      });
+
+      if (inUl) htmlBuffer.push("</ul>");
+      if (inOl) htmlBuffer.push("</ol>");
+
+      contentToInsert = htmlBuffer.join("");
     }
 
     if (contentToInsert) {
