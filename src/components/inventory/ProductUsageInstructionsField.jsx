@@ -27,6 +27,8 @@ const sanitizePastedHtml = (html) => {
     clean = clean.replace(/<meta\b[^>]*>/gi, "");
     clean = clean.replace(/<b(\s+[^>]*)?>/gi, "<strong>").replace(/<\/b>/gi, "</strong>");
     clean = clean.replace(/<i(\s+[^>]*)?>/gi, "<em>").replace(/<\/i>/gi, "</em>");
+    // Strip inline colors to force black text
+    clean = clean.replace(/\s*style="[^"]*"/gi, "");
     return clean;
   }
 
@@ -70,9 +72,14 @@ const sanitizePastedHtml = (html) => {
         newTag = "s";
       else if (tagName === "h1" || tagName === "h2") newTag = "h2";
       else if (["h3", "h4", "h5", "h6"].includes(tagName)) newTag = "h3";
-      else if (["p", "div", "section", "article"].includes(tagName))
-        newTag = "p";
-      else if (tagName === "ul" || tagName === "ol" || tagName === "li")
+      else if (["p", "div", "section", "article"].includes(tagName)) {
+        // If paragraph has left margin/padding (e.g. MS Word indent), map to blockquote
+        const marginLeft = parseInt(
+          node.style?.marginLeft || node.style?.paddingLeft || "0",
+          10,
+        );
+        newTag = marginLeft >= 15 ? "blockquote" : "p";
+      } else if (tagName === "ul" || tagName === "ol" || tagName === "li")
         newTag = tagName;
       else if (tagName === "blockquote") newTag = "blockquote";
       else if (tagName === "hr") newTag = "hr";
@@ -81,12 +88,7 @@ const sanitizePastedHtml = (html) => {
 
       const newElement = document.createElement(newTag);
 
-      // Preserve inline text color or background color if present
-      const color = node.style.color;
-      const bgColor = node.style.backgroundColor;
-      if (color && color !== "inherit") newElement.style.color = color;
-      if (bgColor && bgColor !== "transparent")
-        newElement.style.backgroundColor = bgColor;
+      // Force black text: DO NOT copy inline color or background-color from external source!
 
       for (const child of Array.from(node.childNodes)) {
         const cleanedChild = cleanNode(child);
@@ -108,6 +110,28 @@ const sanitizePastedHtml = (html) => {
 
     const container = document.createElement("div");
     container.appendChild(fragment);
+
+    // Convert any standalone bullet paragraphs (e.g. MS Word • bullet text) into real <ul><li>
+    const paragraphs = Array.from(container.querySelectorAll("p, div"));
+    paragraphs.forEach((p) => {
+      const text = p.textContent.trim();
+      if (/^[•\-\u2013*]\s+/.test(text)) {
+        const cleanText = text.replace(/^[•\-\u2013*]\s+/, "");
+        const li = document.createElement("li");
+        li.innerHTML = cleanText;
+
+        const prev = p.previousElementSibling;
+        if (prev && prev.tagName.toLowerCase() === "ul") {
+          prev.appendChild(li);
+          p.remove();
+        } else {
+          const ul = document.createElement("ul");
+          ul.appendChild(li);
+          p.parentNode.replaceChild(ul, p);
+        }
+      }
+    });
+
     return container.innerHTML;
   } catch {
     return html;
@@ -704,7 +728,7 @@ const ProductUsageInstructionsField = ({
         data-placeholder="Nhập hướng dẫn sử dụng sản phẩm (hỗ trợ in đậm, gạch đầu dòng, tiêu đề...)..."
         className={`min-h-28 max-h-72 w-full overflow-y-auto ${
           !readOnly && !disabled ? "rounded-b-lg border-t-0" : "rounded-lg"
-        } border p-3 text-sm text-gray-900 outline-none transition-colors border-gray-200 focus:border-rose-400 empty:before:text-gray-400 empty:before:content-[attr(data-placeholder)] empty:before:pointer-events-none [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_b]:font-bold [&_strong]:font-bold [&_i]:italic [&_em]:italic [&_u]:underline [&_s]:line-through [&_strike]:line-through [&_h2]:text-base [&_h2]:font-bold [&_h2]:text-rose-700 [&_h2]:mt-1.5 [&_h2]:mb-1 [&_h3]:text-sm [&_h3]:font-bold [&_h3]:text-rose-700 [&_h3]:mt-1 [&_h3]:mb-0.5 [&_blockquote]:border-l-4 [&_blockquote]:border-rose-400 [&_blockquote]:pl-3 [&_blockquote]:italic [&_blockquote]:text-gray-600 [&_hr]:my-2 [&_hr]:border-gray-200 ${
+        } border p-3 text-sm text-gray-900 outline-none transition-colors border-gray-200 focus:border-rose-400 empty:before:text-gray-400 empty:before:content-[attr(data-placeholder)] empty:before:pointer-events-none [&_ul]:list-disc [&_ul]:pl-5 [&_ul_ul]:list-[circle] [&_ul_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_ol_ol]:list-[lower-alpha] [&_ol_ol]:pl-5 [&_b]:font-bold [&_strong]:font-bold [&_i]:italic [&_em]:italic [&_u]:underline [&_s]:line-through [&_strike]:line-through [&_h2]:text-base [&_h2]:font-bold [&_h2]:text-rose-700 [&_h2]:mt-1.5 [&_h2]:mb-1 [&_h3]:text-sm [&_h3]:font-bold [&_h3]:text-rose-700 [&_h3]:mt-1 [&_h3]:mb-0.5 [&_blockquote]:border-l-4 [&_blockquote]:border-rose-400 [&_blockquote]:pl-3 [&_blockquote]:italic [&_blockquote]:text-gray-600 [&_hr]:my-2 [&_hr]:border-gray-200 ${
           readOnly || disabled ? "bg-gray-50 text-gray-500" : "bg-white"
         }`}
       />
