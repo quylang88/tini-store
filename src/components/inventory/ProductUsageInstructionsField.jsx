@@ -272,11 +272,11 @@ const sanitizePastedHtml = (htmlInput) => {
       if (isHeading1) newTag = "h2";
       else if (isHeading2) newTag = "h3";
       else if (["p", "div", "section", "article"].includes(tagName)) {
-        const marginLeft = parseInt(
-          style.marginLeft || style.paddingLeft || "0",
+        const paddingLeft = parseInt(
+          style.paddingLeft || style.marginLeft || "0",
           10,
         );
-        newTag = marginLeft >= 15 ? "blockquote" : "p";
+        newTag = paddingLeft >= 15 ? "blockquote" : "p";
       } else if (tagName === "ul" || tagName === "ol" || tagName === "li") {
         newTag = tagName;
       } else if (tagName === "blockquote") newTag = "blockquote";
@@ -284,6 +284,14 @@ const sanitizePastedHtml = (htmlInput) => {
       else if (tagName === "br") newTag = "br";
 
       let newElement = document.createElement(newTag);
+
+      const paddingLeft = parseInt(
+        style.paddingLeft || style.marginLeft || "0",
+        10,
+      );
+      if (paddingLeft > 0 && newTag === "p") {
+        newElement.style.paddingLeft = `${Math.min(paddingLeft, 80)}px`;
+      }
 
       // Force black text: DO NOT copy inline color or background-color from external source!
 
@@ -346,7 +354,7 @@ const sanitizePastedHtml = (htmlInput) => {
 
     // Convert any standalone section heading paragraphs (e.g., "1. Công dụng", "2. Thành phần") into real <h2>
     const allBlocks = Array.from(
-      container.querySelectorAll("p, div, blockquote, li"),
+      container.querySelectorAll("p, div, blockquote"),
     );
     allBlocks.forEach((p) => {
       const text = p.textContent.trim();
@@ -399,6 +407,122 @@ const sanitizePastedHtml = (htmlInput) => {
   } catch {
     return html;
   }
+};
+
+const processInlineFormatting = (text) => {
+  if (!text) return "";
+  let result = text;
+  // Convert markdown bold **text** or __text__ to <strong>
+  result = result.replace(/(\*\*|__)(.*?)\1/g, "<strong>$2</strong>");
+  // Convert markdown italic *text* or _text_ to <em>
+  result = result.replace(/(\*|_)(.*?)\1/g, "<em>$2</em>");
+  return result;
+};
+
+// Converts plain text with indentations and lists into nested HTML structure
+const parsePlainTextToHtml = (textData) => {
+  if (!textData || !textData.trim()) return "";
+
+  const lines = textData.split(/\r\n|\r|\n/);
+  const htmlBuffer = [];
+  const listStack = []; // stores { depth, type: 'ul'|'ol' }
+
+  const closeListsToDepth = (targetDepth) => {
+    while (
+      listStack.length > 0 &&
+      listStack[listStack.length - 1].depth > targetDepth
+    ) {
+      const top = listStack.pop();
+      htmlBuffer.push(`</${top.type}>`);
+      if (listStack.length > 0) {
+        htmlBuffer.push("</li>");
+      }
+    }
+  };
+
+  lines.forEach((line) => {
+    if (!line.trim()) {
+      closeListsToDepth(-1);
+      htmlBuffer.push("<br>");
+      return;
+    }
+
+    // Calculate indent level (tabs = 4 spaces)
+    const indentMatch = line.match(/^[ \t]*/)[0];
+    let indentSpaces = 0;
+    for (const char of indentMatch) {
+      if (char === "\t") indentSpaces += 4;
+      else indentSpaces += 1;
+    }
+
+    const trimmed = line.trim();
+
+    // Check if line is a Section Heading
+    const isHeading =
+      (SECTION_HEADING_REGEX.test(trimmed) ||
+        NUMERIC_SECTION_HEADING_REGEX.test(trimmed)) &&
+      trimmed.length <= 80 &&
+      !/[;:?!]$/.test(trimmed);
+
+    if (isHeading) {
+      closeListsToDepth(-1);
+      htmlBuffer.push(`<h2>${processInlineFormatting(trimmed)}</h2>`);
+      return;
+    }
+
+    const isBullet = BULLET_SYMBOL_REGEX.test(trimmed);
+    const isNumbered = NUMBERED_SYMBOL_REGEX.test(trimmed);
+
+    if (isBullet || isNumbered) {
+      const listType = isBullet ? "ul" : "ol";
+      const regex = isBullet ? BULLET_SYMBOL_REGEX : NUMBERED_SYMBOL_REGEX;
+      const rawContent = trimmed.replace(regex, "");
+      const formattedContent = processInlineFormatting(rawContent);
+
+      const currentTop = listStack[listStack.length - 1];
+
+      if (!currentTop || indentSpaces > currentTop.depth) {
+        listStack.push({ depth: indentSpaces, type: listType });
+        htmlBuffer.push(`<${listType}><li>${formattedContent}`);
+      } else if (indentSpaces < currentTop.depth) {
+        closeListsToDepth(indentSpaces);
+        const topAfterPop = listStack[listStack.length - 1];
+        if (topAfterPop && topAfterPop.type === listType) {
+          htmlBuffer.push(`</li><li>${formattedContent}`);
+        } else {
+          if (topAfterPop) {
+            listStack.pop();
+            htmlBuffer.push(`</${topAfterPop.type}></li>`);
+          }
+          listStack.push({ depth: indentSpaces, type: listType });
+          htmlBuffer.push(`<${listType}><li>${formattedContent}`);
+        }
+      } else {
+        if (currentTop.type === listType) {
+          htmlBuffer.push(`</li><li>${formattedContent}`);
+        } else {
+          htmlBuffer.push(`</li></${currentTop.type}>`);
+          listStack.pop();
+          listStack.push({ depth: indentSpaces, type: listType });
+          htmlBuffer.push(`<${listType}><li>${formattedContent}`);
+        }
+      }
+    } else {
+      closeListsToDepth(-1);
+      const formattedContent = processInlineFormatting(trimmed);
+      if (indentSpaces > 0) {
+        const paddingEm = Math.min(indentSpaces * 0.75, 4);
+        htmlBuffer.push(
+          `<p style="padding-left: ${paddingEm}em;">${formattedContent}</p>`,
+        );
+      } else {
+        htmlBuffer.push(`<p>${formattedContent}</p>`);
+      }
+    }
+  });
+
+  closeListsToDepth(-1);
+  return htmlBuffer.join("");
 };
 
 const ProductUsageInstructionsField = ({
@@ -626,16 +750,6 @@ const ProductUsageInstructionsField = ({
     const htmlData = e.clipboardData?.getData("text/html");
     const textData = e.clipboardData?.getData("text/plain");
 
-    // DEBUG: Temporarily log clipboard data to diagnose Vietnamese font issues
-    console.log("[HDSD Paste Debug]", {
-      hasHtml: !!htmlData,
-      htmlLen: htmlData?.length,
-      htmlPreview: htmlData?.substring(0, 300),
-      hasText: !!textData,
-      textLen: textData?.length,
-      textPreview: textData?.substring(0, 200),
-    });
-
     let contentToInsert = "";
 
     // Check if htmlData exists AND is NOT corrupted with Shift-JIS / Latin-1 Mojibake
@@ -648,101 +762,8 @@ const ProductUsageInstructionsField = ({
       // Only NFC-normalize plain text, skip Mojibake repair for clean Vietnamese text
       let normalizedText;
       try { normalizedText = textData.normalize("NFC"); } catch { normalizedText = textData; }
-      normalizedText = normalizedText
-        .replace(/[\u00A0\u200B\uFEFF]/g, " ");
-      const lines = normalizedText.split(/\r\n|\r|\n/);
-      let inUl = false;
-      let inOl = false;
-      const htmlBuffer = [];
-
-      lines.forEach((line) => {
-        const trimmed = line.trim();
-        if (!trimmed) {
-          if (inUl) {
-            htmlBuffer.push("</ul>");
-            inUl = false;
-          }
-          if (inOl) {
-            htmlBuffer.push("</ol>");
-            inOl = false;
-          }
-          htmlBuffer.push("<br>");
-          return;
-        }
-
-        // Check if line is a Section Heading (e.g., "1. Công dụng", "2. Thành phần", "3. Hướng dẫn")
-        const isHeading =
-          (SECTION_HEADING_REGEX.test(trimmed) ||
-            NUMERIC_SECTION_HEADING_REGEX.test(trimmed)) &&
-          trimmed.length <= 80 &&
-          !/[;:?!]$/.test(trimmed);
-
-        if (isHeading) {
-          if (inUl) {
-            htmlBuffer.push("</ul>");
-            inUl = false;
-          }
-          if (inOl) {
-            htmlBuffer.push("</ol>");
-            inOl = false;
-          }
-          htmlBuffer.push(`<h2>${trimmed}</h2>`);
-        } else if (BULLET_SYMBOL_REGEX.test(trimmed)) {
-          if (inOl) {
-            htmlBuffer.push("</ol>");
-            inOl = false;
-          }
-          if (!inUl) {
-            htmlBuffer.push("<ul>");
-            inUl = true;
-          }
-          const clean = trimmed.replace(BULLET_SYMBOL_REGEX, "");
-
-          // If bullet item has a label with colon (e.g., "Chống lão hóa & đẹp da: Giúp...")
-          if (clean.includes(":") && clean.indexOf(":") < 45) {
-            const colonIndex = clean.indexOf(":");
-            const label = clean.substring(0, colonIndex);
-            const rest = clean.substring(colonIndex + 1);
-            htmlBuffer.push(`<li><strong>${label}:</strong>${rest}</li>`);
-          } else {
-            htmlBuffer.push(`<li>${clean}</li>`);
-          }
-        } else if (NUMBERED_SYMBOL_REGEX.test(trimmed)) {
-          if (inUl) {
-            htmlBuffer.push("</ul>");
-            inUl = false;
-          }
-          if (!inOl) {
-            htmlBuffer.push("<ol>");
-            inOl = true;
-          }
-          const clean = trimmed.replace(NUMBERED_SYMBOL_REGEX, "");
-
-          if (clean.includes(":") && clean.indexOf(":") < 45) {
-            const colonIndex = clean.indexOf(":");
-            const label = clean.substring(0, colonIndex);
-            const rest = clean.substring(colonIndex + 1);
-            htmlBuffer.push(`<li><strong>${label}:</strong>${rest}</li>`);
-          } else {
-            htmlBuffer.push(`<li>${clean}</li>`);
-          }
-        } else {
-          if (inUl) {
-            htmlBuffer.push("</ul>");
-            inUl = false;
-          }
-          if (inOl) {
-            htmlBuffer.push("</ol>");
-            inOl = false;
-          }
-          htmlBuffer.push(`<p>${trimmed}</p>`);
-        }
-      });
-
-      if (inUl) htmlBuffer.push("</ul>");
-      if (inOl) htmlBuffer.push("</ol>");
-
-      contentToInsert = htmlBuffer.join("");
+      normalizedText = normalizedText.replace(/[\u00A0\u200B\uFEFF]/g, " ");
+      contentToInsert = parsePlainTextToHtml(normalizedText);
     }
 
     if (contentToInsert) {

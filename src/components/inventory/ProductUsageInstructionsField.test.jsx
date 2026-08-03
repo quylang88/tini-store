@@ -44,4 +44,15 @@ describe("ProductUsageInstructionsField", () => {
     expect(html).toContain("<strong>Liều dùng:</strong>");
     expect(html).toContain("<li>Sáng 1 viên</li>");
   });
+
+  it("renders nested multilevel list structures correctly", () => {
+    const html = renderToStaticMarkup(
+      <ProductUsageInstructionsField
+        value="<ul><li>Công dụng:<ul><li>Tăng đề kháng</li></ul></li></ul>"
+        onChange={() => {}}
+      />,
+    );
+
+    expect(html).toContain("<ul><li>Công dụng:<ul><li>Tăng đề kháng</li></ul></li></ul>");
+  });
 });
