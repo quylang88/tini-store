@@ -79,19 +79,23 @@ const win1252ToByte = (char) => {
 const fixVietnameseMojibake = (str) => {
   if (!str || typeof str !== "string") return "";
 
-  const isMojibake =
-    /[\u00C0-\u00FF][\u0080-\u00BF]|\u00C3[\u0080-\u00BF]|\u00E1\u00BB|\u00E1\u00BA|\u0110|\u0111|\u01A0|\u01A1|\u01AF|\u01B0|á»|áº|Ä'|Æ°|Ã|Ã¡|Ã |Ãª|Ã´|Ã¹|Æ¡/.test(
+  // ONLY trigger if string contains explicit double-encoded Mojibake tokens:
+  // e.g. HÃ-nh, cá»Sa, bá in, lÃ, thuá»'c, CẤ ng, dá»*, Ã¡, Ã , Ä', Æ°
+  const isRealMojibake =
+    /Ã[¡à¢êô¹ã¨©-¿]|á»|áº|Ä'|Æ°|Ã\s|HÃ-|cá»Sa|bá in|lÃ\s|thuá»|CẤ ng|dá»\*/.test(
       str,
     );
 
-  if (!isMojibake) return str;
+  if (!isRealMojibake) return str;
 
   try {
     const bytes = new Uint8Array(Array.from(str).map(win1252ToByte));
-    const decoder = new TextDecoder("utf-8", { fatal: false });
+    // fatal: true throws an error on invalid UTF-8 bytes instead of generating \uFFFD question marks!
+    const decoder = new TextDecoder("utf-8", { fatal: true });
     const decoded = decoder.decode(bytes);
 
     if (
+      !decoded.includes("\uFFFD") &&
       /[àáảãạăắằẳẵặâấầẩẫậđèéẻẽẹêếềểễệìíỉĩịòóỏõọôốồổỗộơớờởỡợùúủũụưứừửữựỳýỷỹỵ]/i.test(
         decoded,
       )
@@ -99,7 +103,7 @@ const fixVietnameseMojibake = (str) => {
       return decoded.normalize("NFC");
     }
   } catch {
-    // fallback
+    // If fatal decoding fails or bytes are invalid UTF-8, safely return original string
   }
 
   return str;
