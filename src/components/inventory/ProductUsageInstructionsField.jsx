@@ -313,10 +313,25 @@ const sanitizePastedHtml = (htmlInput) => {
     const container = document.createElement("div");
     container.appendChild(fragment);
 
-    // Convert any standalone bullet or numbered paragraphs into real <ul><li> or <ol><li>
-    const paragraphs = Array.from(container.querySelectorAll("p, div, blockquote"));
-    paragraphs.forEach((p) => {
+    // Convert any standalone section heading paragraphs (e.g., "1. Công dụng", "2. Thành phần") into real <h2>
+    const allBlocks = Array.from(
+      container.querySelectorAll("p, div, blockquote, li"),
+    );
+    allBlocks.forEach((p) => {
       const text = p.textContent.trim();
+
+      const isHeading =
+        (SECTION_HEADING_REGEX.test(text) ||
+          NUMERIC_SECTION_HEADING_REGEX.test(text)) &&
+        text.length <= 80 &&
+        !/[;:?!]$/.test(text);
+
+      if (isHeading && p.tagName.toLowerCase() !== "h2") {
+        const h2 = document.createElement("h2");
+        h2.innerHTML = p.innerHTML;
+        p.parentNode.replaceChild(h2, p);
+        return;
+      }
 
       if (BULLET_SYMBOL_REGEX.test(text)) {
         const cleanText = text.replace(BULLET_SYMBOL_REGEX, "");
