@@ -81,20 +81,25 @@ const charToByte = (char) => {
 const fixVietnameseMojibake = (str) => {
   if (!str || typeof str !== "string") return "";
 
-  // Dynamic detector for double-encoded UTF-8 bytes read as Windows-1252
-  const hasMojibake =
-    /[\u00C0-\u00FF][\u0080-\u00BF]|\u00C3[\u0080-\u00BF\s]|\u00E1[\u0080-\u00BF\s]|\u0110|\u0111|\u01A0|\u01A1|\u01AF|\u01B0/.test(
-      str,
-    );
+  // ONLY trigger if string contains explicit double-encoded Mojibake tokens (e.g. Ã¡, Ã , Ãª, Ã´, á», áº, Ä', Æ°)
+  const hasMojibakeTokens =
+    /Ã[¡à¢êô¹ã¨©-¿]|á»|áº|Ä'|Æ°|Ã\s|Ã¡|Ã |Ãª|Ã´|Ã¹/.test(str);
+  const isAlreadyCleanVietnamese =
+    /[\u1EA0-\u1EF9]/.test(str) && !hasMojibakeTokens;
 
-  if (!hasMojibake) return str;
+  if (!hasMojibakeTokens || isAlreadyCleanVietnamese) {
+    return str;
+  }
 
   try {
     const bytes = new Uint8Array(Array.from(str).map(charToByte));
-    const decoder = new TextDecoder("utf-8", { fatal: false });
+    // fatal: true GUARANTEES TextDecoder WILL THROW AN ERROR on invalid UTF-8 bytes!
+    // It will NEVER output \uFFFD (black diamond question mark)!
+    const decoder = new TextDecoder("utf-8", { fatal: true });
     const decoded = decoder.decode(bytes);
 
     if (
+      !decoded.includes("\uFFFD") &&
       /[àáảãạăắằẳẵặâấầẩẫậđèéẻẽẹêếềểễệìíỉĩịòóỏõọôốồổỗộơớờởỡợùúủũụưứừửữựỳýỷỹỵ]/i.test(
         decoded,
       )
@@ -102,7 +107,8 @@ const fixVietnameseMojibake = (str) => {
       return decoded.normalize("NFC");
     }
   } catch {
-    // fallback
+    // If fatal decoding fails or bytes are invalid UTF-8, safely return original string
+    return str;
   }
 
   return str;
