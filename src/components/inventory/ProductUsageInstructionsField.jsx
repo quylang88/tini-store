@@ -121,6 +121,7 @@ const ProductUsageInstructionsField = ({
   readOnly = false,
 }) => {
   const editorRef = useRef(null);
+  const isFocusedRef = useRef(false);
   const historyRef = useRef([]);
   const historyIndexRef = useRef(-1);
   const isInternalUpdateRef = useRef(false);
@@ -194,11 +195,18 @@ const ProductUsageInstructionsField = ({
     }
   }, []);
 
+  const lastEmittedValueRef = useRef(null);
+
+  // Sync value from outside ONLY on mount or when external prop changes while not active
   useEffect(() => {
     if (editorRef.current) {
-      const currentHtml = editorRef.current.innerHTML;
       const nextValue = value ?? "";
-      if (currentHtml !== nextValue) {
+      if (
+        lastEmittedValueRef.current === null ||
+        (lastEmittedValueRef.current !== nextValue &&
+          document.activeElement !== editorRef.current)
+      ) {
+        lastEmittedValueRef.current = nextValue;
         editorRef.current.innerHTML = nextValue;
       }
       if (historyRef.current.length === 0) {
@@ -209,12 +217,35 @@ const ProductUsageInstructionsField = ({
     }
   }, [value, updateHistoryStatus]);
 
+  const emitValue = useCallback(
+    (finalValue) => {
+      lastEmittedValueRef.current = finalValue;
+      onChange?.(finalValue);
+    },
+    [onChange],
+  );
+
+  const handleFocus = () => {
+    isFocusedRef.current = true;
+  };
+
+  const handleBlur = () => {
+    isFocusedRef.current = false;
+    if (editorRef.current) {
+      const html = editorRef.current.innerHTML;
+      const text = editorRef.current.textContent || "";
+      const finalValue = text.trim() === "" ? "" : html;
+      emitValue(finalValue);
+      pushHistory(finalValue);
+    }
+  };
+
   const handleInput = () => {
     if (editorRef.current) {
       const html = editorRef.current.innerHTML;
       const text = editorRef.current.textContent || "";
       const finalValue = text.trim() === "" ? "" : html;
-      onChange?.(finalValue);
+      emitValue(finalValue);
       checkActiveStates();
 
       if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
@@ -230,7 +261,7 @@ const ProductUsageInstructionsField = ({
       const html = editorRef.current.innerHTML;
       const text = editorRef.current.textContent || "";
       const finalValue = text.trim() === "" ? "" : html;
-      onChange?.(finalValue);
+      emitValue(finalValue);
       checkActiveStates();
       pushHistory(finalValue);
     }
@@ -250,7 +281,7 @@ const ProductUsageInstructionsField = ({
     }
     const text = editorRef.current?.textContent || "";
     const finalValue = text.trim() === "" ? "" : targetHtml;
-    onChange?.(finalValue);
+    emitValue(finalValue);
     checkActiveStates();
     updateHistoryStatus();
   };
@@ -274,7 +305,7 @@ const ProductUsageInstructionsField = ({
     }
     const text = editorRef.current?.textContent || "";
     const finalValue = text.trim() === "" ? "" : targetHtml;
-    onChange?.(finalValue);
+    emitValue(finalValue);
     checkActiveStates();
     updateHistoryStatus();
   };
@@ -646,13 +677,16 @@ const ProductUsageInstructionsField = ({
       <div
         ref={editorRef}
         contentEditable={!disabled && !readOnly}
+        suppressContentEditableWarning={true}
+        dangerouslySetInnerHTML={typeof window !== "undefined" ? undefined : { __html: value ?? "" }}
+        onFocus={handleFocus}
+        onBlur={handleBlur}
         onInput={handleInput}
         onPaste={handlePaste}
         onKeyUp={checkActiveStates}
         onMouseUp={checkActiveStates}
         onSelect={checkActiveStates}
         data-placeholder="Nhập hướng dẫn sử dụng sản phẩm (hỗ trợ in đậm, gạch đầu dòng, tiêu đề...)..."
-        dangerouslySetInnerHTML={{ __html: value ?? "" }}
         className={`min-h-28 max-h-72 w-full overflow-y-auto ${
           !readOnly && !disabled ? "rounded-b-lg border-t-0" : "rounded-lg"
         } border p-3 text-sm text-gray-900 outline-none transition-colors border-gray-200 focus:border-rose-400 empty:before:text-gray-400 empty:before:content-[attr(data-placeholder)] empty:before:pointer-events-none [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_b]:font-bold [&_strong]:font-bold [&_i]:italic [&_em]:italic [&_u]:underline [&_s]:line-through [&_strike]:line-through [&_h2]:text-base [&_h2]:font-bold [&_h2]:text-rose-700 [&_h2]:mt-1.5 [&_h2]:mb-1 [&_h3]:text-sm [&_h3]:font-bold [&_h3]:text-rose-700 [&_h3]:mt-1 [&_h3]:mb-0.5 [&_blockquote]:border-l-4 [&_blockquote]:border-rose-400 [&_blockquote]:pl-3 [&_blockquote]:italic [&_blockquote]:text-gray-600 [&_hr]:my-2 [&_hr]:border-gray-200 ${
