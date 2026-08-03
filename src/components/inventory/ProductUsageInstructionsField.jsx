@@ -15,7 +15,6 @@ import {
   Minus,
   Undo,
   Redo,
-  Palette,
   Eraser,
 } from "lucide-react";
 
@@ -122,7 +121,6 @@ const ProductUsageInstructionsField = ({
   readOnly = false,
 }) => {
   const editorRef = useRef(null);
-  const [showColorPicker, setShowColorPicker] = useState(false);
   const [activeStates, setActiveStates] = useState({
     bold: false,
     italic: false,
@@ -456,88 +454,58 @@ const ProductUsageInstructionsField = ({
 
           <div className="w-[1px] h-4 bg-gray-200 mx-0.5 shrink-0" />
 
-          {/* Color & Highlight */}
-          <div className="relative">
-            <button
-              type="button"
-              onMouseDown={(e) => {
-                e.preventDefault();
-                setShowColorPicker((prev) => !prev);
-              }}
-              className="p-1.5 rounded text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors flex items-center gap-0.5"
-              title="Đổi màu chữ / Đổi màu nền"
-            >
-              <Palette className="w-3.5 h-3.5 text-rose-600" />
-            </button>
+          {/* Color & Highlight Swatches */}
+          <div className="flex items-center gap-1 pl-1 border-l border-gray-200 shrink-0">
+            <span className="text-[10px] text-gray-400 font-bold uppercase px-0.5 select-none">Chữ:</span>
+            {[
+              { color: "#e11d48", label: "Chữ đỏ" },
+              { color: "#d97706", label: "Chữ cam" },
+              { color: "#2563eb", label: "Chữ xanh" },
+              { color: "#16a34a", label: "Chữ lá" },
+              { color: "#1f2937", label: "Chữ đen" },
+            ].map((c) => (
+              <button
+                key={`tc-${c.color}`}
+                type="button"
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  execCommand("foreColor", c.color);
+                }}
+                className="w-4 h-4 rounded-full border border-gray-300 transition-transform active:scale-125 shrink-0"
+                style={{ backgroundColor: c.color }}
+                title={c.label}
+              />
+            ))}
+          </div>
 
-            {showColorPicker && (
-              <div
-                className="absolute top-full right-0 mt-1 p-2 bg-white border border-gray-200 rounded-lg shadow-lg z-20 flex flex-col gap-2 min-w-36"
-                onMouseDown={(e) => e.preventDefault()}
+          <div className="flex items-center gap-1 pl-1 border-l border-gray-200 shrink-0">
+            <span className="text-[10px] text-gray-400 font-bold uppercase px-0.5 select-none">Nền:</span>
+            {[
+              { color: "#fef08a", label: "Nền vàng" },
+              { color: "#fecdd3", label: "Nền hồng" },
+              { color: "#bbf7d0", label: "Nền xanh" },
+              { color: "transparent", label: "Bỏ nền" },
+            ].map((c) => (
+              <button
+                key={`bg-${c.color}`}
+                type="button"
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  execCommand(
+                    "hiliteColor",
+                    c.color === "transparent" ? "#ffffff" : c.color,
+                  );
+                }}
+                className="w-4 h-4 rounded-full border border-gray-300 transition-transform active:scale-125 shrink-0 flex items-center justify-center text-[9px] font-bold text-gray-600"
+                style={{
+                  backgroundColor:
+                    c.color === "transparent" ? "#ffffff" : c.color,
+                }}
+                title={c.label}
               >
-                <div>
-                  <span className="text-[10px] font-bold text-gray-500 block mb-1">
-                    MÀU CHỮ
-                  </span>
-                  <div className="flex gap-1">
-                    {[
-                      { color: "#e11d48", label: "Đỏ hồng" },
-                      { color: "#d97706", label: "Cam" },
-                      { color: "#2563eb", label: "Xanh" },
-                      { color: "#16a34a", label: "Xanh lá" },
-                      { color: "#1f2937", label: "Mặc định" },
-                    ].map((c) => (
-                      <button
-                        key={c.color}
-                        type="button"
-                        onClick={() => {
-                          execCommand("foreColor", c.color);
-                          setShowColorPicker(false);
-                        }}
-                        className="w-5 h-5 rounded-full border border-gray-300 transition-transform hover:scale-110"
-                        style={{ backgroundColor: c.color }}
-                        title={c.label}
-                      />
-                    ))}
-                  </div>
-                </div>
-
-                <div>
-                  <span className="text-[10px] font-bold text-gray-500 block mb-1">
-                    MÀU NỀN (HIGHLIGHT)
-                  </span>
-                  <div className="flex gap-1">
-                    {[
-                      { color: "#fef08a", label: "Vàng" },
-                      { color: "#fecdd3", label: "Hồng" },
-                      { color: "#bbf7d0", label: "Xanh lá" },
-                      { color: "#e0f2fe", label: "Xanh dương" },
-                      { color: "transparent", label: "Bỏ nền" },
-                    ].map((c) => (
-                      <button
-                        key={c.color}
-                        type="button"
-                        onClick={() => {
-                          execCommand(
-                            "hiliteColor",
-                            c.color === "transparent" ? "#ffffff" : c.color,
-                          );
-                          setShowColorPicker(false);
-                        }}
-                        className="w-5 h-5 rounded-full border border-gray-300 transition-transform hover:scale-110 flex items-center justify-center text-[10px]"
-                        style={{
-                          backgroundColor:
-                            c.color === "transparent" ? "#ffffff" : c.color,
-                        }}
-                        title={c.label}
-                      >
-                        {c.color === "transparent" && "✕"}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            )}
+                {c.color === "transparent" && "✕"}
+              </button>
+            ))}
           </div>
 
           <div className="w-[1px] h-4 bg-gray-200 mx-0.5 shrink-0" />
