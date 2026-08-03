@@ -24,9 +24,33 @@ const BULLET_SYMBOL_REGEX =
 const NUMBERED_SYMBOL_REGEX =
   /^(?:\(?\d+[.)]|\(?[a-zA-Z][.)]|\(?[ivxLCDM]+[.)])\s+/iu;
 
+// Safely normalize Vietnamese Unicode diacritics (NFD -> NFC) & fix MS Word smart quotes / HTML entities
+const decodeAndNormalizeVietnamese = (text) => {
+  if (!text || typeof text !== "string") return "";
+
+  let result = text;
+
+  // Unicode NFC Normalization (combines base letters + diacritic accents into composed Vietnamese chars)
+  try {
+    result = result.normalize("NFC");
+  } catch {
+    // fallback
+  }
+
+  // Convert MS Word smart quotes & non-breaking spaces
+  result = result
+    .replace(/[\u201C\u201D]/g, '"')
+    .replace(/[\u2018\u2019]/g, "'")
+    .replace(/\u00A0/g, " ");
+
+  return result;
+};
+
 // Sanitize HTML pasted from external apps (Word, Notes, Web, Messages)
-const sanitizePastedHtml = (html) => {
-  if (!html) return "";
+const sanitizePastedHtml = (htmlInput) => {
+  if (!htmlInput) return "";
+  const html = decodeAndNormalizeVietnamese(htmlInput);
+
   if (typeof document === "undefined" || typeof DOMParser === "undefined") {
     let clean = html.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "");
     clean = clean.replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, "");
@@ -44,7 +68,8 @@ const sanitizePastedHtml = (html) => {
 
     const cleanNode = (node) => {
       if (node.nodeType === Node.TEXT_NODE) {
-        return document.createTextNode(node.textContent);
+        const textContent = decodeAndNormalizeVietnamese(node.textContent);
+        return document.createTextNode(textContent);
       }
 
       if (node.nodeType !== Node.ELEMENT_NODE) {
@@ -388,7 +413,8 @@ const ProductUsageInstructionsField = ({
     if (htmlData && htmlData.trim()) {
       contentToInsert = sanitizePastedHtml(htmlData);
     } else if (textData) {
-      const lines = textData.split(/\r\n|\r|\n/);
+      const normalizedText = decodeAndNormalizeVietnamese(textData);
+      const lines = normalizedText.split(/\r\n|\r|\n/);
       let inUl = false;
       let inOl = false;
       const htmlBuffer = [];
