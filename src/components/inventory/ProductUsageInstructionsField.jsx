@@ -95,29 +95,64 @@ const sanitizePastedHtml = (htmlInput) => {
         return null;
       }
 
-      let newTag = tagName;
-      if (tagName === "b" || tagName === "strong") newTag = "strong";
-      else if (tagName === "i" || tagName === "em") newTag = "em";
-      else if (tagName === "u") newTag = "u";
-      else if (tagName === "s" || tagName === "strike" || tagName === "del")
-        newTag = "s";
-      else if (tagName === "h1" || tagName === "h2") newTag = "h2";
-      else if (["h3", "h4", "h5", "h6"].includes(tagName)) newTag = "h3";
+      // Read inline styles (crucial for mobile iOS/Android copy paste!)
+      const style = node.style || {};
+      const fontWeight = (style.fontWeight || "").toString().toLowerCase();
+      const fontStyle = (style.fontStyle || "").toString().toLowerCase();
+      const textDecoration = (
+        style.textDecorationLine ||
+        style.textDecoration ||
+        ""
+      )
+        .toString()
+        .toLowerCase();
+      const fontSize = parseFloat(style.fontSize || "0");
+
+      const isBold =
+        tagName === "b" ||
+        tagName === "strong" ||
+        fontWeight === "bold" ||
+        fontWeight === "bolder" ||
+        parseInt(fontWeight, 10) >= 600;
+
+      const isItalic =
+        tagName === "i" ||
+        tagName === "em" ||
+        fontStyle === "italic" ||
+        fontStyle === "oblique";
+
+      const isUnderline =
+        tagName === "u" || textDecoration.includes("underline");
+
+      const isStrike =
+        tagName === "s" ||
+        tagName === "strike" ||
+        tagName === "del" ||
+        textDecoration.includes("line-through");
+
+      const isHeading1 =
+        tagName === "h1" || tagName === "h2" || fontSize >= 20;
+      const isHeading2 =
+        ["h3", "h4", "h5", "h6"].includes(tagName) ||
+        (fontSize >= 16 && fontSize < 20);
+
+      // Determine base element tag
+      let newTag = "span";
+      if (isHeading1) newTag = "h2";
+      else if (isHeading2) newTag = "h3";
       else if (["p", "div", "section", "article"].includes(tagName)) {
-        // If paragraph has left margin/padding (e.g. MS Word indent), map to blockquote
         const marginLeft = parseInt(
-          node.style?.marginLeft || node.style?.paddingLeft || "0",
+          style.marginLeft || style.paddingLeft || "0",
           10,
         );
         newTag = marginLeft >= 15 ? "blockquote" : "p";
-      } else if (tagName === "ul" || tagName === "ol" || tagName === "li")
+      } else if (tagName === "ul" || tagName === "ol" || tagName === "li") {
         newTag = tagName;
-      else if (tagName === "blockquote") newTag = "blockquote";
+      } else if (tagName === "blockquote") newTag = "blockquote";
       else if (tagName === "hr") newTag = "hr";
       else if (tagName === "br") newTag = "br";
-      else newTag = "span";
 
-      const newElement = document.createElement(newTag);
+      let newElement = document.createElement(newTag);
 
       // Force black text: DO NOT copy inline color or background-color from external source!
 
@@ -126,6 +161,28 @@ const sanitizePastedHtml = (htmlInput) => {
         if (cleanedChild) {
           newElement.appendChild(cleanedChild);
         }
+      }
+
+      // Apply formatting wrappers if span or block element was bold/italic/underline/strike on mobile
+      if (isBold && newTag !== "strong") {
+        const strong = document.createElement("strong");
+        strong.appendChild(newElement);
+        newElement = strong;
+      }
+      if (isItalic && newTag !== "em") {
+        const em = document.createElement("em");
+        em.appendChild(newElement);
+        newElement = em;
+      }
+      if (isUnderline && newTag !== "u") {
+        const u = document.createElement("u");
+        u.appendChild(newElement);
+        newElement = u;
+      }
+      if (isStrike && newTag !== "s") {
+        const s = document.createElement("s");
+        s.appendChild(newElement);
+        newElement = s;
       }
 
       return newElement;
