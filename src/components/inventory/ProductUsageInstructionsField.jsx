@@ -121,6 +121,15 @@ const ProductUsageInstructionsField = ({
   readOnly = false,
 }) => {
   const editorRef = useRef(null);
+  const historyRef = useRef([]);
+  const historyIndexRef = useRef(-1);
+  const isInternalUpdateRef = useRef(false);
+  const debounceTimerRef = useRef(null);
+  const [historyStatus, setHistoryStatus] = useState({
+    canUndo: false,
+    canRedo: false,
+  });
+
   const [activeStates, setActiveStates] = useState({
     bold: false,
     italic: false,
@@ -132,6 +141,39 @@ const ProductUsageInstructionsField = ({
     justifyCenter: false,
     justifyRight: false,
   });
+
+  const updateHistoryStatus = useCallback(() => {
+    const canUndo = historyIndexRef.current > 0;
+    const canRedo = historyIndexRef.current < historyRef.current.length - 1;
+    setHistoryStatus({ canUndo, canRedo });
+  }, []);
+
+  const pushHistory = useCallback(
+    (newHtml) => {
+      if (isInternalUpdateRef.current) {
+        isInternalUpdateRef.current = false;
+        return;
+      }
+      const history = historyRef.current;
+      const currentIndex = historyIndexRef.current;
+
+      if (currentIndex >= 0 && history[currentIndex] === newHtml) {
+        return;
+      }
+
+      const nextHistory = history.slice(0, currentIndex + 1);
+      nextHistory.push(newHtml);
+
+      if (nextHistory.length > 50) {
+        nextHistory.shift();
+      }
+
+      historyRef.current = nextHistory;
+      historyIndexRef.current = nextHistory.length - 1;
+      updateHistoryStatus();
+    },
+    [updateHistoryStatus],
+  );
 
   const checkActiveStates = useCallback(() => {
     if (typeof document === "undefined") return;
@@ -159,8 +201,13 @@ const ProductUsageInstructionsField = ({
       if (currentHtml !== nextValue) {
         editorRef.current.innerHTML = nextValue;
       }
+      if (historyRef.current.length === 0) {
+        historyRef.current = [nextValue];
+        historyIndexRef.current = 0;
+        updateHistoryStatus();
+      }
     }
-  }, [value]);
+  }, [value, updateHistoryStatus]);
 
   const handleInput = () => {
     if (editorRef.current) {
@@ -169,14 +216,74 @@ const ProductUsageInstructionsField = ({
       const finalValue = text.trim() === "" ? "" : html;
       onChange?.(finalValue);
       checkActiveStates();
+
+      if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
+      debounceTimerRef.current = setTimeout(() => {
+        pushHistory(finalValue);
+      }, 250);
     }
+  };
+
+  const handleInputImmediate = () => {
+    if (editorRef.current) {
+      if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
+      const html = editorRef.current.innerHTML;
+      const text = editorRef.current.textContent || "";
+      const finalValue = text.trim() === "" ? "" : html;
+      onChange?.(finalValue);
+      checkActiveStates();
+      pushHistory(finalValue);
+    }
+  };
+
+  const handleUndo = () => {
+    if (disabled || readOnly || historyIndexRef.current <= 0) return;
+    if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
+
+    historyIndexRef.current -= 1;
+    const targetHtml = historyRef.current[historyIndexRef.current] ?? "";
+
+    isInternalUpdateRef.current = true;
+    if (editorRef.current) {
+      editorRef.current.innerHTML = targetHtml;
+      editorRef.current.focus();
+    }
+    const text = editorRef.current?.textContent || "";
+    const finalValue = text.trim() === "" ? "" : targetHtml;
+    onChange?.(finalValue);
+    checkActiveStates();
+    updateHistoryStatus();
+  };
+
+  const handleRedo = () => {
+    if (
+      disabled ||
+      readOnly ||
+      historyIndexRef.current >= historyRef.current.length - 1
+    )
+      return;
+    if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
+
+    historyIndexRef.current += 1;
+    const targetHtml = historyRef.current[historyIndexRef.current] ?? "";
+
+    isInternalUpdateRef.current = true;
+    if (editorRef.current) {
+      editorRef.current.innerHTML = targetHtml;
+      editorRef.current.focus();
+    }
+    const text = editorRef.current?.textContent || "";
+    const finalValue = text.trim() === "" ? "" : targetHtml;
+    onChange?.(finalValue);
+    checkActiveStates();
+    updateHistoryStatus();
   };
 
   const execCommand = (command, val = null) => {
     if (disabled || readOnly || !editorRef.current) return;
     editorRef.current.focus();
     document.execCommand(command, false, val);
-    handleInput();
+    handleInputImmediate();
   };
 
   const handlePaste = (e) => {
@@ -200,7 +307,7 @@ const ProductUsageInstructionsField = ({
     if (contentToInsert) {
       editorRef.current.focus();
       document.execCommand("insertHTML", false, contentToInsert);
-      handleInput();
+      handleInputImmediate();
     }
   };
 
@@ -208,7 +315,7 @@ const ProductUsageInstructionsField = ({
     if (disabled || readOnly || !editorRef.current) return;
     editorRef.current.focus();
     document.execCommand("removeFormat", false, null);
-    handleInput();
+    handleInputImmediate();
   };
 
   return (
@@ -224,22 +331,32 @@ const ProductUsageInstructionsField = ({
           {/* History */}
           <button
             type="button"
+            disabled={!historyStatus.canUndo}
             onMouseDown={(e) => {
               e.preventDefault();
-              execCommand("undo");
+              handleUndo();
             }}
-            className="p-1.5 rounded text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors"
+            className={`p-1.5 rounded transition-colors ${
+              historyStatus.canUndo
+                ? "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+                : "text-gray-300 cursor-not-allowed"
+            }`}
             title="Hoàn tác (Undo)"
           >
             <Undo className="w-3.5 h-3.5" />
           </button>
           <button
             type="button"
+            disabled={!historyStatus.canRedo}
             onMouseDown={(e) => {
               e.preventDefault();
-              execCommand("redo");
+              handleRedo();
             }}
-            className="p-1.5 rounded text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors"
+            className={`p-1.5 rounded transition-colors ${
+              historyStatus.canRedo
+                ? "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+                : "text-gray-300 cursor-not-allowed"
+            }`}
             title="Làm lại (Redo)"
           >
             <Redo className="w-3.5 h-3.5" />
