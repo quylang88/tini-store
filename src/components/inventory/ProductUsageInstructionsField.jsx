@@ -181,6 +181,14 @@ const sanitizePastedHtml = (htmlInput) => {
     const cleanNode = (node) => {
       if (node.nodeType === Node.TEXT_NODE) {
         const textContent = decodeAndNormalizeVietnamese(node.textContent);
+        if (/\*\*|__/.test(textContent)) {
+          const span = document.createElement("span");
+          span.innerHTML = textContent.replace(
+            /(\*\*|__)(.*?)\1/g,
+            "<strong>$2</strong>",
+          );
+          return span;
+        }
         return document.createTextNode(textContent);
       }
 
@@ -403,9 +411,7 @@ const sanitizePastedHtml = (htmlInput) => {
       }
     });
 
-    let resultHtml = container.innerHTML;
-    resultHtml = processInlineFormatting(resultHtml);
-    return resultHtml;
+    return container.innerHTML;
   } catch {
     return html;
   }
@@ -416,8 +422,6 @@ const processInlineFormatting = (text) => {
   let result = text;
   // Convert markdown bold **text** or __text__ to <strong>
   result = result.replace(/(\*\*|__)(.*?)\1/g, "<strong>$2</strong>");
-  // Convert markdown italic *text* or _text_ to <em>
-  result = result.replace(/(\*|_)(.*?)\1/g, "<em>$2</em>");
   return result;
 };
 
