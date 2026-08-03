@@ -1,10 +1,14 @@
+import {
+  normalizeVietnameseUsageInstructionsValue,
+} from "./usageInstructionsClipboard";
+
 export const normalizeUsageInstructions = (value) => {
   if (typeof value !== "string") return null;
 
   const textContent = value.replace(/<[^>]*>/g, "").trim();
   if (!textContent) return null;
 
-  const normalized = value.trim();
+  const normalized = normalizeVietnameseUsageInstructionsValue(value.trim());
   return normalized || null;
 };
 

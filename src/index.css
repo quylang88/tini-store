@@ -45,6 +45,12 @@ input, textarea, [contenteditable] {
   -webkit-touch-callout: default;
 }
 
+/* Clipboard HTML must never bring an external font into the HDSD editor. */
+.usage-instructions-editor,
+.usage-instructions-editor * {
+  font-family: inherit !important;
+}
+
 /* Utilities */
 .pb-safe-area { padding-bottom: env(safe-area-inset-bottom); }
 .no-scrollbar::-webkit-scrollbar { display: none; }

@@ -25,6 +25,22 @@ describe("usage instruction normalization", () => {
     expect(hasUsageInstructions("<div></div>")).toBe(false);
   });
 
+  it("stores Vietnamese HTML in canonical NFC form", () => {
+    const decomposedHtml = "<p>Hu\u031Bo\u031B\u0301ng da\u0302\u0303n</p>";
+
+    expect(normalizeUsageInstructions(decomposedHtml)).toBe(
+      "<p>Hướng dẫn</p>",
+    );
+  });
+
+  it("repairs legacy mojibake in HTML text without rewriting tag attributes", () => {
+    expect(
+      normalizeUsageInstructions(
+        '<p data-source="HÆ°á»›ng">HÆ°á»›ng dáº«n sá»­ dá»¥ng</p>',
+      ),
+    ).toBe('<p data-source="HÆ°á»›ng">Hướng dẫn sử dụng</p>');
+  });
+
   it("adds the nullable property to legacy products", () => {
     expect(normalizeProductUsageInstructions({ id: "p1" })).toEqual({
       id: "p1",
