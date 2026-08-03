@@ -24,7 +24,7 @@ const BULLET_SYMBOL_REGEX =
 const NUMBERED_SYMBOL_REGEX =
   /^(?:\(?\d+[.)]|\(?[a-zA-Z][.)]|\(?[ivxLCDM]+[.)])\s+/iu;
 
-// Safely normalize Vietnamese Unicode diacritics (NFD -> NFC) & fix MS Word smart quotes / HTML entities
+// Safely normalize Vietnamese Unicode diacritics (NFD -> NFC) & fix MS Word / Mobile smart quotes & spaces
 const decodeAndNormalizeVietnamese = (text) => {
   if (!text || typeof text !== "string") return "";
 
@@ -37,11 +37,11 @@ const decodeAndNormalizeVietnamese = (text) => {
     // fallback
   }
 
-  // Convert MS Word smart quotes & non-breaking spaces
+  // Fix Apple / Android / Word non-breaking spaces & zero-width spaces
   result = result
     .replace(/[\u201C\u201D]/g, '"')
     .replace(/[\u2018\u2019]/g, "'")
-    .replace(/\u00A0/g, " ");
+    .replace(/[\u00A0\u200B\uFEFF]/g, " ");
 
   return result;
 };
@@ -77,6 +77,7 @@ const sanitizePastedHtml = (htmlInput) => {
       }
 
       const tagName = node.tagName.toLowerCase();
+      const elementId = (node.id || "").toLowerCase();
 
       // Skip script, style, meta, XML tags
       if (
@@ -95,7 +96,10 @@ const sanitizePastedHtml = (htmlInput) => {
         return null;
       }
 
-      // Read inline styles (crucial for mobile iOS/Android copy paste!)
+      // Ignore Google Docs Mobile wrapper <b id="docs-internal-guid-..."> or Apple wrapper
+      const isDocsWrapper = elementId.includes("docs-internal-guid");
+
+      // Read inline styles
       const style = node.style || {};
       const fontWeight = (style.fontWeight || "").toString().toLowerCase();
       const fontStyle = (style.fontStyle || "").toString().toLowerCase();
@@ -106,35 +110,50 @@ const sanitizePastedHtml = (htmlInput) => {
       )
         .toString()
         .toLowerCase();
-      const fontSize = parseFloat(style.fontSize || "0");
 
-      const isBold =
-        tagName === "b" ||
-        tagName === "strong" ||
-        fontWeight === "bold" ||
-        fontWeight === "bolder" ||
-        parseInt(fontWeight, 10) >= 600;
+      // Check if explicitly normal weight
+      const isExplicitlyNormal =
+        fontWeight === "normal" ||
+        fontWeight === "400" ||
+        fontWeight === "300" ||
+        fontWeight === "200" ||
+        fontWeight === "100";
+
+      const isBoldTag =
+        (tagName === "b" || tagName === "strong") && !isDocsWrapper;
+      const isBoldStyle =
+        (fontWeight === "bold" ||
+          fontWeight === "bolder" ||
+          parseInt(fontWeight, 10) >= 600) &&
+        !isExplicitlyNormal;
+
+      const isBold = (isBoldTag || isBoldStyle) && !isExplicitlyNormal;
 
       const isItalic =
-        tagName === "i" ||
-        tagName === "em" ||
-        fontStyle === "italic" ||
-        fontStyle === "oblique";
+        (tagName === "i" ||
+          tagName === "em" ||
+          fontStyle === "italic" ||
+          fontStyle === "oblique") &&
+        fontStyle !== "normal";
 
       const isUnderline =
-        tagName === "u" || textDecoration.includes("underline");
+        (tagName === "u" || textDecoration.includes("underline")) &&
+        !textDecoration.includes("none");
 
       const isStrike =
-        tagName === "s" ||
-        tagName === "strike" ||
-        tagName === "del" ||
-        textDecoration.includes("line-through");
+        (tagName === "s" ||
+          tagName === "strike" ||
+          tagName === "del" ||
+          textDecoration.includes("line-through")) &&
+        !textDecoration.includes("none");
 
-      const isHeading1 =
-        tagName === "h1" || tagName === "h2" || fontSize >= 20;
+      // Heading detection: ONLY on block heading tags h1-h6
+      const isHeading1 = tagName === "h1" || tagName === "h2";
       const isHeading2 =
-        ["h3", "h4", "h5", "h6"].includes(tagName) ||
-        (fontSize >= 16 && fontSize < 20);
+        tagName === "h3" ||
+        tagName === "h4" ||
+        tagName === "h5" ||
+        tagName === "h6";
 
       // Determine base element tag
       let newTag = "span";
@@ -163,26 +182,40 @@ const sanitizePastedHtml = (htmlInput) => {
         }
       }
 
-      // Apply formatting wrappers if span or block element was bold/italic/underline/strike on mobile
-      if (isBold && newTag !== "strong") {
-        const strong = document.createElement("strong");
-        strong.appendChild(newElement);
-        newElement = strong;
-      }
-      if (isItalic && newTag !== "em") {
-        const em = document.createElement("em");
-        em.appendChild(newElement);
-        newElement = em;
-      }
-      if (isUnderline && newTag !== "u") {
-        const u = document.createElement("u");
-        u.appendChild(newElement);
-        newElement = u;
-      }
-      if (isStrike && newTag !== "s") {
-        const s = document.createElement("s");
-        s.appendChild(newElement);
-        newElement = s;
+      // Apply formatting wrappers ONLY if element is an inline text tag (span, b, i, u, s, strong, em)
+      const isInlineElement = [
+        "span",
+        "b",
+        "i",
+        "u",
+        "s",
+        "strong",
+        "em",
+        "font",
+        "a",
+      ].includes(tagName);
+
+      if (isInlineElement) {
+        if (isBold && newTag !== "strong") {
+          const strong = document.createElement("strong");
+          strong.appendChild(newElement);
+          newElement = strong;
+        }
+        if (isItalic && newTag !== "em") {
+          const em = document.createElement("em");
+          em.appendChild(newElement);
+          newElement = em;
+        }
+        if (isUnderline && newTag !== "u") {
+          const u = document.createElement("u");
+          u.appendChild(newElement);
+          newElement = u;
+        }
+        if (isStrike && newTag !== "s") {
+          const s = document.createElement("s");
+          s.appendChild(newElement);
+          newElement = s;
+        }
       }
 
       return newElement;
