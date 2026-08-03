@@ -142,7 +142,11 @@ const decodeAndNormalizeVietnamese = (text) => {
 // Sanitize HTML pasted from external apps (Word, Notes, Web, Messages)
 const sanitizePastedHtml = (htmlInput) => {
   if (!htmlInput) return "";
-  const html = decodeAndNormalizeVietnamese(htmlInput);
+  // Do NOT run decodeAndNormalizeVietnamese on raw HTML — it can corrupt HTML
+  // attributes and structure. Vietnamese text normalization is handled per-text-node
+  // inside cleanNode() below.
+  let html;
+  try { html = htmlInput.normalize("NFC"); } catch { html = htmlInput; }
 
   if (typeof document === "undefined" || typeof DOMParser === "undefined") {
     let clean = html.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "");
@@ -150,15 +154,17 @@ const sanitizePastedHtml = (htmlInput) => {
     clean = clean.replace(/<meta\b[^>]*>/gi, "");
     clean = clean.replace(/<b(\s+[^>]*)?>/gi, "<strong>").replace(/<\/b>/gi, "</strong>");
     clean = clean.replace(/<i(\s+[^>]*)?>/gi, "<em>").replace(/<\/i>/gi, "</em>");
-    // Strip inline colors to force black text
+    // Strip ALL inline styles to force consistent text rendering
     clean = clean.replace(/\s*style="[^"]*"/gi, "");
     return clean;
   }
 
   try {
     const parser = new DOMParser();
+    // Strip existing charset meta tags to avoid conflicts with our own
+    const htmlNoCharset = html.replace(/<meta[^>]*charset[^>]*>/gi, "");
     const doc = parser.parseFromString(
-      `<meta charset="utf-8">${html}`,
+      `<meta charset="utf-8">${htmlNoCharset}`,
       "text/html",
     );
 
@@ -716,6 +722,8 @@ const ProductUsageInstructionsField = ({
     }
 
     if (contentToInsert) {
+      // Ensure final content is NFC-normalized for Vietnamese
+      try { contentToInsert = contentToInsert.normalize("NFC"); } catch { /* ignore */ }
       editorRef.current.focus();
       document.execCommand("insertHTML", false, contentToInsert);
       handleInputImmediate();
