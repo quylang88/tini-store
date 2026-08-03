@@ -124,7 +124,6 @@ const ProductUsageInstructionsField = ({
   const isFocusedRef = useRef(false);
   const historyRef = useRef([]);
   const historyIndexRef = useRef(-1);
-  const isInternalUpdateRef = useRef(false);
   const debounceTimerRef = useRef(null);
   const [historyStatus, setHistoryStatus] = useState({
     canUndo: false,
@@ -149,16 +148,26 @@ const ProductUsageInstructionsField = ({
     setHistoryStatus({ canUndo, canRedo });
   }, []);
 
+  const isNavigatingHistoryRef = useRef(false);
+
   const pushHistory = useCallback(
     (newHtml) => {
-      if (isInternalUpdateRef.current) {
-        isInternalUpdateRef.current = false;
+      if (isNavigatingHistoryRef.current) {
         return;
       }
       const history = historyRef.current;
       const currentIndex = historyIndexRef.current;
 
       if (currentIndex >= 0 && history[currentIndex] === newHtml) {
+        return;
+      }
+
+      if (
+        currentIndex + 1 < history.length &&
+        history[currentIndex + 1] === newHtml
+      ) {
+        historyIndexRef.current += 1;
+        updateHistoryStatus();
         return;
       }
 
@@ -271,19 +280,22 @@ const ProductUsageInstructionsField = ({
     if (disabled || readOnly || historyIndexRef.current <= 0) return;
     if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
 
+    isNavigatingHistoryRef.current = true;
     historyIndexRef.current -= 1;
     const targetHtml = historyRef.current[historyIndexRef.current] ?? "";
 
-    isInternalUpdateRef.current = true;
     if (editorRef.current) {
       editorRef.current.innerHTML = targetHtml;
-      editorRef.current.focus();
     }
     const text = editorRef.current?.textContent || "";
     const finalValue = text.trim() === "" ? "" : targetHtml;
     emitValue(finalValue);
     checkActiveStates();
     updateHistoryStatus();
+
+    setTimeout(() => {
+      isNavigatingHistoryRef.current = false;
+    }, 150);
   };
 
   const handleRedo = () => {
@@ -295,19 +307,22 @@ const ProductUsageInstructionsField = ({
       return;
     if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
 
+    isNavigatingHistoryRef.current = true;
     historyIndexRef.current += 1;
     const targetHtml = historyRef.current[historyIndexRef.current] ?? "";
 
-    isInternalUpdateRef.current = true;
     if (editorRef.current) {
       editorRef.current.innerHTML = targetHtml;
-      editorRef.current.focus();
     }
     const text = editorRef.current?.textContent || "";
     const finalValue = text.trim() === "" ? "" : targetHtml;
     emitValue(finalValue);
     checkActiveStates();
     updateHistoryStatus();
+
+    setTimeout(() => {
+      isNavigatingHistoryRef.current = false;
+    }, 150);
   };
 
   const execCommand = (command, val = null) => {
