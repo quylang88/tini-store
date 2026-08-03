@@ -77,41 +77,44 @@ const charToByte = (char) => {
   return CHAR_TO_BYTE_MAP[code] || 0x3f;
 };
 
-// Universal Dynamic UTF-8 Mojibake Repair Engine (Zero hardcoded word replacements!)
+// Universal Dynamic UTF-8 Mojibake Repair Engine (Token-based & 100% Dynamic)
 const fixVietnameseMojibake = (str) => {
   if (!str || typeof str !== "string") return "";
 
-  // ONLY trigger if string contains explicit double-encoded Mojibake tokens (e.g. Ã¡, Ã , Ãª, Ã´, á», áº, Ä', Æ°)
-  const hasMojibakeTokens =
-    /Ã[¡à¢êô¹ã¨©-¿]|á»|áº|Ä'|Æ°|Ã\s|Ã¡|Ã |Ãª|Ã´|Ã¹/.test(str);
-  const isAlreadyCleanVietnamese =
-    /[\u1EA0-\u1EF9]/.test(str) && !hasMojibakeTokens;
-
-  if (!hasMojibakeTokens || isAlreadyCleanVietnamese) {
+  // Quick check: If no Mojibake markers exist in string, return immediately!
+  if (!/Ã|á»|áº|Ä'|Æ°|Æ¡|CẤ|dá»\*/.test(str)) {
     return str;
   }
 
-  try {
-    const bytes = new Uint8Array(Array.from(str).map(charToByte));
-    // fatal: true GUARANTEES TextDecoder WILL THROW AN ERROR on invalid UTF-8 bytes!
-    // It will NEVER output \uFFFD (black diamond question mark)!
-    const decoder = new TextDecoder("utf-8", { fatal: true });
-    const decoded = decoder.decode(bytes);
-
-    if (
-      !decoded.includes("\uFFFD") &&
-      /[àáảãạăắằẳẵặâấầẩẫậđèéẻẽẹêếềểễệìíỉĩịòóỏõọôốồổỗộơớờởỡợùúủũụưứừửữựỳýỷỹỵ]/i.test(
-        decoded,
-      )
-    ) {
-      return decoded.normalize("NFC");
+  // Helper to decode a single word / token safely
+  const decodeToken = (token) => {
+    // If token is clean (no Mojibake markers), leave it alone!
+    if (!/Ã|á»|áº|Ä'|Æ°|Æ¡|CẤ|dá»\*/.test(token)) {
+      return token;
     }
-  } catch {
-    // If fatal decoding fails or bytes are invalid UTF-8, safely return original string
-    return str;
-  }
 
-  return str;
+    try {
+      const bytes = new Uint8Array(Array.from(token).map(charToByte));
+      const decoder = new TextDecoder("utf-8", { fatal: false });
+      const decoded = decoder.decode(bytes);
+
+      if (
+        !decoded.includes("\uFFFD") &&
+        /[àáảãạăắằẳẵặâấầẩẫậđèéẻẽẹêếềểễệìíỉĩịòóỏõọôốồổỗộơớờởỡợùúủũụưứừửữựỳýỷỹỵ]/i.test(
+          decoded,
+        )
+      ) {
+        return decoded.normalize("NFC");
+      }
+    } catch {
+      // ignore
+    }
+
+    return token;
+  };
+
+  // Replace each token matching non-whitespace sequence safely
+  return str.replace(/([^\s<>"':;?!,.()]+)/g, (match) => decodeToken(match));
 };
 
 // Safely normalize Vietnamese Unicode diacritics (NFD -> NFC) & fix MS Word / Mobile smart quotes & spaces
