@@ -6,7 +6,6 @@ import ConfirmModalHost from "../modals/ConfirmModalHost";
 import { formatInputNumber } from "../../utils/formatters/formatUtils";
 import useHighlightFields from "../../hooks/ui/useHighlightFields";
 import ProductUsageInstructionsField from "./ProductUsageInstructionsField";
-import { resolveProductUsageInstructions } from "../../services/productUsageInstructionsService";
 import { normalizeUsageInstructions } from "../../utils/inventory/usageInstructions";
 
 // Helper để tạo object form chuẩn từ product
@@ -27,14 +26,9 @@ const ProductBasicInfoModal = ({
   onClose,
   onSave,
   onError,
-  onUsageInstructionsGenerated,
 }) => {
   const [previousProduct, setPreviousProduct] = useState(product);
   const [confirmModal, setConfirmModal] = useState(null);
-  const [isGeneratingUsageInstructions, setIsGeneratingUsageInstructions] =
-    useState(false);
-
-  const [usageInstructionsError, setUsageInstructionsError] = useState("");
 
   // Khởi tạo state cho formData và initialFormData (để so sánh thay đổi)
   const [formData, setFormData] = useState(() =>
@@ -45,7 +39,6 @@ const ProductBasicInfoModal = ({
   const [initialFormData, setInitialFormData] = useState(() =>
     getInitialFormData(product, categories),
   );
-  const formDataRef = useRef(formData);
   const identityRevisionRef = useRef(0);
 
   const highlightOps = useHighlightFields();
@@ -64,79 +57,13 @@ const ProductBasicInfoModal = ({
     const newData = getInitialFormData(product, categories);
     setFormData(newData);
     setInitialFormData(newData);
-    setUsageInstructionsError("");
-    setIsGeneratingUsageInstructions(false);
   }
-
-  useEffect(() => {
-    formDataRef.current = formData;
-  }, [formData]);
-
-  const handleGenerateUsageInstructions = () => {
-    if (isGeneratingUsageInstructions) return;
-
-    setIsGeneratingUsageInstructions(true);
-    setUsageInstructionsError("");
-
-    const requestName = formData.name || product?.name || "";
-    const requestCategory =
-      formData.category || product?.category || categories?.[0] || "Chung";
-    const requestImage = formData.image || product?.image || null;
-
-    resolveProductUsageInstructions({
-      id: product?.id,
-      name: requestName,
-      category: requestCategory,
-      image: requestImage,
-      usageInstructions: formData.usageInstructions,
-    })
-      .then((res) => {
-        const usageInstructions =
-          typeof res === "string" ? res : res?.instructions;
-        const error = typeof res === "object" ? res?.error : null;
-
-        if (error) {
-          setUsageInstructionsError(error);
-          return;
-        }
-
-        if (!usageInstructions) return;
-
-        setFormData((previous) => ({
-          ...previous,
-          usageInstructions,
-        }));
-        setUsageInstructionsError("");
-        if (product?.id) {
-          onUsageInstructionsGenerated?.({
-            productId: product.id,
-            name: requestName,
-            category: requestCategory,
-            usageInstructions,
-          });
-        }
-      })
-      .catch((error) => {
-        console.error("Không thể tự tạo HDSD khi tra cứu AI:", error);
-        const message =
-          "Đã xảy ra lỗi ngoài dự kiến khi tạo HDSD. Vui lòng thử lại hoặc nhập thủ công.";
-        setUsageInstructionsError(message);
-        onError?.({
-          title: "Không thể tạo HDSD tự động",
-          message,
-        });
-      })
-      .finally(() => {
-        setIsGeneratingUsageInstructions(false);
-      });
-  };
 
   const handleImageFileChange = (file) => {
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
         identityRevisionRef.current += 1;
-        setUsageInstructionsError("");
         setFormData((prev) => ({ ...prev, image: reader.result }));
       };
       reader.readAsDataURL(file);
@@ -282,16 +209,11 @@ const ProductBasicInfoModal = ({
         <ProductUsageInstructionsField
           value={formData.usageInstructions}
           onChange={(usageInstructions) => {
-            setUsageInstructionsError("");
             setFormData((previous) => ({
               ...previous,
               usageInstructions,
             }));
           }}
-          onGenerateAI={handleGenerateUsageInstructions}
-          readOnly={isGeneratingUsageInstructions}
-          isGenerating={isGeneratingUsageInstructions}
-          errorText={usageInstructionsError}
         />
 
         {/* Nhập ghi chú */}

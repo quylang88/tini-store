@@ -1,6 +1,9 @@
 export const normalizeUsageInstructions = (value) => {
   if (typeof value !== "string") return null;
 
+  const textContent = value.replace(/<[^>]*>/g, "").trim();
+  if (!textContent) return null;
+
   const normalized = value.trim();
   return normalized || null;
 };
@@ -18,32 +21,6 @@ export const normalizeProductUsageInstructions = (product = {}) => {
   );
 
   if (hasProperty && product.usageInstructions === usageInstructions) {
-    return product;
-  }
-
-  return {
-    ...product,
-    usageInstructions,
-  };
-};
-
-export const applyGeneratedUsageInstructions = (
-  product = {},
-  generatedUpdate = {},
-) => {
-  const usageInstructions = normalizeUsageInstructions(
-    generatedUpdate.usageInstructions,
-  );
-  const identityMatches =
-    product.id === generatedUpdate.productId &&
-    product.name === generatedUpdate.name &&
-    product.category === generatedUpdate.category;
-
-  if (
-    !identityMatches ||
-    !usageInstructions ||
-    hasUsageInstructions(product.usageInstructions)
-  ) {
     return product;
   }
 

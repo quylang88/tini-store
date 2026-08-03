@@ -58,9 +58,10 @@ const ProductDetailModal = ({ product, onClose, onEditLot }) => {
             <h3 className="text-xs font-bold text-rose-700 uppercase mb-2">
               Hướng dẫn sử dụng
             </h3>
-            <p className="text-sm text-gray-700 whitespace-pre-wrap">
-              {cachedProduct.usageInstructions}
-            </p>
+            <div
+              className="text-sm text-gray-700 space-y-1 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_b]:font-bold [&_strong]:font-bold [&_i]:italic [&_em]:italic [&_u]:underline [&_s]:line-through [&_strike]:line-through whitespace-pre-wrap break-words"
+              dangerouslySetInnerHTML={{ __html: cachedProduct.usageInstructions }}
+            />
           </div>
         )}
         <div className="flex flex-col border-b border-rose-100 pb-4">

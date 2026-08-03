@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
 import {
-  applyGeneratedUsageInstructions,
   hasUsageInstructions,
   normalizeProductUsageInstructions,
   normalizeUsageInstructions,
@@ -11,14 +10,19 @@ describe("usage instruction normalization", () => {
     expect(normalizeUsageInstructions(undefined)).toBeNull();
     expect(normalizeUsageInstructions(null)).toBeNull();
     expect(normalizeUsageInstructions("   ")).toBeNull();
+    expect(normalizeUsageInstructions("<p><br></p>")).toBeNull();
   });
 
-  it("trims and preserves non-empty text", () => {
+  it("trims and preserves non-empty text and HTML", () => {
     expect(normalizeUsageInstructions("  • Liều: 1 viên  ")).toBe(
       "• Liều: 1 viên",
     );
+    expect(
+      normalizeUsageInstructions("<p><b>Liều dùng:</b> 1 viên/ngày</p>"),
+    ).toBe("<p><b>Liều dùng:</b> 1 viên/ngày</p>");
     expect(hasUsageInstructions(" • Liều: 1 viên ")).toBe(true);
     expect(hasUsageInstructions("  ")).toBe(false);
+    expect(hasUsageInstructions("<div></div>")).toBe(false);
   });
 
   it("adds the nullable property to legacy products", () => {
@@ -32,56 +36,5 @@ describe("usage instruction normalization", () => {
     const product = { id: "p1", usageInstructions: "• Liều: 1 viên" };
 
     expect(normalizeProductUsageInstructions(product)).toBe(product);
-  });
-});
-
-describe("generated usage instruction updates", () => {
-  const generatedUpdate = {
-    productId: "p1",
-    name: "Vitamin C",
-    category: "Thực phẩm",
-    usageInstructions: "• Liều mỗi lần: 1 viên",
-  };
-
-  it("applies a generated value only to the matching empty product", () => {
-    const product = {
-      id: "p1",
-      name: "Vitamin C",
-      category: "Thực phẩm",
-      usageInstructions: null,
-    };
-
-    expect(
-      applyGeneratedUsageInstructions(product, generatedUpdate),
-    ).toEqual({
-      ...product,
-      usageInstructions: "• Liều mỗi lần: 1 viên",
-    });
-  });
-
-  it("does not overwrite manual instructions", () => {
-    const product = {
-      id: "p1",
-      name: "Vitamin C",
-      category: "Thực phẩm",
-      usageInstructions: "Nội dung thủ công",
-    };
-
-    expect(
-      applyGeneratedUsageInstructions(product, generatedUpdate),
-    ).toBe(product);
-  });
-
-  it("ignores stale identity results", () => {
-    const product = {
-      id: "p1",
-      name: "Vitamin C phiên bản mới",
-      category: "Thực phẩm",
-      usageInstructions: null,
-    };
-
-    expect(
-      applyGeneratedUsageInstructions(product, generatedUpdate),
-    ).toBe(product);
   });
 });

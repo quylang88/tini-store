@@ -4,55 +4,30 @@ import { describe, expect, it } from "vitest";
 import ProductUsageInstructionsField from "./ProductUsageInstructionsField";
 
 describe("ProductUsageInstructionsField", () => {
-  it("renders the AI failure prominently beside an editable field", () => {
+  it("renders the label and rich text formatting toolbar", () => {
     const html = renderToStaticMarkup(
       <ProductUsageInstructionsField
-        value=""
+        value="<p><b>Liều dùng:</b> 1 viên/ngày</p>"
         onChange={() => {}}
-        errorText="AI đã thử tìm bằng tiếng Việt và tiếng Nhật nhưng chưa đủ dữ liệu."
       />,
     );
 
-    expect(html).toContain(
-      "AI đã thử tìm bằng tiếng Việt và tiếng Nhật nhưng chưa đủ dữ liệu.",
-    );
-    expect(html).toContain('aria-invalid="true"');
-    expect(html).not.toContain("readonly");
+    expect(html).toContain("Hướng dẫn sử dụng");
+    expect(html).toContain("In đậm (Bold)");
+    expect(html).toContain("Danh sách dấu chấm (Bullet List)");
+    expect(html).toContain("Liều dùng:");
   });
 
-  it("renders status label and message when generating offline", () => {
-    const originalOnLine = navigator.onLine;
-    Object.defineProperty(navigator, "onLine", {
-      value: false,
-      configurable: true,
-    });
-
+  it("disables editing when readOnly or disabled is true", () => {
     const html = renderToStaticMarkup(
       <ProductUsageInstructionsField
-        value=""
+        value="HDSD"
         onChange={() => {}}
-        isGenerating={true}
+        readOnly={true}
       />,
     );
 
-    expect(html).toContain("Không có kết nối mạng");
-    expect(html).toContain("Không có kết nối Internet để AI tra cứu HDSD.");
-
-    Object.defineProperty(navigator, "onLine", {
-      value: originalOnLine,
-      configurable: true,
-    });
-  });
-
-  it("renders Tra cứu AI button when onGenerateAI handler is provided", () => {
-    const html = renderToStaticMarkup(
-      <ProductUsageInstructionsField
-        value=""
-        onChange={() => {}}
-        onGenerateAI={() => {}}
-      />,
-    );
-
-    expect(html).toContain("Tra cứu AI");
+    expect(html).toContain('contentEditable="false"');
+    expect(html).not.toContain("In đậm (Bold)");
   });
 });

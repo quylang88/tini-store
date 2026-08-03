@@ -1,99 +1,217 @@
-import React, { useEffect, useRef, useState } from "react";
-import { Sparkles } from "lucide-react";
+import React, { useEffect, useRef, useState, useCallback } from "react";
+import {
+  Bold,
+  Italic,
+  Underline,
+  Strikethrough,
+  List,
+  ListOrdered,
+  Eraser,
+} from "lucide-react";
 
 const ProductUsageInstructionsField = ({
   value,
   onChange,
-  onGenerateAI,
-  readOnly = false,
   disabled = false,
-  isGenerating = false,
-  errorText = "",
+  readOnly = false,
 }) => {
-  const textareaRef = useRef(null);
-  const [isOnline, setIsOnline] = useState(
-    typeof navigator !== "undefined" ? navigator.onLine : true,
-  );
+  const editorRef = useRef(null);
+  const [activeStates, setActiveStates] = useState({
+    bold: false,
+    italic: false,
+    underline: false,
+    strikeThrough: false,
+    insertUnorderedList: false,
+    insertOrderedList: false,
+  });
 
-  useEffect(() => {
-    const handleOnline = () => setIsOnline(true);
-    const handleOffline = () => setIsOnline(false);
-
-    window.addEventListener("online", handleOnline);
-    window.addEventListener("offline", handleOffline);
-
-    return () => {
-      window.removeEventListener("online", handleOnline);
-      window.removeEventListener("offline", handleOffline);
-    };
+  const checkActiveStates = useCallback(() => {
+    if (typeof document === "undefined") return;
+    try {
+      setActiveStates({
+        bold: document.queryCommandState("bold"),
+        italic: document.queryCommandState("italic"),
+        underline: document.queryCommandState("underline"),
+        strikeThrough: document.queryCommandState("strikeThrough"),
+        insertUnorderedList: document.queryCommandState("insertUnorderedList"),
+        insertOrderedList: document.queryCommandState("insertOrderedList"),
+      });
+    } catch {
+      // ignore
+    }
   }, []);
 
   useEffect(() => {
-    if (textareaRef.current) {
-      textareaRef.current.style.height = "auto";
-      textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
+    if (editorRef.current) {
+      const currentHtml = editorRef.current.innerHTML;
+      const nextValue = value ?? "";
+      if (currentHtml !== nextValue) {
+        editorRef.current.innerHTML = nextValue;
+      }
     }
   }, [value]);
 
-  const showOfflineMessage = !isOnline && isGenerating;
+  const handleInput = () => {
+    if (editorRef.current) {
+      const html = editorRef.current.innerHTML;
+      const text = editorRef.current.textContent || "";
+      const finalValue = text.trim() === "" ? "" : html;
+      onChange?.(finalValue);
+      checkActiveStates();
+    }
+  };
+
+  const execCommand = (command, val = null) => {
+    if (disabled || readOnly || !editorRef.current) return;
+    editorRef.current.focus();
+    document.execCommand(command, false, val);
+    handleInput();
+  };
+
+  const clearFormatting = () => {
+    if (disabled || readOnly || !editorRef.current) return;
+    editorRef.current.focus();
+    document.execCommand("removeFormat", false, null);
+    handleInput();
+  };
 
   return (
-    <div>
-      <div className="flex items-center justify-between gap-3">
+    <div className="space-y-1.5">
+      <div className="flex items-center justify-between gap-2 flex-wrap">
         <label className="text-xs font-bold text-rose-700 uppercase">
           Hướng dẫn sử dụng
         </label>
-        {isGenerating ? (
-          <span
-            className={`text-[11px] font-medium flex items-center gap-1 ${
-              !isOnline ? "text-amber-700 font-semibold" : "text-amber-600"
-            }`}
-            role="status"
-          >
-            {!isOnline ? "Không có kết nối mạng" : "AI đang tra cứu…"}
-          </span>
-        ) : (
-          onGenerateAI && (
+
+        {!readOnly && !disabled && (
+          <div className="flex items-center gap-1 bg-gray-50 border border-gray-200 rounded-lg p-1">
             <button
               type="button"
-              onClick={onGenerateAI}
-              disabled={disabled || readOnly || !isOnline}
-              className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium text-amber-700 bg-amber-50 border border-amber-200/80 rounded-md hover:bg-amber-100 active:bg-amber-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              title="Tra cứu hướng dẫn sử dụng bằng AI"
+              onMouseDown={(e) => {
+                e.preventDefault();
+                execCommand("bold");
+              }}
+              className={`p-1.5 rounded transition-colors ${
+                activeStates.bold
+                  ? "bg-rose-100 text-rose-700 font-bold"
+                  : "text-gray-600 hover:bg-gray-200 hover:text-gray-900"
+              }`}
+              title="In đậm (Bold)"
             >
-              <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-              <span>Tra cứu AI</span>
+              <Bold className="w-3.5 h-3.5" />
             </button>
-          )
+
+            <button
+              type="button"
+              onMouseDown={(e) => {
+                e.preventDefault();
+                execCommand("italic");
+              }}
+              className={`p-1.5 rounded transition-colors ${
+                activeStates.italic
+                  ? "bg-rose-100 text-rose-700 font-bold"
+                  : "text-gray-600 hover:bg-gray-200 hover:text-gray-900"
+              }`}
+              title="In nghiêng (Italic)"
+            >
+              <Italic className="w-3.5 h-3.5" />
+            </button>
+
+            <button
+              type="button"
+              onMouseDown={(e) => {
+                e.preventDefault();
+                execCommand("underline");
+              }}
+              className={`p-1.5 rounded transition-colors ${
+                activeStates.underline
+                  ? "bg-rose-100 text-rose-700 font-bold"
+                  : "text-gray-600 hover:bg-gray-200 hover:text-gray-900"
+              }`}
+              title="Gạch chân (Underline)"
+            >
+              <Underline className="w-3.5 h-3.5" />
+            </button>
+
+            <button
+              type="button"
+              onMouseDown={(e) => {
+                e.preventDefault();
+                execCommand("strikeThrough");
+              }}
+              className={`p-1.5 rounded transition-colors ${
+                activeStates.strikeThrough
+                  ? "bg-rose-100 text-rose-700 font-bold"
+                  : "text-gray-600 hover:bg-gray-200 hover:text-gray-900"
+              }`}
+              title="Gạch ngang (Strikethrough)"
+            >
+              <Strikethrough className="w-3.5 h-3.5" />
+            </button>
+
+            <div className="w-[1px] h-4 bg-gray-300 mx-0.5" />
+
+            <button
+              type="button"
+              onMouseDown={(e) => {
+                e.preventDefault();
+                execCommand("insertUnorderedList");
+              }}
+              className={`p-1.5 rounded transition-colors ${
+                activeStates.insertUnorderedList
+                  ? "bg-rose-100 text-rose-700 font-bold"
+                  : "text-gray-600 hover:bg-gray-200 hover:text-gray-900"
+              }`}
+              title="Danh sách dấu chấm (Bullet List)"
+            >
+              <List className="w-3.5 h-3.5" />
+            </button>
+
+            <button
+              type="button"
+              onMouseDown={(e) => {
+                e.preventDefault();
+                execCommand("insertOrderedList");
+              }}
+              className={`p-1.5 rounded transition-colors ${
+                activeStates.insertOrderedList
+                  ? "bg-rose-100 text-rose-700 font-bold"
+                  : "text-gray-600 hover:bg-gray-200 hover:text-gray-900"
+              }`}
+              title="Danh sách số (Numbered List)"
+            >
+              <ListOrdered className="w-3.5 h-3.5" />
+            </button>
+
+            <div className="w-[1px] h-4 bg-gray-300 mx-0.5" />
+
+            <button
+              type="button"
+              onMouseDown={(e) => {
+                e.preventDefault();
+                clearFormatting();
+              }}
+              className="p-1.5 rounded text-gray-500 hover:bg-gray-200 hover:text-gray-800 transition-colors"
+              title="Xoá định dạng"
+            >
+              <Eraser className="w-3.5 h-3.5" />
+            </button>
+          </div>
         )}
       </div>
-      <textarea
-        ref={textareaRef}
-        className={`mt-1 min-h-24 max-h-72 w-full resize-none overflow-y-auto rounded-lg border p-3 text-sm text-gray-900 outline-none read-only:bg-gray-50 read-only:text-gray-500 disabled:bg-gray-100 disabled:text-gray-400 ${
-          errorText && !isGenerating
-            ? "border-red-400 focus:border-red-500"
-            : "border-gray-200 focus:border-rose-400"
+
+      <div
+        ref={editorRef}
+        contentEditable={!disabled && !readOnly}
+        onInput={handleInput}
+        onKeyUp={checkActiveStates}
+        onMouseUp={checkActiveStates}
+        onSelect={checkActiveStates}
+        data-placeholder="Nhập hướng dẫn sử dụng sản phẩm..."
+        dangerouslySetInnerHTML={{ __html: value ?? "" }}
+        className={`min-h-24 max-h-72 w-full overflow-y-auto rounded-lg border p-3 text-sm text-gray-900 outline-none transition-colors border-gray-200 focus:border-rose-400 empty:before:text-gray-400 empty:before:content-[attr(data-placeholder)] empty:before:pointer-events-none [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_b]:font-bold [&_strong]:font-bold [&_i]:italic [&_em]:italic [&_u]:underline [&_s]:line-through [&_strike]:line-through ${
+          readOnly || disabled ? "bg-gray-50 text-gray-500" : "bg-white"
         }`}
-        value={value ?? ""}
-        onChange={(event) => onChange?.(event.target.value)}
-        placeholder="Nhập hướng dẫn hoặc bấm Tra cứu AI..."
-        readOnly={readOnly}
-        disabled={disabled}
-        aria-invalid={Boolean(errorText)}
       />
-      {showOfflineMessage && (
-        <p className="mt-1 text-[11px] text-amber-600 font-medium" role="alert">
-          Không có kết nối Internet để AI tra cứu HDSD. Vui lòng kiểm tra mạng hoặc nhập thủ công.
-        </p>
-      )}
-      {errorText && !isGenerating && !showOfflineMessage && (
-        <p
-          className="mt-1 text-[11px] text-red-500 font-medium"
-          role="alert"
-        >
-          {errorText}
-        </p>
-      )}
     </div>
   );
 };

@@ -159,6 +159,28 @@ const wrapCanvasText = (context, text, maxWidth) => {
   return lines;
 };
 
+export const convertHtmlToPdfLines = (htmlString) => {
+  if (!htmlString || typeof htmlString !== "string") return [];
+
+  let text = htmlString;
+  text = text.replace(/<li[^>]*>/gi, "• ");
+  text = text.replace(/<\/(li|p|div|tr|h[1-6])>/gi, "\n");
+  text = text.replace(/<br\s*\/?>/gi, "\n");
+  text = text.replace(/<[^>]+>/g, "");
+
+  text = text
+    .replace(/&nbsp;/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"');
+
+  return text
+    .split("\n")
+    .map((line) => line.trim())
+    .filter((line) => line.length > 0);
+};
+
 const createCardLayout = (context, item) => {
   const textWidth =
     PAGE_WIDTH -
@@ -171,9 +193,10 @@ const createCardLayout = (context, item) => {
   const nameLines = wrapCanvasText(context, item.name, textWidth);
 
   context.font = `400 27px ${FONT_FAMILY}`;
-  const instructionLines = String(item.usageInstructions || "")
-    .split("\n")
-    .flatMap((line) => wrapCanvasText(context, line, textWidth));
+  const rawInstructionLines = convertHtmlToPdfLines(item.usageInstructions);
+  const instructionLines = rawInstructionLines.flatMap((line) =>
+    wrapCanvasText(context, line, textWidth),
+  );
 
   const textHeight =
     nameLines.length * NAME_LINE_HEIGHT +
