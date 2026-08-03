@@ -15,6 +15,8 @@ describe("ProductUsageInstructionsField", () => {
     expect(html).toContain("Hướng dẫn sử dụng");
     expect(html).toContain("In đậm (Bold)");
     expect(html).toContain("Danh sách dấu chấm (Bullet List)");
+    expect(html).toContain("Căn giữa");
+    expect(html).toContain("Hoàn tác (Undo)");
     expect(html).toContain("Liều dùng:");
   });
 
@@ -29,5 +31,17 @@ describe("ProductUsageInstructionsField", () => {
 
     expect(html).toContain('contentEditable="false"');
     expect(html).not.toContain("In đậm (Bold)");
+  });
+
+  it("renders formatted HTML content correctly", () => {
+    const html = renderToStaticMarkup(
+      <ProductUsageInstructionsField
+        value="<p><strong>Liều dùng:</strong> 2 viên</p><ul><li>Sáng 1 viên</li></ul>"
+        onChange={() => {}}
+      />,
+    );
+
+    expect(html).toContain("<strong>Liều dùng:</strong>");
+    expect(html).toContain("<li>Sáng 1 viên</li>");
   });
 });
