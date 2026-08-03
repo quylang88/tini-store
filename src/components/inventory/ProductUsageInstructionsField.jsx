@@ -77,19 +77,31 @@ const charToByte = (char) => {
   return CHAR_TO_BYTE_MAP[code] || 0x3f;
 };
 
+// Regex to detect valid precomposed Vietnamese NFC characters
+const VALID_VIETNAMESE_NFC_REGEX =
+  /[àáảãạăắằẳẵặâấầẩẫậđèéẻẽẹêếềểễệìíỉĩịòóỏõọôốồổỗộơớờởỡợùúủũụưứừửữựỳýỷỹỵÀÁẢÃẠĂẮẰẲẴẶÂẤẦẨẪẬĐÈÉẺẼẸÊẾỀỂỄỆÌÍỈĨỊÒÓỎÕỌÔỐỒỔỖỘƠỚỜỞỠỢÙÚỦŨỤƯỨỪỬỮỰỲÝỶỸỴ]/;
+
+const MOJIBAKE_MARKER_REGEX = /Ã|á»|áº|Ä\u2018|Æ°|Æ¡|CẤ/;
+
 // Universal Dynamic UTF-8 Mojibake Repair Engine (Token-based & 100% Dynamic)
 const fixVietnameseMojibake = (str) => {
   if (!str || typeof str !== "string") return "";
 
+  // Guard: If text already contains valid Vietnamese NFC characters,
+  // it is definitely NOT Mojibake — return immediately without modification!
+  if (VALID_VIETNAMESE_NFC_REGEX.test(str)) {
+    return str;
+  }
+
   // Quick check: If no Mojibake markers exist in string, return immediately!
-  if (!/Ã|á»|áº|Ä'|Æ°|Æ¡|CẤ|dá»\*/.test(str)) {
+  if (!MOJIBAKE_MARKER_REGEX.test(str)) {
     return str;
   }
 
   // Helper to decode a single word / token safely
   const decodeToken = (token) => {
     // If token is clean (no Mojibake markers), leave it alone!
-    if (!/Ã|á»|áº|Ä'|Æ°|Æ¡|CẤ|dá»\*/.test(token)) {
+    if (!MOJIBAKE_MARKER_REGEX.test(token)) {
       return token;
     }
 
@@ -100,9 +112,7 @@ const fixVietnameseMojibake = (str) => {
 
       if (
         !decoded.includes("\uFFFD") &&
-        /[àáảãạăắằẳẵặâấầẩẫậđèéẻẽẹêếềểễệìíỉĩịòóỏõọôốồổỗộơớờởỡợùúủũụưứừửữựỳýỷỹỵ]/i.test(
-          decoded,
-        )
+        VALID_VIETNAMESE_NFC_REGEX.test(decoded)
       ) {
         return decoded.normalize("NFC");
       }
@@ -616,6 +626,16 @@ const ProductUsageInstructionsField = ({
     const htmlData = e.clipboardData?.getData("text/html");
     const textData = e.clipboardData?.getData("text/plain");
 
+    // DEBUG: Temporarily log clipboard data to diagnose Vietnamese font issues
+    console.log("[HDSD Paste Debug]", {
+      hasHtml: !!htmlData,
+      htmlLen: htmlData?.length,
+      htmlPreview: htmlData?.substring(0, 300),
+      hasText: !!textData,
+      textLen: textData?.length,
+      textPreview: textData?.substring(0, 200),
+    });
+
     let contentToInsert = "";
 
     // Check if htmlData exists AND is NOT corrupted with Shift-JIS / Latin-1 Mojibake
@@ -625,7 +645,11 @@ const ProductUsageInstructionsField = ({
 
     // Fall back to pristine textData whenever htmlData is missing or corrupted by Mojibake
     if (!contentToInsert && textData) {
-      const normalizedText = decodeAndNormalizeVietnamese(textData);
+      // Only NFC-normalize plain text, skip Mojibake repair for clean Vietnamese text
+      let normalizedText;
+      try { normalizedText = textData.normalize("NFC"); } catch { normalizedText = textData; }
+      normalizedText = normalizedText
+        .replace(/[\u00A0\u200B\uFEFF]/g, " ");
       const lines = normalizedText.split(/\r\n|\r|\n/);
       let inUl = false;
       let inOl = false;
