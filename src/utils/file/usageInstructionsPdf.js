@@ -221,152 +221,6 @@ export const parseHtmlToBlocks = (htmlString) => {
   }
 };
 
-const CARD_HTML_STYLES = `
-.card-wrapper {
-  font-family: ${FONT_FAMILY};
-  background-color: #ffffff;
-  color: #1f2937;
-  box-sizing: border-box;
-  padding: 0;
-  width: 100%;
-}
-.card-header {
-  border-bottom: 2px solid #fecdd3;
-  padding-bottom: 12px;
-  margin-bottom: 16px;
-}
-.badge-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 8px;
-}
-.medicine-badge {
-  display: inline-block;
-  background-color: #fff1f2;
-  color: #be123c;
-  border: 1px solid #fecdd3;
-  font-size: 14px;
-  font-weight: 700;
-  padding: 3px 12px;
-  border-radius: 9999px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-.medicine-title {
-  color: #0f172a;
-  font-size: 32px;
-  font-weight: 800;
-  line-height: 1.35;
-  margin: 0;
-  letter-spacing: -0.3px;
-  word-break: break-word;
-}
-.hdsd-body {
-  font-size: 26px;
-  line-height: 1.55;
-  color: #1f2937;
-  word-break: break-word;
-}
-.hdsd-body h1, .hdsd-body h2 {
-  color: #be123c !important;
-  font-size: 28px !important;
-  font-weight: 700 !important;
-  margin-top: 14px !important;
-  margin-bottom: 8px !important;
-  padding-left: 10px !important;
-  border-left: 4px solid #e11d48 !important;
-  line-height: 1.35 !important;
-}
-.hdsd-body h3, .hdsd-body h4 {
-  color: #e11d48 !important;
-  font-size: 26px !important;
-  font-weight: 700 !important;
-  margin-top: 10px !important;
-  margin-bottom: 6px !important;
-}
-.hdsd-body p {
-  margin-top: 0 !important;
-  margin-bottom: 8px !important;
-}
-.hdsd-body strong, .hdsd-body b {
-  font-weight: 700 !important;
-  color: #0f172a !important;
-}
-.hdsd-body em, .hdsd-body i {
-  font-style: italic !important;
-}
-.hdsd-body u {
-  text-decoration: underline !important;
-  text-underline-offset: 3px !important;
-}
-.hdsd-body s, .hdsd-body strike, .hdsd-body del {
-  text-decoration: line-through !important;
-  opacity: 0.75 !important;
-}
-.hdsd-body ul {
-  list-style-type: disc !important;
-  padding-left: 28px !important;
-  margin-top: 4px !important;
-  margin-bottom: 8px !important;
-}
-.hdsd-body ul ul {
-  list-style-type: circle !important;
-  padding-left: 24px !important;
-}
-.hdsd-body ol {
-  list-style-type: decimal !important;
-  padding-left: 28px !important;
-  margin-top: 4px !important;
-  margin-bottom: 8px !important;
-}
-.hdsd-body ol ol {
-  list-style-type: lower-alpha !important;
-  padding-left: 24px !important;
-}
-.hdsd-body li {
-  margin-bottom: 4px !important;
-}
-.hdsd-body blockquote {
-  border-left: 4px solid #fb7185 !important;
-  background-color: #fff1f2 !important;
-  padding: 8px 12px !important;
-  margin: 8px 0 !important;
-  border-radius: 6px !important;
-  font-style: italic !important;
-  color: #374151 !important;
-}
-.hdsd-body hr {
-  border: none !important;
-  border-top: 2px dashed #fecdd3 !important;
-  margin: 12px 0 !important;
-}
-.hdsd-body span[style*="background-color"],
-.hdsd-body mark {
-  padding: 2px 6px !important;
-  border-radius: 4px !important;
-  box-decoration-break: clone !important;
-  -webkit-box-decoration-break: clone !important;
-}
-`;
-
-const buildCardTextHtml = (name, usageInstructionsHtml) => {
-  const nameHtml = escapeHtml(name);
-  const bodyHtml = usageInstructionsHtml || "";
-  return `
-    <div class="card-wrapper">
-      <div class="card-header">
-        <div class="badge-row">
-          <span class="medicine-badge">TÊN THUỐC / SẢN PHẨM</span>
-        </div>
-        <h2 class="medicine-title">${nameHtml}</h2>
-      </div>
-      <div class="hdsd-body">
-        ${bodyHtml}
-      </div>
-    </div>
-  `;
-};
 
 const createCardLayout = (context, item) => {
   const textWidth =
@@ -553,7 +407,143 @@ const drawHeader = (context, exportData, logoImage, pageIndex, pageCount) => {
   context.stroke();
 };
 
-const drawFallbackProductCardText = (
+const parseInlineSpansFromHtml = (htmlContent) => {
+  if (!htmlContent || typeof htmlContent !== "string") return [];
+  const textContent = htmlContent.trim();
+  if (!textContent) return [];
+
+  if (typeof document === "undefined" || typeof DOMParser === "undefined") {
+    const text = textContent.replace(/<[^>]+>/g, "").trim();
+    return text ? [{ text, isBold: false, isItalic: false, isUnderline: false, isStrike: false, color: null, bgColor: null }] : [];
+  }
+
+  try {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(`<div>${textContent}</div>`, "text/html");
+    const container = doc.body.firstElementChild;
+    if (!container) return [];
+
+    const spans = [];
+    const walk = (node, currentStyle = {}) => {
+      if (node.nodeType === Node.TEXT_NODE) {
+        const text = node.textContent;
+        if (text) {
+          spans.push({
+            text,
+            ...currentStyle,
+          });
+        }
+        return;
+      }
+      if (node.nodeType !== Node.ELEMENT_NODE) return;
+
+      const tagName = node.tagName.toLowerCase();
+      const styleAttr = node.getAttribute("style") || "";
+      const colorMatch = styleAttr.match(/(?:^|;\s*)color\s*:\s*([^;]+)/i);
+      const bgMatch = styleAttr.match(/(?:^|;\s*)background-color\s*:\s*([^;]+)/i);
+      const fontAttrColor = node.getAttribute("color");
+
+      const newStyle = {
+        isBold:
+          currentStyle.isBold ||
+          ["strong", "b", "h1", "h2", "h3", "h4"].includes(tagName) ||
+          /font-weight\s*:\s*(bold|[7-9]00)/i.test(styleAttr),
+        isItalic:
+          currentStyle.isItalic ||
+          ["em", "i"].includes(tagName) ||
+          /font-style\s*:\s*italic/i.test(styleAttr),
+        isUnderline:
+          currentStyle.isUnderline ||
+          tagName === "u" ||
+          /text-decoration\s*:\s*[^;]*underline/i.test(styleAttr),
+        isStrike:
+          currentStyle.isStrike ||
+          ["s", "strike", "del"].includes(tagName) ||
+          /text-decoration\s*:\s*[^;]*line-through/i.test(styleAttr),
+        color: colorMatch ? colorMatch[1].trim() : fontAttrColor ? fontAttrColor : currentStyle.color || null,
+        bgColor: bgMatch ? bgMatch[1].trim() : tagName === "mark" ? "#fef08a" : currentStyle.bgColor || null,
+      };
+
+      for (const child of Array.from(node.childNodes)) {
+        walk(child, newStyle);
+      }
+    };
+
+    walk(container, {});
+    return spans;
+  } catch {
+    const text = htmlContent.replace(/<[^>]+>/g, "").trim();
+    return text ? [{ text, isBold: false, isItalic: false, isUnderline: false, isStrike: false, color: null, bgColor: null }] : [];
+  }
+};
+
+const drawRichTextSpans = (
+  context,
+  spans,
+  startX,
+  startY,
+  maxWidth,
+  baseFontSize = 27,
+  defaultColor = COLOR_TEXT,
+) => {
+  if (!spans || spans.length === 0) return startY;
+
+  let currentX = startX;
+  let currentY = startY;
+
+  for (const span of spans) {
+    const text = span.text || "";
+    if (!text) continue;
+
+    const fontStyleStr = span.isItalic ? "italic" : "normal";
+    const fontWeightStr = span.isBold ? "700" : "400";
+    context.font = `${fontStyleStr} ${fontWeightStr} ${baseFontSize}px ${FONT_FAMILY}`;
+
+    const words = text.split(/(\s+)/);
+    for (const word of words) {
+      if (!word) continue;
+      const metrics = context.measureText(word);
+      const wordWidth = metrics.width;
+
+      if (currentX > startX && currentX + wordWidth > startX + maxWidth && word.trim()) {
+        currentX = startX;
+        currentY += INSTRUCTION_LINE_HEIGHT;
+      }
+
+      if (span.bgColor && span.bgColor !== "transparent" && word.trim()) {
+        context.fillStyle = span.bgColor;
+        context.fillRect(currentX - 1, currentY - 22, wordWidth + 2, 28);
+      }
+
+      context.fillStyle = span.color || defaultColor;
+      context.fillText(word, currentX, currentY);
+
+      if (span.isUnderline && word.trim()) {
+        context.strokeStyle = span.color || defaultColor;
+        context.lineWidth = 2;
+        context.beginPath();
+        context.moveTo(currentX, currentY + 3);
+        context.lineTo(currentX + wordWidth, currentY + 3);
+        context.stroke();
+      }
+
+      if (span.isStrike && word.trim()) {
+        context.strokeStyle = span.color || defaultColor;
+        context.lineWidth = 2;
+        context.beginPath();
+        context.moveTo(currentX, currentY - 8);
+        context.lineTo(currentX + wordWidth, currentY - 8);
+        context.stroke();
+      }
+
+      currentX += wordWidth;
+    }
+  }
+
+  return currentY + INSTRUCTION_LINE_HEIGHT;
+};
+
+const drawProductCardText = (
   context,
   layout,
   textX,
@@ -569,7 +559,11 @@ const drawFallbackProductCardText = (
   const badgeWidth = 220;
   const badgeHeight = 32;
   context.beginPath();
-  context.roundRect(textX, textY, badgeWidth, badgeHeight, 16);
+  if (typeof context.roundRect === "function") {
+    context.roundRect(textX, textY, badgeWidth, badgeHeight, 16);
+  } else {
+    context.rect(textX, textY, badgeWidth, badgeHeight);
+  }
   context.fill();
   context.stroke();
 
@@ -597,49 +591,130 @@ const drawFallbackProductCardText = (
   context.stroke();
   textY += 28;
 
-  // 4. Draw HDSD Instruction Lines
-  context.font = `400 27px ${FONT_FAMILY}`;
-  layout.instructionLines.forEach((line) => {
-    let currentLine = line;
-    let isHeading = false;
-    let isBold = false;
-    let textColor = COLOR_TEXT;
+  // 4. Draw HDSD Instruction Lines & Rich HTML Blocks
+  const rawInstructionHtml = layout.usageInstructions || "";
+  const blocks = parseHtmlToBlocks(rawInstructionHtml);
 
-    if (/^<h[1-2]/i.test(currentLine) || /^(\d+\.|I+\.|[A-Z]\.)\s+/i.test(currentLine)) {
-      isHeading = true;
-      textColor = "#be123c";
-    } else if (/^<h[3-6]/i.test(currentLine)) {
-      isHeading = true;
-      textColor = COLOR_ROSE;
+  if (blocks.length > 0) {
+    for (const block of blocks) {
+      const isH12 = /^<h[1-2]/i.test(block) || /^(\d+\.|I+\.|[A-Z]\.)\s+/i.test(block);
+      const isH3 = /^<h[3-6]/i.test(block);
+      const isBlockquote = /^<blockquote/i.test(block);
+      const isHr = /^<hr/i.test(block);
+
+      if (isHr) {
+        context.strokeStyle = COLOR_BORDER;
+        context.lineWidth = 2;
+        context.beginPath();
+        context.moveTo(textX, textY - 10);
+        context.lineTo(textX + textWidth, textY - 10);
+        context.stroke();
+        textY += 16;
+        continue;
+      }
+
+      if (isH12) {
+        context.fillStyle = COLOR_ROSE;
+        context.fillRect(textX, textY - 22, 5, 26);
+        const spans = parseInlineSpansFromHtml(block);
+        textY = drawRichTextSpans(
+          context,
+          spans,
+          textX + 14,
+          textY,
+          textWidth - 14,
+          28,
+          "#be123c",
+        );
+        continue;
+      }
+
+      if (isH3) {
+        const spans = parseInlineSpansFromHtml(block);
+        textY = drawRichTextSpans(
+          context,
+          spans,
+          textX,
+          textY,
+          textWidth,
+          26,
+          COLOR_ROSE,
+        );
+        continue;
+      }
+
+      if (isBlockquote) {
+        context.fillStyle = "#fff1f2";
+        context.fillRect(textX, textY - 22, textWidth, 34);
+        context.fillStyle = COLOR_ROSE;
+        context.fillRect(textX, textY - 22, 4, 34);
+        const spans = parseInlineSpansFromHtml(block);
+        textY = drawRichTextSpans(
+          context,
+          spans,
+          textX + 12,
+          textY,
+          textWidth - 12,
+          25,
+          "#374151",
+        );
+        continue;
+      }
+
+      const spans = parseInlineSpansFromHtml(block);
+      textY = drawRichTextSpans(
+        context,
+        spans,
+        textX,
+        textY,
+        textWidth,
+        27,
+        COLOR_TEXT,
+      );
     }
+  } else {
+    context.font = `400 27px ${FONT_FAMILY}`;
+    layout.instructionLines.forEach((line) => {
+      let currentLine = line;
+      let isHeading = false;
+      let isBold = false;
+      let textColor = COLOR_TEXT;
 
-    if (/<strong>|<b>/i.test(currentLine)) {
-      isBold = true;
-    }
+      if (/^<h[1-2]/i.test(currentLine) || /^(\d+\.|I+\.|[A-Z]\.)\s+/i.test(currentLine)) {
+        isHeading = true;
+        textColor = "#be123c";
+      } else if (/^<h[3-6]/i.test(currentLine)) {
+        isHeading = true;
+        textColor = COLOR_ROSE;
+      }
 
-    currentLine = currentLine.replace(/<[^>]+>/g, "");
+      if (/<strong>|<b>/i.test(currentLine)) {
+        isBold = true;
+      }
 
-    context.fillStyle = textColor;
-    if (isHeading) {
-      context.font = `700 28px ${FONT_FAMILY}`;
-      // Left accent bar for heading
-      context.fillStyle = COLOR_ROSE;
-      context.fillRect(textX, textY - 22, 5, 26);
+      currentLine = currentLine.replace(/<[^>]+>/g, "");
+
       context.fillStyle = textColor;
-      context.fillText(currentLine, textX + 14, textY);
-    } else if (isBold) {
-      context.font = `700 27px ${FONT_FAMILY}`;
-      context.fillText(currentLine, textX, textY);
-    } else {
-      context.font = `400 27px ${FONT_FAMILY}`;
-      context.fillText(currentLine, textX, textY);
-    }
+      if (isHeading) {
+        context.font = `700 28px ${FONT_FAMILY}`;
+        context.fillStyle = COLOR_ROSE;
+        context.fillRect(textX, textY - 22, 5, 26);
+        context.fillStyle = textColor;
+        context.fillText(currentLine, textX + 14, textY);
+      } else if (isBold) {
+        context.font = `700 27px ${FONT_FAMILY}`;
+        context.fillText(currentLine, textX, textY);
+      } else {
+        context.font = `400 27px ${FONT_FAMILY}`;
+        context.fillText(currentLine, textX, textY);
+      }
 
-    textY += INSTRUCTION_LINE_HEIGHT;
-  });
+      textY += INSTRUCTION_LINE_HEIGHT;
+    });
+  }
 };
 
-const drawProductCardContent = async (
+const drawProductCardContent = (
   context,
   layout,
   productImage,
@@ -650,7 +725,6 @@ const drawProductCardContent = async (
   const imageY = top + CARD_PADDING;
   const textX = imageX + PRODUCT_IMAGE_SIZE + TEXT_GAP;
   const textWidth = cardWidth - CARD_PADDING * 2 - PRODUCT_IMAGE_SIZE - TEXT_GAP;
-  const textHeight = layout.height - CARD_PADDING * 2;
 
   // Card container
   context.fillStyle = "#ffffff";
@@ -687,59 +761,11 @@ const drawProductCardContent = async (
     );
   }
 
-  // Render Card Text using SVG foreignObject when Image Constructor is available
-  let renderedSvg = false;
-  if (typeof globalThis.Image !== "undefined" && typeof globalThis.Blob !== "undefined" && typeof globalThis.URL !== "undefined") {
-    try {
-      const fullHtml = buildCardTextHtml(layout.name, layout.usageInstructions);
-      const svgString = `<svg xmlns="http://www.w3.org/2000/svg" width="${textWidth}" height="${textHeight}">
-        <foreignObject width="100%" height="100%">
-          <div xmlns="http://www.w3.org/1999/xhtml">
-            <style>${CARD_HTML_STYLES}</style>
-            ${fullHtml}
-          </div>
-        </foreignObject>
-      </svg>`;
-
-      const blob = new globalThis.Blob([svgString], { type: "image/svg+xml;charset=utf-8" });
-      const url = globalThis.URL.createObjectURL(blob);
-      const img = new globalThis.Image();
-
-      renderedSvg = await new Promise((resolve) => {
-        let timer = setTimeout(() => {
-          globalThis.URL.revokeObjectURL(url);
-          resolve(false);
-        }, 1500);
-
-        img.onload = () => {
-          clearTimeout(timer);
-          try {
-            context.drawImage(img, textX, top + CARD_PADDING, textWidth, textHeight);
-            renderedSvg = true;
-          } catch {
-            renderedSvg = false;
-          }
-          globalThis.URL.revokeObjectURL(url);
-          resolve(renderedSvg);
-        };
-        img.onerror = () => {
-          clearTimeout(timer);
-          globalThis.URL.revokeObjectURL(url);
-          resolve(false);
-        };
-        img.src = url;
-      });
-    } catch {
-      renderedSvg = false;
-    }
-  }
-
-  if (!renderedSvg) {
-    drawFallbackProductCardText(context, layout, textX, top, textWidth);
-  }
+  // Draw Card Text using Canvas 2D Direct Renderer (Never taints canvas!)
+  drawProductCardText(context, layout, textX, top, textWidth);
 };
 
-const renderPageImage = async ({
+const renderPageImage = ({
   exportData,
   pageLayouts,
   pageIndex,
@@ -758,7 +784,7 @@ const renderPageImage = async ({
 
   let currentTop = CONTENT_TOP;
   for (const layout of pageLayouts) {
-    await drawProductCardContent(
+    drawProductCardContent(
       context,
       layout,
       productImages.get(layout.imageKey || layout.key),
@@ -769,6 +795,7 @@ const renderPageImage = async ({
 
   return canvas.toDataURL("image/png");
 };
+
 
 export const generateUsageInstructionsPdf = async (exportData) => {
   if (
