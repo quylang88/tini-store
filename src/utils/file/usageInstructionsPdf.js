@@ -407,6 +407,112 @@ const drawHeader = (context, exportData, logoImage, pageIndex, pageCount) => {
   context.stroke();
 };
 
+export const parseHtmlToRichLines = (htmlContent) => {
+  if (!htmlContent || typeof htmlContent !== "string") return [];
+  const trimmed = htmlContent.trim();
+  if (!trimmed) return [];
+
+  if (typeof document === "undefined" || typeof DOMParser === "undefined") {
+    return convertHtmlToPdfLines(trimmed).map((line) => {
+      const isBullet = /^(?:[•⁃–—\-*+>:▪▫■□▲►✦✧★☆❖◆◇⚪⚫➔✓]|🔴|🔵|➡️|✔️|✅|o)\s+/iu.test(line);
+      return {
+        html: line,
+        type: isBullet ? "li" : "p",
+        bullet: isBullet ? "• " : null,
+      };
+    });
+  }
+
+  try {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(`<div>${trimmed}</div>`, "text/html");
+    const container = doc.body.firstElementChild;
+    if (!container) return [];
+
+    const lines = [];
+
+    const processElement = (element) => {
+      const tagName = element.tagName ? element.tagName.toLowerCase() : "";
+
+      if (tagName === "ul" || tagName === "ol") {
+        let index = 1;
+        for (const child of Array.from(element.children)) {
+          if (child.tagName?.toLowerCase() === "li") {
+            const prefix = tagName === "ol" ? `${index}. ` : "• ";
+            lines.push({
+              html: child.innerHTML,
+              type: "li",
+              bullet: prefix,
+            });
+            index += 1;
+          } else {
+            processElement(child);
+          }
+        }
+        return;
+      }
+
+      if (tagName === "h1" || tagName === "h2") {
+        lines.push({ html: element.innerHTML, type: "h2" });
+        return;
+      }
+      if (tagName === "h3" || tagName === "h4" || tagName === "h5" || tagName === "h6") {
+        lines.push({ html: element.innerHTML, type: "h3" });
+        return;
+      }
+      if (tagName === "blockquote") {
+        lines.push({ html: element.innerHTML, type: "blockquote" });
+        return;
+      }
+      if (tagName === "hr") {
+        lines.push({ html: "", type: "hr" });
+        return;
+      }
+
+      const brSplitHtmls = element.innerHTML.split(/<br\s*\/?>/i);
+      for (const snippetHtml of brSplitHtmls) {
+        const textCheck = snippetHtml.replace(/<[^>]+>/g, "").trim();
+        if (textCheck) {
+          const isBullet = /^(?:[•⁃–—\-*+>:▪▫■□▲►✦✧★☆❖◆◇⚪⚫➔✓]|🔴|🔵|➡️|✔️|✅)\s+/iu.test(textCheck);
+          lines.push({
+            html: snippetHtml,
+            type: isBullet ? "li" : "p",
+            bullet: isBullet ? "• " : null,
+          });
+        }
+      }
+    };
+
+    for (const child of Array.from(container.childNodes)) {
+      if (child.nodeType === Node.TEXT_NODE) {
+        const text = child.textContent;
+        const textLines = text.split(/\r?\n/);
+        for (const lineText of textLines) {
+          const clean = lineText.trim();
+          if (clean) {
+            const isBullet = /^(?:[•⁃–—\-*+>:▪▫■□▲►✦✧★☆❖◆◇⚪⚫➔✓]|🔴|🔵|➡️|✔️|✅)\s+/iu.test(clean);
+            lines.push({
+              html: escapeHtml(clean),
+              type: isBullet ? "li" : "p",
+              bullet: isBullet ? "• " : null,
+            });
+          }
+        }
+      } else if (child.nodeType === Node.ELEMENT_NODE) {
+        processElement(child);
+      }
+    }
+
+    return lines;
+  } catch {
+    return convertHtmlToPdfLines(trimmed).map((line) => ({
+      html: escapeHtml(line),
+      type: "p",
+      bullet: null,
+    }));
+  }
+};
+
 const parseInlineSpansFromHtml = (htmlContent) => {
   if (!htmlContent || typeof htmlContent !== "string") return [];
   const textContent = htmlContent.trim();
@@ -552,15 +658,20 @@ const drawProductCardText = (
 ) => {
   let textY = top + CARD_PADDING;
 
-  // 1. Draw Badge Tag
+  // 1. Draw Badge Tag ("SẢN PHẨM")
   context.fillStyle = "#fff1f2";
   context.strokeStyle = COLOR_BORDER;
-  context.lineWidth = 1;
-  const badgeWidth = 220;
-  const badgeHeight = 32;
+  context.lineWidth = 1.5;
+
+  const badgeText = "SẢN PHẨM";
+  context.font = `700 16px ${FONT_FAMILY}`;
+  const textMetrics = context.measureText(badgeText);
+  const badgeWidth = Math.ceil(textMetrics.width) + 24;
+  const badgeHeight = 30;
+
   context.beginPath();
   if (typeof context.roundRect === "function") {
-    context.roundRect(textX, textY, badgeWidth, badgeHeight, 16);
+    context.roundRect(textX, textY, badgeWidth, badgeHeight, 15);
   } else {
     context.rect(textX, textY, badgeWidth, badgeHeight);
   }
@@ -568,14 +679,18 @@ const drawProductCardText = (
   context.stroke();
 
   context.fillStyle = "#be123c";
-  context.font = `700 18px ${FONT_FAMILY}`;
+  context.font = `700 16px ${FONT_FAMILY}`;
   context.textAlign = "left";
-  context.fillText("TÊN THUỐC / SẢN PHẨM", textX + 14, textY + 22);
-  textY += 46;
+  context.textBaseline = "middle";
+  context.fillText(badgeText, textX + 12, textY + badgeHeight / 2);
 
-  // 2. Draw Medicine Title Name
+  // Position Product Name clearly below the badge with 14px gap
+  textY += badgeHeight + 14;
+
+  // 2. Draw Product Name
   context.fillStyle = "#0f172a";
-  context.font = `800 32px ${FONT_FAMILY}`;
+  context.font = `800 30px ${FONT_FAMILY}`;
+  context.textBaseline = "top";
   layout.nameLines.forEach((line) => {
     context.fillText(line, textX, textY);
     textY += NAME_LINE_HEIGHT;
@@ -590,19 +705,15 @@ const drawProductCardText = (
   context.lineTo(textX + textWidth, textY);
   context.stroke();
   textY += 28;
+  context.textBaseline = "alphabetic";
 
   // 4. Draw HDSD Instruction Lines & Rich HTML Blocks
   const rawInstructionHtml = layout.usageInstructions || "";
-  const blocks = parseHtmlToBlocks(rawInstructionHtml);
+  const richLines = parseHtmlToRichLines(rawInstructionHtml);
 
-  if (blocks.length > 0) {
-    for (const block of blocks) {
-      const isH12 = /^<h[1-2]/i.test(block) || /^(\d+\.|I+\.|[A-Z]\.)\s+/i.test(block);
-      const isH3 = /^<h[3-6]/i.test(block);
-      const isBlockquote = /^<blockquote/i.test(block);
-      const isHr = /^<hr/i.test(block);
-
-      if (isHr) {
+  if (richLines.length > 0) {
+    for (const lineObj of richLines) {
+      if (lineObj.type === "hr") {
         context.strokeStyle = COLOR_BORDER;
         context.lineWidth = 2;
         context.beginPath();
@@ -613,10 +724,10 @@ const drawProductCardText = (
         continue;
       }
 
-      if (isH12) {
+      if (lineObj.type === "h2") {
         context.fillStyle = COLOR_ROSE;
         context.fillRect(textX, textY - 22, 5, 26);
-        const spans = parseInlineSpansFromHtml(block);
+        const spans = parseInlineSpansFromHtml(lineObj.html);
         textY = drawRichTextSpans(
           context,
           spans,
@@ -626,11 +737,12 @@ const drawProductCardText = (
           28,
           "#be123c",
         );
+        textY += 4;
         continue;
       }
 
-      if (isH3) {
-        const spans = parseInlineSpansFromHtml(block);
+      if (lineObj.type === "h3") {
+        const spans = parseInlineSpansFromHtml(lineObj.html);
         textY = drawRichTextSpans(
           context,
           spans,
@@ -640,15 +752,16 @@ const drawProductCardText = (
           26,
           COLOR_ROSE,
         );
+        textY += 4;
         continue;
       }
 
-      if (isBlockquote) {
+      if (lineObj.type === "blockquote") {
         context.fillStyle = "#fff1f2";
         context.fillRect(textX, textY - 22, textWidth, 34);
         context.fillStyle = COLOR_ROSE;
         context.fillRect(textX, textY - 22, 4, 34);
-        const spans = parseInlineSpansFromHtml(block);
+        const spans = parseInlineSpansFromHtml(lineObj.html);
         textY = drawRichTextSpans(
           context,
           spans,
@@ -658,19 +771,30 @@ const drawProductCardText = (
           25,
           "#374151",
         );
+        textY += 4;
         continue;
       }
 
-      const spans = parseInlineSpansFromHtml(block);
+      const lineX = lineObj.bullet ? textX + 24 : textX;
+      const lineWidth = lineObj.bullet ? textWidth - 24 : textWidth;
+
+      if (lineObj.bullet) {
+        context.fillStyle = COLOR_ROSE;
+        context.font = `700 27px ${FONT_FAMILY}`;
+        context.fillText(lineObj.bullet, textX + 4, textY);
+      }
+
+      const spans = parseInlineSpansFromHtml(lineObj.html);
       textY = drawRichTextSpans(
         context,
         spans,
-        textX,
+        lineX,
         textY,
-        textWidth,
+        lineWidth,
         27,
         COLOR_TEXT,
       );
+      textY += 2;
     }
   } else {
     context.font = `400 27px ${FONT_FAMILY}`;
