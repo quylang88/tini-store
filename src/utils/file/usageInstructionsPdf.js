@@ -556,7 +556,7 @@ const drawRichTextSpans = (
   startX,
   startY,
   maxWidth,
-  baseFontSize = 27,
+  baseFontSize = 29,
   defaultColor = COLOR_TEXT,
 ) => {
   if (!spans || spans.length === 0) return startY;
@@ -585,7 +585,7 @@ const drawRichTextSpans = (
 
       if (span.bgColor && span.bgColor !== "transparent" && word.trim()) {
         context.fillStyle = span.bgColor;
-        context.fillRect(currentX - 1, currentY - 22, wordWidth + 2, 28);
+        context.fillRect(currentX - 1, currentY - 24, wordWidth + 2, 30);
       }
 
       context.fillStyle = span.color || defaultColor;
@@ -703,9 +703,9 @@ const drawProductCardContent = (
 
   currentY += badgeHeight + 14;
 
-  // 3. Product Name Title Centered
+  // 3. Product Name Title Centered (Prominent 36px font)
   context.fillStyle = "#0f172a";
-  context.font = `800 32px ${FONT_FAMILY}`;
+  context.font = `800 36px ${FONT_FAMILY}`;
   context.textAlign = "center";
   context.textBaseline = "top";
 
@@ -728,7 +728,7 @@ const drawProductCardContent = (
   context.textBaseline = "alphabetic";
   context.textAlign = "left";
 
-  // 5. HDSD Content Section (Full Width)
+  // 5. HDSD Content Section (Full Width, Larger 29px/32px Typography)
   const contentX = cardLeft + CARD_PADDING + 10;
   const contentWidth = cardWidth - (CARD_PADDING + 10) * 2;
 
@@ -756,7 +756,7 @@ const drawProductCardContent = (
           contentX,
           currentY,
           contentWidth,
-          28,
+          32,
           "#be123c",
         );
         currentY += 4;
@@ -771,7 +771,7 @@ const drawProductCardContent = (
           contentX,
           currentY,
           contentWidth,
-          26,
+          29,
           COLOR_ROSE,
         );
         currentY += 4;
@@ -780,9 +780,9 @@ const drawProductCardContent = (
 
       if (lineObj.type === "blockquote") {
         context.fillStyle = "#fff1f2";
-        context.fillRect(contentX, currentY - 22, contentWidth, 34);
+        context.fillRect(contentX, currentY - 22, contentWidth, 36);
         context.fillStyle = COLOR_ROSE;
-        context.fillRect(contentX, currentY - 22, 4, 34);
+        context.fillRect(contentX, currentY - 22, 4, 36);
         const spans = parseInlineSpansFromHtml(lineObj.html);
         currentY = drawRichTextSpans(
           context,
@@ -790,7 +790,7 @@ const drawProductCardContent = (
           contentX + 12,
           currentY,
           contentWidth - 12,
-          25,
+          28,
           "#374151",
         );
         currentY += 4;
@@ -803,7 +803,7 @@ const drawProductCardContent = (
 
       if (lineObj.bullet) {
         context.fillStyle = COLOR_ROSE;
-        context.font = `700 27px ${FONT_FAMILY}`;
+        context.font = `700 29px ${FONT_FAMILY}`;
         context.fillText(lineObj.bullet, contentX + lineIndent - 20, currentY);
       }
 
@@ -814,13 +814,13 @@ const drawProductCardContent = (
         lineX,
         currentY,
         lineWidth,
-        27,
+        29,
         COLOR_TEXT,
       );
       currentY += 2;
     }
   } else {
-    context.font = `400 27px ${FONT_FAMILY}`;
+    context.font = `400 29px ${FONT_FAMILY}`;
     layout.instructionLines.forEach((line) => {
       let currentLine = line.replace(/<[^>]+>/g, "");
       context.fillStyle = COLOR_TEXT;
