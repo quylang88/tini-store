@@ -65,8 +65,8 @@ const CARD_PADDING = 28;
 const CARD_GAP = 28;
 const PRODUCT_IMAGE_SIZE = 220;
 const TEXT_GAP = 34;
-const NAME_LINE_HEIGHT = 42;
-const INSTRUCTION_LINE_HEIGHT = 38;
+const NAME_LINE_HEIGHT = 48;
+const INSTRUCTION_LINE_HEIGHT = 42;
 const COLOR_ROSE = "#e11d48";
 const COLOR_TEXT = "#1f2937";
 const COLOR_META = "#6b7280";
@@ -223,116 +223,34 @@ export const parseHtmlToBlocks = (htmlString) => {
 
 
 const createCardLayout = (context, item) => {
-  const textWidth =
-    PAGE_WIDTH -
-    PAGE_MARGIN * 2 -
-    CARD_PADDING * 2 -
-    PRODUCT_IMAGE_SIZE -
-    TEXT_GAP;
-
-  context.font = `700 32px ${FONT_FAMILY}`;
-  const nameLines = wrapCanvasText(context, item.name, textWidth);
+  const cardWidth = PAGE_WIDTH - PAGE_MARGIN * 2;
+  context.font = `800 32px ${FONT_FAMILY}`;
+  const nameLines = wrapCanvasText(context, item.name, cardWidth - CARD_PADDING * 4);
 
   const rawInstructionLines = convertHtmlToPdfLines(item.usageInstructions);
   const instructionLines = rawInstructionLines.flatMap((line) =>
-    wrapCanvasText(context, line, textWidth),
+    wrapCanvasText(context, line, cardWidth - CARD_PADDING * 2),
   );
 
-  const textHeight =
-    nameLines.length * NAME_LINE_HEIGHT +
-    45 +
-    instructionLines.length * INSTRUCTION_LINE_HEIGHT;
-  const contentHeight = Math.max(PRODUCT_IMAGE_SIZE, textHeight);
+  const availableHeight = PAGE_HEIGHT - CONTENT_TOP - CONTENT_BOTTOM;
 
   return {
     ...item,
     imageKey: item.key,
     nameLines,
     instructionLines,
-    height: contentHeight + CARD_PADDING * 2,
+    height: availableHeight,
   };
-};
-
-const calculateCardHeight = (nameLines, instructionLines) => {
-  const textHeight =
-    nameLines.length * NAME_LINE_HEIGHT +
-    45 +
-    instructionLines.length * INSTRUCTION_LINE_HEIGHT;
-  return Math.max(PRODUCT_IMAGE_SIZE, textHeight) + CARD_PADDING * 2;
 };
 
 export const fitLayoutsToPageHeight = (
   layouts,
   maxCardHeight,
 ) => {
-  const safeMaxHeight = Math.max(1, Number(maxCardHeight) || 1);
-  const fittedLayouts = [];
-
-  for (const layout of layouts || []) {
-    if (layout.height <= safeMaxHeight) {
-      fittedLayouts.push(layout);
-      continue;
-    }
-
-    const originalNameLines = [...(layout.nameLines || [])];
-    const remainingLines = [...(layout.instructionLines || [])];
-    const fullNameFits =
-      calculateCardHeight(originalNameLines, []) <= safeMaxHeight;
-    let continuationNameLines = originalNameLines;
-    let partIndex = 0;
-
-    if (!fullNameFits) {
-      const nameLineCapacity = Math.max(
-        1,
-        Math.floor(
-          (safeMaxHeight - CARD_PADDING * 2 - 45) /
-            NAME_LINE_HEIGHT,
-        ),
-      );
-      const remainingNameLines = [...originalNameLines];
-      while (remainingNameLines.length > 0) {
-        const nameLines = remainingNameLines.splice(
-          0,
-          nameLineCapacity,
-        );
-        fittedLayouts.push({
-          ...layout,
-          key: `${layout.key}-part-${partIndex + 1}`,
-          imageKey: layout.imageKey || layout.key,
-          nameLines,
-          instructionLines: [],
-          height: calculateCardHeight(nameLines, []),
-        });
-        partIndex += 1;
-      }
-      continuationNameLines = originalNameLines.slice(0, 1);
-    }
-
-    while (remainingLines.length > 0) {
-      const nameLines = continuationNameLines;
-      const fixedTextHeight =
-        nameLines.length * NAME_LINE_HEIGHT + 45;
-      const availableInstructionHeight =
-        safeMaxHeight - CARD_PADDING * 2 - fixedTextHeight;
-      const lineCapacity = Math.max(
-        1,
-        Math.floor(availableInstructionHeight / INSTRUCTION_LINE_HEIGHT),
-      );
-      const instructionLines = remainingLines.splice(0, lineCapacity);
-
-      fittedLayouts.push({
-        ...layout,
-        key: `${layout.key}-part-${partIndex + 1}`,
-        imageKey: layout.imageKey || layout.key,
-        nameLines,
-        instructionLines,
-        height: calculateCardHeight(nameLines, instructionLines),
-      });
-      partIndex += 1;
-    }
-  }
-
-  return fittedLayouts;
+  return (layouts || []).map((layout) => ({
+    ...layout,
+    height: maxCardHeight || layout.height,
+  }));
 };
 
 const drawContainedImage = (
@@ -698,65 +616,122 @@ const drawRichTextSpans = (
   return currentY + INSTRUCTION_LINE_HEIGHT;
 };
 
-const drawProductCardText = (
+const drawProductCardContent = (
   context,
   layout,
-  textX,
+  productImage,
   top,
-  textWidth,
 ) => {
-  let textY = top + CARD_PADDING;
+  const cardWidth = PAGE_WIDTH - PAGE_MARGIN * 2; // 1100px
+  const cardLeft = PAGE_MARGIN; // 70px
 
-  // 1. Draw Badge Tag ("SẢN PHẨM")
-  context.fillStyle = "#fff1f2";
+  // Card container box
+  context.fillStyle = "#ffffff";
+  context.strokeStyle = COLOR_BORDER;
+  context.lineWidth = 2;
+  context.fillRect(cardLeft, top, cardWidth, layout.height);
+  context.strokeRect(cardLeft, top, cardWidth, layout.height);
+
+  let currentY = top + CARD_PADDING + 10;
+
+  // 1. Centered Product Image (360x360)
+  const imageSize = 360;
+  const imageX = cardLeft + (cardWidth - imageSize) / 2;
+
+  context.fillStyle = COLOR_PLACEHOLDER;
+  context.beginPath();
+  if (typeof context.roundRect === "function") {
+    context.roundRect(imageX, currentY, imageSize, imageSize, 16);
+  } else {
+    context.rect(imageX, currentY, imageSize, imageSize);
+  }
+  context.fill();
   context.strokeStyle = COLOR_BORDER;
   context.lineWidth = 1.5;
+  context.stroke();
 
+  if (productImage) {
+    drawContainedImage(
+      context,
+      productImage,
+      imageX,
+      currentY,
+      imageSize,
+      imageSize,
+    );
+  } else {
+    context.fillStyle = COLOR_META;
+    context.font = `600 24px ${FONT_FAMILY}`;
+    context.textAlign = "center";
+    context.textBaseline = "middle";
+    context.fillText(
+      "Không có ảnh sản phẩm",
+      imageX + imageSize / 2,
+      currentY + imageSize / 2,
+    );
+    context.textBaseline = "alphabetic";
+  }
+
+  currentY += imageSize + 22;
+
+  // 2. Badge Tag ("SẢN PHẨM") Centered
   const badgeText = "SẢN PHẨM";
   context.font = `700 16px ${FONT_FAMILY}`;
   const textMetrics = context.measureText(badgeText);
   const badgeWidth = Math.ceil(textMetrics.width) + 24;
   const badgeHeight = 30;
+  const badgeX = cardLeft + (cardWidth - badgeWidth) / 2;
 
+  context.fillStyle = "#fff1f2";
+  context.strokeStyle = COLOR_BORDER;
+  context.lineWidth = 1.5;
   context.beginPath();
   if (typeof context.roundRect === "function") {
-    context.roundRect(textX, textY, badgeWidth, badgeHeight, 15);
+    context.roundRect(badgeX, currentY, badgeWidth, badgeHeight, 15);
   } else {
-    context.rect(textX, textY, badgeWidth, badgeHeight);
+    context.rect(badgeX, currentY, badgeWidth, badgeHeight);
   }
   context.fill();
   context.stroke();
 
   context.fillStyle = "#be123c";
   context.font = `700 16px ${FONT_FAMILY}`;
-  context.textAlign = "left";
+  context.textAlign = "center";
   context.textBaseline = "middle";
-  context.fillText(badgeText, textX + 12, textY + badgeHeight / 2);
+  context.fillText(badgeText, cardLeft + cardWidth / 2, currentY + badgeHeight / 2);
+  context.textBaseline = "alphabetic";
 
-  // Position Product Name clearly below the badge with 14px gap
-  textY += badgeHeight + 14;
+  currentY += badgeHeight + 14;
 
-  // 2. Draw Product Name
+  // 3. Product Name Title Centered
   context.fillStyle = "#0f172a";
-  context.font = `800 30px ${FONT_FAMILY}`;
+  context.font = `800 32px ${FONT_FAMILY}`;
+  context.textAlign = "center";
   context.textBaseline = "top";
-  layout.nameLines.forEach((line) => {
-    context.fillText(line, textX, textY);
-    textY += NAME_LINE_HEIGHT;
-  });
-  textY += 10;
 
-  // 3. Draw Divider Line
+  const nameLines = wrapCanvasText(context, layout.name, cardWidth - CARD_PADDING * 4);
+  nameLines.forEach((line) => {
+    context.fillText(line, cardLeft + cardWidth / 2, currentY);
+    currentY += NAME_LINE_HEIGHT;
+  });
+  currentY += 12;
+
+  // 4. Accent Divider Line
+  const lineMargin = 50;
   context.strokeStyle = COLOR_BORDER;
   context.lineWidth = 2;
   context.beginPath();
-  context.moveTo(textX, textY);
-  context.lineTo(textX + textWidth, textY);
+  context.moveTo(cardLeft + lineMargin, currentY);
+  context.lineTo(cardLeft + cardWidth - lineMargin, currentY);
   context.stroke();
-  textY += 44; // Generous 44px gap after divider line before HDSD content starts
+  currentY += 40;
   context.textBaseline = "alphabetic";
+  context.textAlign = "left";
 
-  // 4. Draw HDSD Instruction Lines & Rich HTML Blocks
+  // 5. HDSD Content Section (Full Width)
+  const contentX = cardLeft + CARD_PADDING + 10;
+  const contentWidth = cardWidth - (CARD_PADDING + 10) * 2;
+
   const rawInstructionHtml = layout.usageInstructions || "";
   const richLines = parseHtmlToRichLines(rawInstructionHtml);
 
@@ -766,172 +741,93 @@ const drawProductCardText = (
         context.strokeStyle = COLOR_BORDER;
         context.lineWidth = 2;
         context.beginPath();
-        context.moveTo(textX, textY - 10);
-        context.lineTo(textX + textWidth, textY - 10);
+        context.moveTo(contentX, currentY - 10);
+        context.lineTo(contentX + contentWidth, currentY - 10);
         context.stroke();
-        textY += 16;
+        currentY += 16;
         continue;
       }
 
       if (lineObj.type === "h2") {
         const spans = parseInlineSpansFromHtml(lineObj.html);
-        textY = drawRichTextSpans(
+        currentY = drawRichTextSpans(
           context,
           spans,
-          textX,
-          textY,
-          textWidth,
+          contentX,
+          currentY,
+          contentWidth,
           28,
           "#be123c",
         );
-        textY += 4;
+        currentY += 4;
         continue;
       }
 
       if (lineObj.type === "h3") {
         const spans = parseInlineSpansFromHtml(lineObj.html);
-        textY = drawRichTextSpans(
+        currentY = drawRichTextSpans(
           context,
           spans,
-          textX,
-          textY,
-          textWidth,
+          contentX,
+          currentY,
+          contentWidth,
           26,
           COLOR_ROSE,
         );
-        textY += 4;
+        currentY += 4;
         continue;
       }
 
       if (lineObj.type === "blockquote") {
         context.fillStyle = "#fff1f2";
-        context.fillRect(textX, textY - 22, textWidth, 34);
+        context.fillRect(contentX, currentY - 22, contentWidth, 34);
         context.fillStyle = COLOR_ROSE;
-        context.fillRect(textX, textY - 22, 4, 34);
+        context.fillRect(contentX, currentY - 22, 4, 34);
         const spans = parseInlineSpansFromHtml(lineObj.html);
-        textY = drawRichTextSpans(
+        currentY = drawRichTextSpans(
           context,
           spans,
-          textX + 12,
-          textY,
-          textWidth - 12,
+          contentX + 12,
+          currentY,
+          contentWidth - 12,
           25,
           "#374151",
         );
-        textY += 4;
+        currentY += 4;
         continue;
       }
 
       const lineIndent = lineObj.indent || (lineObj.bullet ? 24 : 0);
-      const lineX = textX + lineIndent;
-      const lineWidth = textWidth - lineIndent;
+      const lineX = contentX + lineIndent;
+      const lineWidth = contentWidth - lineIndent;
 
       if (lineObj.bullet) {
         context.fillStyle = COLOR_ROSE;
         context.font = `700 27px ${FONT_FAMILY}`;
-        context.fillText(lineObj.bullet, textX + lineIndent - 20, textY);
+        context.fillText(lineObj.bullet, contentX + lineIndent - 20, currentY);
       }
 
       const spans = parseInlineSpansFromHtml(lineObj.html);
-      textY = drawRichTextSpans(
+      currentY = drawRichTextSpans(
         context,
         spans,
         lineX,
-        textY,
+        currentY,
         lineWidth,
         27,
         COLOR_TEXT,
       );
-      textY += 2;
+      currentY += 2;
     }
   } else {
     context.font = `400 27px ${FONT_FAMILY}`;
     layout.instructionLines.forEach((line) => {
-      let currentLine = line;
-      let isHeading = false;
-      let isBold = false;
-      let textColor = COLOR_TEXT;
-
-      if (/^<h[1-2]/i.test(currentLine) || /^(\d+\.|I+\.|[A-Z]\.)\s+/i.test(currentLine)) {
-        isHeading = true;
-        textColor = "#be123c";
-      } else if (/^<h[3-6]/i.test(currentLine)) {
-        isHeading = true;
-        textColor = COLOR_ROSE;
-      }
-
-      if (/<strong>|<b>/i.test(currentLine)) {
-        isBold = true;
-      }
-
-      currentLine = currentLine.replace(/<[^>]+>/g, "");
-
-      context.fillStyle = textColor;
-      if (isHeading) {
-        context.font = `700 28px ${FONT_FAMILY}`;
-        context.fillText(currentLine, textX, textY);
-      } else if (isBold) {
-        context.font = `700 27px ${FONT_FAMILY}`;
-        context.fillText(currentLine, textX, textY);
-      } else {
-        context.font = `400 27px ${FONT_FAMILY}`;
-        context.fillText(currentLine, textX, textY);
-      }
-
-      textY += INSTRUCTION_LINE_HEIGHT;
+      let currentLine = line.replace(/<[^>]+>/g, "");
+      context.fillStyle = COLOR_TEXT;
+      context.fillText(currentLine, contentX, currentY);
+      currentY += INSTRUCTION_LINE_HEIGHT;
     });
   }
-};
-
-const drawProductCardContent = (
-  context,
-  layout,
-  productImage,
-  top,
-) => {
-  const cardWidth = PAGE_WIDTH - PAGE_MARGIN * 2;
-  const imageX = PAGE_MARGIN + CARD_PADDING;
-  const imageY = top + CARD_PADDING;
-  const textX = imageX + PRODUCT_IMAGE_SIZE + TEXT_GAP;
-  const textWidth = cardWidth - CARD_PADDING * 2 - PRODUCT_IMAGE_SIZE - TEXT_GAP;
-
-  // Card container
-  context.fillStyle = "#ffffff";
-  context.strokeStyle = COLOR_BORDER;
-  context.lineWidth = 2;
-  context.fillRect(PAGE_MARGIN, top, cardWidth, layout.height);
-  context.strokeRect(PAGE_MARGIN, top, cardWidth, layout.height);
-
-  // Product Image
-  context.fillStyle = COLOR_PLACEHOLDER;
-  context.fillRect(
-    imageX,
-    imageY,
-    PRODUCT_IMAGE_SIZE,
-    PRODUCT_IMAGE_SIZE,
-  );
-  if (productImage) {
-    drawContainedImage(
-      context,
-      productImage,
-      imageX,
-      imageY,
-      PRODUCT_IMAGE_SIZE,
-      PRODUCT_IMAGE_SIZE,
-    );
-  } else {
-    context.fillStyle = COLOR_META;
-    context.font = `600 22px ${FONT_FAMILY}`;
-    context.textAlign = "center";
-    context.fillText(
-      "Không có ảnh",
-      imageX + PRODUCT_IMAGE_SIZE / 2,
-      imageY + PRODUCT_IMAGE_SIZE / 2,
-    );
-  }
-
-  // Draw Card Text using Canvas 2D Direct Renderer (Never taints canvas!)
-  drawProductCardText(context, layout, textX, top, textWidth);
 };
 
 const renderPageImage = ({

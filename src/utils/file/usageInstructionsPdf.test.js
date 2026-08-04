@@ -27,7 +27,7 @@ describe("usage instruction PDF pagination", () => {
     ).toEqual([[oversized]]);
   });
 
-  it("splits oversized product instructions into bounded continuation cards", () => {
+  it("fits product card layout to 1 page per product", () => {
     const layout = {
       key: "p1",
       imageKey: "p1",
@@ -37,44 +37,13 @@ describe("usage instruction PDF pagination", () => {
         { length: 80 },
         (_, index) => `Dòng ${index + 1}`,
       ),
-      height: 4000,
+      height: 1394,
     };
 
-    const fitted = fitLayoutsToPageHeight([layout], 900);
+    const fitted = fitLayoutsToPageHeight([layout], 1394);
 
-    expect(fitted.length).toBeGreaterThan(1);
-    expect(fitted.every((item) => item.height <= 900)).toBe(true);
-    expect(
-      fitted.flatMap((item) => item.instructionLines),
-    ).toEqual(layout.instructionLines);
-    expect(fitted[1].nameLines).toEqual(layout.nameLines);
-  });
-
-  it("keeps every continuation bounded when the wrapped name is oversized", () => {
-    const layout = {
-      key: "p-long-name",
-      imageKey: "p-long-name",
-      name: "Tên rất dài",
-      nameLines: Array.from(
-        { length: 30 },
-        (_, index) => `Dòng tên ${index + 1}`,
-      ),
-      instructionLines: ["• Liều mỗi lần: 1 viên"],
-      height: 4000,
-    };
-
-    const fitted = fitLayoutsToPageHeight([layout], 900);
-
-    expect(fitted.length).toBeGreaterThan(1);
-    expect(fitted.every((item) => item.height <= 900)).toBe(true);
-    for (const nameLine of layout.nameLines) {
-      expect(
-        fitted.some((item) => item.nameLines.includes(nameLine)),
-      ).toBe(true);
-    }
-    expect(
-      fitted.flatMap((item) => item.instructionLines),
-    ).toEqual(layout.instructionLines);
+    expect(fitted.length).toBe(1);
+    expect(fitted[0].height).toBe(1394);
   });
 
   it("returns no pages for empty input", () => {
