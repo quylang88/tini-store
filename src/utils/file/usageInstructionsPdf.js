@@ -419,6 +419,7 @@ export const parseHtmlToRichLines = (htmlContent) => {
         html: line,
         type: isBullet ? "li" : "p",
         bullet: isBullet ? "• " : null,
+        indent: isBullet ? 24 : 0,
       };
     });
   }
@@ -431,7 +432,17 @@ export const parseHtmlToRichLines = (htmlContent) => {
 
     const lines = [];
 
-    const processNode = (node) => {
+    const getBulletPrefix = (listType, index, depth) => {
+      if (listType === "ol") {
+        if (depth === 1) return `${String.fromCharCode(96 + index)}. `;
+        return `${index}. `;
+      }
+      if (depth === 1) return "◦ ";
+      if (depth >= 2) return "▪ ";
+      return "• ";
+    };
+
+    const processNode = (node, depth = 0) => {
       if (node.nodeType === Node.TEXT_NODE) {
         const text = node.textContent;
         const textLines = text.split(/\r?\n/);
@@ -442,7 +453,8 @@ export const parseHtmlToRichLines = (htmlContent) => {
             lines.push({
               html: escapeHtml(clean),
               type: isBullet ? "li" : "p",
-              bullet: isBullet ? "• " : null,
+              bullet: isBullet ? (depth > 0 ? "◦ " : "• ") : null,
+              indent: isBullet ? 24 + depth * 28 : depth * 28,
             });
           }
         }
@@ -457,34 +469,53 @@ export const parseHtmlToRichLines = (htmlContent) => {
         let index = 1;
         for (const child of Array.from(node.children)) {
           if (child.tagName?.toLowerCase() === "li") {
-            const prefix = tagName === "ol" ? `${index}. ` : "• ";
-            lines.push({
-              html: child.innerHTML,
-              type: "li",
-              bullet: prefix,
-            });
+            const prefix = getBulletPrefix(tagName, index, depth);
+            const indent = 24 + depth * 28;
+
+            const childClone = child.cloneNode(true);
+            const nestedLists = Array.from(
+              childClone.querySelectorAll("ul, ol"),
+            );
+            nestedLists.forEach((l) => l.remove());
+
+            const inlineHtml = childClone.innerHTML.trim();
+            if (inlineHtml) {
+              lines.push({
+                html: inlineHtml,
+                type: "li",
+                bullet: prefix,
+                indent,
+              });
+            }
+
+            for (const nestedList of Array.from(child.children)) {
+              const nestedTag = nestedList.tagName?.toLowerCase();
+              if (nestedTag === "ul" || nestedTag === "ol") {
+                processNode(nestedList, depth + 1);
+              }
+            }
             index += 1;
           } else {
-            processNode(child);
+            processNode(child, depth);
           }
         }
         return;
       }
 
       if (tagName === "h1" || tagName === "h2") {
-        lines.push({ html: node.innerHTML, type: "h2" });
+        lines.push({ html: node.innerHTML, type: "h2", indent: 0 });
         return;
       }
       if (["h3", "h4", "h5", "h6"].includes(tagName)) {
-        lines.push({ html: node.innerHTML, type: "h3" });
+        lines.push({ html: node.innerHTML, type: "h3", indent: 0 });
         return;
       }
       if (tagName === "blockquote") {
-        lines.push({ html: node.innerHTML, type: "blockquote" });
+        lines.push({ html: node.innerHTML, type: "blockquote", indent: 0 });
         return;
       }
       if (tagName === "hr") {
-        lines.push({ html: "", type: "hr" });
+        lines.push({ html: "", type: "hr", indent: 0 });
         return;
       }
 
@@ -496,7 +527,7 @@ export const parseHtmlToRichLines = (htmlContent) => {
 
       if (hasBlockChildren) {
         for (const child of Array.from(node.childNodes)) {
-          processNode(child);
+          processNode(child, depth);
         }
         return;
       }
@@ -509,14 +540,15 @@ export const parseHtmlToRichLines = (htmlContent) => {
           lines.push({
             html: snippetHtml,
             type: isBullet ? "li" : "p",
-            bullet: isBullet ? "• " : null,
+            bullet: isBullet ? (depth > 0 ? "◦ " : "• ") : null,
+            indent: isBullet ? 24 + depth * 28 : depth * 28,
           });
         }
       }
     };
 
     for (const child of Array.from(container.childNodes)) {
-      processNode(child);
+      processNode(child, 0);
     }
 
     return lines;
@@ -525,6 +557,7 @@ export const parseHtmlToRichLines = (htmlContent) => {
       html: escapeHtml(line),
       type: "p",
       bullet: null,
+      indent: 0,
     }));
   }
 };
@@ -720,7 +753,7 @@ const drawProductCardText = (
   context.moveTo(textX, textY);
   context.lineTo(textX + textWidth, textY);
   context.stroke();
-  textY += 28;
+  textY += 44; // Generous 44px gap after divider line before HDSD content starts
   context.textBaseline = "alphabetic";
 
   // 4. Draw HDSD Instruction Lines & Rich HTML Blocks
@@ -791,13 +824,14 @@ const drawProductCardText = (
         continue;
       }
 
-      const lineX = lineObj.bullet ? textX + 24 : textX;
-      const lineWidth = lineObj.bullet ? textWidth - 24 : textWidth;
+      const lineIndent = lineObj.indent || (lineObj.bullet ? 24 : 0);
+      const lineX = textX + lineIndent;
+      const lineWidth = textWidth - lineIndent;
 
       if (lineObj.bullet) {
         context.fillStyle = COLOR_ROSE;
         context.font = `700 27px ${FONT_FAMILY}`;
-        context.fillText(lineObj.bullet, textX + 4, textY);
+        context.fillText(lineObj.bullet, textX + lineIndent - 20, textY);
       }
 
       const spans = parseInlineSpansFromHtml(lineObj.html);
