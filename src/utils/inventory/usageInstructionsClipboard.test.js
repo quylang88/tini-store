@@ -1,8 +1,11 @@
 import { describe, expect, it, vi } from "vitest";
 import {
   buildUsageInstructionsPasteHtml,
+  getDeclaredBoldClassNamesFromCss,
+  isClipboardBoldFormatting,
   normalizeVietnameseClipboardText,
   repairVietnameseUtf8Mojibake,
+  restoreBoldFormattingInPlainText,
 } from "./usageInstructionsClipboard";
 
 describe("Vietnamese usage-instructions clipboard handling", () => {
@@ -69,7 +72,6 @@ describe("Vietnamese usage-instructions clipboard handling", () => {
       htmlData: "<p>HÆ°á»›ng dáº«n sá»­ dá»¥ng</p>",
       textData: "Hướng dẫn sử dụng",
       sanitizeHtml: (html) => html,
-      htmlToText: (html) => html.replace(/<[^>]+>/g, ""),
       plainTextToHtml: toPlainHtml,
     });
 
@@ -77,16 +79,123 @@ describe("Vietnamese usage-instructions clipboard handling", () => {
     expect(toPlainHtml).toHaveBeenCalledWith("Hướng dẫn sử dụng");
   });
 
-  it("keeps sanitized rich formatting when its Unicode text matches plain text", () => {
+  it("rebuilds bold formatting on top of clean plain text", () => {
+    const toPlainHtml = vi.fn((text) =>
+      `<p>${text.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")}</p>`,
+    );
     const result = buildUsageInstructionsPasteHtml({
-      htmlData: "<p><strong>Liều dùng</strong>: 1 viên</p>",
+      htmlData:
+        '<p style="font-family: Courier New"><strong>Liều dùng</strong>: 1 viên</p>',
       textData: "Liều dùng: 1 viên",
       sanitizeHtml: (html) => html,
-      htmlToText: (html) => html.replace(/<[^>]+>/g, ""),
-      plainTextToHtml: (text) => `<p>${text}</p>`,
+      getBoldTextSegments: () => ["Liều dùng"],
+      plainTextToHtml: toPlainHtml,
     });
 
     expect(result).toBe("<p><strong>Liều dùng</strong>: 1 viên</p>");
+    expect(toPlainHtml).toHaveBeenCalledWith("**Liều dùng**: 1 viên");
+  });
+
+  it("restores rich bold formatting when plain mobile text adds list markers", () => {
+    const richHtml =
+      "<ul><li><strong>Công dụng</strong>: Tăng đề kháng</li>" +
+      "<li><strong>Liều dùng</strong>: 1 viên</li></ul>";
+    const toPlainHtml = vi.fn((text) => `<article>${text}</article>`);
+    const result = buildUsageInstructionsPasteHtml({
+      htmlData: richHtml,
+      textData:
+        "• Công dụng: Tăng đề kháng\n• Liều dùng: 1 viên",
+      sanitizeHtml: (html) => html,
+      getBoldTextSegments: () => ["Công dụng", "Liều dùng"],
+      plainTextToHtml: toPlainHtml,
+    });
+
+    expect(result).toBe(
+      "<article>• **Công dụng**: Tăng đề kháng\n" +
+        "• **Liều dùng**: 1 viên</article>",
+    );
+    expect(toPlainHtml).toHaveBeenCalledWith(
+      "• **Công dụng**: Tăng đề kháng\n• **Liều dùng**: 1 viên",
+    );
+  });
+
+  it("restores repeated bold ranges without changing the plain text", () => {
+    expect(
+      restoreBoldFormattingInPlainText(
+        "Liều dùng sáng. Liều dùng tối.",
+        ["Liều dùng", "Liều dùng"],
+      ),
+    ).toBe("**Liều dùng** sáng. **Liều dùng** tối.");
+    expect(
+      restoreBoldFormattingInPlainText(
+        "Đã có **chữ đậm** và chữ thường.",
+        ["chữ đậm"],
+      ),
+    ).toBe("Đã có **chữ đậm** và chữ thường.");
+    expect(
+      restoreBoldFormattingInPlainText("Hướng dẫn sử dụng", [
+        "HÆ°á»›ng dáº«n",
+      ]),
+    ).toBe("**Hướng dẫn** sử dụng");
+    expect(
+      restoreBoldFormattingInPlainText(
+        "Liều dùng sáng. Liều dùng tối.",
+        [{ text: "Liều dùng", occurrence: 1 }],
+      ),
+    ).toBe("Liều dùng sáng. **Liều dùng** tối.");
+  });
+
+  it("recognizes semantic, CSS, and variable-font bold clipboard formats", () => {
+    expect(isClipboardBoldFormatting({ tagName: "strong" })).toBe(true);
+    expect(isClipboardBoldFormatting({ tagName: "h3" })).toBe(true);
+    expect(
+      isClipboardBoldFormatting({ tagName: "span", fontWeight: "600" }),
+    ).toBe(true);
+    expect(
+      isClipboardBoldFormatting({
+        tagName: "span",
+        className: "response-text font-semibold",
+      }),
+    ).toBe(true);
+    expect(
+      isClipboardBoldFormatting({
+        tagName: "span",
+        fontVariationSettings: '"wght" 650',
+      }),
+    ).toBe(true);
+    expect(
+      isClipboardBoldFormatting({
+        tagName: "span",
+        declaredBold: true,
+      }),
+    ).toBe(true);
+    expect(
+      isClipboardBoldFormatting({
+        tagName: "span",
+        declaredBold: true,
+        fontWeight: "normal",
+      }),
+    ).toBe(false);
+    expect(
+      isClipboardBoldFormatting({
+        tagName: "span",
+        className: "font-semibold",
+        fontWeight: "normal",
+      }),
+    ).toBe(false);
+  });
+
+  it("finds bold classes declared inside clipboard stylesheets", () => {
+    const classNames = getDeclaredBoldClassNamesFromCss(`
+      .gemini-emphasis { font-weight: 650 !important; }
+      .chatgpt-variable { font-variation-settings: "wght" 700; }
+      .regular-copy { font-weight: 400; }
+    `);
+
+    expect(Array.from(classNames).sort()).toEqual([
+      "chatgpt-variable",
+      "gemini-emphasis",
+    ]);
   });
 
   it("uses plain text when the HTML payload contains different clipboard content", () => {
@@ -94,7 +203,6 @@ describe("Vietnamese usage-instructions clipboard handling", () => {
       htmlData: "<p>ChatGPT</p><p>Hướng dẫn sử dụng</p>",
       textData: "Hướng dẫn sử dụng",
       sanitizeHtml: (html) => html,
-      htmlToText: (html) => html.replace(/<[^>]+>/g, ""),
       plainTextToHtml: (text) => `<p>${text}</p>`,
     });
 

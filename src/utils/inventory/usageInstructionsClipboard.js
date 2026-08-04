@@ -131,16 +131,188 @@ export const normalizeVietnameseUsageInstructionsValue = (value) => {
   );
 };
 
-const canonicalClipboardText = (value) =>
-  normalizeVietnameseClipboardText(value)
-    .replace(/(\*\*|__)(.*?)\1/gu, "$2")
-    .replace(/\s/gu, "");
+const EXPLICIT_NORMAL_FONT_WEIGHTS = new Set([
+  "normal",
+  "400",
+  "300",
+  "200",
+  "100",
+]);
+
+const BOLD_CLASS_REGEX =
+  /(?:^|\s)(?:bold|font-(?:medium|semibold|bold|extrabold|black)|font-\[?[5-9]00\]?|(?:font-)?weight-?[5-9]00|fw-(?:semibold|bold)|semi-?bold|extra-?bold)(?:\s|$)/iu;
+
+const BOLD_CSS_DECLARATION_REGEX =
+  /(?:font-weight\s*:\s*(?:bold|bolder|[5-9][0-9]{2})\b|font\s*:\s*(?:[^;]*\s)?(?:bold|bolder|[5-9][0-9]{2})\b|font-variation-settings\s*:[^;]*["']?wght["']?\s+[5-9][0-9]{2})/iu;
+
+export const getDeclaredBoldClassNamesFromCss = (cssText) => {
+  const classNames = new Set();
+  if (typeof cssText !== "string" || !cssText) return classNames;
+
+  for (const rule of cssText.matchAll(/([^{}]+)\{([^{}]*)\}/gu)) {
+    if (!BOLD_CSS_DECLARATION_REGEX.test(rule[2])) continue;
+
+    for (const classMatch of rule[1].matchAll(/\.(-?[_a-zA-Z]+[\w-]*)/gu)) {
+      classNames.add(classMatch[1]);
+    }
+  }
+
+  return classNames;
+};
+
+export const isClipboardBoldFormatting = ({
+  tagName = "",
+  fontWeight = "",
+  fontVariationSettings = "",
+  className = "",
+  declaredBold = false,
+} = {}) => {
+  const normalizedTag = String(tagName).toLowerCase();
+  const normalizedWeight = String(fontWeight).trim().toLowerCase();
+
+  if (EXPLICIT_NORMAL_FONT_WEIGHTS.has(normalizedWeight)) return false;
+  if (declaredBold) return true;
+
+  if (
+    [
+      "b",
+      "strong",
+      "th",
+      "dt",
+      "h1",
+      "h2",
+      "h3",
+      "h4",
+      "h5",
+      "h6",
+    ].includes(normalizedTag)
+  )
+    return true;
+  if (["bold", "bolder"].includes(normalizedWeight)) return true;
+
+  const numericWeight = Number.parseFloat(normalizedWeight);
+  if (Number.isFinite(numericWeight) && numericWeight >= 500) return true;
+
+  const variableWeight = String(fontVariationSettings).match(
+    /["']?wght["']?\s+([0-9]+(?:\.[0-9]+)?)/iu,
+  );
+  if (variableWeight && Number(variableWeight[1]) >= 500) return true;
+
+  return BOLD_CLASS_REGEX.test(String(className));
+};
+
+const getExistingMarkdownBoldRanges = (text) => {
+  const ranges = [];
+  const pattern = /(\*\*|__)(.*?)\1/gu;
+
+  for (const match of text.matchAll(pattern)) {
+    const contentStart = match.index + match[1].length;
+    ranges.push({
+      start: contentStart,
+      end: contentStart + match[2].length,
+    });
+  }
+
+  return ranges;
+};
+
+const rangesOverlap = (left, right) =>
+  left.start < right.end && right.start < left.end;
+
+const findTextOccurrence = (text, segment, occurrence) => {
+  let searchIndex = 0;
+  let matchIndex = -1;
+
+  for (let index = 0; index <= occurrence; index += 1) {
+    matchIndex = text.indexOf(segment, searchIndex);
+    if (matchIndex < 0) return -1;
+    searchIndex = matchIndex + segment.length;
+  }
+
+  return matchIndex;
+};
+
+export const restoreBoldFormattingInPlainText = (
+  plainText,
+  boldTextSegments = [],
+) => {
+  const normalizedPlainText = normalizeVietnameseClipboardText(plainText);
+  if (!normalizedPlainText || !Array.isArray(boldTextSegments)) {
+    return normalizedPlainText;
+  }
+
+  const existingRanges = getExistingMarkdownBoldRanges(normalizedPlainText);
+  const restoredRanges = [];
+  const nextSearchIndexBySegment = new Map();
+
+  for (const rawSegment of boldTextSegments) {
+    const segmentValue =
+      typeof rawSegment === "string" ? rawSegment : rawSegment?.text;
+    const requestedOccurrence =
+      typeof rawSegment === "object" &&
+      Number.isInteger(rawSegment?.occurrence) &&
+      rawSegment.occurrence >= 0
+        ? rawSegment.occurrence
+        : null;
+    const segment = normalizeVietnameseClipboardText(segmentValue).trim();
+    if (!segment) continue;
+
+    let searchIndex = nextSearchIndexBySegment.get(segment) || 0;
+    let matchIndex =
+      requestedOccurrence === null
+        ? normalizedPlainText.indexOf(segment, searchIndex)
+        : findTextOccurrence(
+            normalizedPlainText,
+            segment,
+            requestedOccurrence,
+          );
+
+    while (matchIndex >= 0) {
+      const candidate = {
+        start: matchIndex,
+        end: matchIndex + segment.length,
+      };
+      const alreadyBold = existingRanges.some((range) =>
+        rangesOverlap(range, candidate),
+      );
+      const overlapsRestored = restoredRanges.some((range) =>
+        rangesOverlap(range, candidate),
+      );
+
+      if (!alreadyBold && !overlapsRestored) {
+        restoredRanges.push(candidate);
+        nextSearchIndexBySegment.set(segment, candidate.end);
+        break;
+      }
+
+      if (alreadyBold) {
+        nextSearchIndexBySegment.set(segment, candidate.end);
+        break;
+      }
+
+      if (requestedOccurrence !== null) break;
+
+      matchIndex = normalizedPlainText.indexOf(segment, candidate.end);
+    }
+  }
+
+  return restoredRanges
+    .sort((left, right) => right.start - left.start)
+    .reduce(
+      (result, range) =>
+        `${result.slice(0, range.start)}**${result.slice(
+          range.start,
+          range.end,
+        )}**${result.slice(range.end)}`,
+      normalizedPlainText,
+    );
+};
 
 export const buildUsageInstructionsPasteHtml = ({
   htmlData = "",
   textData = "",
   sanitizeHtml = () => "",
-  htmlToText = () => "",
+  getBoldTextSegments = () => [],
   plainTextToHtml = (text) => text,
 } = {}) => {
   const normalizedPlainText = normalizeVietnameseClipboardText(textData);
@@ -150,25 +322,13 @@ export const buildUsageInstructionsPasteHtml = ({
     return safeNormalizeNfc(sanitizedHtml);
   }
 
-  if (!sanitizedHtml) {
-    return safeNormalizeNfc(plainTextToHtml(normalizedPlainText));
-  }
+  const boldTextSegments = sanitizedHtml
+    ? getBoldTextSegments(sanitizedHtml)
+    : [];
+  const cleanFormattedText = restoreBoldFormattingInPlainText(
+    normalizedPlainText,
+    boldTextSegments,
+  );
 
-  const richText = htmlToText(sanitizedHtml);
-  const normalizedRichText = normalizeVietnameseClipboardText(richText);
-  const plainScore = getMojibakeScore(normalizedPlainText);
-  const richScore = getMojibakeScore(richText);
-
-  // text/plain is the character-authority on mobile. Rich HTML is retained
-  // only when it is at least as healthy and represents the same text.
-  const richTextMatchesPlain =
-    normalizedRichText &&
-    canonicalClipboardText(normalizedRichText) ===
-      canonicalClipboardText(normalizedPlainText);
-
-  if (richScore <= plainScore && richTextMatchesPlain) {
-    return safeNormalizeNfc(sanitizedHtml);
-  }
-
-  return safeNormalizeNfc(plainTextToHtml(normalizedPlainText));
+  return safeNormalizeNfc(plainTextToHtml(cleanFormattedText));
 };

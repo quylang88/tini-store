@@ -19,6 +19,8 @@ import {
 } from "lucide-react";
 import {
   buildUsageInstructionsPasteHtml,
+  getDeclaredBoldClassNamesFromCss,
+  isClipboardBoldFormatting,
   normalizeVietnameseClipboardText,
 } from "../../utils/inventory/usageInstructionsClipboard";
 
@@ -70,6 +72,14 @@ const sanitizePastedHtml = (htmlInput) => {
       `<meta charset="utf-8">${htmlNoCharset}`,
       "text/html",
     );
+    const declaredBoldClassNames = new Set();
+    for (const styleElement of Array.from(doc.querySelectorAll("style"))) {
+      for (const className of getDeclaredBoldClassNamesFromCss(
+        styleElement.textContent,
+      )) {
+        declaredBoldClassNames.add(className);
+      }
+    }
 
     const cleanNode = (node) => {
       if (node.nodeType === Node.TEXT_NODE) {
@@ -90,6 +100,19 @@ const sanitizePastedHtml = (htmlInput) => {
 
       const tagName = node.tagName.toLowerCase();
       const elementId = (node.id || "").toLowerCase();
+      const elementClassName =
+        typeof node.className === "string" ? node.className : "";
+      const hasDeclaredBoldClass = Array.from(node.classList || []).some(
+        (className) => declaredBoldClassNames.has(className),
+      );
+      const semanticFormat = [
+        node.getAttribute("data-font-weight"),
+        node.getAttribute("data-weight"),
+        node.getAttribute("data-style"),
+        node.getAttribute("data-format"),
+      ]
+        .filter(Boolean)
+        .join(" ");
 
       // Skip script, style, meta, XML tags
       if (
@@ -114,6 +137,9 @@ const sanitizePastedHtml = (htmlInput) => {
       // Read inline styles
       const style = node.style || {};
       const fontWeight = (style.fontWeight || "").toString().toLowerCase();
+      const fontVariationSettings = (
+        style.fontVariationSettings || ""
+      ).toString();
       const fontStyle = (style.fontStyle || "").toString().toLowerCase();
       const textDecoration = (
         style.textDecorationLine ||
@@ -123,23 +149,15 @@ const sanitizePastedHtml = (htmlInput) => {
         .toString()
         .toLowerCase();
 
-      // Check if explicitly normal weight
-      const isExplicitlyNormal =
-        fontWeight === "normal" ||
-        fontWeight === "400" ||
-        fontWeight === "300" ||
-        fontWeight === "200" ||
-        fontWeight === "100";
-
-      const isBoldTag =
-        (tagName === "b" || tagName === "strong") && !isDocsWrapper;
-      const isBoldStyle =
-        (fontWeight === "bold" ||
-          fontWeight === "bolder" ||
-          parseInt(fontWeight, 10) >= 600) &&
-        !isExplicitlyNormal;
-
-      const isBold = (isBoldTag || isBoldStyle) && !isExplicitlyNormal;
+      const isBold =
+        !isDocsWrapper &&
+        isClipboardBoldFormatting({
+          tagName,
+          fontWeight,
+          fontVariationSettings,
+          className: `${elementClassName} ${semanticFormat}`.trim(),
+          declaredBold: hasDeclaredBoldClass,
+        });
 
       const isItalic =
         (tagName === "i" ||
@@ -309,11 +327,36 @@ const sanitizePastedHtml = (htmlInput) => {
   }
 };
 
-const extractTextFromHtml = (html) => {
-  if (!html || typeof document === "undefined") return "";
+const extractBoldTextSegmentsFromHtml = (html) => {
+  if (!html || typeof document === "undefined") return [];
   const container = document.createElement("div");
   container.innerHTML = html;
-  return container.textContent || "";
+  const boldSelector = "strong, b";
+
+  return Array.from(container.querySelectorAll(boldSelector))
+    .filter((node) => !node.parentElement?.closest(boldSelector))
+    .map((node) => {
+      const text = normalizeVietnameseClipboardText(node.textContent).trim();
+      if (!text) return null;
+
+      const prefixRange = document.createRange();
+      prefixRange.setStart(container, 0);
+      prefixRange.setEndBefore(node);
+      const prefixText = normalizeVietnameseClipboardText(
+        prefixRange.toString(),
+      );
+      let occurrence = 0;
+      let searchIndex = 0;
+      let matchIndex = prefixText.indexOf(text, searchIndex);
+      while (matchIndex >= 0) {
+        occurrence += 1;
+        searchIndex = matchIndex + text.length;
+        matchIndex = prefixText.indexOf(text, searchIndex);
+      }
+
+      return { text, occurrence };
+    })
+    .filter(Boolean);
 };
 
 // Converts plain text with indentations and lists into nested HTML structure
@@ -693,23 +736,27 @@ const ProductUsageInstructionsField = ({
 
   const handlePaste = (e) => {
     if (disabled || readOnly || !editorRef.current) return;
-    e.preventDefault();
 
     const clipboardData =
       e.clipboardData ||
       e.nativeEvent?.clipboardData ||
       globalThis.clipboardData;
+    if (!clipboardData) return;
+
     const htmlData = clipboardData?.getData("text/html") || "";
     const textData =
       clipboardData?.getData("text/plain") ||
       clipboardData?.getData("text") ||
       "";
+    if (!htmlData && !textData) return;
+
+    e.preventDefault();
 
     const contentToInsert = buildUsageInstructionsPasteHtml({
       htmlData,
       textData,
       sanitizeHtml: sanitizePastedHtml,
-      htmlToText: extractTextFromHtml,
+      getBoldTextSegments: extractBoldTextSegmentsFromHtml,
       plainTextToHtml: parsePlainTextToHtml,
     });
 
