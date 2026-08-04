@@ -774,15 +774,13 @@ const drawProductCardText = (
       }
 
       if (lineObj.type === "h2") {
-        context.fillStyle = COLOR_ROSE;
-        context.fillRect(textX, textY - 22, 5, 26);
         const spans = parseInlineSpansFromHtml(lineObj.html);
         textY = drawRichTextSpans(
           context,
           spans,
-          textX + 14,
+          textX,
           textY,
-          textWidth - 14,
+          textWidth,
           28,
           "#be123c",
         );
@@ -871,10 +869,7 @@ const drawProductCardText = (
       context.fillStyle = textColor;
       if (isHeading) {
         context.font = `700 28px ${FONT_FAMILY}`;
-        context.fillStyle = COLOR_ROSE;
-        context.fillRect(textX, textY - 22, 5, 26);
-        context.fillStyle = textColor;
-        context.fillText(currentLine, textX + 14, textY);
+        context.fillText(currentLine, textX, textY);
       } else if (isBold) {
         context.font = `700 27px ${FONT_FAMILY}`;
         context.fillText(currentLine, textX, textY);
