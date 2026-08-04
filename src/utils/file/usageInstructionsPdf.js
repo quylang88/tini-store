@@ -431,12 +431,31 @@ export const parseHtmlToRichLines = (htmlContent) => {
 
     const lines = [];
 
-    const processElement = (element) => {
-      const tagName = element.tagName ? element.tagName.toLowerCase() : "";
+    const processNode = (node) => {
+      if (node.nodeType === Node.TEXT_NODE) {
+        const text = node.textContent;
+        const textLines = text.split(/\r?\n/);
+        for (const lineText of textLines) {
+          const clean = lineText.trim();
+          if (clean) {
+            const isBullet = /^(?:[•⁃–—\-*+>:▪▫■□▲►✦✧★☆❖◆◇⚪⚫➔✓]|🔴|🔵|➡️|✔️|✅)\s+/iu.test(clean);
+            lines.push({
+              html: escapeHtml(clean),
+              type: isBullet ? "li" : "p",
+              bullet: isBullet ? "• " : null,
+            });
+          }
+        }
+        return;
+      }
+
+      if (node.nodeType !== Node.ELEMENT_NODE) return;
+
+      const tagName = node.tagName ? node.tagName.toLowerCase() : "";
 
       if (tagName === "ul" || tagName === "ol") {
         let index = 1;
-        for (const child of Array.from(element.children)) {
+        for (const child of Array.from(node.children)) {
           if (child.tagName?.toLowerCase() === "li") {
             const prefix = tagName === "ol" ? `${index}. ` : "• ";
             lines.push({
@@ -446,22 +465,22 @@ export const parseHtmlToRichLines = (htmlContent) => {
             });
             index += 1;
           } else {
-            processElement(child);
+            processNode(child);
           }
         }
         return;
       }
 
       if (tagName === "h1" || tagName === "h2") {
-        lines.push({ html: element.innerHTML, type: "h2" });
+        lines.push({ html: node.innerHTML, type: "h2" });
         return;
       }
-      if (tagName === "h3" || tagName === "h4" || tagName === "h5" || tagName === "h6") {
-        lines.push({ html: element.innerHTML, type: "h3" });
+      if (["h3", "h4", "h5", "h6"].includes(tagName)) {
+        lines.push({ html: node.innerHTML, type: "h3" });
         return;
       }
       if (tagName === "blockquote") {
-        lines.push({ html: element.innerHTML, type: "blockquote" });
+        lines.push({ html: node.innerHTML, type: "blockquote" });
         return;
       }
       if (tagName === "hr") {
@@ -469,7 +488,20 @@ export const parseHtmlToRichLines = (htmlContent) => {
         return;
       }
 
-      const brSplitHtmls = element.innerHTML.split(/<br\s*\/?>/i);
+      const hasBlockChildren = Array.from(node.children).some((c) =>
+        ["p", "div", "ul", "ol", "h1", "h2", "h3", "h4", "h5", "h6", "blockquote", "hr", "section", "article"].includes(
+          c.tagName?.toLowerCase(),
+        ),
+      );
+
+      if (hasBlockChildren) {
+        for (const child of Array.from(node.childNodes)) {
+          processNode(child);
+        }
+        return;
+      }
+
+      const brSplitHtmls = node.innerHTML.split(/<br\s*\/?>/i);
       for (const snippetHtml of brSplitHtmls) {
         const textCheck = snippetHtml.replace(/<[^>]+>/g, "").trim();
         if (textCheck) {
@@ -484,23 +516,7 @@ export const parseHtmlToRichLines = (htmlContent) => {
     };
 
     for (const child of Array.from(container.childNodes)) {
-      if (child.nodeType === Node.TEXT_NODE) {
-        const text = child.textContent;
-        const textLines = text.split(/\r?\n/);
-        for (const lineText of textLines) {
-          const clean = lineText.trim();
-          if (clean) {
-            const isBullet = /^(?:[•⁃–—\-*+>:▪▫■□▲►✦✧★☆❖◆◇⚪⚫➔✓]|🔴|🔵|➡️|✔️|✅)\s+/iu.test(clean);
-            lines.push({
-              html: escapeHtml(clean),
-              type: isBullet ? "li" : "p",
-              bullet: isBullet ? "• " : null,
-            });
-          }
-        }
-      } else if (child.nodeType === Node.ELEMENT_NODE) {
-        processElement(child);
-      }
+      processNode(child);
     }
 
     return lines;
@@ -896,6 +912,7 @@ const renderPageImage = ({
   pageCount,
   logoImage,
   productImages,
+  skipRemoteImages = false,
 }) => {
   const canvas = document.createElement("canvas");
   canvas.width = PAGE_WIDTH;
@@ -908,16 +925,33 @@ const renderPageImage = ({
 
   let currentTop = CONTENT_TOP;
   for (const layout of pageLayouts) {
+    const prodImg = skipRemoteImages ? null : productImages?.get(layout.imageKey || layout.key);
     drawProductCardContent(
       context,
       layout,
-      productImages.get(layout.imageKey || layout.key),
+      prodImg,
       currentTop,
     );
     currentTop += layout.height + CARD_GAP;
   }
 
-  return canvas.toDataURL("image/png");
+  try {
+    return canvas.toDataURL("image/png");
+  } catch (err) {
+    console.warn("Canvas export warning (e.g. cross-origin product image), falling back to safe rendering:", err);
+    if (!skipRemoteImages) {
+      return renderPageImage({
+        exportData,
+        pageLayouts,
+        pageIndex,
+        pageCount,
+        logoImage: null,
+        productImages: null,
+        skipRemoteImages: true,
+      });
+    }
+    throw err;
+  }
 };
 
 
@@ -971,4 +1005,5 @@ export const generateUsageInstructionsPdf = async (exportData) => {
 
   return createPdfFromPageImages(pageImages);
 };
+
 
