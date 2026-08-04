@@ -112,4 +112,79 @@ describe("usage instruction PDF pagination", () => {
     expect(await request).toBeNull();
     vi.useRealTimers();
   });
+
+  it("parses rich HTML strings into structural blocks", async () => {
+    const { parseHtmlToBlocks } = await import("./usageInstructionsPdf");
+    const html = "<h2>1. Công dụng</h2><p><strong>Uống 2 viên/ngày</strong></p><ul><li>Sáng 1 viên</li></ul>";
+    const blocks = parseHtmlToBlocks(html);
+
+    expect(blocks.length).toBeGreaterThan(0);
+    expect(blocks.some((b) => b.includes("1. Công dụng"))).toBe(true);
+    expect(blocks.some((b) => b.includes("Uống 2 viên/ngày"))).toBe(true);
+  });
+
+  it("generates usage instructions PDF with rich HTML content and formatted medicine title", async () => {
+    const { generateUsageInstructionsPdf } = await import("./usageInstructionsPdf");
+
+    const mockCanvas = {
+      width: 1240,
+      height: 1754,
+      getContext: () => ({
+        fillRect: () => {},
+        strokeRect: () => {},
+        fillText: () => {},
+        measureText: () => ({ width: 100 }),
+        drawImage: () => {},
+        beginPath: () => {},
+        moveTo: () => {},
+        lineTo: () => {},
+        stroke: () => {},
+        fill: () => {},
+        roundRect: () => {},
+      }),
+      toDataURL: () =>
+        "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=",
+    };
+
+    const prevDoc = globalThis.document;
+    globalThis.document = {
+      createElement: (tagName) => {
+        if (tagName === "canvas") return mockCanvas;
+        return {
+          style: {},
+          appendChild: () => {},
+          removeChild: () => {},
+        };
+      },
+    };
+
+    try {
+      const exportData = {
+        dateDisplay: "04/08/2026",
+        fileName: "Phieu_HDSD_2026-08-04.pdf",
+        items: [
+          {
+            key: "p1",
+            productId: "p1",
+            name: "Thuốc Cảm Cúm Tiffy Dey",
+            image: null,
+            usageInstructions:
+              '<h2 style="color:#e11d48">1. Công dụng</h2><p><strong>Giảm đau, hạ sốt nhanh chóng</strong></p><ul><li>Liều dùng: <span style="color:#2563eb">1-2 viên/lần</span></li></ul>',
+          },
+        ],
+      };
+
+      const blob = await generateUsageInstructionsPdf(exportData);
+      expect(blob).toBeInstanceOf(Blob);
+      expect(blob.type).toBe("application/pdf");
+    } finally {
+      if (prevDoc === undefined) {
+        delete globalThis.document;
+      } else {
+        globalThis.document = prevDoc;
+      }
+    }
+  });
 });
+
+
